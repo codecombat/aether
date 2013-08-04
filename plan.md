@@ -52,6 +52,10 @@ Aether.defaults
     global: {Math: Math, parseInt: parseInt, parseFloat: parseFloat, eval: eval, isNaN: isNaN, escape: escape, unescape: unescape},
     levels: {
         // Look at jshint's warnings for many, many ideas: http://jshint.com/docs/options
+        // And there are others in the Closure compiler: https://developers.google.com/closure/compiler/docs/error-ref
+        // And maybe some more here: https://gist.github.com/textarcana/3375708#file_js_code_sniffs.md
+        // More: https://github.com/mdevils/node-jscs/blob/master/lib/checker.js
+        // More: https://github.com/nzakas/eslint/tree/master/lib/rules
         
         // Errors: things that will error out and thus prevent us from compiling the code (syntax errors, missing variables, typos)
         Aether.problems.unexpectedIdentifier: 'error',
@@ -77,7 +81,11 @@ Aether.defaults
         // ... many more problems ignored by default ...
     },
     language: "javascript",
-    languageVersion: "1.5"
+    languageVersion: "ES5",
+    methodName: "foo",  // in case we need it for error messages
+    methodParameters: [],  // or something like ["target"]
+    yieldAutomatically: false,  // horrible name... we could have it auto-insert yields after every statement
+    yieldConditionally: false,  // also bad name, but what it would do is make it yield whenever this._shouldYield is true (and clear it)
 }
 
 // Example custom analyzer
@@ -113,18 +121,20 @@ var options = {
         "Infinite loop": "error",
         "Strange loop": "warning"
     },
-    languageVersion: "1.8"
+    languageVersion: "ES5",
+    methodName: "getNearestEnemies",
+    yieldConditionally: true
 };
 aether = new Aether(options);
 ```
 
-## Compilation
+## Transpilation
 
 ```javascript
 // `raw` is the string containing the code above
 
 // Quick heuristics: can this code be run, or will it produce a compilation error?
-aether.canCompile(raw);  // -> false
+aether.canTranspile(raw);  // -> false
 
 // Barring things like comments and whitespace and such, are the ASTs going to be different? (oldAether being a previously compiled instance)
 aether.hasChangedSignificantly(raw, oldAether);  // -> false
@@ -132,8 +142,8 @@ aether.hasChangedSignificantly(raw, oldAether);  // -> false
 // Is the code exactly the same?
 aether.hasChanged(raw, oldAether);  // -> true
 
-// Compile it. Even if it can't compile, it will give syntax errors and warnings and such.
-aether.compile(raw);
+// Transpile it. Even if it can't transpile, it will give syntax errors and warnings and such.
+aether.transpile(raw);
 
 aether.problems.errors;  // I'll pretend that the plan.md line numbers are the actual raw line numbers.
 // We couldn't show all of these at one because we'll probably get hung up on missing curly braces or whatever, but eventually as they fixed things they'd see them.
@@ -204,27 +214,117 @@ aether = Aether.deserialize(serialized);  // ... and back
 
 ## Running
 
-**TODO**: figure out what kind of API we want here
+There are two main modes. The first is that we expect to fully execute the method every time it's called. That's relatively easy:
+
+```javascript
+// Simplified example: 
+tharin = world.getThangByID("Tharin");
+tharin.replaceMethodCode = function(methodName, code) {
+    // replaceMethodCode does some extra stuff, whatever
+    method = this.programmableMethods[methodName];
+    method.source = code;
+    var inner = new Function(method.parameters.join(', '), code);
+    var outer = function() {
+        // I currently have no idea what I'm doing with the createUserContext method.
+        // What I need to be able to do is to give the user code an execution context that controls which copies they can read and write.
+        // Should this be done in aether or outside of it? How should I be doing it at all?
+        var userContext = this.createUserContext();
+        
+        // Then we call the function with that context and the original arguments, but with error handling.
+        try {
+            var result = inner.call(userContext, arguments);
+        }
+        catch(error) {
+            this.erroredOut = this.errorsOut = true;
+            if(!(error instanceof Aether.errors.UserCodeError))  // If not aready handled in another aetherified method...
+                error = world.userCodeMap[methodName].purifyError(error);  // ... then fill in the context and attach to our list of errors.
+            if(error.methodName === methodName)
+                this.replaceMethodCode(methodName, '');  // from now on, this method will be a no-op
+            throw error;  // We'll have to be able serialize this error across a worker
+        }
+        // Then we update this with any allowed changes they made to the context.
+        this.updateFromUserContext(userContext);
+        // You can see how all of this currently works in CodeCombat: app/lib/world/systems/programming.coffee.
+    }
+    this.createMethodChain(methodName).user = outer;  // Pretty much like: this[methodName] = outer
+};
+
+tharin.replaceMethodCode("chooseAction", world.userCodeMap['chooseAction'].pure);
+tharin.replaceMethodCode("getNearestEnemy", world.userCodeMap['getNearestEnemy'].pure);
+for(var frameIndex = 0; frameIndex < world.totalFrames; ++frameIndex) {
+    // world does some stuff, whatever
+    // at some point on most frames, we will call the aetherified code for chooseAction, which will in turn call that for getNearestEnemy
+    if(tharin.canAct())
+        tharin.chooseAction();
+}
+```
+
+But then there's the method where we can run the method in chunks, essentially with coroutines (or continuations, or generators, or what-have-you). There are two ways to do this. The first is to use **yield**, which isn't really implemented yet (it's in the latest node, a different version of it is in Firefox, Esprima can parse it, and there's a recent pull request to CoffeeScript to generate it, but that's about it). The second is to use a shim that simulates it, like Google Traceur (or we could try to roll our own). I'll just imagine that it works in the next example, since that would be oh-so-sweet.
+
+```javascript
+var planCode = "
+    for(var i = 0; i < 5; ++i)
+        this.attack(this.getNearestEnemy());  // attack calls setTarget() and setAction('attack'), here five times
+    this.setTargetPos(50, 30);  // Should not trigger a yield
+    this.setAction('move');  // Should
+    this.jump();  // Also should
+    // And now we're done; no more yields
+";
+
+tharin.replaceMethodCode("plan", world.userCodeMap['plan'].pure);
+tharin.replaceMethodCode("getNearestEnemy", world.userCodeMap['getNearestEnemy'].pure);
+for(var frameIndex = 0; frameIndex < world.totalFrames; ++frameIndex) {
+    if(tharin.canAct())
+        tharin.chooseAction();  // Same as before, but see how chooseAction is implemented below...
+}
+tharin.chooseAction = function() {
+    if(this.planFinished) {
+        this.setAction('idle');
+        return;
+    }
+    // Every `setAction()` method call in the user's code should trigger a yield, whereas everything else should run normally
+    if(!this.planGenerator)
+        this.planGenerator = this.plan();
+    var next = this.planGenerator.next();  // This just set the action; cool!
+    if(next.done)
+        this.planFinished = true;
+}
+```
+
+Then the open question is, how do we make it so that **aether** inserts yields on all `setAction()` calls, even when they can be nested inside other methods? I can make `setAction()` indicate that the thang wants to yield if the Thang is a planner--that would be outside the **aether** code, but **aether** could have an optional configuration for checking the execution context (this) after every statement to see if it should yield. Yeah, that oughtta do it:
+
+```javascript
+function setAction(action) {
+    this.action = action;
+    if(this.plan)
+        this._shouldYield = true;
+}
+```
 
 ## Runtime Errors
 
-**TODO**
+Ideally runtime errors have the same interface as transpile errors. The World generation error handler could catch the UserCodeErrors generated above. When an Aether instance creates a UserCodeError, it adds it to its list of errors, so to grab all the errors, we just go through each Aether instance and get the error list--which will, I think, always just have zero or one error in each of the aethers for our purposes, since we don't continue to run the aetherified code after an error. But other people might run it more than once.
+
+```javascript
+var serialized = world.serialize();  // also serializes all the aethers in the userCodeMap, which serializes their errors
+// ... web worker transer
+var world = World.deserialize(serialized);  // and we're back
+
+var allErrors = [];
+for(var methodName in world.userCodeMap) {
+    var aether = world.userCodeMap[methodName];
+    allErrors.push(aether.errors...);
+}
+allErrors;
+// ->
+[
+    {ranges: [[[22, 1], [22, 13]], [[15, 1], [15, 18]], [[18, 1], [18, 14]]], type: 'ArgumentError', message: '`getNearestEnemy()` should return a `Thang` or `null`, not a string (`"Goreball"`).', hint: 'You returned `nearestEnemy`, which had value `"Goreball"`. Check lines 15 and 18 for mistakes setting `nearestEnemy`.' }
+]
+```
+
+Okay, but how did we define the return type validation and custom error message generation so that **aether** knew what to do? **TODO: this is as far as I've gotten.**
+
 
 ## Flow Analysis
 
 **TODO**: What I mean is that after it has run, we'll want to be able to look at the metrics (statements executed, runtime, etc.) and also to be able to ask it what all the state was for a particular run during a particular statement (so we can step through and show values and such).
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
