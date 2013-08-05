@@ -15,9 +15,16 @@ module.exports = function(grunt) {
     coffeelint: {
         app: ['src/*.coffee']
     },
+    watch: {
+      files:['src/*','test/*'],
+      tasks:['coffeelint','coffee','jasmine','uglify'],
+      options:{
+        spawn: false
+      }
+    },
     jasmine: {
       aetherTests: {
-        src: ['build/*.js'],
+        src: ['build/<% pkg.name %>.js'],
         options: {
           specs: ['test/*Spec.js']
         }
@@ -26,7 +33,7 @@ module.exports = function(grunt) {
     coffee: {
         compile: {
             files: {
-              'build/aether.js' : ['src/*.coffee'] //multiple files will be concat'd
+              'build/<% pkg.name %>.js' : ['src/*.coffee'] //multiple files will be concat'd
           }
         }
       }

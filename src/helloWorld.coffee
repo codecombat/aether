@@ -1,1 +1,1 @@
-window.helloWorld = () -> "Hello world"
+window.helloWorld = () -> "Hello World"
