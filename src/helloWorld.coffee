@@ -1,0 +1,1 @@
+window.helloWorld = () -> "Hello world"
