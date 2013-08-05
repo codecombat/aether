@@ -80,6 +80,14 @@ Aether.defaults
         Aether.problems.camelCase: 'ignore',
         // ... many more problems ignored by default ...
     },
+    executionCosts: {
+        Aether.execution.assignment: 2,  // enumerated in Aether.execution? ... somewhere
+        Aether.execution.addition: 1,
+        Aether.execution.subtraction: 1,
+        Aether.execution.multiplication: 3,
+        Aether.execution.division: 5,
+        // ... many more
+    }
     language: "javascript",
     languageVersion: "ES5",
     methodName: "foo",  // in case we need it for error messages
@@ -121,6 +129,10 @@ var options = {
         "Infinite loop": "error",
         "Strange loop": "warning"
     },
+    executionCosts: {
+        Aether.execution.subtraction: 2,
+        "getEnemies": 30  // how should we specify costs for custom functions?
+    }
     languageVersion: "ES5",
     methodName: "getNearestEnemies",
     yieldConditionally: true
@@ -177,13 +189,14 @@ aether.style;
     loc: 35,
     sloc: 28,
     statements: 29,
+    score: 0.64,  // or something
     conceptsUsed: {
         recursion: true,
         objects: false,
         arrays: false,
         strings: true,
         Math: false,
-        functions: true,
+        //functions: true,
         anonymousFunctions: false,
         ifStatements: true,
         elseStatements: true,
@@ -199,9 +212,11 @@ aether.style;
         NaN: false
         // ... many more
     },
-    // variables used?
-    // functions declared?
-    // properties used? (of this)
+    identifiers: {
+        variableNames: [dx, dy, enemies, nearestEnemy, nearestDistance, enemy], //names of variables used, perhaps will contain function parameters, properties of non 'this' objects
+        functionNames: [distance_squared], //names of functions used
+        propertyNames: [] //properties of 'this' objects
+    }
     // what else?
 }
 
@@ -249,8 +264,8 @@ tharin.replaceMethodCode = function(methodName, code) {
     this.createMethodChain(methodName).user = outer;  // Pretty much like: this[methodName] = outer
 };
 
-tharin.replaceMethodCode("chooseAction", world.userCodeMap['chooseAction'].pure);
-tharin.replaceMethodCode("getNearestEnemy", world.userCodeMap['getNearestEnemy'].pure);
+tharin.replaceMethodCode("chooseAction", world.userCodeMap['Tharin']['chooseAction'].pure);
+tharin.replaceMethodCode("getNearestEnemy", world.userCodeMap['Tharin']['getNearestEnemy'].pure);
 for(var frameIndex = 0; frameIndex < world.totalFrames; ++frameIndex) {
     // world does some stuff, whatever
     // at some point on most frames, we will call the aetherified code for chooseAction, which will in turn call that for getNearestEnemy
@@ -271,8 +286,8 @@ var planCode = "
     // And now we're done; no more yields
 ";
 
-tharin.replaceMethodCode("plan", world.userCodeMap['plan'].pure);
-tharin.replaceMethodCode("getNearestEnemy", world.userCodeMap['getNearestEnemy'].pure);
+tharin.replaceMethodCode("plan", world.userCodeMap['Tharin']['plan'].pure);
+tharin.replaceMethodCode("getNearestEnemy", world.userCodeMap['Tharin']['getNearestEnemy'].pure);
 for(var frameIndex = 0; frameIndex < world.totalFrames; ++frameIndex) {
     if(tharin.canAct())
         tharin.chooseAction();  // Same as before, but see how chooseAction is implemented below...
@@ -305,26 +320,74 @@ function setAction(action) {
 
 Ideally runtime errors have the same interface as transpile errors. The World generation error handler could catch the UserCodeErrors generated above. When an Aether instance creates a UserCodeError, it adds it to its list of errors, so to grab all the errors, we just go through each Aether instance and get the error list--which will, I think, always just have zero or one error in each of the aethers for our purposes, since we don't continue to run the aetherified code after an error. But other people might run it more than once.
 
+Each error should also contain the callNumber and statementNumber for when it happened, as well as preserving the userInfo of any errors that were passed into the UserCodeError.
+
 ```javascript
 var serialized = world.serialize();  // also serializes all the aethers in the userCodeMap, which serializes their errors
-// ... web worker transer
+// ... web worker transfer
 var world = World.deserialize(serialized);  // and we're back
 
 var allErrors = [];
-for(var methodName in world.userCodeMap) {
-    var aether = world.userCodeMap[methodName];
-    allErrors.push(aether.errors...);
-}
+for(var thangID in world.userCodeMap)
+    for(var methodName in world.userCodeMap[thangID]) {
+        var aether = world.userCodeMap[thangID][methodName];
+        allErrors.push(aether.errors...);
+    }
 allErrors;
 // ->
 [
-    {ranges: [[[22, 1], [22, 13]], [[15, 1], [15, 18]], [[18, 1], [18, 14]]], type: 'ArgumentError', message: '`getNearestEnemy()` should return a `Thang` or `null`, not a string (`"Goreball"`).', hint: 'You returned `nearestEnemy`, which had value `"Goreball"`. Check lines 15 and 18 for mistakes setting `nearestEnemy`.' }
+    {ranges: [[[22, 1], [22, 13]], [[15, 1], [15, 18]], [[18, 1], [18, 14]]], type: 'ArgumentError', message: '`getNearestEnemy()` should return a `Thang` or `null`, not a string (`"Goreball"`).', hint: 'You returned `nearestEnemy`, which had value `"Goreball"`. Check lines 15 and 18 for mistakes setting `nearestEnemy`.', callNumber: 118, statementNumber: 25, userInfo: {frameNumber: 25} }
 ]
 ```
 
-Okay, but how did we define the return type validation and custom error message generation so that **aether** knew what to do? **TODO: this is as far as I've gotten.**
+Okay, but how did we define the return type validation and custom error message generation so that **aether** knew what to do? ... maybe we used JSDoc comments if we wanted that.
 
 
 ## Flow Analysis
 
-**TODO**: What I mean is that after it has run, we'll want to be able to look at the metrics (statements executed, runtime, etc.) and also to be able to ask it what all the state was for a particular run during a particular statement (so we can step through and show values and such).
+What I mean is that after it has run, we'll want to be able to look at the metrics (statements executed, runtime, etc.) and also to be able to ask it what all the state was for a particular run during a particular statement (so we can step through and show values and such).
+
+```javascript
+var aether = world.userCodeMap['Tharin']['getNearestEnemy'];
+// We already checked the errors; now let's check the metrics, then we'll look at the state.
+
+// TODO: need better names for all of these
+aether.metrics;
+// ->
+{
+    timesExecuted: 60,
+    statementsExecuted: 1459,
+    timeSpent: 4.253, // time in ms
+    executionCost: 2329, // some statements cost more than 1
+    maxDepth: 4 // 4 nested levels deep
+}
+
+// Now, for watching the state... I guess we'll have something like this, but actually efficient
+for(var callNumber in aether.flow.states) {
+    var callState = aether.flow.states[callNumber];
+    for(var statementNumber in callStates) {
+        var state = callStates[statementNumber];
+        state; // -> example state below (inside the for-loop)
+        // TODO: how do we indicate nested, shadowed variables' values? Or do we use ranges as keys, rather than the original variable names?
+        {
+            executionRange: [[23, 9], [23, 36]],
+            variables: {
+                "this": {/*... object containg all the accessible properties and their values, or maybe in our case, we replace it with the full Thang values?*/},
+                "distanceSquared": {type: 'function', value: "<function>"},
+                "enemies": {type: 'array', value: ["Brack", "Grul'thock", "Weeb"]},
+                "nearestEnemy": {type: 'Thang', value: 'Brack'},
+                "nearestDistance": {type: 'number', value: 32.42},
+                "enemy": {type: 'Thang', value: "Grul'thock"},
+                "distance": {type: 'number', value: 25.63}
+            }
+        }
+    }
+}
+
+
+```
+## Visualization
+As well as the visualizations for code execution, it might be nice to turn the AST into a graph using something like Viz.js
+```javascript
+aether.visualization.graph();  // Generates AST graph in browser to help user debug.
+```
