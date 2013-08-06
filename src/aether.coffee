@@ -1,3 +1,4 @@
-#helloWorld = require 'helloWorld'
+helloWorld = require './helloWorld'
+esprima = require 'esprima'
 
 console.log "hi"

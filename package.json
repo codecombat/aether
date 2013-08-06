@@ -17,10 +17,13 @@
     "grunt-coffeelint": "0.0.7",
     "grunt": "~0.4.1",
     "grunt-contrib-coffee": "~0.7.0",
-    "grunt-contrib-watch": "~0.5.1"
+    "grunt-contrib-watch": "~0.5.1",
+    "grunt-browserify": "~1.2.1"
   },
-  "licenses": [{
-    "type": "MIT",
-    "url": "https://github.com/nwinter/aether/blob/master/LICENSE"
-  }]
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "https://github.com/nwinter/aether/blob/master/LICENSE"
+    }
+  ]
 }

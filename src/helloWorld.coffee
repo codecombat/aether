@@ -1,1 +1,1 @@
-window.helloWorld = () -> "Hello World"
+module.exports = helloWorld = -> "Hello World"
