@@ -48,5 +48,6 @@ module.exports = function(grunt) {
 
   // Default task(s).
   grunt.registerTask('default', ['coffeelint','coffee','jasmine','uglify']);
+  grunt.registerTask('travis',['coffeelint','coffee','jasmine']);
 
 };
