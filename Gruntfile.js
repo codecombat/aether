@@ -24,16 +24,16 @@ module.exports = function(grunt) {
     },
     jasmine: {
       aetherTests: {
-        src: ['build/<% pkg.name %>.js'],
+        src: ['build/<%= pkg.name %>.js'],
         options: {
-          specs: ['test/*Spec.js']
+          specs: ['test/*Spec.js'],
         }
       }
     },
     coffee: {
         compile: {
             files: {
-              'build/<% pkg.name %>.js' : ['src/*.coffee'] //multiple files will be concat'd
+              'build/<%= pkg.name %>.js' : ['src/*.coffee'] //multiple files will be concat'd
           }
         }
       }
