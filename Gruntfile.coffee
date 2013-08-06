@@ -60,3 +60,4 @@ module.exports = (grunt) ->
 
   # Default task(s).
   grunt.registerTask 'default', ['coffeelint', 'coffee', 'browserify', 'jasmine', 'uglify']
+  grunt.registerTask 'travis', ['coffeelint', 'coffee', 'browserify', 'jasmine']
