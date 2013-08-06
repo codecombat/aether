@@ -13,6 +13,14 @@ module.exports = (grunt) ->
 
     coffeelint:
         app: ['src/*.coffee', 'test/*.coffee']
+        options:
+          no_trailing_whitespace:
+            level: 'ignore'  # PyCharm can't just autostrip for .coffee, needed for .jade
+          max_line_length:
+            level: 'ignore'
+          line_endings:
+            value: "unix"
+            level: "error"
 
     watch:
       files: ['src/*', 'test/*.coffee']
@@ -50,6 +58,11 @@ module.exports = (grunt) ->
         src: ['lib/test/*.js']
         dest: 'build/test/<%= pkg.name %>_specs.js'
 
+    copy:
+      files:
+        src: "build/<%= pkg.name %>.js"
+        dest: "../coco/vendor/scripts/<%= pkg.name %>.js"
+
   # Load the plugin that provides the "uglify" task.
   grunt.loadNpmTasks 'grunt-contrib-uglify'
   grunt.loadNpmTasks 'grunt-contrib-jasmine'
@@ -57,7 +70,8 @@ module.exports = (grunt) ->
   grunt.loadNpmTasks 'grunt-contrib-coffee'
   grunt.loadNpmTasks 'grunt-contrib-watch'
   grunt.loadNpmTasks 'grunt-browserify'
+  grunt.loadNpmTasks 'grunt-contrib-copy'
 
   # Default task(s).
-  grunt.registerTask 'default', ['coffeelint', 'coffee', 'browserify', 'jasmine', 'uglify']
+  grunt.registerTask 'default', ['coffeelint', 'coffee', 'browserify', 'jasmine', 'uglify', 'copy']
   grunt.registerTask 'travis', ['coffeelint', 'coffee', 'browserify', 'jasmine']

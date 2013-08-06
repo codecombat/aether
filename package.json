@@ -2,14 +2,22 @@
   "name": "aether",
   "version": "0.0.1",
   "description": "Analyzes, instruments, and transpiles JS to help beginners.",
+  "keywords": ["lint", "static analysis", "transpiler", "learning programming"],
   "repository": {
     "type": "git",
     "url": "https://github.com/nwinter/aether"
   },
-  "main": "./index",
+  "contributors": [
+    "Nick Winter <livelily@gmail.com> (http://www.nickwinter.net/)",
+    "Michael Schmatz <michaelschmatz@gmail.com> (https://github.com/schmatz)",
+    "Scott Erickson <sderickson@gmail.com> (https://github.com/sderickson)"
+  ],
+  "main": "lib/aether",
   "dependencies": {
     "coffee-script": "1.6.x",
-    "esprima": "*"
+    "esprima": "https://github.com/ariya/esprima/tarball/harmony",
+    "lodash": "~1.3.1",
+    "falafel": "~0.3.1"
   },
   "devDependencies": {
     "grunt-contrib-uglify": "~0.2.2",
@@ -18,13 +26,16 @@
     "grunt": "~0.4.1",
     "grunt-contrib-coffee": "~0.7.0",
     "grunt-contrib-watch": "~0.5.1",
-    "grunt-browserify": "~1.2.1"
+    "grunt-browserify": "~1.2.1",
+    "grunt-contrib-copy": "~0.4.1"
   },
   "scripts": {
     "test": "grunt travis --verbose"
   },
-  "licenses": [{
-    "type": "MIT",
-    "url": "https://github.com/nwinter/aether/blob/master/LICENSE"
-  }]
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "https://github.com/nwinter/aether/blob/master/LICENSE"
+    }
+  ]
 }
