@@ -1,6 +1,16 @@
 {
   "name": "aether",
   "version": "0.0.1",
+  "description": "Analyzes, instruments, and transpiles JS to help beginners.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nwinter/aether"
+  },
+  "main": "./index",
+  "dependencies": {
+    "coffee-script": "1.6.x",
+    "esprima": "*"
+  },
   "devDependencies": {
     "grunt-contrib-uglify": "~0.2.2",
     "grunt-contrib-jasmine": "~0.5.1",
@@ -8,5 +18,9 @@
     "grunt": "~0.4.1",
     "grunt-contrib-coffee": "~0.7.0",
     "grunt-contrib-watch": "~0.5.1"
-  }
+  },
+  "licenses": [{
+    "type": "MIT",
+    "url": "https://github.com/nwinter/aether/blob/master/LICENSE"
+  }]
 }
