@@ -1,5 +1,6 @@
 ![aether logo](http://i.imgur.com/uf36eRD.jpg)
 ======
+[![Build Status](https://travis-ci.org/nwinter/aether.png)](https://travis-ci.org/nwinter/aether)
 ##Purpose
 **aether** aims to make it easy for people to learn and write CoffeeScript and JavaScript by helping them catch and fix bugs, 
 letting them see and more easily understand the execution of their program [(like Brett Victor commanded!)](http://youtu.be/PUv66718DII?t=17m25s), 
