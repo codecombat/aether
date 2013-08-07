@@ -1,5 +1,5 @@
-esprima = require 'esprima'
-Syntax = esprima.Syntax
+#esprima = require 'esprima'
+#Syntax = esprima.Syntax
 
 module.exports = execution =
   # Based on Esprima Harmony's Syntax map for Mozilla's Parser AST

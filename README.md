@@ -6,6 +6,9 @@
 letting them see and more easily understand the execution of their program [(like Brett Victor commanded!)](http://youtu.be/PUv66718DII?t=17m25s), 
 and giving them tips on how they can improve their code. [CodeCombat](http://codecombat.com/) is behind it.
 
+##Get in touch
+You can use the GitHub issues, the [Google Group](https://groups.google.com/forum/#!forum/aether-dev), or the [CodeCombat / **aether** / Treema HipChat](http://www.hipchat.com/g3plnOKqa).
+
 ##Functionality
 
 ###Compilation

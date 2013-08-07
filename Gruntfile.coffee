@@ -24,15 +24,22 @@ module.exports = (grunt) ->
 
     watch:
       files: ['src/*', 'test/*.coffee']
-      tasks: ['coffeelint', 'coffee', 'browserify', 'jasmine', 'uglify']
+      tasks: ['coffeelint', 'coffee', 'browserify', 'jasmine', 'copy']
       options:
         spawn: false
 
-    jasmine:
-      aetherTests:
-        src: ['build/<%= pkg.name %>.js']
-        options:
-          specs: ['build/test/<%= pkg.name %>_specs.js']
+    #jasmine:
+    #  aetherTests:
+    #    src: ['build/<%= pkg.name %>.js']
+    #    options:
+    #      specs: ['']
+
+    "jasmine-node":
+      run:
+        spec: "lib/test/"
+      env:
+        NODE_PATH: "lib"
+      executable: './node_modules/.bin/jasmine-node'
 
     coffee:
       compile:
@@ -54,18 +61,21 @@ module.exports = (grunt) ->
       src:
         src: ['lib/<%= pkg.name %>.js']
         dest: 'build/<%= pkg.name %>.js'
+        options:
+          #standalone: "Aether"  # can't figure out how to get this to work
+          ignore: 'lodash'
       test:
         src: ['lib/test/*.js']
         dest: 'build/test/<%= pkg.name %>_specs.js'
 
     copy:
-      files:
-        src: "build/<%= pkg.name %>.js"
-        dest: "../coco/vendor/scripts/<%= pkg.name %>.js"
+      main:
+        src: "build/<%= pkg.name %>.js", dest: "../coco/vendor/scripts/<%= pkg.name %>.js"
 
   # Load the plugin that provides the "uglify" task.
   grunt.loadNpmTasks 'grunt-contrib-uglify'
-  grunt.loadNpmTasks 'grunt-contrib-jasmine'
+  #grunt.loadNpmTasks 'grunt-contrib-jasmine'
+  grunt.loadNpmTasks 'grunt-contrib-jasmine-node'
   grunt.loadNpmTasks 'grunt-coffeelint'
   grunt.loadNpmTasks 'grunt-contrib-coffee'
   grunt.loadNpmTasks 'grunt-contrib-watch'
@@ -73,5 +83,6 @@ module.exports = (grunt) ->
   grunt.loadNpmTasks 'grunt-contrib-copy'
 
   # Default task(s).
-  grunt.registerTask 'default', ['coffeelint', 'coffee', 'browserify', 'jasmine', 'uglify', 'copy']
-  grunt.registerTask 'travis', ['coffeelint', 'coffee', 'browserify', 'jasmine']
+  grunt.registerTask 'default', ['coffeelint', 'coffee', 'browserify', 'jasmine-node', 'copy', 'uglify']
+  grunt.registerTask 'travis', ['coffeelint', 'coffee', 'browserify', 'jasmine-node']
+  grunt.registerTask 'build', ['coffeelint', 'coffee', 'browserify', 'uglify', 'copy', 'uglify']

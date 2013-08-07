@@ -1,5 +1,7 @@
 
 
+module.exports.commonMethods = commonMethods = ['moveRight', 'moveLeft', 'moveUp', 'moveDown', 'attackNearbyEnemy', 'say', 'move', 'attackNearestEnemy', 'shootAt', 'rotateTo', 'shoot', 'distance', 'getNearestEnemy', 'getEnemies', 'attack', 'setAction', 'setTarget', 'getFriends', 'patrol']  # TODO: should be part of user configuration
+
 module.exports.UserCodeError = class UserCodeError extends Error
   @className: "UserCodeError"
   constructor: (@message, properties) ->
@@ -63,7 +65,7 @@ module.exports.UserCodeError = class UserCodeError extends Error
           explained = true
           break
         else
-          matchScore = string_score.score commonMethod, method, 0.5
+          matchScore = string_score?.score commonMethod, method, 0.5
           if matchScore > closestMatchScore
             [closestMatch, closestMatchScore] = [commonMethod, matchScore]
       unless explained

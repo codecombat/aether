@@ -1,6 +1,6 @@
 problems = require './problems'
 execution = require './execution'
-_ = require 'lodash'
+_ = window?._ ? self?._ ? global?._ ? require 'lodash'  # rely on lodash existing, since it busts CodeCombat to browserify it--TODO
 
 module.exports = defaults =
   thisValue: null

@@ -1,3 +1,7 @@
+_ = require 'lodash'
+window?._ = _
+global?._ = _
+self?._ = _
 Aether = require '../aether'
 
 describe "Aether", ->

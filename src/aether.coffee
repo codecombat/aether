@@ -1,13 +1,11 @@
-_ = require 'lodash'
-esprima = require 'esprima'
-falafel = require 'falafel'
+_ = window?._ ? self?._ ? global?._ ? require 'lodash'  # rely on lodash existing, since it busts CodeCombat to browserify it--TODO
+#esprima = require 'esprima'  # getting our Esprima Harmony
+falafel = require 'falafel'  # pulls in dev Esprima
 
 defaults = require './defaults'
 problems = require './problems'
 execution = require './execution'
 errors = require './errors'
-
-commonMethods = ['moveRight', 'moveLeft', 'moveUp', 'moveDown', 'attackNearbyEnemy', 'say', 'move', 'attackNearestEnemy', 'shootAt', 'rotateTo', 'shoot', 'distance', 'getNearestEnemy', 'getEnemies', 'attack', 'setAction', 'setTarget', 'getFriends', 'patrol']  # TODO: should be part of user configuration
 
 module.exports = class Aether
   @defaults: defaults
@@ -32,11 +30,16 @@ module.exports = class Aether
   transpile: (@raw) ->
     # Transpile it. Even if it can't transpile, it will give syntax errors and warnings and such.
     # Should generate: @raw, @pure, @problems, @style, and an empty @flow, @metrics, and @visualization to be populated when function is run
+    return @raw
     @pure = @cook()  # TODO: for now we're just cooking like old CodeCombat Cook did
 
   createFunction: ->
     # Return a ready-to-execute, instrumented function from the purified code
-    func = new Function options.parameters.join(', '), pure
+    new Function options.parameters.join(', '), pure
+
+  createMethod: ->
+    # Like createFunction, but binds method to thisValue if specified
+    func = @createFunction()
     func = _.bind func, options.thisValue if options.thisValue
     func
 
@@ -62,6 +65,7 @@ module.exports = class Aether
     catch error
       throw new errors.UserCodeError error.message, thangID: @options.thang.id, thangSpriteName: @options.thang.spriteName, methodName: @options.methodName, methodType: @methodType, code: @rawCode, recoverable: true, lineNumber: error.lineNumber - 2, column: error.column
     @cookedCode = Aether.getFunctionBody output.toString(), false
+    @cookedCode = @raw
 
   transform: (node) =>
     #if $? then console.log "Doing node", node, node.source()
@@ -95,7 +99,7 @@ module.exports = class Aether
           m = "this.what? (Check available spells below.)"
         else
           m = "#{exp.source()} has no effect."
-          if exp.property.name in commonMethods
+          if exp.property.name in errors.commonMethods
             m += " It needs parentheses: #{exp.property.name}()"
         error = new Error m
         error.lineNumber = lineNumber + 2  # Reapply wrapper function offset
@@ -149,3 +153,6 @@ module.exports = class Aether
     else
       indent = 0
     (line.slice indent for line in lines).join '\n'
+
+self.Aether = Aether if self?
+window.Aether = Aether if window?
