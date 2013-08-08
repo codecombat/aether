@@ -8,7 +8,8 @@ problems = require './problems'
 execution = require './execution'
 errors = require './errors'
 
-validation = require './validation'
+
+optionsValidator = require './validators/options'
 
 module.exports = class Aether
   @defaults: defaults
@@ -21,8 +22,10 @@ module.exports = class Aether
     options.problems ?= {}
     unless options.excludeDefaultProblems
       options.problems = _.merge _.cloneDeep(Aether.problems), options.problems
-    validation.checkOptions options
 
+    optionsValidation = optionsValidator options
+    throw new Error("Options array is not valid: " + JSON.stringify(optionsValidation.errors,null,4)) if not optionsValidation.valid
+    
     @options = _.merge _.cloneDeep(Aether.defaults), options
     @reset()
 

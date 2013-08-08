@@ -1,6 +1,6 @@
 ;(function(e,t,n){function i(n,s){if(!t[n]){if(!e[n]){var o=typeof require=="function"&&require;if(!s&&o)return o(n,!0);if(r)return r(n,!0);throw new Error("Cannot find module '"+n+"'")}var u=t[n]={exports:{}};e[n][0].call(u.exports,function(t){var r=e[n][1][t];return i(r?r:t)},u,u.exports)}return t[n].exports}var r=typeof require=="function"&&require;for(var s=0;s<n.length;s++)i(n[s]);return i})({1:[function(require,module,exports){
 var global=self;(function() {
-  var Aether, defaults, errors, execution, falafel, jshint, problems, validation, _, _ref, _ref1, _ref2,
+  var Aether, defaults, errors, execution, falafel, jshint, optionsValidator, problems, _, _ref, _ref1, _ref2,
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
@@ -18,7 +18,7 @@ var global=self;(function() {
 
   errors = require('./errors');
 
-  validation = require('./validation');
+  optionsValidator = require('./validators/options');
 
   module.exports = Aether = (function() {
     Aether.defaults = defaults;
@@ -31,6 +31,7 @@ var global=self;(function() {
 
     function Aether(options) {
       this.transform = __bind(this.transform, this);
+      var optionsValidation;
       this.originalOptions = _.cloneDeep(options);
       if (options == null) {
         options = {};
@@ -41,7 +42,10 @@ var global=self;(function() {
       if (!options.excludeDefaultProblems) {
         options.problems = _.merge(_.cloneDeep(Aether.problems), options.problems);
       }
-      validation.checkOptions(options);
+      optionsValidation = optionsValidator(options);
+      if (!optionsValidation.valid) {
+        throw new Error("Options array is not valid: " + JSON.stringify(optionsValidation.errors, null, 4));
+      }
       this.options = _.merge(_.cloneDeep(Aether.defaults), options);
       this.reset();
     }
@@ -375,7 +379,7 @@ var global=self;(function() {
 
 }).call(this);
 
-},{"./defaults":2,"./errors":3,"./execution":4,"./problems":5,"./validation":9,"falafel":10,"jshint":23,"lodash":28}],2:[function(require,module,exports){
+},{"./defaults":2,"./errors":3,"./execution":4,"./problems":5,"./validators/options":8,"falafel":9,"jshint":22,"lodash":27}],2:[function(require,module,exports){
 (function() {
   var defaults, execution;
 
@@ -1666,7 +1670,7 @@ var global=self;(function() {
 
 }).call(this);
 
-},{"../aether":1,"lodash":28}],7:[function(require,module,exports){
+},{"../aether":1,"lodash":27}],7:[function(require,module,exports){
 var global=self;(function() {
   var Aether, _;
 
@@ -1740,30 +1744,31 @@ var global=self;(function() {
 
 }).call(this);
 
-},{"../aether":1,"lodash":28}],8:[function(require,module,exports){
+},{"../aether":1,"lodash":27}],8:[function(require,module,exports){
 (function() {
-
-
-}).call(this);
-
-},{}],9:[function(require,module,exports){
-(function() {
-  var validation,
-    __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
-
-  module.exports = validation = {
-    checkOptions: function(options) {
-      var allowedLanguages, _ref;
-      allowedLanguages = ["javascript"];
-      if (options.language && (_ref = options.language, __indexOf.call(allowedLanguages, _ref) < 0)) {
-        throw new Error("Language specified in options is not allowed");
+  module.exports = function(options) {
+    var module;
+    module = typeof json !== "undefined" && json !== null ? json : require('revalidator');
+    return module.validate(options, {
+      additionalProperties: false,
+      properties: {
+        language: {
+          type: 'string',
+          description: "Input language",
+          minLength: 1,
+          'enum': ['javascript'],
+          required: false
+        },
+        problems: {
+          required: false
+        }
       }
-    }
+    });
   };
 
 }).call(this);
 
-},{}],10:[function(require,module,exports){
+},{"revalidator":28}],9:[function(require,module,exports){
 var parse = require('esprima').parse;
 var objectKeys = Object.keys || function (obj) {
     var keys = [];
@@ -1859,7 +1864,7 @@ function insertHelpers (node, parent, chunks) {
     };
 }
 
-},{"esprima":11}],11:[function(require,module,exports){
+},{"esprima":10}],10:[function(require,module,exports){
 /*
   Copyright (C) 2012 Ariya Hidayat <ariya.hidayat@gmail.com>
   Copyright (C) 2012 Mathias Bynens <mathias@qiwi.be>
@@ -5728,7 +5733,7 @@ parseStatement: true, parseSourceElement: true */
 }));
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{}],12:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 // UTILITY
 var util = require('util');
 var Buffer = require("buffer").Buffer;
@@ -6044,7 +6049,7 @@ assert.doesNotThrow = function(block, /*optional*/error, /*optional*/message) {
 
 assert.ifError = function(err) { if (err) {throw err;}};
 
-},{"buffer":16,"util":14}],13:[function(require,module,exports){
+},{"buffer":15,"util":13}],12:[function(require,module,exports){
 var process=require("__browserify_process");if (!process.EventEmitter) process.EventEmitter = function () {};
 
 var EventEmitter = exports.EventEmitter = process.EventEmitter;
@@ -6240,7 +6245,7 @@ EventEmitter.listenerCount = function(emitter, type) {
   return ret;
 };
 
-},{"__browserify_process":18}],14:[function(require,module,exports){
+},{"__browserify_process":17}],13:[function(require,module,exports){
 var events = require('events');
 
 exports.isArray = isArray;
@@ -6593,7 +6598,7 @@ exports.format = function(f) {
   return str;
 };
 
-},{"events":13}],15:[function(require,module,exports){
+},{"events":12}],14:[function(require,module,exports){
 exports.readIEEE754 = function(buffer, offset, isBE, mLen, nBytes) {
   var e, m,
       eLen = nBytes * 8 - mLen - 1,
@@ -6679,7 +6684,7 @@ exports.writeIEEE754 = function(buffer, value, offset, isBE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128;
 };
 
-},{}],16:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 var assert = require('assert');
 exports.Buffer = Buffer;
 exports.SlowBuffer = Buffer;
@@ -7762,7 +7767,7 @@ Buffer.prototype.writeDoubleBE = function(value, offset, noAssert) {
   writeDouble(this, value, offset, true, noAssert);
 };
 
-},{"./buffer_ieee754":15,"assert":12,"base64-js":17}],17:[function(require,module,exports){
+},{"./buffer_ieee754":14,"assert":11,"base64-js":16}],16:[function(require,module,exports){
 (function (exports) {
 	'use strict';
 
@@ -7848,7 +7853,7 @@ Buffer.prototype.writeDoubleBE = function(value, offset, noAssert) {
 	module.exports.fromByteArray = uint8ToBase64;
 }());
 
-},{}],18:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -7902,7 +7907,7 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
-},{}],19:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 var global=self;/*global window, global*/
 var util = require("util")
 var assert = require("assert")
@@ -7989,7 +7994,7 @@ function assert(expression) {
     }
 }
 
-},{"assert":12,"util":14}],20:[function(require,module,exports){
+},{"assert":11,"util":13}],19:[function(require,module,exports){
 //     Underscore.js 1.4.4
 //     http://underscorejs.org
 //     (c) 2009-2013 Jeremy Ashkenas, DocumentCloud Inc.
@@ -9217,7 +9222,7 @@ function assert(expression) {
 
 }).call(this);
 
-},{}],21:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 "use strict";
 
 var _ = require("underscore");
@@ -9437,7 +9442,7 @@ _.each(info, function (desc, code) {
 	exports.info[code] = { code: code, desc: desc };
 });
 
-},{"underscore":20}],22:[function(require,module,exports){
+},{"underscore":19}],21:[function(require,module,exports){
 // jshint -W001
 
 "use strict";
@@ -10023,7 +10028,7 @@ exports.yui = {
 };
 
 
-},{}],23:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 /*!
  * JSHint, by JSHint Community.
  *
@@ -14847,7 +14852,7 @@ if (typeof exports === "object" && exports) {
 	exports.JSHINT = JSHINT;
 }
 
-},{"../shared/messages.js":21,"../shared/vars.js":22,"./lex.js":24,"./reg.js":25,"./state.js":26,"./style.js":27,"console-browserify":19,"events":13,"underscore":20}],24:[function(require,module,exports){
+},{"../shared/messages.js":20,"../shared/vars.js":21,"./lex.js":23,"./reg.js":24,"./state.js":25,"./style.js":26,"console-browserify":18,"events":12,"underscore":19}],23:[function(require,module,exports){
 /*
  * Lexical analysis and token construction.
  */
@@ -16542,7 +16547,7 @@ Lexer.prototype = {
 
 exports.Lexer = Lexer;
 
-},{"./reg.js":25,"./state.js":26,"events":13,"underscore":20}],25:[function(require,module,exports){
+},{"./reg.js":24,"./state.js":25,"events":12,"underscore":19}],24:[function(require,module,exports){
 /*
  * Regular expressions. Some of these are stupidly long.
  */
@@ -16578,7 +16583,7 @@ exports.javascriptURL = /^(?:javascript|jscript|ecmascript|vbscript|mocha|livesc
 // Catches /* falls through */ comments (ft)
 exports.fallsThrough = /^\s*\/\*\s*falls?\sthrough\s*\*\/\s*$/;
 
-},{}],26:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 "use strict";
 
 var state = {
@@ -16604,7 +16609,7 @@ var state = {
 
 exports.state = state;
 
-},{}],27:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 "use strict";
 
 exports.register = function (linter) {
@@ -16776,7 +16781,7 @@ exports.register = function (linter) {
 		}
 	});
 };
-},{}],28:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 var global=self;/**
  * @license
  * Lo-Dash 1.3.1 (Custom Build) <http://lodash.com/>
@@ -22333,5 +22338,416 @@ var global=self;/**
   }
 }(this));
 
-},{}]},{},[6,7,8])
+},{}],28:[function(require,module,exports){
+(function (exports) {
+  exports.validate = validate;
+  exports.mixin = mixin;
+
+  //
+  // ### function validate (object, schema, options)
+  // #### {Object} object the object to validate.
+  // #### {Object} schema (optional) the JSON Schema to validate against.
+  // #### {Object} options (optional) options controlling the validation
+  //      process. See {@link #validate.defaults) for details.
+  // Validate <code>object</code> against a JSON Schema.
+  // If <code>object</code> is self-describing (i.e. has a
+  // <code>$schema</code> property), it will also be validated
+  // against the referenced schema. [TODO]: This behaviour bay be
+  // suppressed by setting the {@link #validate.options.???}
+  // option to <code>???</code>.[/TODO]
+  //
+  // If <code>schema</code> is not specified, and <code>object</code>
+  // is not self-describing, validation always passes.
+  //
+  // <strong>Note:</strong> in order to pass options but no schema,
+  // <code>schema</code> <em>must</em> be specified in the call to
+  // <code>validate()</code>; otherwise, <code>options</code> will
+  // be interpreted as the schema. <code>schema</code> may be passed
+  // as <code>null</code>, <code>undefinded</code>, or the empty object
+  // (<code>{}</code>) in this case.
+  //
+  function validate(object, schema, options) {
+    options = mixin({}, options, validate.defaults);
+    var errors = [];
+
+    validateObject(object, schema, options, errors);
+
+    //
+    // TODO: self-described validation
+    // if (! options.selfDescribing) { ... }
+    //
+
+    return {
+      valid: !(errors.length),
+      errors: errors
+    };
+  };
+
+  /**
+   * Default validation options. Defaults can be overridden by
+   * passing an 'options' hash to {@link #validate}. They can
+   * also be set globally be changing the values in
+   * <code>validate.defaults</code> directly.
+   */
+  validate.defaults = {
+      /**
+       * <p>
+       * Enforce 'format' constraints.
+       * </p><p>
+       * <em>Default: <code>true</code></em>
+       * </p>
+       */
+      validateFormats: true,
+      /**
+       * <p>
+       * When {@link #validateFormats} is <code>true</code>,
+       * treat unrecognized formats as validation errors.
+       * </p><p>
+       * <em>Default: <code>false</code></em>
+       * </p>
+       *
+       * @see validation.formats for default supported formats.
+       */
+      validateFormatsStrict: false,
+      /**
+       * <p>
+       * When {@link #validateFormats} is <code>true</code>,
+       * also validate formats defined in {@link #validate.formatExtensions}.
+       * </p><p>
+       * <em>Default: <code>true</code></em>
+       * </p>
+       */
+      validateFormatExtensions: true
+  };
+
+  /**
+   * Default messages to include with validation errors.
+   */
+  validate.messages = {
+      required:         "is required",
+      minLength:        "is too short (minimum is %{expected} characters)",
+      maxLength:        "is too long (maximum is %{expected} characters)",
+      pattern:          "invalid input",
+      minimum:          "must be greater than or equal to %{expected}",
+      maximum:          "must be less than or equal to %{expected}",
+      exclusiveMinimum: "must be greater than %{expected}",
+      exclusiveMaximum: "must be less than %{expected}",
+      divisibleBy:      "must be divisible by %{expected}",
+      minItems:         "must contain more than %{expected} items",
+      maxItems:         "must contain less than %{expected} items",
+      uniqueItems:      "must hold a unique set of values",
+      format:           "is not a valid %{expected}",
+      conform:          "must conform to given constraint",
+      type:             "must be of %{expected} type"
+  };
+  validate.messages['enum'] = "must be present in given enumerator";
+
+  /**
+   *
+   */
+  validate.formats = {
+    'email':          /^((([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+(\.([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+)*)|((\x22)((((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(([\x01-\x08\x0b\x0c\x0e-\x1f\x7f]|\x21|[\x23-\x5b]|[\x5d-\x7e]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(\\([\x01-\x09\x0b\x0c\x0d-\x7f]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]))))*(((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(\x22)))@((([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.)+(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.?$/i,
+    'ip-address':     /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/i,
+    'ipv6':           /^([0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}$/,
+    'date-time':      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:.\d{1,3})?Z$/,
+    'date':           /^\d{4}-\d{2}-\d{2}$/,
+    'time':           /^\d{2}:\d{2}:\d{2}$/,
+    'color':          /^#[a-z0-9]{6}|#[a-z0-9]{3}|(?:rgb\(\s*(?:[+-]?\d+%?)\s*,\s*(?:[+-]?\d+%?)\s*,\s*(?:[+-]?\d+%?)\s*\))aqua|black|blue|fuchsia|gray|green|lime|maroon|navy|olive|orange|purple|red|silver|teal|white|and yellow$/i,
+    //'style':        (not supported)
+    //'phone':        (not supported)
+    //'uri':          (not supported)
+    'host-name':      /^(([a-zA-Z]|[a-zA-Z][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z]|[A-Za-z][A-Za-z0-9\-]*[A-Za-z0-9])/,
+    'utc-millisec':   {
+      test: function (value) {
+        return typeof(value) === 'number' && value >= 0;
+      }
+    },
+    'regex':          {
+      test: function (value) {
+        try { new RegExp(value) }
+        catch (e) { return false }
+
+        return true;
+      }
+    }
+  };
+
+  /**
+   *
+   */
+  validate.formatExtensions = {
+    'url': /^(https?|ftp|git):\/\/(((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:)*@)?(((\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5]))|((([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.)+(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.?)(:\d*)?)(\/((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)+(\/(([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)*)*)?)?(\?((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)|[\uE000-\uF8FF]|\/|\?)*)?(\#((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)|\/|\?)*)?$/i
+  };
+
+  function mixin(obj) {
+    var sources = Array.prototype.slice.call(arguments, 1);
+    while (sources.length) {
+      var source = sources.shift();
+      if (!source) { continue }
+
+      if (typeof(source) !== 'object') {
+        throw new TypeError('mixin non-object');
+      }
+
+      for (var p in source) {
+        if (source.hasOwnProperty(p)) {
+          obj[p] = source[p];
+        }
+      }
+    }
+
+    return obj;
+  };
+
+  function validateObject(object, schema, options, errors) {
+    var props, allProps = Object.keys(object),
+        visitedProps = [];
+
+    // see 5.2
+    if (schema.properties) {
+      props = schema.properties;
+      for (var p in props) {
+        if (props.hasOwnProperty(p)) {
+          visitedProps.push(p);
+          validateProperty(object, object[p], p, props[p], options, errors);
+        }
+      }
+    }
+
+    // see 5.3
+    if (schema.patternProperties) {
+      props = schema.patternProperties;
+      for (var p in props) {
+        if (props.hasOwnProperty(p)) {
+          var re = new RegExp(p);
+
+          // Find all object properties that are matching `re`
+          for (var k in object) {
+            if (object.hasOwnProperty(k)) {
+              visitedProps.push(k);
+              if (re.exec(k) !== null) {
+                validateProperty(object, object[k], p, props[p], options, errors);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // see 5.4
+    if (undefined !== schema.additionalProperties) {
+      var i, l;
+
+      var unvisitedProps = allProps.filter(function(k){
+        return -1 === visitedProps.indexOf(k);
+      });
+
+      // Prevent additional properties; each unvisited property is therefore an error
+      if (schema.additionalProperties === false && unvisitedProps.length > 0) {
+        for (i = 0, l = unvisitedProps.length; i < l; i++) {
+          error("additionalProperties", unvisitedProps[i], object[unvisitedProps[i]], false, errors);
+        }
+      }
+      // additionalProperties is a schema and validate unvisited properties against that schema
+      else if (typeof schema.additionalProperties == "object" && unvisitedProps.length > 0) {
+        for (i = 0, l = unvisitedProps.length; i < l; i++) {
+          validateProperty(object, object[unvisitedProps[i]], unvisitedProps[i], schema.unvisitedProperties, options, errors);
+        }
+      }
+    }
+
+  };
+
+  function validateProperty(object, value, property, schema, options, errors) {
+    var format,
+        valid,
+        spec,
+        type;
+
+    function constrain(name, value, assert) {
+      if (schema[name] !== undefined && !assert(value, schema[name])) {
+        error(name, property, value, schema, errors);
+      }
+    }
+
+    if (value === undefined) {
+      if (schema.required && schema.type !== 'any') {
+        return error('required', property, undefined, schema, errors);
+      } else {
+        return;
+      }
+    }
+
+    if (options.cast) {
+      if (('integer' === schema.type || 'number' === schema.type) && value == +value) {
+        value = +value;
+      }
+
+      if ('boolean' === schema.type) {
+        if ('true' === value || '1' === value || 1 === value) {
+          value = true;
+        }
+
+        if ('false' === value || '0' === value || 0 === value) {
+          value = false;
+        }
+      }
+    }
+
+    if (schema.format && options.validateFormats) {
+      format = schema.format;
+
+      if (options.validateFormatExtensions) { spec = validate.formatExtensions[format] }
+      if (!spec) { spec = validate.formats[format] }
+      if (!spec) {
+        if (options.validateFormatsStrict) {
+          return error('format', property, value, schema, errors);
+        }
+      }
+      else {
+        if (!spec.test(value)) {
+          return error('format', property, value, schema, errors);
+        }
+      }
+    }
+
+    if (schema['enum'] && schema['enum'].indexOf(value) === -1) {
+      error('enum', property, value, schema, errors);
+    }
+
+    // Dependencies (see 5.8)
+    if (typeof schema.dependencies === 'string' &&
+        object[schema.dependencies] === undefined) {
+      error('dependencies', property, null, schema, errors);
+    }
+
+    if (isArray(schema.dependencies)) {
+      for (var i = 0, l = schema.dependencies.length; i < l; i++) {
+        if (object[schema.dependencies[i]] === undefined) {
+          error('dependencies', property, null, schema, errors);
+        }
+      }
+    }
+
+    if (typeof schema.dependencies === 'object') {
+      validateObject(object, schema.dependencies, options, errors);
+    }
+
+    checkType(value, schema.type, function(err, type) {
+      if (err) return error('type', property, typeof value, schema, errors);
+
+      constrain('conform', value, function (a, e) { return e(a) });
+
+      switch (type || (isArray(value) ? 'array' : typeof value)) {
+        case 'string':
+          constrain('minLength', value.length, function (a, e) { return a >= e });
+          constrain('maxLength', value.length, function (a, e) { return a <= e });
+          constrain('pattern',   value,        function (a, e) {
+            e = typeof e === 'string'
+              ? e = new RegExp(e)
+              : e;
+            return e.test(a)
+          });
+          break;
+        case 'integer':
+        case 'number':
+          constrain('minimum',     value, function (a, e) { return a >= e });
+          constrain('maximum',     value, function (a, e) { return a <= e });
+          constrain('exclusiveMinimum', value, function (a, e) { return a > e });
+          constrain('exclusiveMaximum', value, function (a, e) { return a < e });
+          constrain('divisibleBy', value, function (a, e) {
+            var multiplier = Math.max((a - Math.floor(a)).toString().length - 2, (e - Math.floor(e)).toString().length - 2);
+            multiplier = multiplier > 0 ? Math.pow(10, multiplier) : 1;
+            return (a * multiplier) % (e * multiplier) === 0
+          });
+          break;
+        case 'array':
+          constrain('items', value, function (a, e) {
+            for (var i = 0, l = a.length; i < l; i++) {
+              validateProperty(object, a[i], property, e, options, errors);
+            }
+            return true;
+          });
+          constrain('minItems', value, function (a, e) { return a.length >= e });
+          constrain('maxItems', value, function (a, e) { return a.length <= e });
+          constrain('uniqueItems', value, function (a) {
+            var h = {};
+
+            for (var i = 0, l = a.length; i < l; i++) {
+              var key = JSON.stringify(a[i]);
+              if (h[key]) return false;
+              h[key] = true;
+            }
+
+            return true;
+          });
+          break;
+        case 'object':
+          // Recursive validation
+          if (schema.properties || schema.patternProperties || schema.additionalProperties) {
+            validateObject(value, schema, options, errors);
+          }
+          break;
+      }
+    });
+  };
+
+  function checkType(val, type, callback) {
+    var result = false,
+        types = isArray(type) ? type : [type];
+
+    // No type - no check
+    if (type === undefined) return callback(null, type);
+
+    // Go through available types
+    // And fine first matching
+    for (var i = 0, l = types.length; i < l; i++) {
+      type = types[i].toLowerCase().trim();
+      if (type === 'string' ? typeof val === 'string' :
+          type === 'array' ? isArray(val) :
+          type === 'object' ? val && typeof val === 'object' &&
+                             !isArray(val) :
+          type === 'number' ? typeof val === 'number' :
+          type === 'integer' ? typeof val === 'number' && ~~val === val :
+          type === 'null' ? val === null :
+          type === 'boolean'? typeof val === 'boolean' :
+          type === 'any' ? typeof val !== 'undefined' : false) {
+        return callback(null, type);
+      }
+    };
+
+    callback(true);
+  };
+
+  function error(attribute, property, actual, schema, errors) {
+    var lookup = { expected: schema[attribute], attribute: attribute, property: property };
+    var message = schema.messages && schema.messages[attribute] || schema.message || validate.messages[attribute] || "no default message";
+    message = message.replace(/%\{([a-z]+)\}/ig, function (_, match) { return lookup[match.toLowerCase()] || ''; });
+    errors.push({
+      attribute: attribute,
+      property:  property,
+      expected:  schema[attribute],
+      actual:    actual,
+      message:   message
+    });
+  };
+
+  function isArray(value) {
+    var s = typeof value;
+    if (s === 'object') {
+      if (value) {
+        if (typeof value.length === 'number' &&
+           !(value.propertyIsEnumerable('length')) &&
+           typeof value.splice === 'function') {
+           return true;
+        }
+      }
+    }
+    return false;
+  }
+
+
+})(typeof(window) === 'undefined' ? module.exports : (window.json = window.json || {}));
+
+},{}]},{},[6,7])
 ;
