@@ -23,7 +23,7 @@ module.exports = (grunt) ->
             level: "error"
 
     watch:
-      files: ['src/*', 'test/*.coffee']
+      files: ['src/**/*', 'test/**/*.coffee']
       tasks: ['coffeelint', 'coffee', 'browserify', 'jasmine-node', 'copy', 'uglify']
       options:
         spawn: false

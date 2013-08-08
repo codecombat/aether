@@ -1,6 +1,7 @@
+revalidator = require 'revalidator'
+
 module.exports = (options) ->
-  module = if json? then json else require('revalidator')
-  module.validate options,
+  revalidator.validate options,
     additionalProperties: false
     properties:
       thisValue:
@@ -28,7 +29,7 @@ module.exports = (options) ->
         required: false
       languageVersion:
         type: 'string'
-        description: "Input language version" 
+        description: "Input language version"
         minLength:1
         'enum': ["ES5"] #change this later
       problems:

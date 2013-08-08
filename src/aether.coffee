@@ -8,7 +8,6 @@ problems = require './problems'
 execution = require './execution'
 errors = require './errors'
 
-
 optionsValidator = require './validators/options'
 
 module.exports = class Aether
@@ -25,11 +24,11 @@ module.exports = class Aether
 
     optionsValidation = optionsValidator options
     throw new Error("Options array is not valid: " + JSON.stringify(optionsValidation.errors,null,4)) if not optionsValidation.valid
-    
+
     @options = _.merge _.cloneDeep(Aether.defaults), options
     @reset()
 
- 
+
 
   canTranspile: (raw, thorough=false) ->
     # Quick heuristics: can this code be run, or will it produce a compilation error?
@@ -106,7 +105,7 @@ module.exports = class Aether
     errorPos = Aether.errors.UserCodeError.getAnonymousErrorPosition error
     errorMessage = Aether.errors.UserCodeError.explainErrorMessage error#, @  # TODO: preserve thang explanation in message somehow
     userInfo ?= {}
-    userInfo.lineNumber ?= if errorPos.lineNumber? then errorPos.lineNumber - 1 else undefined
+    userInfo.lineNumber ?= if errorPos.lineNumber? then errorPos.lineNumber - 2 else undefined
     userInfo.column ?= errorPos.column
     pureError = new Aether.errors.UserCodeError errorMessage, error.level ? "error", userInfo
     @problems[pureError.level + "s"].push pureError.serialize()

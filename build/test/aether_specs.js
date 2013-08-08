@@ -176,7 +176,7 @@ var global=self;(function() {
         userInfo = {};
       }
       if (userInfo.lineNumber == null) {
-        userInfo.lineNumber = errorPos.lineNumber != null ? errorPos.lineNumber - 1 : void 0;
+        userInfo.lineNumber = errorPos.lineNumber != null ? errorPos.lineNumber - 2 : void 0;
       }
       if (userInfo.column == null) {
         userInfo.column = errorPos.column;
@@ -1760,16 +1760,19 @@ var global=self;(function() {
 
 },{"../aether":1,"lodash":27}],8:[function(require,module,exports){
 (function() {
+  var revalidator;
+
+  revalidator = require('revalidator');
+
   module.exports = function(options) {
-    var module;
-    module = typeof json !== "undefined" && json !== null ? json : require('revalidator');
-    return module.validate(options, {
+    return revalidator.validate(options, {
       additionalProperties: false,
       properties: {
         thisValue: {
           required: false
         },
         global: {
+          type: 'array',
           required: false
         },
         functionName: {
@@ -1779,9 +1782,11 @@ var global=self;(function() {
           required: false
         },
         yieldAutomatically: {
+          type: 'boolean',
           required: false
         },
         yieldConditionally: {
+          type: 'boolean',
           required: false
         },
         executionCosts: {
@@ -22788,7 +22793,7 @@ var global=self;/**
   }
 
 
-})(typeof(window) === 'undefined' ? module.exports : (window.json = window.json || {}));
+})(typeof module !== 'undefined' ? module.exports : (window.json = window.json || {}));
 
 },{}]},{},[6,7])
 ;
