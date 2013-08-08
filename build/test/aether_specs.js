@@ -161,7 +161,20 @@ var global=self;(function() {
       return func;
     };
 
-    Aether.prototype.purifyError = function(error) {};
+    Aether.prototype.purifyError = function(error, userInfo) {
+      var errorMessage, errorPos, pureError, _ref3;
+      errorPos = Aether.errors.UserCodeError.getAnonymousErrorPosition(error);
+      errorMessage = Aether.errors.UserCodeError.explainErrorMessage(error);
+      if (userInfo == null) {
+        userInfo = {};
+      }
+      userInfo.lineNumber = errorPos.lineNumber != null ? errorPos.lineNumber - 1 : void 0;
+      userInfo.column = errorPos.column;
+      pureError = new Aether.errors.UserCodeError(errorMessage, (_ref3 = error.level) != null ? _ref3 : "error", userInfo);
+      this.problems[pureError.level + "s"].push(pureError.serialize());
+      console.log("Purified UserCodeError:", pureError.serialize());
+      return pureError;
+    };
 
     Aether.prototype.serialize = function() {
       var serialized;
@@ -390,14 +403,15 @@ var global=self;(function() {
 
     UserCodeError.className = "UserCodeError";
 
-    function UserCodeError(message, properties) {
+    function UserCodeError(message, level, userInfo) {
       var key, val,
         _this = this;
       this.message = message;
+      this.level = level != null ? level : "error";
       UserCodeError.__super__.constructor.call(this, message);
-      for (key in properties) {
-        if (!__hasProp.call(properties, key)) continue;
-        val = properties[key];
+      for (key in userInfo) {
+        if (!__hasProp.call(userInfo, key)) continue;
+        val = userInfo[key];
         this[key] = val;
       }
       if (this.lineNumber != null) {

@@ -92,8 +92,18 @@ module.exports = class Aether
     func = _.bind func, @options.thisValue if @options.thisValue
     func
 
-  purifyError: (error) ->
+  purifyError: (error, userInfo) ->
     # Fill in the context and attach to our list of errors
+    # TODO: change it into a RuntimeError (UserCodeProblem) instead of the old UserCodeError
+    errorPos = Aether.errors.UserCodeError.getAnonymousErrorPosition error
+    errorMessage = Aether.errors.UserCodeError.explainErrorMessage error#, @  # TODO: preserve thang explanation in message somehow
+    userInfo ?= {}
+    userInfo.lineNumber = if errorPos.lineNumber? then errorPos.lineNumber - 1 else undefined
+    userInfo.column = errorPos.column
+    pureError = new Aether.errors.UserCodeError errorMessage, error.level ? "error", userInfo
+    @problems[pureError.level + "s"].push pureError.serialize()
+    console.log "Purified UserCodeError:", pureError.serialize()
+    pureError
 
   serialize: ->
     # Convert to JSON so we can pass it across web workers and HTTP requests and store it in databases and such

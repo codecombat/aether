@@ -1,13 +1,11 @@
-
-
 module.exports.commonMethods = commonMethods = ['moveRight', 'moveLeft', 'moveUp', 'moveDown', 'attackNearbyEnemy', 'say', 'move', 'attackNearestEnemy', 'shootAt', 'rotateTo', 'shoot', 'distance', 'getNearestEnemy', 'getEnemies', 'attack', 'setAction', 'setTarget', 'getFriends', 'patrol']  # TODO: should be part of user configuration
 
 module.exports.UserCodeError = class UserCodeError extends Error
   @className: "UserCodeError"
-  constructor: (@message, properties) ->
+  constructor: (@message, @level="error", userInfo) ->
     super message
-    # Can specify things like thangID, thangSpriteName, methodName, methodType, code, recoverable, lineNumber, column
-    for own key, val of properties
+    # Can specify things like thangID, thangSpriteName, methodType, methodName, recoverable, code, lineNumber, column
+    for own key, val of userInfo
       @[key] = val
     if @lineNumber?
       if @message.search(/^Line \d+/) != -1
