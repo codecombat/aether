@@ -171,12 +171,19 @@ var global=self;(function() {
       if (userInfo == null) {
         userInfo = {};
       }
-      userInfo.lineNumber = errorPos.lineNumber != null ? errorPos.lineNumber - 1 : void 0;
-      userInfo.column = errorPos.column;
+      if (userInfo.lineNumber == null) {
+        userInfo.lineNumber = errorPos.lineNumber != null ? errorPos.lineNumber - 1 : void 0;
+      }
+      if (userInfo.column == null) {
+        userInfo.column = errorPos.column;
+      }
       pureError = new Aether.errors.UserCodeError(errorMessage, (_ref3 = error.level) != null ? _ref3 : "error", userInfo);
       this.problems[pureError.level + "s"].push(pureError.serialize());
-      console.log("Purified UserCodeError:", pureError.serialize());
       return pureError;
+    };
+
+    Aether.prototype.getAllProblems = function() {
+      return _.flatten(_.values(this.problems));
     };
 
     Aether.prototype.serialize = function() {
@@ -207,7 +214,7 @@ var global=self;(function() {
     };
 
     Aether.prototype.cook = function() {
-      var error, i, output, wrapped, _ref3;
+      var column, error, i, lineNumber, output, pureError, userInfo, wrapped, _ref3;
       this.methodType = this.options.methodType || "instance";
       this.requireThis = (_ref3 = this.options.requireThis) != null ? _ref3 : false;
       wrapped = "function wrapped() {\n\"use strict\";\n" + this.raw + "\n}";
@@ -227,19 +234,22 @@ var global=self;(function() {
         output = falafel(wrapped, {}, this.transform);
       } catch (_error) {
         error = _error;
-        throw new errors.UserCodeError(error.message, {
+        lineNumber = error.lineNumber != null ? error.lineNumber - 1 : null;
+        column = error.column;
+        userInfo = {
           thangID: this.options.thisValue.id,
           thangSpriteName: this.options.thisValue.spriteName,
           methodName: this.options.functionName,
           methodType: this.methodType,
-          code: this.rawCode,
-          recoverable: true,
-          lineNumber: error.lineNumber - 2,
-          column: error.column
-        });
+          lineNumber: lineNumber,
+          column: column
+        };
+        console.log("Whoa, got me an error!", error, userInfo);
+        pureError = this.purifyError(error.message, userInfo);
+        this.cookedCode = '';
+        return;
       }
-      this.cookedCode = Aether.getFunctionBody(output.toString(), false);
-      return this.cookedCode = this.raw;
+      return this.cookedCode = Aether.getFunctionBody(output.toString(), false);
     };
 
     Aether.prototype.transform = function(node) {
@@ -297,7 +307,7 @@ var global=self;(function() {
             continue;
           }
           if (method === plannedMethod) {
-            return lineNumber;
+            return lineNumber - 1;
           }
         }
       }
@@ -319,7 +329,7 @@ var global=self;(function() {
         parent = parent.parent;
       }
       fullSource = parent.source();
-      line = forRawCode ? -1 : 1;
+      line = forRawCode ? -2 : 0;
       for (i = _i = 0, _ref3 = node.range[0]; 0 <= _ref3 ? _i < _ref3 : _i > _ref3; i = 0 <= _ref3 ? ++_i : --_i) {
         if (fullSource[i] === '\n') {
           ++line;
@@ -624,6 +634,7 @@ var global=self;(function() {
       originalLines = code.slice(codePrefix.length).split('\n');
       this.id = this.getProblemID(err, source);
       problemConfig = aether.options.problems[this.id];
+      this.type = 'transpile';
       this.level = (_ref = problemConfig != null ? problemConfig.level : void 0) != null ? _ref : "error";
       this.hint = problemConfig != null ? problemConfig.hint : void 0;
       if (source === 'jshint') {
@@ -672,6 +683,7 @@ var global=self;(function() {
       var args;
       args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
       RuntimeError.__super__.constructor.apply(this, args);
+      this.type = 'runtime';
     }
 
     return RuntimeError;

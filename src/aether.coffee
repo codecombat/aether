@@ -84,7 +84,6 @@ module.exports = class Aether
       continue if problem.level is "ignore"
       console.log "JSHint found problem:", problem.serialize()
       lintProblems[problem.level + "s"].push problem
-      #throw new errors.UserCodeError error.reason, thangID: @options.thisValue.id, thangSpriteName: @options.thisValue.spriteName, methodName: @options.functionName, methodType: @methodType, code: @rawCode, recoverable: true, lineNumber: error.line, column: error.character
 
     lintProblems
 
@@ -104,12 +103,15 @@ module.exports = class Aether
     errorPos = Aether.errors.UserCodeError.getAnonymousErrorPosition error
     errorMessage = Aether.errors.UserCodeError.explainErrorMessage error#, @  # TODO: preserve thang explanation in message somehow
     userInfo ?= {}
-    userInfo.lineNumber = if errorPos.lineNumber? then errorPos.lineNumber - 1 else undefined
-    userInfo.column = errorPos.column
+    userInfo.lineNumber ?= if errorPos.lineNumber? then errorPos.lineNumber - 1 else undefined
+    userInfo.column ?= errorPos.column
     pureError = new Aether.errors.UserCodeError errorMessage, error.level ? "error", userInfo
     @problems[pureError.level + "s"].push pureError.serialize()
-    console.log "Purified UserCodeError:", pureError.serialize()
+    #console.log "Purified UserCodeError:", pureError.serialize()
     pureError
+
+  getAllProblems: ->
+    _.flatten _.values @problems
 
   serialize: ->
     # Convert to JSON so we can pass it across web workers and HTTP requests and store it in databases and such
@@ -140,9 +142,15 @@ module.exports = class Aether
     try
       output = falafel wrapped, {}, @transform
     catch error
-      throw new errors.UserCodeError error.message, thangID: @options.thisValue.id, thangSpriteName: @options.thisValue.spriteName, methodName: @options.functionName, methodType: @methodType, code: @rawCode, recoverable: true, lineNumber: error.lineNumber - 2, column: error.column
+      # TODO: change this to generating UserCodeProblems instead
+      lineNumber = if error.lineNumber? then error.lineNumber - 1 else null
+      column = error.column
+      userInfo = thangID: @options.thisValue.id, thangSpriteName: @options.thisValue.spriteName, methodName: @options.functionName, methodType: @methodType, lineNumber: lineNumber, column: column
+      console.log "Whoa, got me an error!", error, userInfo
+      pureError = @purifyError error.message, userInfo
+      @cookedCode = ''
+      return
     @cookedCode = Aether.getFunctionBody output.toString(), false
-    @cookedCode = @raw
 
   transform: (node) =>
     #if $? then console.log "Doing node", node, node.source()
@@ -198,7 +206,7 @@ module.exports = class Aether
       for method, j in methods
         if n++ < numMethodsSeen then continue
         if method is plannedMethod
-          return lineNumber
+          return lineNumber - 1
     null
 
   checkCommonMistakes: (code) ->
@@ -214,7 +222,7 @@ module.exports = class Aether
     while parent.type isnt "Program"
       parent = parent.parent
     fullSource = parent.source()
-    line = if forRawCode then -1 else 1
+    line = if forRawCode then -2 else 0
     for i in [0 ... node.range[0]]
       if fullSource[i] is '\n'
         ++line
