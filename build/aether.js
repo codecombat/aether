@@ -55,6 +55,9 @@ var global=self;(function() {
       if (thorough == null) {
         thorough = false;
       }
+      if (!raw) {
+        return true;
+      }
       try {
         eval("'use strict;'\nthrow 0;" + raw);
       } catch (_error) {

@@ -28,11 +28,10 @@ module.exports = class Aether
     @options = _.merge _.cloneDeep(Aether.defaults), options
     @reset()
 
-
-
   canTranspile: (raw, thorough=false) ->
     # Quick heuristics: can this code be run, or will it produce a compilation error?
     # First check inspired by ACE: https://github.com/ajaxorg/ace/blob/master/lib/ace/mode/javascript_worker.js
+    return true if not raw #blank code should compile, but bypass the other steps
     try
       eval "'use strict;'\nthrow 0;" + raw  # evaluated code can only create variables in this function
     catch e
