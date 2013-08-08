@@ -45,41 +45,11 @@ return nearestEnemy;
 ```javascript
 // Syntax highlighting won't work for coffeescript, alas
 
-Aether.defaults
+Aether.defaults;
 // ->
 {
-    "this": {},
-    global: {Math: Math, parseInt: parseInt, parseFloat: parseFloat, eval: eval, isNaN: isNaN, escape: escape, unescape: unescape},
-    levels: {
-        // Look at jshint's warnings for many, many ideas: http://jshint.com/docs/options
-        // And there are others in the Closure compiler: https://developers.google.com/closure/compiler/docs/error-ref
-        // And maybe some more here: https://gist.github.com/textarcana/3375708#file_js_code_sniffs.md
-        // More: https://github.com/mdevils/node-jscs/blob/master/lib/checker.js
-        // More: https://github.com/nzakas/eslint/tree/master/lib/rules
-        
-        // Errors: things that will error out and thus prevent us from compiling the code (syntax errors, missing variables, typos)
-        Aether.problems.unexpectedIdentifier: 'error',
-        Aether.problems.missingVarKeyword: 'error',
-        Aether.problems.undefinedVariable: 'error',
-        Aether.problems.missingThis: 'error',
-        // ... many more errors ...
-        
-        // Warnings: things that we think might cause runtime errors or bugs, but aren't sure (statements that don't do anything, variables which are defined and not used, weird operator precedence issues, etc.)
-        Aether.problems.noEffect: 'warning',
-        Aether.problems.falseBlockIndentation: 'warning',
-        Aether.problems.undefinedProperty: 'warning',
-        // ... many more warnings ...
-        
-        // Info: things that are usually bad code (missing semicolons, bad indentation, multiple statements on a line, for..in loops where we think they're doing arrays, really long lines, bad_case_conventions)
-        Aether.problems.inconsistentIndentation: 'info',
-        Aether.problems.snakeCase: 'info',
-        // ... many more infos ...
-        
-        Aether.problems.singleQuotes: "ignore",
-        Aether.problems.doubleQuotes: "ignore"
-        Aether.problems.camelCase: 'ignore',
-        // ... many more problems ignored by default ...
-    },
+    thisValue: {},
+    global: {Math: Math, parseInt: parseInt, parseFloat: parseFloat, eval: eval, isNaN: isNaN, escape: escape, unescape: unescape},  // TOOD: could also do like JSHint and provide easy support for various environments' globals
     executionCosts: {
         Aether.execution.assignment: 2,  // enumerated in Aether.execution? ... somewhere
         Aether.execution.addition: 1,
@@ -90,30 +60,78 @@ Aether.defaults
     }
     language: "javascript",
     languageVersion: "ES5",
-    methodName: "foo",  // in case we need it for error messages
-    methodParameters: [],  // or something like ["target"]
+    functionName: "foo",  // in case we need it for error messages
+    functionParameters: [],  // or something like ["target"]
     yieldAutomatically: false,  // horrible name... we could have it auto-insert yields after every statement
     yieldConditionally: false,  // also bad name, but what it would do is make it yield whenever this._shouldYield is true (and clear it)
 }
+
+Aether.problems.problems;
+// ->
+{
+    // Look at jshint's warnings for many, many ideas: http://jshint.com/docs/options
+    // And there are others in the Closure compiler: https://developers.google.com/closure/compiler/docs/error-ref
+    // And maybe some more here: https://gist.github.com/textarcana/3375708#file_js_code_sniffs.md
+    // More: https://github.com/mdevils/node-jscs/blob/master/lib/checker.js
+    // More: https://github.com/nzakas/eslint/tree/master/lib/rules
+    
+    // TODO: the values here should be something else... since "message" needs to be a function, and what about "hint", etc?
+    unknown_Unknown: {message: "Unknown problem.", level: "error"}
+
+    // Errors: things that will error out and thus prevent us from compiling the code (syntax errors, missing variables, typos)
+    aether_UnexpectedIdentifier: 'error',
+    aether_MissingVarKeyword: 'error',
+    aether_UndefinedVariable: 'error',
+    aether_MissingThis: 'error',
+    // ... many more errors ...
+    
+    // Warnings: things that we think might cause runtime errors or bugs, but aren't sure (statements that don't do anything, variables which are defined and not used, weird operator precedence issues, etc.)
+    aether_NoEffect: 'warning',
+    aether_FalseBlockIndentation: 'warning',
+    aether_UndefinedProperty: 'warning',
+    // ... many more warnings ...
+    
+    // Info: things that are usually bad code (missing semicolons, bad indentation, multiple statements on a line, for..in loops where we think they're doing arrays, really long lines, bad_case_conventions)
+    aether_InconsistentIndentation: 'info',
+    aether_SnakeCase: 'info',
+    // ... many more infos ...
+    
+    aether_SingleQuotes: "ignore",
+    aether_DoubleQuotes: "ignore"
+    aether_CamelCase: 'ignore',
+    // ... many more problems ignored by default ...
+    
+    // Based on Esprima Harmony's error messages, which track V8's
+    // https://github.com/ariya/esprima/blob/harmony/esprima.js#L194
+    esprima_UnexpectedToken: {message: 'Unexpected token %0', level: "error"}
+    esprima_UnexpectedNumber: {message: 'Unexpected number', level: "error"}
+    esprima_UnexpectedString: {message: 'Unexpected string', level: "error"}
+    // ... many more Esprima problem messages ...
+    
+    // JSHint's error and warning messages
+    // https://github.com/jshint/jshint/blob/master/src/messages.js
+    jshint_E001: {message: "Bad option: '{a}'.", level: "error"}
+    jshint_E002: {message: "Bad option value.", level: "error"}
+    // ... many more JSHint problem messages ...
+
+    // ... ESLint ones...
+}
+
 
 // Example custom analyzer
 var infiniteLoopAnalyzer = function() {
     var problems = [];
     for(var statement in this.ast.statements) {  // I don't know
         if(obviouslyInInfiniteLoop(statement))
-            problems.push({ranges: [statement.range], type: "Infinite loop", message: "That's an infinite loop!", hint: "No way are we falling for that one, Wizard!"});
+            problems.push({ranges: [statement.range], id: "custom_InfiniteLoop", message: "That's an infinite loop!", hint: "No way are we falling for that one, Wizard!"});
         if(maybeInInfiniteLoop(statement))
-            problems.push({ranges: [statement.range], type: "Strange loop", message: "That's a strange loop!", hint: "Are you sure " + statement.source + " will end?"});        
+            problems.push({ranges: [statement.range], id: "custom_StrangeLoop", message: "That's a strange loop!", hint: "Are you sure " + statement.source + " will end?"});        
     }
     return problems;
 };
 infiniteLoopAnalyzer.problems = {
-    infiniteLoop: "Infinite loop",
-    strangeLoop: "Strange loop"
-};
-infiniteLoopAnalyzer.levels = {
-    infiniteLoopAnalyzer.infiniteLoop: "warning",
-    infiniteLoopAnalyzer.strangeLoop: "info"
+    custom_InfiniteLoop: {level: "warning"},
+    custom_StrangeLoop: {level: "info"}
 };
 
 // Example configuration of a new Aether instance aether
@@ -121,20 +139,20 @@ var options = {
     "this": {pos: <Vector: 15, 30>, health: 15, target: null, say: <function>, explode: <function>, getEnemies: <function>},  // read-only somehow?
     global: _.extend(Aether.defaults.global, {console: _.pick(console, "log")}),  // also read-only
     analyzers: [infiniteLoopAnalyzer],
-    levels: {
-        Aether.problems.undefinedProperty: 'error',
-        Aether.problems.inconsistentIndentation: 'warning',
-        Aether.problems.missingThis: 'warning',
-        Aether.problems.noEffect: 'ignore',
-        "Infinite loop": "error",
-        "Strange loop": "warning"
+    problems: {
+        aether_UndefinedProperty: {level: 'error'},
+        aether_InconsistentIndentation: {level: 'warning'},
+        aether_MissingThis: {level: 'warning'},
+        aether_NoEffect: {level: 'ignore'},
+        custom_InfiniteLoop: {level: "error"},
+        custom_StrangeLoop: {level: "warning", message: "Strange loop is strange!!!"}
     },
     executionCosts: {
         Aether.execution.subtraction: 2,
         "getEnemies": 30  // how should we specify costs for custom functions?
     }
     languageVersion: "ES5",
-    methodName: "getNearestEnemies",
+    functionName: "getNearestEnemies",
     yieldConditionally: true
 };
 aether = new Aether(options);
@@ -146,9 +164,11 @@ aether = new Aether(options);
 // `raw` is the string containing the code above
 
 // Quick heuristics: can this code be run, or will it produce a compilation error?
-aether.canTranspile(raw);  // -> false
+aether.canTranspile(raw);  // -> true
+aether.canTranspile(raw, true);  // -> false  (more thorough check using linters)
 
 // Barring things like comments and whitespace and such, are the ASTs going to be different? (oldAether being a previously compiled instance)
+// TODO: is oldAether the most interesting way to do this, or should the same aether instance be reused somehow?
 aether.hasChangedSignificantly(raw, oldAether);  // -> false
 
 // Is the code exactly the same?
@@ -161,30 +181,33 @@ aether.problems.errors;  // I'll pretend that the plan.md line numbers are the a
 // We couldn't show all of these at one because we'll probably get hung up on missing curly braces or whatever, but eventually as they fixed things they'd see them.
 // ->
 [
-    {ranges: [[[6, 20], [6, 25]]], type: 'Unexpected identifier', message: 'Missing operator or function call between `dy` and `dy`.', hint: 'How does `dy` relate to `dy`? `dy + dy`? `dy(dy)`? Or maybe a string: "dy dy"?' }
-    {ranges: [[[15, 1], [15, 16]]], type: 'Missing var keyword', message: 'Missing `var` keyword when defining near variable `nearestDistance`.', hint: 'Try `var nearestDistance = 9001;`. New variables need the `var` keyword.'}
-    {ranges: [[[24, 24], [24, 30]]], type: 'Undefined variable', message: 'No variable `enemyy`. Did you mean `enemy`?' hint: '`enemyy is not defined yet, so `nearestEnemy = enemyy` would throw an error.'}
-    {ranges: [[[15, 15], [15, 22]]], type: 'Undefined property', message: 'No method `getEnemyys`. Did you mean `getEnemies`?' hint: '`this` has no method `getEnemys()`, so `this.getEnemys()` would throw an error.'}
+    {ranges: [[[6, 20], [6, 25]]], id: 'aether_UnexpectedIdentifier', message: 'Missing operator or function call between `dy` and `dy`.', hint: 'How does `dy` relate to `dy`? `dy + dy`? `dy(dy)`? Or maybe a string: "dy dy"?' }
+    {ranges: [[[15, 1], [15, 16]]], id: 'aether_MissingVarKeyword', message: 'Missing `var` keyword when defining near variable `nearestDistance`.', hint: 'Try `var nearestDistance = 9001;`. New variables need the `var` keyword.'}
+    {ranges: [[[24, 24], [24, 30]]], id: 'aether_UndefinedVariable', message: 'No variable `enemyy`. Did you mean `enemy`?' hint: '`enemyy is not defined yet, so `nearestEnemy = enemyy` would throw an error.'}
+    {ranges: [[[15, 15], [15, 22]]], id: 'aether_UndefinedProperty', message: 'No method `getEnemyys`. Did you mean `getEnemies`?' hint: '`this` has no method `getEnemys()`, so `this.getEnemys()` would throw an error.'}
     // ... many more errors
 ]
 
 aether.problems.warnings;
 // ->
 [
-    {ranges: [[[4, 4], [4, 8]], [[5, 8], [5, 12]]], type: 'False block indentation', message: "Block indentation problem. `if` missing braces { }?", hint: "These lines will not be a part of the `if(from.pos)` condition:\n`if(target.pos)  // weird indentation\n    return distanceSquared(from, target.pos);  // |target| as Thang`" },
-    {ranges: [[[15, 15], [15, 22]]], type: 'Missing this', message: 'Missing `this.` keyword; should be `this.getEnemies`.' hint: 'There is no function `getEnemys`, but `this` has a method `getEnemies`.'}  // ideally this and the Undefined property problem would interact, since it's the one that knows that they mean getEnemies.
+    {ranges: [[[4, 4], [4, 8]], [[5, 8], [5, 12]]], id: 'aether_FalseBlockIndentation', message: "Block indentation problem. `if` missing braces { }?", hint: "These lines will not be a part of the `if(from.pos)` condition:\n`if(target.pos)  // weird indentation\n    return distanceSquared(from, target.pos);  // |target| as Thang`" },
+    {ranges: [[[15, 15], [15, 22]]], id: 'aether_MissingThis', message: 'Missing `this.` keyword; should be `this.getEnemies`.' hint: 'There is no function `getEnemys`, but `this` has a method `getEnemies`.'}  // ideally this and the Undefined property problem would interact, since it's the one that knows that they mean getEnemies.
     // ... many more warnings
 ]
 
 aether.problems.info;
 // ->
 [
-    {ranges: [[[6, 10], [6, 25]]], type: 'Snake case', message: '`distanceSquared` is better than `distance_squared`.', hint: "JavaScript convention is lower camelCase, not snake_case. (Upper CamelCase for classes.)"}
+    {ranges: [[[6, 10], [6, 25]]], type: 'aether_SnakeCase', message: '`distanceSquared` is better than `distance_squared`.', hint: "JavaScript convention is lower camelCase, not snake_case. (Upper CamelCase for classes.)"}
     // ... many more infos
 ]
 
+// Or, just run the linting without transpiling:
+problems = aether.lint(raw);  // problems should be same as above, but not assigned to aether
+
 aether.style;
-// ->
+// -> (after having transpiled)
 {
     loc: 35,
     sloc: 28,
@@ -232,7 +255,7 @@ aether = Aether.deserialize(serialized);  // ... and back
 There are two main modes. The first is that we expect to fully execute the method every time it's called. That's relatively easy:
 
 ```javascript
-// Simplified example: 
+// Simplified example--latest version of this is implemented in coco/app/lib/world/systems/programming.coffee
 tharin = world.getThangByID("Tharin");
 tharin.replaceMethodCode = function(methodName, code) {
     // replaceMethodCode does some extra stuff, whatever
@@ -321,6 +344,8 @@ function setAction(action) {
 Ideally runtime errors have the same interface as transpile errors. The World generation error handler could catch the UserCodeErrors generated above. When an Aether instance creates a UserCodeError, it adds it to its list of errors, so to grab all the errors, we just go through each Aether instance and get the error list--which will, I think, always just have zero or one error in each of the aethers for our purposes, since we don't continue to run the aetherified code after an error. But other people might run it more than once.
 
 Each error should also contain the callNumber and statementNumber for when it happened, as well as preserving the userInfo of any errors that were passed into the UserCodeError.
+
+Note: the error handling is still in flux, but I'm thinking of having Aether.problems.UserCodeProblem (which would easily serialize to the static analysis error objects seen above), and also Aether.problems.RuntimeError, which would inherit from UserCodeProblem and add things like callNumber, statementNumber, and userInfo.
 
 ```javascript
 var serialized = world.serialize();  // also serializes all the aethers in the userCodeMap, which serializes their errors
