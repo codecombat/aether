@@ -102,7 +102,6 @@ module.exports.problems = problems =
   esprima_ComprehensionError: {message: 'Comprehension Error', level: "error"}
   esprima_EachNotAllowed: {message: 'Each is not supported', level: "error"}
 
-aetherLint:
   # Errors: things that will error out and thus prevent us from compiling the code (syntax errors, missing variables, typos)
   aether_UnexpectedIdentifier: {message: 'UnexpectedIdentifier', level: 'error'}
   aether_MissingVarKeyword: {message: 'MissingVarKeyword', level: 'error'}
@@ -126,7 +125,6 @@ aetherLint:
   aether_CamelCase: {message: 'CamelCase', level: 'ignore'}
   # ... many more problems ignored by default ...
 
-jshint:
   # JSHint's error and warning messages
   # https://github.com/jshint/jshint/blob/master/src/messages.js
 

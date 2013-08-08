@@ -26,7 +26,7 @@ module.exports = class Aether
     # Quick heuristics: can this code be run, or will it produce a compilation error?
     # First check inspired by ACE: https://github.com/ajaxorg/ace/blob/master/lib/ace/mode/javascript_worker.js
     try
-      eval "throw 0;" + raw  # evaluated code can only create variables in this function
+      eval "'use strict;'\nthrow 0;" + raw  # evaluated code can only create variables in this function
     catch e
       return false if e isnt 0
     return true unless thorough
