@@ -1,6 +1,6 @@
 ;(function(e,t,n){function i(n,s){if(!t[n]){if(!e[n]){var o=typeof require=="function"&&require;if(!s&&o)return o(n,!0);if(r)return r(n,!0);throw new Error("Cannot find module '"+n+"'")}var u=t[n]={exports:{}};e[n][0].call(u.exports,function(t){var r=e[n][1][t];return i(r?r:t)},u,u.exports)}return t[n].exports}var r=typeof require=="function"&&require;for(var s=0;s<n.length;s++)i(n[s]);return i})({1:[function(require,module,exports){
 var global=self;(function() {
-  var Aether, defaults, errors, execution, falafel, jshint, problems, _, _ref, _ref1, _ref2,
+  var Aether, defaults, errors, execution, falafel, jshint, problems, validation, _, _ref, _ref1, _ref2,
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
@@ -17,6 +17,8 @@ var global=self;(function() {
   execution = require('./execution');
 
   errors = require('./errors');
+
+  validation = require('./validation');
 
   module.exports = Aether = (function() {
     Aether.defaults = defaults;
@@ -39,6 +41,7 @@ var global=self;(function() {
       if (!options.excludeDefaultProblems) {
         options.problems = _.merge(_.cloneDeep(Aether.problems), options.problems);
       }
+      validation.checkOptions(options);
       this.options = _.merge(_.cloneDeep(Aether.defaults), options);
       this.reset();
     }
@@ -362,7 +365,7 @@ var global=self;(function() {
 
 }).call(this);
 
-},{"./defaults":2,"./errors":3,"./execution":4,"./problems":5,"falafel":7,"jshint":20,"lodash":25}],2:[function(require,module,exports){
+},{"./defaults":2,"./errors":3,"./execution":4,"./problems":5,"./validation":9,"falafel":10,"jshint":23,"lodash":28}],2:[function(require,module,exports){
 (function() {
   var defaults, execution;
 
@@ -381,7 +384,7 @@ var global=self;(function() {
     },
     language: "javascript",
     languageVersion: "ES5",
-    functionName: "foo",
+    functionName: null,
     functionParameters: [],
     yieldAutomatically: false,
     yieldConditionally: false,
@@ -1651,7 +1654,104 @@ var global=self;(function() {
 
 }).call(this);
 
-},{"../aether":1,"lodash":25}],7:[function(require,module,exports){
+},{"../aether":1,"lodash":28}],7:[function(require,module,exports){
+var global=self;(function() {
+  var Aether, _;
+
+  _ = require('lodash');
+
+  if (typeof window !== "undefined" && window !== null) {
+    window._ = _;
+  }
+
+  if (typeof global !== "undefined" && global !== null) {
+    global._ = _;
+  }
+
+  if (typeof self !== "undefined" && self !== null) {
+    self._ = _;
+  }
+
+  Aether = require('../aether');
+
+  describe("Constructor Test Suite", function() {
+    describe("Default values", function() {
+      var aether;
+      aether = new Aether();
+      it("should initialize thisValue to be null", function() {
+        return expect(aether.options.thisValue).toBeNull();
+      });
+      it("should initialize functionName as null", function() {
+        return expect(aether.options.functionName).toBeNull();
+      });
+      it("should have javascript as the default language", function() {
+        return expect(aether.options.language).toEqual("javascript");
+      });
+      it("should be using ECMAScript 5", function() {
+        return expect(aether.options.languageVersion).toBe("ES5");
+      });
+      it("should have no functionParameters", function() {
+        return expect(aether.options.functionParameters).toEqual([]);
+      });
+      it("should not yield automatically by default", function() {
+        return expect(aether.options.yieldAutomatically).toBe(false);
+      });
+      it("should not yield conditionally", function() {
+        return expect(aether.options.yieldConditionally).toBe(false);
+      });
+      it("should have defined execution costs", function() {
+        return expect(aether.options.executionCosts).toBeDefined();
+      });
+      return it("should have defined globals", function() {
+        return expect(aether.options.global).toBeDefined();
+      });
+    });
+    return describe("Custom option values", function() {
+      var constructAther;
+      constructAther = function(options) {
+        var aether;
+        return aether = new Aether(options);
+      };
+      beforeEach(function() {
+        var aether;
+        return aether = null;
+      });
+      return it("should not allow non-supported languages", function() {
+        var options;
+        options = {
+          language: "Brainfuck"
+        };
+        return expect(constructAther.bind(null, options)).toThrow();
+      });
+    });
+  });
+
+}).call(this);
+
+},{"../aether":1,"lodash":28}],8:[function(require,module,exports){
+(function() {
+
+
+}).call(this);
+
+},{}],9:[function(require,module,exports){
+(function() {
+  var validation,
+    __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+
+  module.exports = validation = {
+    checkOptions: function(options) {
+      var allowedLanguages, _ref;
+      allowedLanguages = ["javascript"];
+      if (options.language && (_ref = options.language, __indexOf.call(allowedLanguages, _ref) < 0)) {
+        throw new Error("Language specified in options is not allowed");
+      }
+    }
+  };
+
+}).call(this);
+
+},{}],10:[function(require,module,exports){
 var parse = require('esprima').parse;
 var objectKeys = Object.keys || function (obj) {
     var keys = [];
@@ -1747,7 +1847,7 @@ function insertHelpers (node, parent, chunks) {
     };
 }
 
-},{"esprima":8}],8:[function(require,module,exports){
+},{"esprima":11}],11:[function(require,module,exports){
 /*
   Copyright (C) 2012 Ariya Hidayat <ariya.hidayat@gmail.com>
   Copyright (C) 2012 Mathias Bynens <mathias@qiwi.be>
@@ -5616,7 +5716,7 @@ parseStatement: true, parseSourceElement: true */
 }));
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{}],9:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 // UTILITY
 var util = require('util');
 var Buffer = require("buffer").Buffer;
@@ -5932,7 +6032,7 @@ assert.doesNotThrow = function(block, /*optional*/error, /*optional*/message) {
 
 assert.ifError = function(err) { if (err) {throw err;}};
 
-},{"buffer":13,"util":11}],10:[function(require,module,exports){
+},{"buffer":16,"util":14}],13:[function(require,module,exports){
 var process=require("__browserify_process");if (!process.EventEmitter) process.EventEmitter = function () {};
 
 var EventEmitter = exports.EventEmitter = process.EventEmitter;
@@ -6128,7 +6228,7 @@ EventEmitter.listenerCount = function(emitter, type) {
   return ret;
 };
 
-},{"__browserify_process":15}],11:[function(require,module,exports){
+},{"__browserify_process":18}],14:[function(require,module,exports){
 var events = require('events');
 
 exports.isArray = isArray;
@@ -6481,7 +6581,7 @@ exports.format = function(f) {
   return str;
 };
 
-},{"events":10}],12:[function(require,module,exports){
+},{"events":13}],15:[function(require,module,exports){
 exports.readIEEE754 = function(buffer, offset, isBE, mLen, nBytes) {
   var e, m,
       eLen = nBytes * 8 - mLen - 1,
@@ -6567,7 +6667,7 @@ exports.writeIEEE754 = function(buffer, value, offset, isBE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128;
 };
 
-},{}],13:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 var assert = require('assert');
 exports.Buffer = Buffer;
 exports.SlowBuffer = Buffer;
@@ -7650,7 +7750,7 @@ Buffer.prototype.writeDoubleBE = function(value, offset, noAssert) {
   writeDouble(this, value, offset, true, noAssert);
 };
 
-},{"./buffer_ieee754":12,"assert":9,"base64-js":14}],14:[function(require,module,exports){
+},{"./buffer_ieee754":15,"assert":12,"base64-js":17}],17:[function(require,module,exports){
 (function (exports) {
 	'use strict';
 
@@ -7736,7 +7836,7 @@ Buffer.prototype.writeDoubleBE = function(value, offset, noAssert) {
 	module.exports.fromByteArray = uint8ToBase64;
 }());
 
-},{}],15:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -7790,7 +7890,7 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
-},{}],16:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 var global=self;/*global window, global*/
 var util = require("util")
 var assert = require("assert")
@@ -7877,7 +7977,7 @@ function assert(expression) {
     }
 }
 
-},{"assert":9,"util":11}],17:[function(require,module,exports){
+},{"assert":12,"util":14}],20:[function(require,module,exports){
 //     Underscore.js 1.4.4
 //     http://underscorejs.org
 //     (c) 2009-2013 Jeremy Ashkenas, DocumentCloud Inc.
@@ -9105,7 +9205,7 @@ function assert(expression) {
 
 }).call(this);
 
-},{}],18:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 "use strict";
 
 var _ = require("underscore");
@@ -9325,7 +9425,7 @@ _.each(info, function (desc, code) {
 	exports.info[code] = { code: code, desc: desc };
 });
 
-},{"underscore":17}],19:[function(require,module,exports){
+},{"underscore":20}],22:[function(require,module,exports){
 // jshint -W001
 
 "use strict";
@@ -9911,7 +10011,7 @@ exports.yui = {
 };
 
 
-},{}],20:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 /*!
  * JSHint, by JSHint Community.
  *
@@ -14735,7 +14835,7 @@ if (typeof exports === "object" && exports) {
 	exports.JSHINT = JSHINT;
 }
 
-},{"../shared/messages.js":18,"../shared/vars.js":19,"./lex.js":21,"./reg.js":22,"./state.js":23,"./style.js":24,"console-browserify":16,"events":10,"underscore":17}],21:[function(require,module,exports){
+},{"../shared/messages.js":21,"../shared/vars.js":22,"./lex.js":24,"./reg.js":25,"./state.js":26,"./style.js":27,"console-browserify":19,"events":13,"underscore":20}],24:[function(require,module,exports){
 /*
  * Lexical analysis and token construction.
  */
@@ -16430,7 +16530,7 @@ Lexer.prototype = {
 
 exports.Lexer = Lexer;
 
-},{"./reg.js":22,"./state.js":23,"events":10,"underscore":17}],22:[function(require,module,exports){
+},{"./reg.js":25,"./state.js":26,"events":13,"underscore":20}],25:[function(require,module,exports){
 /*
  * Regular expressions. Some of these are stupidly long.
  */
@@ -16466,7 +16566,7 @@ exports.javascriptURL = /^(?:javascript|jscript|ecmascript|vbscript|mocha|livesc
 // Catches /* falls through */ comments (ft)
 exports.fallsThrough = /^\s*\/\*\s*falls?\sthrough\s*\*\/\s*$/;
 
-},{}],23:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 "use strict";
 
 var state = {
@@ -16492,7 +16592,7 @@ var state = {
 
 exports.state = state;
 
-},{}],24:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 "use strict";
 
 exports.register = function (linter) {
@@ -16664,7 +16764,7 @@ exports.register = function (linter) {
 		}
 	});
 };
-},{}],25:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 var global=self;/**
  * @license
  * Lo-Dash 1.3.1 (Custom Build) <http://lodash.com/>
@@ -22221,5 +22321,5 @@ var global=self;/**
   }
 }(this));
 
-},{}]},{},[6])
+},{}]},{},[6,7,8])
 ;

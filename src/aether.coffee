@@ -8,6 +8,8 @@ problems = require './problems'
 execution = require './execution'
 errors = require './errors'
 
+validation = require './validation'
+
 module.exports = class Aether
   @defaults: defaults
   @problems: problems.problems
@@ -19,8 +21,12 @@ module.exports = class Aether
     options.problems ?= {}
     unless options.excludeDefaultProblems
       options.problems = _.merge _.cloneDeep(Aether.problems), options.problems
+    validation.checkOptions options
+
     @options = _.merge _.cloneDeep(Aether.defaults), options
     @reset()
+
+ 
 
   canTranspile: (raw, thorough=false) ->
     # Quick heuristics: can this code be run, or will it produce a compilation error?
