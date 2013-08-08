@@ -29,6 +29,7 @@ var global=self;(function() {
 
     function Aether(options) {
       this.transform = __bind(this.transform, this);
+      this.originalOptions = _.cloneDeep(options);
       if (options == null) {
         options = {};
       }
@@ -39,22 +40,44 @@ var global=self;(function() {
         options.problems = _.merge(_.cloneDeep(Aether.problems), options.problems);
       }
       this.options = _.merge(_.cloneDeep(Aether.defaults), options);
+      this.reset();
     }
 
-    Aether.prototype.canTranspile = function(raw) {
-      return true;
+    Aether.prototype.canTranspile = function(raw, thorough) {
+      var e, lintProblems;
+      if (thorough == null) {
+        thorough = false;
+      }
+      try {
+        eval("throw 0;" + raw);
+      } catch (_error) {
+        e = _error;
+        if (e !== 0) {
+          return false;
+        }
+      }
+      if (!thorough) {
+        return true;
+      }
+      lintProblems = this.lint(raw);
+      return lintProblems.errors.length === 0;
     };
 
     Aether.prototype.hasChangedSignificantly = function(raw, oldAether) {
-      return true;
+      if (!oldAether) {
+        return true;
+      }
+      return raw !== oldAether.raw;
     };
 
     Aether.prototype.hasChanged = function(raw, oldAether) {
-      return true;
+      if (!oldAether) {
+        return true;
+      }
+      return raw !== oldAether.raw;
     };
 
-    Aether.prototype.transpile = function(raw) {
-      this.raw = raw;
+    Aether.prototype.reset = function() {
       this.problems = {
         errors: [],
         warnings: [],
@@ -63,16 +86,28 @@ var global=self;(function() {
       this.style = {};
       this.flow = {};
       this.metrics = {};
-      this.lint();
+      this.visualization = {};
+      return this.pure = null;
+    };
+
+    Aether.prototype.transpile = function(raw) {
+      this.raw = raw;
+      this.reset();
+      this.problems = this.lint(this.raw);
       this.pure = this.cook();
       return this.pure;
     };
 
-    Aether.prototype.lint = function() {
-      var error, g, jshintGlobals, jshintOptions, jshintSuccess, prefix, problem, strictCode, suffix, _i, _len, _ref3, _results;
+    Aether.prototype.lint = function(raw) {
+      var error, g, jshintGlobals, jshintOptions, jshintSuccess, lintProblems, prefix, problem, strictCode, suffix, _i, _len, _ref3;
       prefix = "function wrapped() {\n\"use strict\";\n";
       suffix = "\n}";
-      strictCode = prefix + this.raw + suffix;
+      strictCode = prefix + raw + suffix;
+      lintProblems = {
+        errors: [],
+        warnings: [],
+        infos: []
+      };
       jshintOptions = {
         browser: false,
         couch: false,
@@ -101,7 +136,6 @@ var global=self;(function() {
       })());
       jshintSuccess = jshint(strictCode, jshintOptions, jshintGlobals);
       _ref3 = jshint.errors;
-      _results = [];
       for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
         error = _ref3[_i];
         problem = new problems.UserCodeProblem(error, strictCode, this, 'jshint', prefix);
@@ -109,29 +143,52 @@ var global=self;(function() {
           continue;
         }
         console.log("JSHint found problem:", problem.serialize());
-        _results.push(this.problems[problem.level + "s"].push(problem));
+        lintProblems[problem.level + "s"].push(problem);
       }
-      return _results;
+      return lintProblems;
     };
 
     Aether.prototype.createFunction = function() {
-      return new Function(options.parameters.join(', '), pure);
+      return new Function(this.options.functionParameters.join(', '), this.pure);
     };
 
     Aether.prototype.createMethod = function() {
       var func;
       func = this.createFunction();
-      if (options.thisValue) {
-        func = _.bind(func, options.thisValue);
+      if (this.options.thisValue) {
+        func = _.bind(func, this.options.thisValue);
       }
       return func;
     };
 
     Aether.prototype.purifyError = function(error) {};
 
-    Aether.prototype.serialize = function() {};
+    Aether.prototype.serialize = function() {
+      var serialized;
+      serialized = {
+        originalOptions: this.originalOptions,
+        raw: this.raw,
+        pure: this.pure,
+        problems: this.problems,
+        style: this.style,
+        flow: this.flow,
+        metrics: this.metrics,
+        visualization: this.visualization
+      };
+      serialized = _.cloneDeep(serialized);
+      serialized.originalOptions.thisValue = null;
+      return serialized;
+    };
 
-    Aether.deserialize = function(serialized) {};
+    Aether.deserialize = function(serialized) {
+      var aether, prop, val;
+      aether = new Aether(serialized.originalOptions);
+      for (prop in serialized) {
+        val = serialized[prop];
+        aether[prop] = val;
+      }
+      return aether;
+    };
 
     Aether.prototype.cook = function() {
       var error, i, output, wrapped, _ref3;
@@ -157,7 +214,7 @@ var global=self;(function() {
         throw new errors.UserCodeError(error.message, {
           thangID: this.options.thisValue.id,
           thangSpriteName: this.options.thisValue.spriteName,
-          methodName: this.options.methodName,
+          methodName: this.options.functionName,
           methodType: this.methodType,
           code: this.rawCode,
           recoverable: true,
@@ -179,9 +236,9 @@ var global=self;(function() {
             node.update("this." + (node.source()));
           }
         } else if (node.type === 'ReturnStatement' && !node.argument) {
-          node.update("return this.validateReturn('" + this.options.methodName + "', null);");
+          node.update("return this.validateReturn('" + this.options.functionName + "', null);");
         } else if (((_ref3 = node.parent) != null ? _ref3.type : void 0) === 'ReturnStatement') {
-          node.update("this.validateReturn('" + this.options.methodName + "', (" + (node.source()) + "))");
+          node.update("this.validateReturn('" + this.options.functionName + "', (" + (node.source()) + "))");
         }
       }
       if (node.type === 'ExpressionStatement') {
@@ -311,8 +368,8 @@ var global=self;(function() {
     },
     language: "javascript",
     languageVersion: "ES5",
-    methodName: "foo",
-    methodParameters: [],
+    functionName: "foo",
+    functionParameters: [],
     yieldAutomatically: false,
     yieldConditionally: false,
     executionCosts: execution
@@ -531,8 +588,10 @@ var global=self;(function() {
 
 },{}],5:[function(require,module,exports){
 (function() {
-  var UserCodeProblem, problems,
-    __hasProp = {}.hasOwnProperty;
+  var RuntimeError, UserCodeProblem, problems,
+    __hasProp = {}.hasOwnProperty,
+    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
+    __slice = [].slice;
 
   module.exports.UserCodeProblem = UserCodeProblem = (function() {
     UserCodeProblem.className = "UserCodeProblem";
@@ -586,6 +645,21 @@ var global=self;(function() {
     return UserCodeProblem;
 
   })();
+
+  module.exports.RuntimeError = RuntimeError = (function(_super) {
+    __extends(RuntimeError, _super);
+
+    RuntimeError.className = "RuntimeError";
+
+    function RuntimeError() {
+      var args;
+      args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+      RuntimeError.__super__.constructor.apply(this, args);
+    }
+
+    return RuntimeError;
+
+  })(UserCodeProblem);
 
   module.exports.problems = problems = {
     unknown_Unknown: {

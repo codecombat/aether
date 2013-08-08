@@ -14,41 +14,57 @@ module.exports = class Aether
   @execution: execution
   @errors: errors
   constructor: (options) ->
+    @originalOptions = _.cloneDeep options
     options ?= {}
     options.problems ?= {}
     unless options.excludeDefaultProblems
       options.problems = _.merge _.cloneDeep(Aether.problems), options.problems
     @options = _.merge _.cloneDeep(Aether.defaults), options
+    @reset()
 
-  canTranspile: (raw) ->
+  canTranspile: (raw, thorough=false) ->
     # Quick heuristics: can this code be run, or will it produce a compilation error?
-    true
+    # First check inspired by ACE: https://github.com/ajaxorg/ace/blob/master/lib/ace/mode/javascript_worker.js
+    try
+      eval "throw 0;" + raw  # evaluated code can only create variables in this function
+    catch e
+      return false if e isnt 0
+    return true unless thorough
+    lintProblems = @lint raw
+    return lintProblems.errors.length is 0
 
   hasChangedSignificantly: (raw, oldAether) ->
     # Barring things like comments and whitespace and such, are the ASTs going to be different? (oldAether being a previously compiled instance)
-    true
+    return true unless oldAether
+    return raw isnt oldAether.raw  # TODO: add AST checks
 
   hasChanged: (raw, oldAether) ->
     # Is the code exactly the same?
-    true
+    return true unless oldAether
+    return raw isnt oldAether.raw
 
-  transpile: (@raw) ->
-    # Transpile it. Even if it can't transpile, it will give syntax errors and warnings and such.
-    # Should generate: @raw, @pure, @problems, @style, and an empty @flow, @metrics, and @visualization to be populated when function is run
+  reset: ->
     @problems = errors: [], warnings: [], infos: []
     @style = {}
     @flow = {}
     @metrics = {}
+    @visualization = {}
+    @pure = null
 
-    @lint()
+  transpile: (@raw) ->
+    # Transpile it. Even if it can't transpile, it will give syntax errors and warnings and such. Clears any old state.
+    @reset()
+
+    @problems = @lint @raw
 
     @pure = @cook()  # TODO: for now we're just cooking like old CodeCombat Cook did
     @pure
 
-  lint: ->
+  lint: (raw) ->
     prefix = "function wrapped() {\n\"use strict\";\n"
     suffix = "\n}"
-    strictCode = prefix + @raw + suffix
+    strictCode = prefix + raw + suffix
+    lintProblems = errors: [], warnings: [], infos: []
 
     # Run it through JSHint first, because that doesn't rely on Esprima
     # See also how ACE does it: https://github.com/ajaxorg/ace/blob/master/lib/ace/mode/javascript_worker.js
@@ -61,17 +77,19 @@ module.exports = class Aether
       problem = new problems.UserCodeProblem error, strictCode, @, 'jshint', prefix
       continue if problem.level is "ignore"
       console.log "JSHint found problem:", problem.serialize()
-      @problems[problem.level + "s"].push problem
-      #throw new errors.UserCodeError error.reason, thangID: @options.thisValue.id, thangSpriteName: @options.thisValue.spriteName, methodName: @options.methodName, methodType: @methodType, code: @rawCode, recoverable: true, lineNumber: error.line, column: error.character
+      lintProblems[problem.level + "s"].push problem
+      #throw new errors.UserCodeError error.reason, thangID: @options.thisValue.id, thangSpriteName: @options.thisValue.spriteName, methodName: @options.functionName, methodType: @methodType, code: @rawCode, recoverable: true, lineNumber: error.line, column: error.character
+
+    lintProblems
 
   createFunction: ->
     # Return a ready-to-execute, instrumented function from the purified code
-    new Function options.parameters.join(', '), pure
+    new Function @options.functionParameters.join(', '), @pure
 
   createMethod: ->
     # Like createFunction, but binds method to thisValue if specified
     func = @createFunction()
-    func = _.bind func, options.thisValue if options.thisValue
+    func = _.bind func, @options.thisValue if @options.thisValue
     func
 
   purifyError: (error) ->
@@ -79,9 +97,20 @@ module.exports = class Aether
 
   serialize: ->
     # Convert to JSON so we can pass it across web workers and HTTP requests and store it in databases and such
+    serialized = originalOptions: @originalOptions, raw: @raw, pure: @pure, problems: @problems, style: @style, flow: @flow, metrics: @metrics, visualization: @visualization
+    serialized = _.cloneDeep serialized
+    serialized.originalOptions.thisValue = null  # TODO: haaack, what
+    # TODO: serialize problems, too
+    #console.log "Serialized into", serialized
+    serialized
 
   @deserialize: (serialized) ->
     # Convert a serialized Aether instance back from JSON
+    aether = new Aether serialized.originalOptions
+    for prop, val of serialized
+      aether[prop] = val
+    aether
+
 
   #### TODO: this stuff is all the old CodeCombat Cook way of doing it ####
   cook: ->
@@ -95,7 +124,7 @@ module.exports = class Aether
     try
       output = falafel wrapped, {}, @transform
     catch error
-      throw new errors.UserCodeError error.message, thangID: @options.thisValue.id, thangSpriteName: @options.thisValue.spriteName, methodName: @options.methodName, methodType: @methodType, code: @rawCode, recoverable: true, lineNumber: error.lineNumber - 2, column: error.column
+      throw new errors.UserCodeError error.message, thangID: @options.thisValue.id, thangSpriteName: @options.thisValue.spriteName, methodName: @options.functionName, methodType: @methodType, code: @rawCode, recoverable: true, lineNumber: error.lineNumber - 2, column: error.column
     @cookedCode = Aether.getFunctionBody output.toString(), false
     @cookedCode = @raw
 
@@ -109,9 +138,9 @@ module.exports = class Aether
         if node.callee.name and not @vars[node.callee.name] and not (@options.global[node.callee.name])
           node.update "this.#{node.source()}"
       else if node.type is 'ReturnStatement' and not node.argument
-        node.update "return this.validateReturn('#{@options.methodName}', null);"
+        node.update "return this.validateReturn('#{@options.functionName}', null);"
       else if node.parent?.type is 'ReturnStatement'
-        node.update "this.validateReturn('#{@options.methodName}', (#{node.source()}))"
+        node.update "this.validateReturn('#{@options.functionName}', (#{node.source()}))"
 
     if node.type is 'ExpressionStatement'
       lineNumber = Aether.getLineNumberForNode node, true

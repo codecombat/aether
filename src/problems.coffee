@@ -36,6 +36,13 @@ module.exports.UserCodeProblem = class UserCodeProblem
       o[key] = value
     o
 
+module.exports.RuntimeError = class RuntimeError extends UserCodeProblem
+  @className: "RuntimeError"
+  constructor: (args...) ->
+    super args...
+    # what are we doing here?
+
+
 module.exports.problems = problems =
   # TODO: the values here should be something else...
   unknown_Unknown: {message: "Unknown problem.", level: "error"}
