@@ -15,9 +15,9 @@ describe "Aether", ->
     aether = null
     beforeEach ->
       aether = new Aether()
-    it "doesn't compile a blank piece of code", ->
+    it "Compiles a blank piece of code", ->
       raw = ""
-      expect(aether.canTranspile(raw)).toEqual false
+      expect(aether.canTranspile(raw)).toEqual true
       
 
 

@@ -56,7 +56,7 @@ var global=self;(function() {
         thorough = false;
       }
       if (!raw) {
-        return false;
+        return true;
       }
       try {
         eval("'use strict;'\nthrow 0;" + raw);
@@ -1677,10 +1677,10 @@ var global=self;(function() {
       beforeEach(function() {
         return aether = new Aether();
       });
-      return it("doesn't compile a blank piece of code", function() {
+      return it("Compiles a blank piece of code", function() {
         var raw;
         raw = "";
-        return expect(aether.canTranspile(raw)).toEqual(false);
+        return expect(aether.canTranspile(raw)).toEqual(true);
       });
     });
   });

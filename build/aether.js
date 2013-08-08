@@ -56,7 +56,7 @@ var global=self;(function() {
         thorough = false;
       }
       if (!raw) {
-        return false;
+        return true;
       }
       try {
         eval("'use strict;'\nthrow 0;" + raw);
