@@ -55,6 +55,9 @@ var global=self;(function() {
       if (thorough == null) {
         thorough = false;
       }
+      if (!raw) {
+        return false;
+      }
       try {
         eval("'use strict;'\nthrow 0;" + raw);
       } catch (_error) {
@@ -1651,6 +1654,7 @@ var global=self;(function() {
           required: false
         },
         global: {
+          type: 'array',
           required: false
         },
         functionName: {
@@ -1660,9 +1664,11 @@ var global=self;(function() {
           required: false
         },
         yieldAutomatically: {
+          type: 'boolean',
           required: false
         },
         yieldConditionally: {
+          type: 'boolean',
           required: false
         },
         executionCosts: {

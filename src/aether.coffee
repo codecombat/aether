@@ -34,6 +34,7 @@ module.exports = class Aether
   canTranspile: (raw, thorough=false) ->
     # Quick heuristics: can this code be run, or will it produce a compilation error?
     # First check inspired by ACE: https://github.com/ajaxorg/ace/blob/master/lib/ace/mode/javascript_worker.js
+    return false if not raw #you shouldn
     try
       eval "'use strict;'\nthrow 0;" + raw  # evaluated code can only create variables in this function
     catch e
