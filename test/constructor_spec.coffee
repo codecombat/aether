@@ -33,7 +33,12 @@ describe "Constructor Test Suite", ->
     it "should not allow non-supported languages", ->
       options = language : "Brainfuck"
       expect(constructAther.bind null, options).toThrow()
-
+    it "should not allow non-supported language versions", ->
+      options = languageVersion: "ES6"
+      expect(constructAther.bind null, options).toThrow()
+    it "should not allow options that do not exist", ->
+      options = blah : "blah"
+      expect(constructAther.bind null, options).toThrow()
 
 
 

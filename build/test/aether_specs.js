@@ -1732,10 +1732,24 @@ var global=self;(function() {
         var aether;
         return aether = null;
       });
-      return it("should not allow non-supported languages", function() {
+      it("should not allow non-supported languages", function() {
         var options;
         options = {
           language: "Brainfuck"
+        };
+        return expect(constructAther.bind(null, options)).toThrow();
+      });
+      it("should not allow non-supported language versions", function() {
+        var options;
+        options = {
+          languageVersion: "ES6"
+        };
+        return expect(constructAther.bind(null, options)).toThrow();
+      });
+      return it("should not allow options that do not exist", function() {
+        var options;
+        options = {
+          blah: "blah"
         };
         return expect(constructAther.bind(null, options)).toThrow();
       });
@@ -1752,12 +1766,39 @@ var global=self;(function() {
     return module.validate(options, {
       additionalProperties: false,
       properties: {
+        thisValue: {
+          required: false
+        },
+        global: {
+          required: false
+        },
+        functionName: {
+          required: false
+        },
+        functionParameters: {
+          required: false
+        },
+        yieldAutomatically: {
+          required: false
+        },
+        yieldConditionally: {
+          required: false
+        },
+        executionCosts: {
+          required: false
+        },
         language: {
           type: 'string',
           description: "Input language",
           minLength: 1,
           'enum': ['javascript'],
           required: false
+        },
+        languageVersion: {
+          type: 'string',
+          description: "Input language version",
+          minLength: 1,
+          'enum': ["ES5"]
         },
         problems: {
           required: false
