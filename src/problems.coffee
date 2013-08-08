@@ -13,6 +13,7 @@ module.exports.UserCodeProblem = class UserCodeProblem
     originalLines = code.slice(codePrefix.length).split '\n'
     @id = @getProblemID err, source
     problemConfig = aether.options.problems[@id]
+    @type = 'transpile'
     @level = problemConfig?.level ? "error"
     #@message = problemConfig?.message ? "Unknown problem." # TODO: we don't actually do anything good with this message
     @hint = problemConfig?.hint
@@ -40,6 +41,7 @@ module.exports.RuntimeError = class RuntimeError extends UserCodeProblem
   @className: "RuntimeError"
   constructor: (args...) ->
     super args...
+    @type = 'runtime'
     # what are we doing here?
 
 
