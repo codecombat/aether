@@ -1,6 +1,7 @@
 _ = window?._ ? self?._ ? global?._ ? require 'lodash'  # rely on lodash existing, since it busts CodeCombat to browserify it--TODO
 #esprima = require 'esprima'  # getting our Esprima Harmony
-falafel = require 'falafel'  # pulls in dev Esprima
+falafel = require 'falafel'  # pulls in dev stock Esprima
+jshint = require('jshint').JSHINT
 
 defaults = require './defaults'
 problems = require './problems'
@@ -9,11 +10,15 @@ errors = require './errors'
 
 module.exports = class Aether
   @defaults: defaults
-  @problems: problems
+  @problems: problems.problems
   @execution: execution
   @errors: errors
   constructor: (options) ->
-    @options = _.defaults(options or {}, _.cloneDeep Aether.defaults)
+    options ?= {}
+    options.problems ?= {}
+    unless options.excludeDefaultProblems
+      options.problems = _.merge _.cloneDeep(Aether.problems), options.problems
+    @options = _.merge _.cloneDeep(Aether.defaults), options
 
   canTranspile: (raw) ->
     # Quick heuristics: can this code be run, or will it produce a compilation error?
@@ -30,8 +35,34 @@ module.exports = class Aether
   transpile: (@raw) ->
     # Transpile it. Even if it can't transpile, it will give syntax errors and warnings and such.
     # Should generate: @raw, @pure, @problems, @style, and an empty @flow, @metrics, and @visualization to be populated when function is run
-    return @raw
+    @problems = errors: [], warnings: [], infos: []
+    @style = {}
+    @flow = {}
+    @metrics = {}
+
+    @lint()
+
     @pure = @cook()  # TODO: for now we're just cooking like old CodeCombat Cook did
+    @pure
+
+  lint: ->
+    prefix = "function wrapped() {\n\"use strict\";\n"
+    suffix = "\n}"
+    strictCode = prefix + @raw + suffix
+
+    # Run it through JSHint first, because that doesn't rely on Esprima
+    # See also how ACE does it: https://github.com/ajaxorg/ace/blob/master/lib/ace/mode/javascript_worker.js
+    # TODO: make JSHint stop providing these globals somehow; the below doesn't work
+    jshintOptions = browser: false, couch: false, devel: false, dojo: false, jquery: false, mootools: false, node: false, nonstandard: false, phantom: false, prototypejs: false, rhino: false, worker: false, wsh: false, yui: false
+    jshintGlobals = _.keys(@options.global)
+    jshintGlobals = _.zipObject jshintGlobals, (false for g in jshintGlobals)  # JSHint expects {key: writable} globals
+    jshintSuccess = jshint(strictCode, jshintOptions, jshintGlobals)
+    for error in jshint.errors
+      problem = new problems.UserCodeProblem error, strictCode, @, 'jshint', prefix
+      continue if problem.level is "ignore"
+      console.log "JSHint found problem:", problem.serialize()
+      @problems[problem.level + "s"].push problem
+      #throw new errors.UserCodeError error.reason, thangID: @options.thisValue.id, thangSpriteName: @options.thisValue.spriteName, methodName: @options.methodName, methodType: @methodType, code: @rawCode, recoverable: true, lineNumber: error.line, column: error.character
 
   createFunction: ->
     # Return a ready-to-execute, instrumented function from the purified code
@@ -60,10 +91,11 @@ module.exports = class Aether
     wrapped = @checkCommonMistakes wrapped
     @vars = {}
     @methodLineNumbers = ([] for i in @raw.split('\n'))
+
     try
       output = falafel wrapped, {}, @transform
     catch error
-      throw new errors.UserCodeError error.message, thangID: @options.thang.id, thangSpriteName: @options.thang.spriteName, methodName: @options.methodName, methodType: @methodType, code: @rawCode, recoverable: true, lineNumber: error.lineNumber - 2, column: error.column
+      throw new errors.UserCodeError error.message, thangID: @options.thisValue.id, thangSpriteName: @options.thisValue.spriteName, methodName: @options.methodName, methodType: @methodType, code: @rawCode, recoverable: true, lineNumber: error.lineNumber - 2, column: error.column
     @cookedCode = Aether.getFunctionBody output.toString(), false
     @cookedCode = @raw
 

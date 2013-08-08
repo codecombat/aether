@@ -24,7 +24,7 @@ module.exports = (grunt) ->
 
     watch:
       files: ['src/*', 'test/*.coffee']
-      tasks: ['coffeelint', 'coffee', 'browserify', 'jasmine', 'copy']
+      tasks: ['coffeelint', 'coffee', 'browserify', 'jasmine-node', 'copy']
       options:
         spawn: false
 
