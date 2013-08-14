@@ -2,6 +2,7 @@ _ = window?._ ? self?._ ? global?._ ? require 'lodash'  # rely on lodash existin
 #esprima = require 'esprima'  # getting our Esprima Harmony
 falafel = require 'falafel'  # pulls in dev stock Esprima
 jshint = require('jshint').JSHINT
+#traceur = require 'traceur/src/runtime/runtime'
 
 defaults = require './defaults'
 problems = require './problems'
@@ -51,6 +52,7 @@ module.exports = class Aether
     return raw isnt oldAether.raw
 
   reset: ->
+
     @problems = errors: [], warnings: [], infos: []
     @style = {}
     @flow = {}
@@ -83,7 +85,7 @@ module.exports = class Aether
     for error in jshint.errors
       problem = new problems.UserCodeProblem error, strictCode, @, 'jshint', prefix
       continue if problem.level is "ignore"
-      console.log "JSHint found problem:", problem.serialize()
+      #console.log "JSHint found problem:", problem.serialize()
       lintProblems[problem.level + "s"].push problem
 
     lintProblems
@@ -130,6 +132,20 @@ module.exports = class Aether
       aether[prop] = val
     aether
 
+  es6ify: (code) ->
+    # TODO: where to put this?
+    project = new traceur.semantics.symbols.Project('codecombat')
+    reporter = new traceur.util.ErrorReporter()
+    compiler = new traceur.codegeneration.Compiler(reporter, project)
+    sourceFile = new traceur.syntax.SourceFile("randotron_" + Math.random(), code)
+    project.addFile(sourceFile)
+    trees = compiler.compile_()
+    if reporter.hadError()
+      console.log "traceur had error trying to compile"
+    tree = trees.values()[0]
+    opts = showLineNumbers: false
+    tree.generatedSource = traceur.outputgeneration.TreeWriter.write(tree, opts)
+    tree.generatedSource
 
   #### TODO: this stuff is all the old CodeCombat Cook way of doing it ####
   cook: ->
@@ -178,7 +194,10 @@ module.exports = class Aether
           name = exp.callee.name  # say() without this... (even though I added this)
         else if $?
           console.log "How is this CallExpression being handled?", node, node.source(), exp.callee, exp.callee.source()
-        @methodLineNumbers[lineNumber].push name
+        if @methodLineNumbers.length > lineNumber
+          @methodLineNumbers[lineNumber].push name
+        else
+          console.log "More lines than we can actually handle:", lineNumber, name, "of", @methodLineNumbers.length, "lines"
       else if exp.type is 'MemberExpression'
         # Handle missing parentheses, like in:  this.moveUp;
         if exp.property.name is "IncompleteThisReference"

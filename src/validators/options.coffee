@@ -31,6 +31,6 @@ module.exports = (options) ->
         type: 'string'
         description: "Input language version"
         minLength:1
-        'enum': ["ES5"] #change this later
+        'enum': ["ES5", "ES6"] #change this later
       problems:
         required: false

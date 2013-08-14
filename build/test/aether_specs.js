@@ -152,7 +152,6 @@ var global=self;(function() {
         if (problem.level === "ignore") {
           continue;
         }
-        console.log("JSHint found problem:", problem.serialize());
         lintProblems[problem.level + "s"].push(problem);
       }
       return lintProblems;
@@ -220,6 +219,25 @@ var global=self;(function() {
       return aether;
     };
 
+    Aether.prototype.es6ify = function(code) {
+      var compiler, opts, project, reporter, sourceFile, tree, trees;
+      project = new traceur.semantics.symbols.Project('codecombat');
+      reporter = new traceur.util.ErrorReporter();
+      compiler = new traceur.codegeneration.Compiler(reporter, project);
+      sourceFile = new traceur.syntax.SourceFile("randotron_" + Math.random(), code);
+      project.addFile(sourceFile);
+      trees = compiler.compile_();
+      if (reporter.hadError()) {
+        console.log("traceur had error trying to compile");
+      }
+      tree = trees.values()[0];
+      opts = {
+        showLineNumbers: false
+      };
+      tree.generatedSource = traceur.outputgeneration.TreeWriter.write(tree, opts);
+      return tree.generatedSource;
+    };
+
     Aether.prototype.cook = function() {
       var column, error, i, lineNumber, output, pureError, userInfo, wrapped, _ref3;
       this.methodType = this.options.methodType || "instance";
@@ -285,7 +303,11 @@ var global=self;(function() {
           } else if (typeof $ !== "undefined" && $ !== null) {
             console.log("How is this CallExpression being handled?", node, node.source(), exp.callee, exp.callee.source());
           }
-          return this.methodLineNumbers[lineNumber].push(name);
+          if (this.methodLineNumbers.length > lineNumber) {
+            return this.methodLineNumbers[lineNumber].push(name);
+          } else {
+            return console.log("More lines than we can actually handle:", lineNumber, name, "of", this.methodLineNumbers.length, "lines");
+          }
         } else if (exp.type === 'MemberExpression') {
           if (exp.property.name === "IncompleteThisReference") {
             m = "this.what? (Check available spells below.)";
@@ -382,7 +404,7 @@ var global=self;(function() {
 
 }).call(this);
 
-},{"./defaults":2,"./errors":3,"./execution":4,"./problems":5,"./validators/options":8,"falafel":9,"jshint":22,"lodash":27}],2:[function(require,module,exports){
+},{"./defaults":2,"./errors":3,"./execution":4,"./problems":5,"./validators/options":10,"falafel":11,"jshint":26,"lodash":31}],2:[function(require,module,exports){
 (function() {
   var defaults, execution;
 
@@ -1687,7 +1709,7 @@ var global=self;(function() {
 
 }).call(this);
 
-},{"../aether":1,"lodash":27}],7:[function(require,module,exports){
+},{"../aether":1,"lodash":31}],7:[function(require,module,exports){
 var global=self;(function() {
   var Aether, _;
 
@@ -1759,7 +1781,7 @@ var global=self;(function() {
       it("should not allow non-supported language versions", function() {
         var options;
         options = {
-          languageVersion: "ES6"
+          languageVersion: "ES7"
         };
         return expect(constructAther.bind(null, options)).toThrow();
       });
@@ -1775,7 +1797,111 @@ var global=self;(function() {
 
 }).call(this);
 
-},{"../aether":1,"lodash":27}],8:[function(require,module,exports){
+},{"../aether":1,"lodash":31}],8:[function(require,module,exports){
+var global=self;(function() {
+  var Aether, traceur, _;
+
+  _ = require('lodash');
+
+  if (typeof window !== "undefined" && window !== null) {
+    window._ = _;
+  }
+
+  if (typeof global !== "undefined" && global !== null) {
+    global._ = _;
+  }
+
+  if (typeof self !== "undefined" && self !== null) {
+    self._ = _;
+  }
+
+  traceur = require('traceur');
+
+  Aether = require('../aether');
+
+  describe("ES6 Test Suite", function() {
+    return describe("Traceur compilation", function() {
+      var aether;
+      aether = new Aether({
+        languageVersion: "ES6"
+      });
+      it("should compile generator functions", function() {
+        var code, compiled, hoboz;
+        code = "var x = 3;\nfunction* gen(z) {\n  yield z;\n  yield z + x;\n  yield z * x;\n}";
+        compiled = aether.es6ify(code);
+        eval(compiled);
+        hoboz = gen(5);
+        expect(hoboz.next().value).toEqual(5);
+        expect(hoboz.next().value).toEqual(8);
+        expect(hoboz.next().value).toEqual(15);
+        return expect(hoboz.next().done).toEqual(true);
+      });
+      return it("should compile default parameters", function() {
+        var code, compiled;
+        aether = new Aether({
+          languageVersion: "ES6"
+        });
+        code = "function hobaby(name, codes = 'JavaScript', livesIn = 'USA') {\n  return 'name: ' + name + ', codes: ' + codes + ', livesIn: ' + livesIn;\n};";
+        compiled = aether.es6ify(code);
+        eval(compiled);
+        return expect(hobaby("A yeti!")).toEqual('name: A yeti!, codes: JavaScript, livesIn: USA');
+      });
+    });
+  });
+
+}).call(this);
+
+},{"../aether":1,"lodash":31,"traceur":36}],9:[function(require,module,exports){
+var global=self;(function() {
+  var Aether, _;
+
+  _ = require('lodash');
+
+  if (typeof window !== "undefined" && window !== null) {
+    window._ = _;
+  }
+
+  if (typeof global !== "undefined" && global !== null) {
+    global._ = _;
+  }
+
+  if (typeof self !== "undefined" && self !== null) {
+    self._ = _;
+  }
+
+  Aether = require('../aether');
+
+  describe("Linting Test Suite", function() {
+    describe("Default linting", function() {
+      var aether;
+      aether = new Aether();
+      return it("should warn about missing semicolons", function() {
+        var code, warnings;
+        code = "var bandersnatch = 'frumious'";
+        warnings = aether.lint(code).warnings;
+        expect(warnings.length).toEqual(1);
+        return expect(warnings[0].message).toEqual('Missing semicolon.');
+      });
+    });
+    return describe("Custom lint levels", function() {
+      return it("should allow ignoring of warnings", function() {
+        var aether, code, options, warnings;
+        options = {
+          problems: {
+            jshint_W033: 'ignore'
+          }
+        };
+        aether = new Aether(options);
+        code = "var bandersnatch = 'frumious'";
+        warnings = aether.lint(code).warnings;
+        return expect(warnings.length).toEqual(0);
+      });
+    });
+  });
+
+}).call(this);
+
+},{"../aether":1,"lodash":31}],10:[function(require,module,exports){
 (function() {
   var revalidator;
 
@@ -1820,7 +1946,7 @@ var global=self;(function() {
           type: 'string',
           description: "Input language version",
           minLength: 1,
-          'enum': ["ES5"]
+          'enum': ["ES5", "ES6"]
         },
         problems: {
           required: false
@@ -1831,7 +1957,7 @@ var global=self;(function() {
 
 }).call(this);
 
-},{"revalidator":28}],9:[function(require,module,exports){
+},{"revalidator":32}],11:[function(require,module,exports){
 var parse = require('esprima').parse;
 var objectKeys = Object.keys || function (obj) {
     var keys = [];
@@ -1927,7 +2053,7 @@ function insertHelpers (node, parent, chunks) {
     };
 }
 
-},{"esprima":10}],10:[function(require,module,exports){
+},{"esprima":12}],12:[function(require,module,exports){
 /*
   Copyright (C) 2012 Ariya Hidayat <ariya.hidayat@gmail.com>
   Copyright (C) 2012 Mathias Bynens <mathias@qiwi.be>
@@ -5796,7 +5922,7 @@ parseStatement: true, parseSourceElement: true */
 }));
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{}],11:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 // UTILITY
 var util = require('util');
 var Buffer = require("buffer").Buffer;
@@ -6112,7 +6238,7 @@ assert.doesNotThrow = function(block, /*optional*/error, /*optional*/message) {
 
 assert.ifError = function(err) { if (err) {throw err;}};
 
-},{"buffer":15,"util":13}],12:[function(require,module,exports){
+},{"buffer":19,"util":17}],14:[function(require,module,exports){
 var process=require("__browserify_process");if (!process.EventEmitter) process.EventEmitter = function () {};
 
 var EventEmitter = exports.EventEmitter = process.EventEmitter;
@@ -6308,7 +6434,187 @@ EventEmitter.listenerCount = function(emitter, type) {
   return ret;
 };
 
-},{"__browserify_process":17}],13:[function(require,module,exports){
+},{"__browserify_process":21}],15:[function(require,module,exports){
+// nothing to see here... no file methods for the browser
+
+},{}],16:[function(require,module,exports){
+var process=require("__browserify_process");function filter (xs, fn) {
+    var res = [];
+    for (var i = 0; i < xs.length; i++) {
+        if (fn(xs[i], i, xs)) res.push(xs[i]);
+    }
+    return res;
+}
+
+// resolves . and .. elements in a path array with directory names there
+// must be no slashes, empty elements, or device names (c:\) in the array
+// (so also no leading and trailing slashes - it does not distinguish
+// relative and absolute paths)
+function normalizeArray(parts, allowAboveRoot) {
+  // if the path tries to go above the root, `up` ends up > 0
+  var up = 0;
+  for (var i = parts.length; i >= 0; i--) {
+    var last = parts[i];
+    if (last == '.') {
+      parts.splice(i, 1);
+    } else if (last === '..') {
+      parts.splice(i, 1);
+      up++;
+    } else if (up) {
+      parts.splice(i, 1);
+      up--;
+    }
+  }
+
+  // if the path is allowed to go above the root, restore leading ..s
+  if (allowAboveRoot) {
+    for (; up--; up) {
+      parts.unshift('..');
+    }
+  }
+
+  return parts;
+}
+
+// Regex to split a filename into [*, dir, basename, ext]
+// posix version
+var splitPathRe = /^(.+\/(?!$)|\/)?((?:.+?)?(\.[^.]*)?)$/;
+
+// path.resolve([from ...], to)
+// posix version
+exports.resolve = function() {
+var resolvedPath = '',
+    resolvedAbsolute = false;
+
+for (var i = arguments.length; i >= -1 && !resolvedAbsolute; i--) {
+  var path = (i >= 0)
+      ? arguments[i]
+      : process.cwd();
+
+  // Skip empty and invalid entries
+  if (typeof path !== 'string' || !path) {
+    continue;
+  }
+
+  resolvedPath = path + '/' + resolvedPath;
+  resolvedAbsolute = path.charAt(0) === '/';
+}
+
+// At this point the path should be resolved to a full absolute path, but
+// handle relative paths to be safe (might happen when process.cwd() fails)
+
+// Normalize the path
+resolvedPath = normalizeArray(filter(resolvedPath.split('/'), function(p) {
+    return !!p;
+  }), !resolvedAbsolute).join('/');
+
+  return ((resolvedAbsolute ? '/' : '') + resolvedPath) || '.';
+};
+
+// path.normalize(path)
+// posix version
+exports.normalize = function(path) {
+var isAbsolute = path.charAt(0) === '/',
+    trailingSlash = path.slice(-1) === '/';
+
+// Normalize the path
+path = normalizeArray(filter(path.split('/'), function(p) {
+    return !!p;
+  }), !isAbsolute).join('/');
+
+  if (!path && !isAbsolute) {
+    path = '.';
+  }
+  if (path && trailingSlash) {
+    path += '/';
+  }
+  
+  return (isAbsolute ? '/' : '') + path;
+};
+
+
+// posix version
+exports.join = function() {
+  var paths = Array.prototype.slice.call(arguments, 0);
+  return exports.normalize(filter(paths, function(p, index) {
+    return p && typeof p === 'string';
+  }).join('/'));
+};
+
+
+exports.dirname = function(path) {
+  var dir = splitPathRe.exec(path)[1] || '';
+  var isWindows = false;
+  if (!dir) {
+    // No dirname
+    return '.';
+  } else if (dir.length === 1 ||
+      (isWindows && dir.length <= 3 && dir.charAt(1) === ':')) {
+    // It is just a slash or a drive letter with a slash
+    return dir;
+  } else {
+    // It is a full dirname, strip trailing slash
+    return dir.substring(0, dir.length - 1);
+  }
+};
+
+
+exports.basename = function(path, ext) {
+  var f = splitPathRe.exec(path)[2] || '';
+  // TODO: make this comparison case-insensitive on windows?
+  if (ext && f.substr(-1 * ext.length) === ext) {
+    f = f.substr(0, f.length - ext.length);
+  }
+  return f;
+};
+
+
+exports.extname = function(path) {
+  return splitPathRe.exec(path)[3] || '';
+};
+
+exports.relative = function(from, to) {
+  from = exports.resolve(from).substr(1);
+  to = exports.resolve(to).substr(1);
+
+  function trim(arr) {
+    var start = 0;
+    for (; start < arr.length; start++) {
+      if (arr[start] !== '') break;
+    }
+
+    var end = arr.length - 1;
+    for (; end >= 0; end--) {
+      if (arr[end] !== '') break;
+    }
+
+    if (start > end) return [];
+    return arr.slice(start, end - start + 1);
+  }
+
+  var fromParts = trim(from.split('/'));
+  var toParts = trim(to.split('/'));
+
+  var length = Math.min(fromParts.length, toParts.length);
+  var samePartsLength = length;
+  for (var i = 0; i < length; i++) {
+    if (fromParts[i] !== toParts[i]) {
+      samePartsLength = i;
+      break;
+    }
+  }
+
+  var outputParts = [];
+  for (var i = samePartsLength; i < fromParts.length; i++) {
+    outputParts.push('..');
+  }
+
+  outputParts = outputParts.concat(toParts.slice(samePartsLength));
+
+  return outputParts.join('/');
+};
+
+},{"__browserify_process":21}],17:[function(require,module,exports){
 var events = require('events');
 
 exports.isArray = isArray;
@@ -6661,7 +6967,7 @@ exports.format = function(f) {
   return str;
 };
 
-},{"events":12}],14:[function(require,module,exports){
+},{"events":14}],18:[function(require,module,exports){
 exports.readIEEE754 = function(buffer, offset, isBE, mLen, nBytes) {
   var e, m,
       eLen = nBytes * 8 - mLen - 1,
@@ -6747,7 +7053,7 @@ exports.writeIEEE754 = function(buffer, value, offset, isBE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128;
 };
 
-},{}],15:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 var assert = require('assert');
 exports.Buffer = Buffer;
 exports.SlowBuffer = Buffer;
@@ -7830,7 +8136,7 @@ Buffer.prototype.writeDoubleBE = function(value, offset, noAssert) {
   writeDouble(this, value, offset, true, noAssert);
 };
 
-},{"./buffer_ieee754":14,"assert":11,"base64-js":16}],16:[function(require,module,exports){
+},{"./buffer_ieee754":18,"assert":13,"base64-js":20}],20:[function(require,module,exports){
 (function (exports) {
 	'use strict';
 
@@ -7916,7 +8222,7 @@ Buffer.prototype.writeDoubleBE = function(value, offset, noAssert) {
 	module.exports.fromByteArray = uint8ToBase64;
 }());
 
-},{}],17:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -7970,7 +8276,7 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
-},{}],18:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 var global=self;/*global window, global*/
 var util = require("util")
 var assert = require("assert")
@@ -8057,7 +8363,7 @@ function assert(expression) {
     }
 }
 
-},{"assert":11,"util":13}],19:[function(require,module,exports){
+},{"assert":13,"util":17}],23:[function(require,module,exports){
 //     Underscore.js 1.4.4
 //     http://underscorejs.org
 //     (c) 2009-2013 Jeremy Ashkenas, DocumentCloud Inc.
@@ -9285,7 +9591,7 @@ function assert(expression) {
 
 }).call(this);
 
-},{}],20:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 "use strict";
 
 var _ = require("underscore");
@@ -9505,7 +9811,7 @@ _.each(info, function (desc, code) {
 	exports.info[code] = { code: code, desc: desc };
 });
 
-},{"underscore":19}],21:[function(require,module,exports){
+},{"underscore":23}],25:[function(require,module,exports){
 // jshint -W001
 
 "use strict";
@@ -10091,7 +10397,7 @@ exports.yui = {
 };
 
 
-},{}],22:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 /*!
  * JSHint, by JSHint Community.
  *
@@ -14915,7 +15221,7 @@ if (typeof exports === "object" && exports) {
 	exports.JSHINT = JSHINT;
 }
 
-},{"../shared/messages.js":20,"../shared/vars.js":21,"./lex.js":23,"./reg.js":24,"./state.js":25,"./style.js":26,"console-browserify":18,"events":12,"underscore":19}],23:[function(require,module,exports){
+},{"../shared/messages.js":24,"../shared/vars.js":25,"./lex.js":27,"./reg.js":28,"./state.js":29,"./style.js":30,"console-browserify":22,"events":14,"underscore":23}],27:[function(require,module,exports){
 /*
  * Lexical analysis and token construction.
  */
@@ -16610,7 +16916,7 @@ Lexer.prototype = {
 
 exports.Lexer = Lexer;
 
-},{"./reg.js":24,"./state.js":25,"events":12,"underscore":19}],24:[function(require,module,exports){
+},{"./reg.js":28,"./state.js":29,"events":14,"underscore":23}],28:[function(require,module,exports){
 /*
  * Regular expressions. Some of these are stupidly long.
  */
@@ -16646,7 +16952,7 @@ exports.javascriptURL = /^(?:javascript|jscript|ecmascript|vbscript|mocha|livesc
 // Catches /* falls through */ comments (ft)
 exports.fallsThrough = /^\s*\/\*\s*falls?\sthrough\s*\*\/\s*$/;
 
-},{}],25:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 "use strict";
 
 var state = {
@@ -16672,7 +16978,7 @@ var state = {
 
 exports.state = state;
 
-},{}],26:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 "use strict";
 
 exports.register = function (linter) {
@@ -16844,7 +17150,7 @@ exports.register = function (linter) {
 		}
 	});
 };
-},{}],27:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 var global=self;/**
  * @license
  * Lo-Dash 1.3.1 (Custom Build) <http://lodash.com/>
@@ -22401,7 +22707,7 @@ var global=self;/**
   }
 }(this));
 
-},{}],28:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 (function (exports) {
   exports.validate = validate;
   exports.mixin = mixin;
@@ -22812,5 +23118,382 @@ var global=self;/**
 
 })(typeof module !== 'undefined' ? module.exports : (window.json = window.json || {}));
 
-},{}]},{},[6,7])
+},{}],33:[function(require,module,exports){
+// Copyright 2013 Traceur Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+var fs = require('fs');
+
+function stripShebang(data) {
+  if (/^#!/.test(data))
+    data = '//' + data;
+  return data;
+}
+
+function NodeLoader() {}
+
+NodeLoader.prototype = {
+  loadSync: function(url) {
+    return stripShebang(fs.readFileSync(url, 'utf8'));
+  },
+
+  load: function(url, callback, errback) {
+    fs.readFile(url, 'utf8', function(err, data) {
+      if (err)
+        errback(err);
+      else
+        callback(stripShebang(data));
+    });
+
+    // Returns an abort function.
+    return function() {
+      callback = function() {};
+    };
+  }
+};
+
+module.exports = NodeLoader;
+
+},{"fs":15}],34:[function(require,module,exports){
+var __dirname="/../../node_modules/traceur/src/node";// Copyright 2012 Traceur Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+var fs = require('fs');
+var path = require('path');
+var NodeLoader = require('./NodeLoader.js');
+
+var generateNameForUrl = traceur.generateNameForUrl;
+var ErrorReporter = traceur.util.ErrorReporter;
+var InternalLoader = traceur.modules.internals.InternalLoader;
+var ModuleAnalyzer = traceur.semantics.ModuleAnalyzer;
+var ModuleDefinition = traceur.syntax.trees.ModuleDefinition;
+var ModuleRequireVisitor = traceur.codegeneration.module.ModuleRequireVisitor;
+var ModuleSymbol = traceur.semantics.symbols.ModuleSymbol;
+var ModuleTransformer = traceur.codegeneration.ModuleTransformer;
+var ParseTreeFactory = traceur.codegeneration.ParseTreeFactory;
+var ParseTreeTransformer = traceur.codegeneration.ParseTreeTransformer;
+var Parser = traceur.syntax.Parser;
+var Program = traceur.syntax.trees.Program;
+var ProgramTransformer = traceur.codegeneration.ProgramTransformer;
+var Project = traceur.semantics.symbols.Project;
+var SourceFile = traceur.syntax.SourceFile
+var SourceMapGenerator = traceur.outputgeneration.SourceMapGenerator;
+var TreeWriter = traceur.outputgeneration.TreeWriter;
+
+var canonicalizeUrl = traceur.util.canonicalizeUrl;
+var createIdentifierExpression = ParseTreeFactory.createIdentifierExpression;
+var createIdentifierToken = ParseTreeFactory.createIdentifierToken;
+var resolveUrl = traceur.util.resolveUrl;
+
+/**
+ * Wraps a program in a module definition.
+ * @param  {ProgramTree} tree The original program tree.
+ * @param  {string} url The relative URL of the module that the program
+ *     represents.
+ * @param {string} commonPath The base path of all the files. This is passed
+ *     along to |generateNameForUrl|.
+ * @return {[ProgramTree} A new program tree with only one statement, which is
+ *     a module definition.
+ */
+function wrapProgram(tree, url, commonPath) {
+  var name = generateNameForUrl(url, commonPath);
+  return new Program(null,
+      [new ModuleDefinition(null,
+          createIdentifierToken(name), tree.programElements)]);
+}
+
+/**
+ * This transformer replaces
+ *
+ *   import * from "url"
+ *
+ * with
+ *
+ *   import * from $_name_associated_with_url
+ *
+ * @param {string} url The base URL that all the modules should be relative
+ *     to.
+ * @param {string} commonPath The path that is common for all URLs.
+ */
+function ModuleRequireTransformer(url, commonPath) {
+  ParseTreeTransformer.call(this);
+  this.url = url;
+  this.commonPath = commonPath;
+}
+
+ModuleRequireTransformer.prototype = {
+  __proto__: ParseTreeTransformer.prototype,
+  transformModuleRequire: function(tree) {
+    var url = tree.url.processedValue;
+
+    // Don't handle builtin modules.
+    if (url.charAt(0) === '@')
+      return tree;
+    url = resolveUrl(this.url, url);
+
+    return createIdentifierExpression(generateNameForUrl(url, this.commonPath));
+  }
+};
+
+var startCodeUnit;
+
+/**
+ * @param {ErrorReporter} reporter
+ * @param {Project} project
+ * @param {Array.<ParseTree>} elements
+ * @param {string|undefined} depTarget A valid depTarget means dependency
+ *     printing was requested.
+ */
+function InlineCodeLoader(reporter, project, elements, depTarget) {
+  InternalLoader.call(this, reporter, project, new NodeLoader);
+  this.elements = elements;
+  this.dirname = project.url;
+  this.depTarget = depTarget && path.relative('.', depTarget);
+  this.codeUnitList = [];
+}
+
+InlineCodeLoader.prototype = {
+  __proto__: InternalLoader.prototype,
+
+  evalCodeUnit: function(codeUnit) {
+    // Don't eval. Instead append the trees to the output.
+    var tree = codeUnit.transformedTree;
+    this.elements.push.apply(this.elements, tree.programElements);
+  },
+
+  transformCodeUnit: function(codeUnit) {
+    var transformer = new ModuleRequireTransformer(codeUnit.url, this.dirname);
+    var tree = transformer.transformAny(codeUnit.tree);
+    if (this.depTarget)
+      console.log('%s: %s', this.depTarget,
+                  path.relative(path.join(__dirname, '../..'), codeUnit.url));
+    if (codeUnit === startCodeUnit)
+      return tree;
+    return wrapProgram(tree, codeUnit.url, this.dirname);
+  }
+};
+
+function allLoaded(url, reporter, elements) {
+  var project = new Project(url);
+  var programTree = new Program(null, elements);
+
+  var file = new SourceFile(project.url, '/* dummy */');
+  project.addFile(file);
+  project.setParseTree(file, programTree);
+
+  var analyzer = new ModuleAnalyzer(reporter, project);
+  analyzer.analyze();
+
+  var transformer = new ProgramTransformer(reporter, project);
+  return transformer.transform(programTree);
+}
+
+/**
+ * Compiles the files in "filenames" along with any associated modules, into a
+ * single js file, in proper module dependency order.
+ *
+ * @param {Array.<string>} filenames The list of files to compile and concat.
+ * @param {Object} options A container for misc options. 'depTarget' is the
+ *     only currently available option, which results in the dependencies for
+ *     'filenames' being printed to stdout, with 'depTarget' as the target.
+ * @param {ErrorReporter} reporter
+ * @param {Function} callback Callback used to return the result. A null result
+ *     indicates that inlineAndCompile has returned successfully from a
+ *     non-compile request.
+ * @param {Function} errback Callback used to return errors.
+ */
+function inlineAndCompile(filenames, options, reporter, callback, errback) {
+
+  // The caller needs to do a chdir.
+  var basePath = './';
+  var depTarget = options && options.depTarget;
+
+  var loadCount = 0;
+  var elements = [];
+  var project = new Project(basePath);
+  var loader = new InlineCodeLoader(reporter, project, elements, depTarget);
+
+  function loadNext() {
+    var codeUnit = loader.load(filenames[loadCount]);
+    startCodeUnit = codeUnit;
+
+    codeUnit.addListener(function() {
+      loadCount++;
+      if (loadCount < filenames.length) {
+        loadNext();
+      } else if (depTarget) {
+        callback(null);
+      } else {
+        var tree = allLoaded(basePath, reporter, elements);
+        callback(tree);
+      }
+    }, function() {
+      console.error(codeUnit.loader.error);
+      errback(codeUnit.loader.error);
+    });
+  }
+
+  loadNext();
+}
+
+function inlineAndCompileSync(filenames, options, reporter) {
+  // The caller needs to do a chdir.
+  var basePath = './';
+  var depTarget = options && options.depTarget;
+
+  var loadCount = 0;
+  var elements = [];
+  var project = new Project(basePath);
+  var loader = new InlineCodeLoader(reporter, project, elements, depTarget);
+
+  filenames.forEach(function(filename) {
+    filename = resolveUrl(basePath, filename);
+    startCodeUnit = loader.getCodeUnit(filename);
+    loader.loadSync(filename);
+  });
+  return allLoaded(basePath, reporter, elements);
+}
+
+exports.inlineAndCompile = inlineAndCompile;
+exports.inlineAndCompileSync = inlineAndCompileSync;
+
+},{"./NodeLoader.js":33,"fs":15,"path":16}],35:[function(require,module,exports){
+// Copyright 2013 Traceur Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+'use strict';
+
+//var Module = require('module');
+var traceur = require('./traceur.js');
+var inlineAndCompileSync = require('./inline-module.js').inlineAndCompileSync;
+
+var TreeWriter = traceur.outputgeneration.TreeWriter;
+var ErrorReporter = traceur.util.ErrorReporter;
+
+var ext = '.traceur-compiled';
+
+Module._extensions[ext] = function(module, filename) {
+  module.filename = filename.slice(0, -ext.length);
+  module._compile(module.compiledCode, module.filename);
+};
+
+function compile(filename) {
+  var reporter = new ErrorReporter();
+  var tree = inlineAndCompileSync([filename], null, reporter);
+  if (reporter.hadError()) {
+    // TODO(arv): Provide a SyntaxErrorReporter that throws a SyntaxError on the
+    // first error.
+    throw new Error();
+  }
+
+  return TreeWriter.write(tree);
+}
+
+function traceurRequire(filename) {
+  var source = compile(filename);
+  var module = new Module(filename, require.main);
+  module.compiledCode = source;
+  module.load(filename + ext);
+  return module.exports;
+};
+
+var filters = [];
+var originalRequireJs = Module._extensions['.js'];
+
+function shouldCompile(filename) {
+  if (filters.length === 0)
+    return true;
+  for (var i = 0; i < filters.length; i++) {
+    if (filters[i].call(null, filename))
+      return true;
+  }
+  return false;
+}
+
+traceurRequire.makeDefault = function(filter) {
+  if (!filter)
+    filters = [];
+  else
+    filters.push(filter);
+
+  Module._extensions['.js'] = function(module, filename) {
+    if (shouldCompile(filename)) {
+      var source = compile(filename)
+      return module._compile(source, filename);
+    }
+    return originalRequireJs(module, filename);
+  };
+};
+
+module.exports = traceurRequire;
+
+},{"./inline-module.js":34,"./traceur.js":36}],36:[function(require,module,exports){
+// Copyright 2012 Traceur Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+var fs = require('fs');
+var path = require('path');
+
+var filename = '../../bin/traceur.js';
+filename = path.join(path.dirname(module.filename), filename);
+var data = fs.readFileSync(filename, 'utf8');
+if (!data)
+  throw new Error('Failed to import ' + filename);
+
+('global', eval)(data);
+
+// traceur is a module and thus frozen.
+module.exports = {
+  __proto__: traceur,
+  // Wrap in a getter to break cyclic dependencies.
+  get require() {
+    return require('./require.js');
+  }
+};
+
+},{"./require.js":35,"fs":15,"path":16}]},{},[6,7,8,9])
 ;
