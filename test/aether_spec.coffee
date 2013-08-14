@@ -1,7 +1,3 @@
-_ = require 'lodash'
-window?._ = _
-global?._ = _
-self?._ = _
 Aether = require '../aether'
 
 describe "Aether", ->
@@ -18,6 +14,3 @@ describe "Aether", ->
     it "Compiles a blank piece of code", ->
       raw = ""
       expect(aether.canTranspile(raw)).toEqual true
-      
-
-

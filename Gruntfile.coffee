@@ -63,10 +63,10 @@ module.exports = (grunt) ->
         dest: 'build/<%= pkg.name %>.js'
         options:
           #standalone: "Aether"  # can't figure out how to get this to work
-          ignore: 'lodash'
-      test:
-        src: ['lib/test/*.js']
-        dest: 'build/test/<%= pkg.name %>_specs.js'
+          ignore: ['lodash', 'traceur']
+      #test:  # We're not using jasmine but now jasmine-node, so we don't need to browserify the tests
+      #  src: ['lib/test/*.js']
+      #  dest: 'build/test/<%= pkg.name %>_specs.js'
 
     concat:
       build:

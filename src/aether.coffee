@@ -1,8 +1,9 @@
 _ = window?._ ? self?._ ? global?._ ? require 'lodash'  # rely on lodash existing, since it busts CodeCombat to browserify it--TODO
+traceur = window?.traceur ? self?.traceur ? global?.traceur ? require 'traceur'  # rely on traceur existing, since it busts CodeCombat to browserify it--TODO
+
 #esprima = require 'esprima'  # getting our Esprima Harmony
 falafel = require 'falafel'  # pulls in dev stock Esprima
 jshint = require('jshint').JSHINT
-#traceur = require 'traceur/src/runtime/runtime'
 
 defaults = require './defaults'
 problems = require './problems'
