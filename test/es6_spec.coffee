@@ -3,6 +3,10 @@ window?._ = _
 global?._ = _
 self?._ = _
 traceur = require 'traceur'
+window?.traceur = traceur
+global?.traceur = traceur
+self?.traceur = traceur
+
 Aether = require '../aether'
 
 describe "ES6 Test Suite", ->

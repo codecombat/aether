@@ -1817,6 +1817,18 @@ var global=self;(function() {
 
   traceur = require('traceur');
 
+  if (typeof window !== "undefined" && window !== null) {
+    window.traceur = traceur;
+  }
+
+  if (typeof global !== "undefined" && global !== null) {
+    global.traceur = traceur;
+  }
+
+  if (typeof self !== "undefined" && self !== null) {
+    self.traceur = traceur;
+  }
+
   Aether = require('../aether');
 
   describe("ES6 Test Suite", function() {
