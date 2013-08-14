@@ -4,6 +4,8 @@ traceur = window?.traceur ? self?.traceur ? global?.traceur ? require 'traceur' 
 #esprima = require 'esprima'  # getting our Esprima Harmony
 falafel = require 'falafel'  # pulls in dev stock Esprima
 jshint = require('jshint').JSHINT
+normalizer = require 'JS_WALA/normalizer/lib/normalizer'
+escodegen = require 'escodegen'
 
 defaults = require './defaults'
 problems = require './problems'
@@ -148,6 +150,12 @@ module.exports = class Aether
     tree.generatedSource = traceur.outputgeneration.TreeWriter.write(tree, opts)
     tree.generatedSource
 
+  normalize: (ast) ->
+    console.log "About to normalize:", ast, '\n', escodegen.generate(ast)
+    normalized = normalizer.normalize(ast)
+    console.log "Normalized:", normalized, '\n', escodegen.generate(normalized)
+    normalized
+
   #### TODO: this stuff is all the old CodeCombat Cook way of doing it ####
   cook: ->
     @methodType = @options.methodType or "instance"  # TODO: this is old
@@ -156,6 +164,13 @@ module.exports = class Aether
     wrapped = @checkCommonMistakes wrapped
     @vars = {}
     @methodLineNumbers = ([] for i in @raw.split('\n'))
+
+    ast = esprima.parse(wrapped, loc: true, range: true, raw: true, comment: true, tolerant: true)
+    try
+      normalized = @normalize(ast)
+    catch error
+      console.log "Couldn't normalize", error.message
+      throw error
 
     try
       output = falafel wrapped, {}, @transform
