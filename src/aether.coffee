@@ -5,7 +5,6 @@ esprima = require 'esprima'  # getting our Esprima Harmony
 jshint = require('jshint').JSHINT
 normalizer = require 'JS_WALA/normalizer/lib/normalizer'
 escodegen = require 'escodegen'
-estraverse = require 'estraverse'
 
 defaults = require './defaults'
 problems = require './problems'
@@ -96,7 +95,6 @@ module.exports = class Aether
 
   createFunction: ->
     # Return a ready-to-execute, instrumented function from the purified code
-    console.log "About to create function from", @pure, @options.functionParameters.join(', ')
     new Function @options.functionParameters.join(', '), @pure
 
   createMethod: ->
@@ -153,9 +151,9 @@ module.exports = class Aether
     tree.generatedSource
 
   normalize: (ast) ->
-    console.log "About to normalize:", ast, '\n', escodegen.generate(ast)
+    #console.log "About to normalize:", ast, '\n', escodegen.generate(ast)
     normalized = normalizer.normalize(ast)
-    console.log "Normalized:", normalized, '\n', escodegen.generate(normalized)
+    #console.log "Normalized:", normalized, '\n', escodegen.generate(normalized)
     normalized
 
   #### TODO: this stuff is all the old CodeCombat Cook way of doing it ####
@@ -178,90 +176,12 @@ module.exports = class Aether
     # ... we can basically just put a yield check in after every CallExpression except the outermost one if we are yielding conditionally.
     # TODO: only do this conditionally, skip the outermost check, also handle the case where we want to yield after every original statement.
     Syntax = esprima.Syntax
-    blocks = []
-    instrumented = estraverse.replace normalized, {
-      enter: (node) ->
-        block = blocks[blocks.length - 1] if blocks.length
-        #console.log "Got", node.type, node
-        if block? and node.type in [Syntax.ExpressionStatement, Syntax.VariableDeclaration, Syntax.ReturnStatement, Syntax.LabeledStatement, Syntax.WhileStatement, Syntax.IfStatement]
-          # Handle more statements? EmptyStatement, ExpressionStatement, BreakStatement, ContinueStatement, DebuggerStatement, DoWhileStatement, ForStatement, FunctionDeclaration, ClassDeclaration, IfStatement, ReturnStatement, SwitchStatement, ThrowStatement, TryStatement, VariableStatement, WhileStatement, WithStatement
-          ++block.statementIndex
-          block.body.push node
-          #console.log "-------- Incremented block statement index to", block.statementIndex, "for", node
-        switch node.type
-          when Syntax.BlockStatement
-            #console.log "Entering block statement:", node
-            blocks.push {block: node, statementIndex: 0, body: []}
-            #console.log "   ", blocks[blocks.length - 1]
-          when Syntax.CallExpression
-            #console.log "Entering call expression:", node, block
-            if block?
-              #yieldGuard =
-              #  type: Syntax.ExpressionStatement
-              #  expression:
-              #    type: Syntax.Literal
-              #    value: "Hohoho"
-              #    raw: "Hohoho"
-              yieldGuard =
-                type: Syntax.IfStatement
-                test:
-                  type: Syntax.MemberExpression
-                  computed: false
-                  object:
-                    type: Syntax.ThisExpression
-                  property:
-                    type: Syntax.Identifier
-                    name: "_shouldYield"
-                consequent:
-                  type: Syntax.BlockStatement
-                  body: [
-                      type: Syntax.ExpressionStatement
-                      expression:
-                        type: Syntax.AssignmentExpression
-                        operator: "="
-                        left:
-                          type: Syntax.MemberExpression
-                          computed: false
-                          object:
-                            type: Syntax.ThisExpression
-                          property:
-                            type: Syntax.Identifier
-                            name: "_shouldYield"
-                        right:
-                          type: Syntax.Literal
-                          value: false
-                          raw: "false"
-                    ,
-                      type: Syntax.ExpressionStatement
-                      expression:
-                        type: Syntax.YieldExpression
-                        argument:
-                          type: Syntax.Literal
-                          value: "waiting..."
-                          raw: "waiting..."
-                        delegate: false  # not sure what this should be
-                  ]
-                alternate: null
-              console.log "Inserting", yieldGuard, "into", block.block.body.slice(), "at", block.statementIndex
-              block.body.push yieldGuard
-        node
-      leave: (node) ->
-        block = blocks[blocks.length - 1] if blocks.length
-        switch node.type
-          when Syntax.BlockStatement
-            #console.log "Leaving block statement:", node
-            block = blocks.pop()
-            node = _.clone node
-            node.body = block.body
-            return node
-          #when Syntax.CallExpression
-            #console.log "Leaving call expression:", node
-        node
-    }
+    instrumented = morph escodegen.generate(normalized), (node) ->
+      grandparent = node.parent?.parent
+      if node.type is Syntax.CallExpression and grandparent?.type is Syntax.ExpressionStatement
+        grandparent.update "#{grandparent.source()} if (this._shouldYield) { this._shouldYield = false; yield 'waiting...'; }"
 
-    console.log "Now we have:\n", escodegen.generate(instrumented)
-
-    #instrumented2 = morph escodegen.generate(normalized), ->
+    #console.log "Now we have:\n", instrumented
 
     try
       output = morph wrapped, @transform
@@ -274,7 +194,6 @@ module.exports = class Aether
       pureError = @purifyError error.message, userInfo
       @cookedCode = ''
       return
-    console.log "Got output", output
     @cookedCode = Aether.getFunctionBody output
 
   transform: (node) =>
