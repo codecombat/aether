@@ -8,10 +8,11 @@
 
 module.exports.UserCodeProblem = class UserCodeProblem
   @className: "UserCodeProblem"
-  constructor: (err, code, aether, source='unknown', codePrefix="function wrapped() {\n\"use strict\";\n") ->
-    #console.log "Converting", err, "to a UserCodeProblem"
+  constructor: (error, code, aether, source='unknown', codePrefix="function wrapped() {\n\"use strict\";\n") ->
+    #console.log "Converting", error, "to a UserCodeProblem"
     originalLines = code.slice(codePrefix.length).split '\n'
-    @id = @getProblemID err, source
+    lineOffset = codePrefix.split('\n').length - 1
+    @id = @getProblemID error, source
     problemConfig = aether.options.problems[@id]
     @type = 'transpile'
     @level = problemConfig?.level ? "error"
@@ -19,20 +20,27 @@ module.exports.UserCodeProblem = class UserCodeProblem
     @hint = problemConfig?.hint
 
     if source is 'jshint'
-      @message = err.reason
-      line = err.line - codePrefix.split('\n').length
+      @message = error.reason
+      line = error.line - codePrefix.split('\n').length
       if line >= 0
-        startCol = originalLines[line].indexOf err.evidence
-        endCol = startCol + err.evidence.length
+        startCol = originalLines[line].indexOf error.evidence
+        endCol = startCol + error.evidence.length
         @ranges = [[[line, startCol], [line, endCol]]]
       else
         # TODO: if we type an unmatched {, for example, then it thinks that line -2's function wrapped() { is unmatched...
         @ranges = [[[0, 0], [originalLines.length - 1, originalLines[originalLines.length - 1].length - 1]]]
+    else if source is 'esprima'
+      @message = error.message
+      # TODO: column range should extend to whole token. Mod Esprima, or extend to end of line?
+      @ranges = [[[error.lineNumber - 1 - lineOffset, error.column - 1], [error.lineNumber - 1 - lineOffset, error.column]]]
+    else
+      console.log "Unhandled UserCodeProblem source", source
+      @message = problemConfig?.message ? "Unknoooown problem"
 
-  getProblemID: (err, source) ->
+  getProblemID: (error, source) ->
     id = switch source
-      when 'jshint' then err.code
-      else err.id or "Unknown"
+      when 'jshint' then error.code
+      else error.id or "Unknown"
     source + "_" + id
 
   serialize: ->

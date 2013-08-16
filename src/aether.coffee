@@ -66,11 +66,8 @@ module.exports = class Aether
   transpile: (@raw) ->
     # Transpile it. Even if it can't transpile, it will give syntax errors and warnings and such. Clears any old state.
     @reset()
-
     @problems = @lint @raw
-    return if @problems.errors.length  # TODO: should make CodeCombat use this as an error state for its guys
-
-    @pure = @cook()  # TODO: for now we're just cooking like old CodeCombat Cook did
+    @pure = @purifyCode @raw
     @pure
 
   lint: (raw) ->
@@ -151,16 +148,23 @@ module.exports = class Aether
     tree.generatedSource = traceur.outputgeneration.TreeWriter.write(tree, opts)
     tree.generatedSource
 
-  #### TODO: this stuff is all the old CodeCombat Cook way of doing it ####
-  cook: ->
-    #wrapped = "function wrapped() {\n\"use strict\";\n#{@raw}\n}"
-    wrapped = @raw
-    wrapped = @checkCommonMistakes wrapped
+  purifyCode: (rawCode) ->
+    wrappedCode = @checkCommonMistakes rawCode
     @vars = {}
-    @methodLineNumbers = ([] for i in @raw.split('\n'))
+    @methodLineNumbers = ([] for i in rawCode.split('\n'))
 
     # TODO: need to insert 'use strict' after normalization, since otherwise you get tmp2 = 'use strict'
-    wrappedAST = esprima.parse(wrapped, loc: true, range: true, raw: true, comment: true, tolerant: true)
+    try
+      wrappedAST = esprima.parse(wrappedCode, loc: true, range: true, raw: true, comment: true, tolerant: true)
+    catch error
+      problem = new problems.UserCodeProblem error, wrappedCode, @, 'esprima', ''
+      if problem.level in ["ignore", "info", "warning"]
+        console.log "Esprima can't survive", problem.serialize(), "at level", problem.level
+        problem.level = "error"
+      @problems[problem.level + "s"].push problem
+      # Now what? Return an empty string?
+      return ''
+
     normalizedAST = normalizer.normalize wrappedAST
     normalizedCode = escodegen.generate normalizedAST
     morphers = [transforms.checkIncompleteMembers, transforms.instrumentStatements]
@@ -169,7 +173,7 @@ module.exports = class Aether
     morphers.unshift transforms.yieldAutomatically if @options.yieldAutomatically
     morphers.unshift transforms.addThis unless @options.requireThis
     try
-      instrumented = morph normalizedCode, (_.bind m, @ for m in morphers)
+      instrumentedCode = morph normalizedCode, (_.bind m, @ for m in morphers)
     catch error
       # TODO: change this to generating UserCodeProblems instead
       lineNumber = if error.lineNumber? then error.lineNumber - 1 else null
@@ -179,12 +183,12 @@ module.exports = class Aether
       console.log "Whoa, got me an error!", error, userInfo
       pureError = @purifyError error.message, userInfo
       return ''
-    traceured = @es6ify "return " + instrumented
+    traceuredCode = @es6ify "return " + instrumentedCode
     if false
-      console.log "----RAW CODE----: #{@raw.split('\n').length}\n", {code: @raw}
-      console.log "---NORMALIZED---: #{instrumented.split('\n').length}\n", {code: "return " + instrumented}
-      console.log "----TRACEURED---: #{traceured.split('\n').length}\n", {code: traceured}
-    return traceured
+      console.log "---RAW CODE----: #{rawCode.split('\n').length}\n", {code: rawCode}
+      console.log "---NORMALIZED--: #{instrumentedCode.split('\n').length}\n", {code: "return " + instrumentedCode}
+      console.log "---TRACEURED---: #{traceuredCode.split('\n').length}\n", {code: traceuredCode}
+    return traceuredCode
 
   getLineNumberForPlannedMethod: (plannedMethod, numMethodsSeen) ->
     n = 0
