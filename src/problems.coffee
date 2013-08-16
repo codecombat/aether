@@ -21,9 +21,13 @@ module.exports.UserCodeProblem = class UserCodeProblem
     if source is 'jshint'
       @message = err.reason
       line = err.line - codePrefix.split('\n').length
-      startCol = originalLines[line].indexOf err.evidence
-      endCol = startCol + err.evidence.length
-      @ranges = [[[line, startCol], [line, endCol]]]
+      if line >= 0
+        startCol = originalLines[line].indexOf err.evidence
+        endCol = startCol + err.evidence.length
+        @ranges = [[[line, startCol], [line, endCol]]]
+      else
+        # TODO: if we type an unmatched {, for example, then it thinks that line -2's function wrapped() { is unmatched...
+        @ranges = [[[0, 0], [originalLines.length - 1, originalLines[originalLines.length - 1].length - 1]]]
 
   getProblemID: (err, source) ->
     id = switch source

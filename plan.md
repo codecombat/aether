@@ -181,30 +181,33 @@ aether.problems.errors;  // I'll pretend that the plan.md line numbers are the a
 // We couldn't show all of these at one because we'll probably get hung up on missing curly braces or whatever, but eventually as they fixed things they'd see them.
 // ->
 [
-    {ranges: [[[6, 20], [6, 25]]], id: 'aether_UnexpectedIdentifier', message: 'Missing operator or function call between `dy` and `dy`.', hint: 'How does `dy` relate to `dy`? `dy + dy`? `dy(dy)`? Or maybe a string: "dy dy"?' }
-    {ranges: [[[15, 1], [15, 16]]], id: 'aether_MissingVarKeyword', message: 'Missing `var` keyword when defining near variable `nearestDistance`.', hint: 'Try `var nearestDistance = 9001;`. New variables need the `var` keyword.'}
-    {ranges: [[[24, 24], [24, 30]]], id: 'aether_UndefinedVariable', message: 'No variable `enemyy`. Did you mean `enemy`?' hint: '`enemyy is not defined yet, so `nearestEnemy = enemyy` would throw an error.'}
-    {ranges: [[[15, 15], [15, 22]]], id: 'aether_UndefinedProperty', message: 'No method `getEnemyys`. Did you mean `getEnemies`?' hint: '`this` has no method `getEnemys()`, so `this.getEnemys()` would throw an error.'}
+    {ranges: [[[6, 20], [6, 25]]], id: 'aether_UnexpectedIdentifier', message: 'Missing operator or function call between `dy` and `dy`.', hint: 'How does `dy` relate to `dy`? `dy + dy`? `dy(dy)`? Or maybe a string: "dy dy"?', level: "error"},
+    {ranges: [[[15, 1], [15, 16]]], id: 'aether_MissingVarKeyword', message: 'Missing `var` keyword when defining near variable `nearestDistance`.', hint: 'Try `var nearestDistance = 9001;`. New variables need the `var` keyword.', level: "error"},
+    {ranges: [[[24, 24], [24, 30]]], id: 'aether_UndefinedVariable', message: 'No variable `enemyy`. Did you mean `enemy`?' hint: '`enemyy is not defined yet, so `nearestEnemy = enemyy` would throw an error.', level: "error"},
+    {ranges: [[[15, 15], [15, 22]]], id: 'aether_UndefinedProperty', message: 'No method `getEnemyys`. Did you mean `getEnemies`?' hint: '`this` has no method `getEnemys()`, so `this.getEnemys()` would throw an error.', level: "error"}
     // ... many more errors
 ]
 
 aether.problems.warnings;
 // ->
 [
-    {ranges: [[[4, 4], [4, 8]], [[5, 8], [5, 12]]], id: 'aether_FalseBlockIndentation', message: "Block indentation problem. `if` missing braces { }?", hint: "These lines will not be a part of the `if(from.pos)` condition:\n`if(target.pos)  // weird indentation\n    return distanceSquared(from, target.pos);  // |target| as Thang`" },
-    {ranges: [[[15, 15], [15, 22]]], id: 'aether_MissingThis', message: 'Missing `this.` keyword; should be `this.getEnemies`.' hint: 'There is no function `getEnemys`, but `this` has a method `getEnemies`.'}  // ideally this and the Undefined property problem would interact, since it's the one that knows that they mean getEnemies.
+    {ranges: [[[4, 4], [4, 8]], [[5, 8], [5, 12]]], id: 'aether_FalseBlockIndentation', message: "Block indentation problem. `if` missing braces { }?", hint: "These lines will not be a part of the `if(from.pos)` condition:\n`if(target.pos)  // weird indentation\n    return distanceSquared(from, target.pos);  // |target| as Thang`", level: "warning"},
+    {ranges: [[[15, 15], [15, 22]]], id: 'aether_MissingThis', message: 'Missing `this.` keyword; should be `this.getEnemies`.' hint: 'There is no function `getEnemys`, but `this` has a method `getEnemies`.', level: "warning"}  // ideally this and the Undefined property problem would interact, since it's the one that knows that they mean getEnemies.
     // ... many more warnings
 ]
 
 aether.problems.info;
 // ->
 [
-    {ranges: [[[6, 10], [6, 25]]], type: 'aether_SnakeCase', message: '`distanceSquared` is better than `distance_squared`.', hint: "JavaScript convention is lower camelCase, not snake_case. (Upper CamelCase for classes.)"}
+    {ranges: [[[6, 10], [6, 25]]], type: 'aether_SnakeCase', message: '`distanceSquared` is better than `distance_squared`.', hint: "JavaScript convention is lower camelCase, not snake_case. (Upper CamelCase for classes.)", level: "info"}
     // ... many more infos
 ]
 
 // Or, just run the linting without transpiling:
 problems = aether.lint(raw);  // problems should be same as above, but not assigned to aether
+
+// Or, to get all the problems flattened (after transpiling):
+allProblems = aether.getAllProblems();  // [firstError, secondError, ..., firstWarning, ..., firstInfo, ...]
 
 aether.style;
 // -> (after having transpiled)
@@ -361,7 +364,7 @@ for(var thangID in world.userCodeMap)
 allErrors;
 // ->
 [
-    {ranges: [[[22, 1], [22, 13]], [[15, 1], [15, 18]], [[18, 1], [18, 14]]], type: 'ArgumentError', message: '`getNearestEnemy()` should return a `Thang` or `null`, not a string (`"Goreball"`).', hint: 'You returned `nearestEnemy`, which had value `"Goreball"`. Check lines 15 and 18 for mistakes setting `nearestEnemy`.', callNumber: 118, statementNumber: 25, userInfo: {frameNumber: 25} }
+    {ranges: [[[22, 1], [22, 13]], [[15, 1], [15, 18]], [[18, 1], [18, 14]]], id: 'ArgumentError', message: '`getNearestEnemy()` should return a `Thang` or `null`, not a string (`"Goreball"`).', hint: 'You returned `nearestEnemy`, which had value `"Goreball"`. Check lines 15 and 18 for mistakes setting `nearestEnemy`.', level: "error", callNumber: 118, statementNumber: 25, userInfo: {frameNumber: 25} }
 ]
 ```
 

@@ -11,6 +11,7 @@ problems = require './problems'
 execution = require './execution'
 errors = require './errors'
 morph = require './morph'
+transforms = require './transforms'
 
 optionsValidator = require './validators/options'
 
@@ -55,7 +56,6 @@ module.exports = class Aether
     return raw isnt oldAether.raw
 
   reset: ->
-
     @problems = errors: [], warnings: [], infos: []
     @style = {}
     @flow = {}
@@ -68,6 +68,7 @@ module.exports = class Aether
     @reset()
 
     @problems = @lint @raw
+    return if @problems.errors.length  # TODO: should make CodeCombat use this as an error state for its guys
 
     @pure = @cook()  # TODO: for now we're just cooking like old CodeCombat Cook did
     @pure
@@ -150,102 +151,49 @@ module.exports = class Aether
     tree.generatedSource = traceur.outputgeneration.TreeWriter.write(tree, opts)
     tree.generatedSource
 
-  normalize: (ast) ->
-    #console.log "About to normalize:", ast, '\n', escodegen.generate(ast)
-    normalized = normalizer.normalize(ast)
-    #console.log "Normalized:", normalized, '\n', escodegen.generate(normalized)
-    normalized
-
   #### TODO: this stuff is all the old CodeCombat Cook way of doing it ####
   cook: ->
     @methodType = @options.methodType or "instance"  # TODO: this is old
     @requireThis = @options.requireThis ? false  # TODO: this is old
-    wrapped = "function wrapped() {\n\"use strict\";\n#{@raw}\n}"
+    #wrapped = "function wrapped() {\n\"use strict\";\n#{@raw}\n}"
+    wrapped = @raw
     wrapped = @checkCommonMistakes wrapped
     @vars = {}
     @methodLineNumbers = ([] for i in @raw.split('\n'))
 
-    ast = esprima.parse(wrapped, loc: true, range: true, raw: true, comment: true, tolerant: true)
+    # TODO: need to insert 'use strict' after normalization, since otherwise you get tmp2 = 'use strict'
+    wrappedAST = esprima.parse(wrapped, loc: true, range: true, raw: true, comment: true, tolerant: true)
+    normalizedAST = normalizer.normalize wrappedAST
+    normalizedCode = escodegen.generate normalizedAST
+    morphers = [transforms.instrumentStatements]
+    morphers.unshift transforms.validateReturns if @options.thisValue?.validateReturn  # TODO: this should be part of Aether
+    morphers.unshift transforms.yieldConditionally if @options.yieldConditionally
+    morphers.unshift transforms.yieldAutomatically if @options.yieldAutomatically
+    morphers.unshift transforms.addThis unless @requireThis
     try
-      normalized = @normalize(ast)
-    catch error
-      console.log "Couldn't normalize", error.message
-      throw error
-
-    # Now that it's normalized to this: https://github.com/nwinter/JS_WALA/blob/master/normalizer/doc/normalization.md
-    # ... we can basically just put a yield check in after every CallExpression except the outermost one if we are yielding conditionally.
-    # TODO: only do this conditionally, skip the outermost check, also handle the case where we want to yield after every original statement.
-    Syntax = esprima.Syntax
-    instrumented = morph escodegen.generate(normalized), (node) ->
-      grandparent = node.parent?.parent
-      if node.type is Syntax.CallExpression and grandparent?.type is Syntax.ExpressionStatement
-        grandparent.update "#{grandparent.source()} if (this._shouldYield) { this._shouldYield = false; yield 'waiting...'; }"
-
-    #console.log "Now we have:\n", instrumented
-
-    try
-      output = morph wrapped, @transform
+      instrumented = morph normalizedCode, (_.bind m, @ for m in morphers)
     catch error
       # TODO: change this to generating UserCodeProblems instead
       lineNumber = if error.lineNumber? then error.lineNumber - 1 else null
       column = error.column
-      userInfo = thangID: @options.thisValue.id, thangSpriteName: @options.thisValue.spriteName, methodName: @options.functionName, methodType: @methodType, lineNumber: lineNumber, column: column
+      userInfo = thangID: @options.thisValue?.id, thangSpriteName: @options.thisValue?.spriteName, methodName: @options.functionName, methodType: @methodType, lineNumber: lineNumber, column: column
       console.log "Whoa, got me an error!", error, userInfo
       pureError = @purifyError error.message, userInfo
       @cookedCode = ''
       return
-    @cookedCode = Aether.getFunctionBody output
+    #console.log "Now we have:\n", "return " + instrumented
+    traceured = @es6ify "return " + instrumented
+    #console.log "Finally we have:\n", traceured
+    @cookedCode = traceured
+    return @cookedCode
 
-  transform: (node) =>
-    #if $? then console.log "Doing node", node, node.source()
-
-    unless @requireThis
-      if node.type is 'VariableDeclarator'
-        @vars[node.id] = true
-      else if node.type is 'CallExpression'
-        if node.callee.name and not @vars[node.callee.name] and not (@options.global[node.callee.name])
-          node.update "this.#{node.source()}"
-      else if node.type is 'ReturnStatement' and not node.argument
-        node.update "return this.validateReturn('#{@options.functionName}', null);"
-      else if node.parent?.type is 'ReturnStatement'
-        node.update "this.validateReturn('#{@options.functionName}', (#{node.source()}))"
-
-    if node.type is 'ExpressionStatement'
-      lineNumber = Aether.getLineNumberForNode node, true
-      exp = node.expression
-      if exp.type is 'CallExpression'
-        # Quick hack to handle tracking line number for plan() method invocations
-        if exp.callee.type is 'MemberExpression'
-          name = exp.callee.property.name
-        else if exp.callee.type is 'Identifier'
-          name = exp.callee.name  # say() without this... (even though I added this)
-        else if $?
-          console.log "How is this CallExpression being handled?", node, node.source(), exp.callee, exp.callee.source()
-        if @methodLineNumbers.length > lineNumber
-          @methodLineNumbers[lineNumber].push name
-        else
-          console.log "More lines than we can actually handle:", lineNumber, name, "of", @methodLineNumbers.length, "lines"
-      else if exp.type is 'MemberExpression'
-        # Handle missing parentheses, like in:  this.moveUp;
-        if exp.property.name is "IncompleteThisReference"
-          m = "this.what? (Check available spells below.)"
-        else
-          m = "#{exp.source()} has no effect."
-          if exp.property.name in errors.commonMethods
-            m += " It needs parentheses: #{exp.property.name}()"
-        error = new Error m
-        error.lineNumber = lineNumber + 2  # Reapply wrapper function offset
-        #if $? then console.log node, node.source(), "going to error out!"
-        throw error
-
-    #if $? then console.log "Did node", node, node.source()  # avoid DataClone error in worker
-
-    #if node.type is 'Program'
-    #  node.update """
-    #                 "use strict";
-    #                 #{node.source()}
-    #              """
-    # Also insert instrumentation here
+    #f = new Function [], traceured
+    #thisValue = {}
+    #f.apply thisValue
+    #console.log "Now thisValue.wrapped is", thisValue.wrapped
+    #@cookedCode = Aether.getFunctionBody thisValue.wrapped
+    #console.log "Got cookedCode:", @cookedCode
+    #@cookedCode
 
   getLineNumberForPlannedMethod: (plannedMethod, numMethodsSeen) ->
     n = 0
@@ -262,19 +210,6 @@ module.exports = class Aether
     # If we wanted to do it just when it would hit the ending } but allow multiline this refs:
     #code = code.replace /this.(\s+})$/, "this.IncompleteThisReference;$1"
     code
-
-  @getLineNumberForNode: (node, forRawCode=false) ->
-    # If forRawCode, then we ignore the first two wrapper lines
-    parent = node
-    while parent.type isnt "Program"
-      parent = parent.parent
-    fullSource = parent.source()
-    line = if forRawCode then -2 else 0
-    for i in [0 ... node.range[0]]
-      if fullSource[i] is '\n'
-        ++line
-    #console.log "getLineNumberFor", node, forRawCode, "of", fullSource, "is", line
-    line
 
   @getFunctionBody: (func) ->
     # Remove function() { ... } wrapper and any extra indentation

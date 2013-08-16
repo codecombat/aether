@@ -70,7 +70,7 @@ module.exports = (grunt) ->
 
     concat:
       build:
-        src: ['build/<%= pkg.name %>.js', 'node_modules/traceur/bin/traceur.js']
+        src: ['node_modules/traceur/bin/traceur.js', 'build/<%= pkg.name %>.js']
         dest: 'build/<%= pkg.name %>.js'
 
     copy:
@@ -87,8 +87,9 @@ module.exports = (grunt) ->
   grunt.loadNpmTasks 'grunt-browserify'
   grunt.loadNpmTasks 'grunt-contrib-copy'
   grunt.loadNpmTasks 'grunt-contrib-concat'
+  grunt.loadNpmTasks 'grunt-notify'
 
   # Default task(s).
   grunt.registerTask 'default', ['coffeelint', 'coffee', 'browserify', 'concat', 'jasmine-node', 'copy', 'uglify']
   grunt.registerTask 'travis', ['coffeelint', 'coffee', 'browserify', 'concat', 'jasmine-node']
-  grunt.registerTask 'build', ['coffeelint', 'coffee', 'browserify', 'concat', 'uglify', 'copy', 'uglify']
+  grunt.registerTask 'build', ['coffeelint', 'coffee', 'browserify', 'concat', 'copy', 'uglify']

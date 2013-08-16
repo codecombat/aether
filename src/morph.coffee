@@ -1,9 +1,10 @@
 # Based on https://github.com/substack/node-falafel
 # A similar approach could be seen in https://github.com/ariya/esmorph
+_ = window?._ ? self?._ ? global?._ ? require 'lodash'  # rely on lodash existing, since it busts CodeCombat to browserify it--TODO
 
-esprima = require 'esprima'  # getting our Esprima Harmony
+esprima = require 'esprima'
 
-module.exports = morph = (source, transform) ->
+module.exports = morph = (source, transforms) ->
   chunks = source.split ''
   ast = esprima.parse source, range: true
   walk = (node, parent) ->
@@ -16,7 +17,7 @@ module.exports = morph = (source, transform) ->
       else if _.isString child?.type
         insertHelpers child, node, chunks
         walk child, node
-    transform node
+    transform node for transform in transforms
   walk ast, undefined
   chunks.join ''
 
