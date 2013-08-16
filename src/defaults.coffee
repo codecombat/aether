@@ -5,8 +5,9 @@ module.exports = defaults =
   global: {Math: Math, parseInt: parseInt, parseFloat: parseFloat, eval: eval, isNaN: isNaN, escape: escape, unescape: unescape}
   language: "javascript"
   languageVersion: "ES5"
-  functionName: null  # in case we need it for error messages
-  functionParameters: []  # or something like ["target"]
-  yieldAutomatically: false  # horrible name... we could have it auto-insert yields after every statement
-  yieldConditionally: false  # also bad name, but what it would do is make it yield whenever this._shouldYield is true (and clear it)
+  functionName: null  # In case we need it for error messages
+  functionParameters: []  # Or something like ["target"]
+  yieldAutomatically: false  # Horrible name... we could have it auto-insert yields after every statement
+  yieldConditionally: false  # Also bad name, but what it would do is make it yield whenever this._shouldYield is true (and clear it)
+  requiresThis: true  # Whether leaving off "this" is an error, or just a warning which we work around.
   executionCosts: execution

@@ -21124,77 +21124,6 @@ var traceur = (function() {
 
 },{}],2:[function(require,module,exports){
 (function() {
-  var execution;
-
-  module.exports = execution = {
-    ArrayExpression: 1,
-    ArrayPattern: 1,
-    ArrowFunctionExpression: 1,
-    AssignmentExpression: 1,
-    BinaryExpression: 1,
-    BlockStatement: 1,
-    BreakStatement: 1,
-    CallExpression: 1,
-    CatchClause: 1,
-    ClassBody: 1,
-    ClassDeclaration: 1,
-    ClassExpression: 1,
-    ClassHeritage: 1,
-    ComprehensionBlock: 1,
-    ComprehensionExpression: 1,
-    ConditionalExpression: 1,
-    ContinueStatement: 1,
-    DebuggerStatement: 1,
-    DoWhileStatement: 1,
-    EmptyStatement: 1,
-    ExportDeclaration: 1,
-    ExportBatchSpecifier: 1,
-    ExportSpecifier: 1,
-    ExpressionStatement: 1,
-    ForInStatement: 1,
-    ForOfStatement: 1,
-    ForStatement: 1,
-    FunctionDeclaration: 1,
-    FunctionExpression: 1,
-    Identifier: 1,
-    IfStatement: 1,
-    ImportDeclaration: 1,
-    ImportSpecifier: 1,
-    LabeledStatement: 1,
-    Literal: 1,
-    LogicalExpression: 1,
-    MemberExpression: 1,
-    MethodDefinition: 1,
-    ModuleDeclaration: 1,
-    NewExpression: 1,
-    ObjectExpression: 1,
-    ObjectPattern: 1,
-    Program: 1,
-    Property: 1,
-    ReturnStatement: 1,
-    SequenceExpression: 1,
-    SpreadElement: 1,
-    SwitchCase: 1,
-    SwitchStatement: 1,
-    TaggedTemplateExpression: 1,
-    TemplateElement: 1,
-    TemplateLiteral: 1,
-    ThisExpression: 1,
-    ThrowStatement: 1,
-    TryStatement: 1,
-    UnaryExpression: 1,
-    UpdateExpression: 1,
-    VariableDeclaration: 1,
-    VariableDeclarator: 1,
-    WhileStatement: 1,
-    WithStatement: 1,
-    YieldExpression: 1
-  };
-
-}).call(this);
-
-},{}],3:[function(require,module,exports){
-(function() {
   var RuntimeError, UserCodeProblem, problems,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
@@ -22219,6 +22148,77 @@ var traceur = (function() {
 
 }).call(this);
 
+},{}],3:[function(require,module,exports){
+(function() {
+  var execution;
+
+  module.exports = execution = {
+    ArrayExpression: 1,
+    ArrayPattern: 1,
+    ArrowFunctionExpression: 1,
+    AssignmentExpression: 1,
+    BinaryExpression: 1,
+    BlockStatement: 1,
+    BreakStatement: 1,
+    CallExpression: 1,
+    CatchClause: 1,
+    ClassBody: 1,
+    ClassDeclaration: 1,
+    ClassExpression: 1,
+    ClassHeritage: 1,
+    ComprehensionBlock: 1,
+    ComprehensionExpression: 1,
+    ConditionalExpression: 1,
+    ContinueStatement: 1,
+    DebuggerStatement: 1,
+    DoWhileStatement: 1,
+    EmptyStatement: 1,
+    ExportDeclaration: 1,
+    ExportBatchSpecifier: 1,
+    ExportSpecifier: 1,
+    ExpressionStatement: 1,
+    ForInStatement: 1,
+    ForOfStatement: 1,
+    ForStatement: 1,
+    FunctionDeclaration: 1,
+    FunctionExpression: 1,
+    Identifier: 1,
+    IfStatement: 1,
+    ImportDeclaration: 1,
+    ImportSpecifier: 1,
+    LabeledStatement: 1,
+    Literal: 1,
+    LogicalExpression: 1,
+    MemberExpression: 1,
+    MethodDefinition: 1,
+    ModuleDeclaration: 1,
+    NewExpression: 1,
+    ObjectExpression: 1,
+    ObjectPattern: 1,
+    Program: 1,
+    Property: 1,
+    ReturnStatement: 1,
+    SequenceExpression: 1,
+    SpreadElement: 1,
+    SwitchCase: 1,
+    SwitchStatement: 1,
+    TaggedTemplateExpression: 1,
+    TemplateElement: 1,
+    TemplateLiteral: 1,
+    ThisExpression: 1,
+    ThrowStatement: 1,
+    TryStatement: 1,
+    UnaryExpression: 1,
+    UpdateExpression: 1,
+    VariableDeclaration: 1,
+    VariableDeclarator: 1,
+    WhileStatement: 1,
+    WithStatement: 1,
+    YieldExpression: 1
+  };
+
+}).call(this);
+
 },{}],4:[function(require,module,exports){
 (function() {
   var UserCodeError, commonMethods,
@@ -22359,6 +22359,35 @@ var traceur = (function() {
 }).call(this);
 
 },{}],5:[function(require,module,exports){
+(function() {
+  var defaults, execution;
+
+  execution = require('./execution');
+
+  module.exports = defaults = {
+    thisValue: null,
+    global: {
+      Math: Math,
+      parseInt: parseInt,
+      parseFloat: parseFloat,
+      "eval": eval,
+      isNaN: isNaN,
+      escape: escape,
+      unescape: unescape
+    },
+    language: "javascript",
+    languageVersion: "ES5",
+    functionName: null,
+    functionParameters: [],
+    yieldAutomatically: false,
+    yieldConditionally: false,
+    requiresThis: true,
+    executionCosts: execution
+  };
+
+}).call(this);
+
+},{"./execution":3}],6:[function(require,module,exports){
 var global=self;(function() {
   var Aether, defaults, errors, escodegen, esprima, execution, jshint, morph, normalizer, optionsValidator, problems, traceur, transforms, _, _ref, _ref1, _ref2, _ref3, _ref4, _ref5;
 
@@ -22609,18 +22638,16 @@ var global=self;(function() {
     };
 
     Aether.prototype.cook = function() {
-      var column, error, i, instrumented, lineNumber, m, morphers, normalizedAST, normalizedCode, pureError, traceured, userInfo, wrapped, wrappedAST, _ref6, _ref7, _ref8, _ref9;
-      this.methodType = this.options.methodType || "instance";
-      this.requireThis = (_ref6 = this.options.requireThis) != null ? _ref6 : false;
+      var column, error, i, instrumented, lineNumber, m, methodType, morphers, normalizedAST, normalizedCode, pureError, traceured, userInfo, wrapped, wrappedAST, _ref6, _ref7, _ref8;
       wrapped = this.raw;
       wrapped = this.checkCommonMistakes(wrapped);
       this.vars = {};
       this.methodLineNumbers = (function() {
-        var _i, _len, _ref7, _results;
-        _ref7 = this.raw.split('\n');
+        var _i, _len, _ref6, _results;
+        _ref6 = this.raw.split('\n');
         _results = [];
-        for (_i = 0, _len = _ref7.length; _i < _len; _i++) {
-          i = _ref7[_i];
+        for (_i = 0, _len = _ref6.length; _i < _len; _i++) {
+          i = _ref6[_i];
           _results.push([]);
         }
         return _results;
@@ -22634,8 +22661,8 @@ var global=self;(function() {
       });
       normalizedAST = normalizer.normalize(wrappedAST);
       normalizedCode = escodegen.generate(normalizedAST);
-      morphers = [transforms.instrumentStatements];
-      if ((_ref7 = this.options.thisValue) != null ? _ref7.validateReturn : void 0) {
+      morphers = [transforms.checkIncompleteMembers, transforms.instrumentStatements];
+      if ((_ref6 = this.options.thisValue) != null ? _ref6.validateReturn : void 0) {
         morphers.unshift(transforms.validateReturns);
       }
       if (this.options.yieldConditionally) {
@@ -22644,7 +22671,7 @@ var global=self;(function() {
       if (this.options.yieldAutomatically) {
         morphers.unshift(transforms.yieldAutomatically);
       }
-      if (!this.requireThis) {
+      if (!this.options.requireThis) {
         morphers.unshift(transforms.addThis);
       }
       try {
@@ -22661,22 +22688,32 @@ var global=self;(function() {
         error = _error;
         lineNumber = error.lineNumber != null ? error.lineNumber - 1 : null;
         column = error.column;
+        methodType = this.options.methodType || "instance";
         userInfo = {
-          thangID: (_ref8 = this.options.thisValue) != null ? _ref8.id : void 0,
-          thangSpriteName: (_ref9 = this.options.thisValue) != null ? _ref9.spriteName : void 0,
+          thangID: (_ref7 = this.options.thisValue) != null ? _ref7.id : void 0,
+          thangSpriteName: (_ref8 = this.options.thisValue) != null ? _ref8.spriteName : void 0,
           methodName: this.options.functionName,
-          methodType: this.methodType,
+          methodType: methodType,
           lineNumber: lineNumber,
           column: column
         };
         console.log("Whoa, got me an error!", error, userInfo);
         pureError = this.purifyError(error.message, userInfo);
-        this.cookedCode = '';
-        return;
+        return '';
       }
       traceured = this.es6ify("return " + instrumented);
-      this.cookedCode = traceured;
-      return this.cookedCode;
+      if (false) {
+        console.log("----RAW CODE----: " + (this.raw.split('\n').length) + "\n", {
+          code: this.raw
+        });
+        console.log("---NORMALIZED---: " + (instrumented.split('\n').length) + "\n", {
+          code: "return " + instrumented
+        });
+        console.log("----TRACEURED---: " + (traceured.split('\n').length) + "\n", {
+          code: traceured
+        });
+      }
+      return traceured;
     };
 
     Aether.prototype.getLineNumberForPlannedMethod = function(plannedMethod, numMethodsSeen) {
@@ -22734,35 +22771,7 @@ var global=self;(function() {
 
 }).call(this);
 
-},{"./defaults":6,"./errors":4,"./execution":2,"./morph":7,"./problems":3,"./transforms":8,"./validators/options":9,"JS_WALA/normalizer/lib/normalizer":10,"escodegen":13,"esprima":11,"jshint":12,"lodash":1,"traceur":1}],6:[function(require,module,exports){
-(function() {
-  var defaults, execution;
-
-  execution = require('./execution');
-
-  module.exports = defaults = {
-    thisValue: null,
-    global: {
-      Math: Math,
-      parseInt: parseInt,
-      parseFloat: parseFloat,
-      "eval": eval,
-      isNaN: isNaN,
-      escape: escape,
-      unescape: unescape
-    },
-    language: "javascript",
-    languageVersion: "ES5",
-    functionName: null,
-    functionParameters: [],
-    yieldAutomatically: false,
-    yieldConditionally: false,
-    executionCosts: execution
-  };
-
-}).call(this);
-
-},{"./execution":2}],11:[function(require,module,exports){
+},{"./defaults":5,"./errors":4,"./execution":3,"./morph":7,"./problems":2,"./transforms":8,"./validators/options":9,"JS_WALA/normalizer/lib/normalizer":10,"escodegen":13,"esprima":12,"jshint":11,"lodash":1,"traceur":1}],12:[function(require,module,exports){
 /*
   Copyright (C) 2013 Ariya Hidayat <ariya.hidayat@gmail.com>
   Copyright (C) 2013 Thaddee Tyl <thaddee.tyl@gmail.com>
@@ -29351,143 +29360,7 @@ parseYieldExpression: true
   exports.normalize = normalize;
 //});
 
-},{"../../common/lib/ast":14,"../../common/lib/position":18,"./cflow":15,"./decls":16,"./scope":17,"./util":19}],15:[function(require,module,exports){
-/*******************************************************************************
- * Copyright (c) 2012 IBM Corporation.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *     IBM Corporation - initial API and implementation
- *******************************************************************************/
-
-/**
- * Helper function for determining whether a piece of code may terminate normally, or whether
- * it always returns/breaks/throws an exception.
- */
-//if(typeof define !== 'function') {
-//  var define = require('amdefine')(module);
-//}
-//
-//define(function(require, exports) {
-  var mayCompleteNormally = exports.mayCompleteNormally = function(nd) {
-    switch(nd.type) {
-    case 'ReturnStatement':
-    case 'BreakStatement':
-    case 'ContinueStatement':
-    case 'ThrowStatement':
-      return false;
-    case 'IfStatement':
-      return mayCompleteNormally(nd.consequent) || nd.alternate && mayCompleteNormally(nd.alternate);
-    case 'WithStatement':
-      return mayCompleteNormally(nd.body);
-    case 'BlockStatement':
-      for(var i=0;i<nd.body.length;++i)
-        if(!mayCompleteNormally(nd.body[i]))
-          return false;
-      return true;
-    default:
-      return true;
-    }
-  };
-//});
-
-},{}],18:[function(require,module,exports){
-/*******************************************************************************
- * Copyright (c) 2012 IBM Corporation.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *     IBM Corporation - initial API and implementation
- *******************************************************************************/
-
-/**
- * ADT for representing source positions identified by a URL, a start line, a start
- * offset (i.e., character offset from the beginning of the file), an end line, and
- * an end offset.
- * 
- * The start line corresponds to Esprima's loc.start.line, the start offset to
- * range[0], and similar for the end line and end offset.
- * 
- * For compatibility with Esprima, line numbering should normally be 1-based.
- */
-
-//if(typeof define !== 'function') {
-//  var define = require('amdefine')(module);
-//}
-//
-//define(function(require, exports) {
-  function Position(url, start_line, start_offset, end_line, end_offset) {
-    this.url = url || "<unknown>";
-    this.start_line = start_line;
-    this.start_offset = start_offset;
-    this.end_line = end_line;
-    this.end_offset = end_offset;
-  }
-  
-  Position.prototype.toString = function(short) {
-    if(short)
-      return this.start_line + ":" + this.start_offset;
-    return this.url + "/" + this.start_line + ":" + this.start_offset + "-" + this.end_line + ":" + this.end_offset;
-  };
-  
-  Position.prototype.clone = function() {
-    return new Position(this.url, this.start_line, this.start_offset, this.end_line, this.end_offset);
-  };
-  
-  Position.prototype.equals = function(o) {
-    if(!(o instanceof Position))
-      return false;
-    return o.url === this.url &&
-           o.start_line === this.start_line &&
-           o.start_offset === this.start_offset &&
-           o.end_line === this.end_line &&
-           o.end_offset === this.end_offset;
-  };
-  
-  var DUMMY_POS = new Position(null, -1, -1, -1, -1);
-  
-  exports.Position = Position;
-  exports.DUMMY_POS = DUMMY_POS;
-//});
-
-},{}],19:[function(require,module,exports){
-/*******************************************************************************
- * Copyright (c) 2012 IBM Corporation.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *     IBM Corporation - initial API and implementation
- *******************************************************************************/
-
-/**
- * Utility methods. 
- */
-//if(typeof define !== 'function') {
-//  var define = require('amdefine')(module);
-//}
-//
-//define(function(require, exports) {
-  Array.prototype.flatmap = function(fn, thisArg) {
-    var res = [];
-    for(var i=0;i<this.length;++i) {
-      var r = fn.call(thisArg, this[i], i, this);
-      for(var j=0;j<r.length;++j)
-        res[res.length] = r[j];
-    }
-    return res;
-  };
-//});
-
-},{}],7:[function(require,module,exports){
+},{"../../common/lib/ast":14,"../../common/lib/position":16,"./cflow":18,"./decls":19,"./scope":15,"./util":17}],7:[function(require,module,exports){
 var global=self;(function() {
   var esprima, insertHelpers, morph, _, _ref, _ref1, _ref2;
 
@@ -29558,7 +29431,7 @@ var global=self;(function() {
 
 }).call(this);
 
-},{"esprima":11,"lodash":1}],8:[function(require,module,exports){
+},{"esprima":12,"lodash":1}],8:[function(require,module,exports){
 (function() {
   var S, addThis, checkIncompleteMembers, esprima, gatherLineNumbers, getLineNumberForNode, instrumentStatements, possiblyGeneratorifyAncestorFunction, statements, validateReturns, yieldAutomatically, yieldConditionally,
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
@@ -29661,7 +29534,7 @@ var global=self;(function() {
   module.exports.checkIncompleteMembers = checkIncompleteMembers = function(node) {
     var error, exp, lineNumber, m, _ref;
     if (node.type === 'ExpressionStatement') {
-      lineNumber = Aether.getLineNumberForNode(node, true);
+      lineNumber = getLineNumberForNode(node);
       exp = node.expression;
       if (exp.type === 'MemberExpression') {
         if (exp.property.name === "IncompleteThisReference") {
@@ -29683,74 +29556,143 @@ var global=self;(function() {
 
 }).call(this);
 
-},{"esprima":11}],20:[function(require,module,exports){
-module.exports={
-  "name": "escodegen",
-  "description": "ECMAScript code generator",
-  "homepage": "http://github.com/Constellation/escodegen.html",
-  "main": "escodegen.js",
-  "bin": {
-    "esgenerate": "./bin/esgenerate.js",
-    "escodegen": "./bin/escodegen.js"
-  },
-  "version": "0.0.25",
-  "engines": {
-    "node": ">=0.4.0"
-  },
-  "maintainers": [
-    {
-      "name": "Yusuke Suzuki",
-      "email": "utatane.tea@gmail.com",
-      "url": "http://github.com/Constellation"
-    }
-  ],
-  "repository": {
-    "type": "git",
-    "url": "http://github.com/Constellation/escodegen.git"
-  },
-  "dependencies": {
-    "esprima": "~1.0.2",
-    "estraverse": "~1.3.0",
-    "source-map": ">= 0.1.2"
-  },
-  "optionalDependencies": {
-    "source-map": ">= 0.1.2"
-  },
-  "devDependencies": {
-    "esprima-moz": "*",
-    "commonjs-everywhere": "~0.8.0",
-    "q": "*",
-    "bower": "*",
-    "semver": "*",
-    "chai": "~1.7.2",
-    "grunt-contrib-jshint": "~0.5.0",
-    "grunt-cli": "~0.1.9",
-    "grunt": "~0.4.1",
-    "grunt-mocha-test": "~0.6.2"
-  },
-  "licenses": [
-    {
-      "type": "BSD",
-      "url": "http://github.com/Constellation/escodegen/raw/master/LICENSE.BSD"
-    }
-  ],
-  "scripts": {
-    "test": "grunt travis",
-    "unit-test": "grunt test",
-    "lint": "grunt lint",
-    "release": "node tools/release.js",
-    "build": "./node_modules/.bin/cjsify -ma path: tools/entry-point.js > escodegen.browser.js"
-  },
-  "readme": "\n### Escodegen [![Build Status](https://secure.travis-ci.org/Constellation/escodegen.png)](http://travis-ci.org/Constellation/escodegen) [![Build Status](https://drone.io/github.com/Constellation/escodegen/status.png)](https://drone.io/github.com/Constellation/escodegen/latest)\n\nEscodegen ([escodegen](http://github.com/Constellation/escodegen)) is\n[ECMAScript](http://www.ecma-international.org/publications/standards/Ecma-262.htm)\n(also popularly known as [JavaScript](http://en.wikipedia.org/wiki/JavaScript>JavaScript))\ncode generator from [Parser API](https://developer.mozilla.org/en/SpiderMonkey/Parser_API) AST.\nSee [online generator demo](http://constellation.github.com/escodegen/demo/index.html).\n\n\n### Install\n\nEscodegen can be used in a web browser:\n\n    <script src=\"escodegen.browser.js\"></script>\n\nor in a Node.js application via the package manager:\n\n    npm install escodegen\n\n\n### Usage\n\nA simple example: the program\n\n    escodegen.generate({\n        type: 'BinaryExpression',\n        operator: '+',\n        left: { type: 'Literal', value: 40 },\n        right: { type: 'Literal', value: 2 }\n    });\n\nproduces the string `'40 + 2'`\n\nSee the [API page](https://github.com/Constellation/escodegen/wiki/API) for\noptions. To run the tests, execute `npm test` in the root directory.\n\n\n### License\n\n#### Escodegen\n\nCopyright (C) 2012 [Yusuke Suzuki](http://github.com/Constellation)\n (twitter: [@Constellation](http://twitter.com/Constellation)) and other contributors.\n\nRedistribution and use in source and binary forms, with or without\nmodification, are permitted provided that the following conditions are met:\n\n  * Redistributions of source code must retain the above copyright\n    notice, this list of conditions and the following disclaimer.\n\n  * Redistributions in binary form must reproduce the above copyright\n    notice, this list of conditions and the following disclaimer in the\n    documentation and/or other materials provided with the distribution.\n\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\"\nAND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE\nIMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE\nARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY\nDIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES\n(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;\nLOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND\nON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT\n(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF\nTHIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n\n#### source-map\n\nSourceNodeMocks has a limited interface of mozilla/source-map SourceNode implementations.\n\nCopyright (c) 2009-2011, Mozilla Foundation and contributors\nAll rights reserved.\n\nRedistribution and use in source and binary forms, with or without\nmodification, are permitted provided that the following conditions are met:\n\n* Redistributions of source code must retain the above copyright notice, this\n  list of conditions and the following disclaimer.\n\n* Redistributions in binary form must reproduce the above copyright notice,\n  this list of conditions and the following disclaimer in the documentation\n  and/or other materials provided with the distribution.\n\n* Neither the names of the Mozilla Foundation nor the names of project\n  contributors may be used to endorse or promote products derived from this\n  software without specific prior written permission.\n\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AND\nANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED\nWARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE\nDISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE\nFOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL\nDAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR\nSERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER\nCAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,\nOR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE\nOF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n",
-  "readmeFilename": "README.md",
-  "bugs": {
-    "url": "https://github.com/Constellation/escodegen/issues"
-  },
-  "_id": "escodegen@0.0.25",
-  "_from": "escodegen@"
-}
+},{"esprima":12}],16:[function(require,module,exports){
+/*******************************************************************************
+ * Copyright (c) 2012 IBM Corporation.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
+ *******************************************************************************/
 
-},{}],21:[function(require,module,exports){
+/**
+ * ADT for representing source positions identified by a URL, a start line, a start
+ * offset (i.e., character offset from the beginning of the file), an end line, and
+ * an end offset.
+ * 
+ * The start line corresponds to Esprima's loc.start.line, the start offset to
+ * range[0], and similar for the end line and end offset.
+ * 
+ * For compatibility with Esprima, line numbering should normally be 1-based.
+ */
+
+//if(typeof define !== 'function') {
+//  var define = require('amdefine')(module);
+//}
+//
+//define(function(require, exports) {
+  function Position(url, start_line, start_offset, end_line, end_offset) {
+    this.url = url || "<unknown>";
+    this.start_line = start_line;
+    this.start_offset = start_offset;
+    this.end_line = end_line;
+    this.end_offset = end_offset;
+  }
+  
+  Position.prototype.toString = function(short) {
+    if(short)
+      return this.start_line + ":" + this.start_offset;
+    return this.url + "/" + this.start_line + ":" + this.start_offset + "-" + this.end_line + ":" + this.end_offset;
+  };
+  
+  Position.prototype.clone = function() {
+    return new Position(this.url, this.start_line, this.start_offset, this.end_line, this.end_offset);
+  };
+  
+  Position.prototype.equals = function(o) {
+    if(!(o instanceof Position))
+      return false;
+    return o.url === this.url &&
+           o.start_line === this.start_line &&
+           o.start_offset === this.start_offset &&
+           o.end_line === this.end_line &&
+           o.end_offset === this.end_offset;
+  };
+  
+  var DUMMY_POS = new Position(null, -1, -1, -1, -1);
+  
+  exports.Position = Position;
+  exports.DUMMY_POS = DUMMY_POS;
+//});
+
+},{}],17:[function(require,module,exports){
+/*******************************************************************************
+ * Copyright (c) 2012 IBM Corporation.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
+ *******************************************************************************/
+
+/**
+ * Utility methods. 
+ */
+//if(typeof define !== 'function') {
+//  var define = require('amdefine')(module);
+//}
+//
+//define(function(require, exports) {
+  Array.prototype.flatmap = function(fn, thisArg) {
+    var res = [];
+    for(var i=0;i<this.length;++i) {
+      var r = fn.call(thisArg, this[i], i, this);
+      for(var j=0;j<r.length;++j)
+        res[res.length] = r[j];
+    }
+    return res;
+  };
+//});
+
+},{}],18:[function(require,module,exports){
+/*******************************************************************************
+ * Copyright (c) 2012 IBM Corporation.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
+ *******************************************************************************/
+
+/**
+ * Helper function for determining whether a piece of code may terminate normally, or whether
+ * it always returns/breaks/throws an exception.
+ */
+//if(typeof define !== 'function') {
+//  var define = require('amdefine')(module);
+//}
+//
+//define(function(require, exports) {
+  var mayCompleteNormally = exports.mayCompleteNormally = function(nd) {
+    switch(nd.type) {
+    case 'ReturnStatement':
+    case 'BreakStatement':
+    case 'ContinueStatement':
+    case 'ThrowStatement':
+      return false;
+    case 'IfStatement':
+      return mayCompleteNormally(nd.consequent) || nd.alternate && mayCompleteNormally(nd.alternate);
+    case 'WithStatement':
+      return mayCompleteNormally(nd.body);
+    case 'BlockStatement':
+      for(var i=0;i<nd.body.length;++i)
+        if(!mayCompleteNormally(nd.body[i]))
+          return false;
+      return true;
+    default:
+      return true;
+    }
+  };
+//});
+
+},{}],20:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -29804,7 +29746,7 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
-},{}],22:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 var process=require("__browserify_process");if (!process.EventEmitter) process.EventEmitter = function () {};
 
 var EventEmitter = exports.EventEmitter = process.EventEmitter;
@@ -30000,7 +29942,7 @@ EventEmitter.listenerCount = function(emitter, type) {
   return ret;
 };
 
-},{"__browserify_process":21}],23:[function(require,module,exports){
+},{"__browserify_process":20}],22:[function(require,module,exports){
 // jshint -W001
 
 "use strict";
@@ -30586,7 +30528,7 @@ exports.yui = {
 };
 
 
-},{}],24:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 /*
  * Regular expressions. Some of these are stupidly long.
  */
@@ -30621,6 +30563,32 @@ exports.javascriptURL = /^(?:javascript|jscript|ecmascript|vbscript|mocha|livesc
 
 // Catches /* falls through */ comments (ft)
 exports.fallsThrough = /^\s*\/\*\s*falls?\sthrough\s*\*\/\s*$/;
+
+},{}],24:[function(require,module,exports){
+"use strict";
+
+var state = {
+	syntax: {},
+
+	reset: function () {
+		this.tokens = {
+			prev: null,
+			next: null,
+			curr: null
+		};
+
+		this.option = {};
+		this.ignored = {};
+		this.directive = {};
+		this.jsonMode = false;
+		this.jsonWarnings = [];
+		this.lines = [];
+		this.tab = "";
+		this.cache = {}; // Node.JS doesn't have Map. Sniff.
+	}
+};
+
+exports.state = state;
 
 },{}],25:[function(require,module,exports){
 "use strict";
@@ -30795,32 +30763,134 @@ exports.register = function (linter) {
 	});
 };
 },{}],26:[function(require,module,exports){
-"use strict";
+module.exports={
+  "name": "escodegen",
+  "description": "ECMAScript code generator",
+  "homepage": "http://github.com/Constellation/escodegen.html",
+  "main": "escodegen.js",
+  "bin": {
+    "esgenerate": "./bin/esgenerate.js",
+    "escodegen": "./bin/escodegen.js"
+  },
+  "version": "0.0.25",
+  "engines": {
+    "node": ">=0.4.0"
+  },
+  "maintainers": [
+    {
+      "name": "Yusuke Suzuki",
+      "email": "utatane.tea@gmail.com",
+      "url": "http://github.com/Constellation"
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/Constellation/escodegen.git"
+  },
+  "dependencies": {
+    "esprima": "~1.0.2",
+    "estraverse": "~1.3.0",
+    "source-map": ">= 0.1.2"
+  },
+  "optionalDependencies": {
+    "source-map": ">= 0.1.2"
+  },
+  "devDependencies": {
+    "esprima-moz": "*",
+    "commonjs-everywhere": "~0.8.0",
+    "q": "*",
+    "bower": "*",
+    "semver": "*",
+    "chai": "~1.7.2",
+    "grunt-contrib-jshint": "~0.5.0",
+    "grunt-cli": "~0.1.9",
+    "grunt": "~0.4.1",
+    "grunt-mocha-test": "~0.6.2"
+  },
+  "licenses": [
+    {
+      "type": "BSD",
+      "url": "http://github.com/Constellation/escodegen/raw/master/LICENSE.BSD"
+    }
+  ],
+  "scripts": {
+    "test": "grunt travis",
+    "unit-test": "grunt test",
+    "lint": "grunt lint",
+    "release": "node tools/release.js",
+    "build": "./node_modules/.bin/cjsify -ma path: tools/entry-point.js > escodegen.browser.js"
+  },
+  "readme": "\n### Escodegen [![Build Status](https://secure.travis-ci.org/Constellation/escodegen.png)](http://travis-ci.org/Constellation/escodegen) [![Build Status](https://drone.io/github.com/Constellation/escodegen/status.png)](https://drone.io/github.com/Constellation/escodegen/latest)\n\nEscodegen ([escodegen](http://github.com/Constellation/escodegen)) is\n[ECMAScript](http://www.ecma-international.org/publications/standards/Ecma-262.htm)\n(also popularly known as [JavaScript](http://en.wikipedia.org/wiki/JavaScript>JavaScript))\ncode generator from [Parser API](https://developer.mozilla.org/en/SpiderMonkey/Parser_API) AST.\nSee [online generator demo](http://constellation.github.com/escodegen/demo/index.html).\n\n\n### Install\n\nEscodegen can be used in a web browser:\n\n    <script src=\"escodegen.browser.js\"></script>\n\nor in a Node.js application via the package manager:\n\n    npm install escodegen\n\n\n### Usage\n\nA simple example: the program\n\n    escodegen.generate({\n        type: 'BinaryExpression',\n        operator: '+',\n        left: { type: 'Literal', value: 40 },\n        right: { type: 'Literal', value: 2 }\n    });\n\nproduces the string `'40 + 2'`\n\nSee the [API page](https://github.com/Constellation/escodegen/wiki/API) for\noptions. To run the tests, execute `npm test` in the root directory.\n\n\n### License\n\n#### Escodegen\n\nCopyright (C) 2012 [Yusuke Suzuki](http://github.com/Constellation)\n (twitter: [@Constellation](http://twitter.com/Constellation)) and other contributors.\n\nRedistribution and use in source and binary forms, with or without\nmodification, are permitted provided that the following conditions are met:\n\n  * Redistributions of source code must retain the above copyright\n    notice, this list of conditions and the following disclaimer.\n\n  * Redistributions in binary form must reproduce the above copyright\n    notice, this list of conditions and the following disclaimer in the\n    documentation and/or other materials provided with the distribution.\n\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\"\nAND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE\nIMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE\nARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY\nDIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES\n(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;\nLOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND\nON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT\n(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF\nTHIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n\n#### source-map\n\nSourceNodeMocks has a limited interface of mozilla/source-map SourceNode implementations.\n\nCopyright (c) 2009-2011, Mozilla Foundation and contributors\nAll rights reserved.\n\nRedistribution and use in source and binary forms, with or without\nmodification, are permitted provided that the following conditions are met:\n\n* Redistributions of source code must retain the above copyright notice, this\n  list of conditions and the following disclaimer.\n\n* Redistributions in binary form must reproduce the above copyright notice,\n  this list of conditions and the following disclaimer in the documentation\n  and/or other materials provided with the distribution.\n\n* Neither the names of the Mozilla Foundation nor the names of project\n  contributors may be used to endorse or promote products derived from this\n  software without specific prior written permission.\n\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AND\nANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED\nWARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE\nDISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE\nFOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL\nDAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR\nSERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER\nCAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,\nOR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE\nOF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n",
+  "readmeFilename": "README.md",
+  "bugs": {
+    "url": "https://github.com/Constellation/escodegen/issues"
+  },
+  "_id": "escodegen@0.0.25",
+  "_from": "escodegen@"
+}
 
-var state = {
-	syntax: {},
+},{}],9:[function(require,module,exports){
+(function() {
+  var revalidator;
 
-	reset: function () {
-		this.tokens = {
-			prev: null,
-			next: null,
-			curr: null
-		};
+  revalidator = require('revalidator');
 
-		this.option = {};
-		this.ignored = {};
-		this.directive = {};
-		this.jsonMode = false;
-		this.jsonWarnings = [];
-		this.lines = [];
-		this.tab = "";
-		this.cache = {}; // Node.JS doesn't have Map. Sniff.
-	}
-};
+  module.exports = function(options) {
+    return revalidator.validate(options, {
+      additionalProperties: false,
+      properties: {
+        thisValue: {
+          required: false
+        },
+        global: {
+          type: 'array',
+          required: false
+        },
+        functionName: {
+          required: false
+        },
+        functionParameters: {
+          required: false
+        },
+        yieldAutomatically: {
+          type: 'boolean',
+          required: false
+        },
+        yieldConditionally: {
+          type: 'boolean',
+          required: false
+        },
+        requiresThis: {
+          type: 'boolean',
+          "default": true,
+          description: 'Whether leaving off "this" is an error, or just a warning which we work around.'
+        },
+        executionCosts: {
+          required: false
+        },
+        language: {
+          type: 'string',
+          description: "Input language",
+          minLength: 1,
+          'enum': ['javascript'],
+          required: false
+        },
+        languageVersion: {
+          type: 'string',
+          description: "Input language version",
+          minLength: 1,
+          'enum': ["ES5", "ES6"]
+        },
+        problems: {
+          required: false
+        }
+      }
+    });
+  };
 
-exports.state = state;
+}).call(this);
 
-},{}],13:[function(require,module,exports){
+},{"revalidator":27}],13:[function(require,module,exports){
 var global=self;/*
   Copyright (C) 2012-2013 Yusuke Suzuki <utatane.tea@gmail.com>
   Copyright (C) 2012-2013 Michael Ficarra <escodegen.copyright@michael.ficarra.me>
@@ -32887,63 +32957,777 @@ var global=self;/*
 }());
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{"./package.json":20,"estraverse":27,"source-map":28}],9:[function(require,module,exports){
-(function() {
-  var revalidator;
+},{"./package.json":26,"estraverse":28,"source-map":29}],14:[function(require,module,exports){
+/*******************************************************************************
+ * Copyright (c) 2012 IBM Corporation.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
+ *******************************************************************************/
 
-  revalidator = require('revalidator');
+/**
+ * Convenience functions for constructing and navigating ASTs.
+ */
+//if(typeof define !== 'function') {
+//  var define = require('amdefine')(module);
+//}
+//
+//define(function(require, exports) {
+  var position = require('./position');
+  
+  // constructor signatures; arguments in angle brackets are terminal children, the others subtrees
+  var signatures = {
+      AssignmentExpression: [ '<operator>', 'left', 'right'],
+      ArrayExpression: [ 'elements' ],
+      BlockStatement: [ 'body' ],
+      BinaryExpression: [ '<operator>', 'left', 'right'],
+      BreakStatement: [ 'label' ],
+      CallExpression: [ 'callee', 'arguments' ],
+      CatchClause: [ 'param', 'body' ],
+      ConditionalExpression: [ 'test', 'consequent', 'alternate' ],
+      ContinueStatement: [ 'label' ],
+      DirectiveStatement: [ ],
+      DoWhileStatement: [ 'body', 'test' ],
+      DebuggerStatement: [ ],
+      EmptyStatement: [ ],
+      ExpressionStatement: [ 'expression' ],
+      ForStatement: [ 'init', 'test', 'update', 'body' ],
+      ForInStatement: [ 'left', 'right', 'body' ],
+      FunctionDeclaration: [ 'id', 'params', 'body' ],
+      FunctionExpression: [ 'id', 'params', 'body' ],
+      Identifier: [ '<name>' ],
+      IfStatement: [ 'test', 'consequent', 'alternate' ],
+      Literal: [ '<value>' ],
+      LabeledStatement: [ 'label', 'body' ],
+      LogicalExpression: [ '<operator>', 'left', 'right' ],
+      MemberExpression: [ 'object', 'property', '<computed>' ],
+      NewExpression: [ 'callee', 'arguments' ],
+      ObjectExpression: [ 'properties' ],
+      Program: [ 'body' ],
+      Property: [ 'key', 'value', '<kind>' ],
+      ReturnStatement: [ 'argument' ],
+      SequenceExpression: [ 'expressions' ],
+      SwitchStatement: [ 'discriminant', 'cases' ],
+      SwitchCase: [ 'test', 'consequent' ],
+      ThisExpression: [ ],
+      ThrowStatement: [ 'argument' ],
+      TryStatement: [ 'block', 'guardedHandlers', 'handlers', 'finalizer' ],
+      UnaryExpression: [ '<operator>', 'argument' ],
+      UpdateExpression: [ '<operator>', 'argument', '<prefix>' ],
+      VariableDeclaration: [ 'declarations', '<kind>' ],
+      VariableDeclarator: [ 'id', 'init' ],
+      WhileStatement: [ 'test', 'body' ],
+      WithStatement: [ 'object', 'body' ]
+  };
 
-  module.exports = function(options) {
-    return revalidator.validate(options, {
-      additionalProperties: false,
-      properties: {
-        thisValue: {
-          required: false
-        },
-        global: {
-          type: 'array',
-          required: false
-        },
-        functionName: {
-          required: false
-        },
-        functionParameters: {
-          required: false
-        },
-        yieldAutomatically: {
-          type: 'boolean',
-          required: false
-        },
-        yieldConditionally: {
-          type: 'boolean',
-          required: false
-        },
-        executionCosts: {
-          required: false
-        },
-        language: {
-          type: 'string',
-          description: "Input language",
-          minLength: 1,
-          'enum': ['javascript'],
-          required: false
-        },
-        languageVersion: {
-          type: 'string',
-          description: "Input language version",
-          minLength: 1,
-          'enum': ["ES5", "ES6"]
-        },
-        problems: {
-          required: false
+  // define a constructor from a signature
+  function defconstructor(tpname, signature) {
+    var child_names = [], nonterminal_children = [];
+    for(var i=0;i<signature.length;++i)
+      if(signature[i][0] === '<') {
+        child_names[child_names.length] = signature[i].substring(1, signature[i].length-1);
+      } else {
+        child_names[child_names.length] = signature[i];
+        nonterminal_children[nonterminal_children.length] = signature[i];
+      }
+    
+    exports[tpname] = function() {
+      this.type = tpname;
+      this.attr = {};
+      for(var i=0;i<arguments.length;++i)
+        this[child_names[i]] = arguments[i];
+      for(;i<child_names.length;++i)
+        this[child_names[i]] = null;
+    };
+    exports[tpname].children = nonterminal_children;
+  }
+  
+  // several convenience methods for accessing subtrees
+  var getNumChild = exports.getNumChild = function(nd) {
+    if(Array.isArray(nd))
+      return nd.length;
+    
+    if(nd && nd.type)
+      return exports[nd.type].children.length;
+    
+    return 0;
+  };
+  
+  var getChild = exports.getChild = function(nd, i) {
+    if(Array.isArray(nd))
+      return nd[i];
+    
+    return nd[exports[nd.type].children[i]];
+  };
+
+  var setChild = exports.setChild = function(nd, i, v) {
+    if(Array.isArray(nd))
+      return nd[i] = v;
+
+    return nd[exports[nd.type].children[i]] = v;
+  };
+  
+  var forEachChild = exports.forEachChild = function(nd, cb) {
+    for(var i = 0, n = getNumChild(nd); i < n; ++i)
+      cb(getChild(nd, i), i);
+  };
+  
+  var mapChildren = exports.mapChildren = function(nd, cb) {
+    var res = [];
+    forEachChild(nd, function(ch, i) {
+      res[res.length] = cb(ch, i);
+    });
+    return res;
+  };
+
+  // simple debug printing function
+  var dump = exports.dump = function(nd) {
+    if(Array.isArray(nd))
+      return "[" + nd.map(dump).join() + "]";
+    
+    if(!nd || !nd.type)
+      return nd+"";
+    
+    return nd.type + "(" + mapChildren(nd, dump).join() + ")";
+  };
+  
+  // we give every AST node a property "attr" for storing attributes
+  exports.getAttribute = function(nd, name) {
+    nd.attr = nd.attr || {};
+    return nd.attr[name];
+  };
+  
+  exports.setAttribute = function(nd, name, value) {
+    nd.attr = nd.attr || {};
+    nd.attr[name] = value;
+    return nd;
+  };
+  
+  // positions are attached as attributes
+  exports.hasPosition = function(nd) {
+      return !!exports.getAttribute(nd, 'pos') || !!nd.loc || !!nd.range;
+  };
+  
+  exports.getPosition = function(nd) {
+      if(!exports.getAttribute(nd, 'pos')) {
+      var pos = position.DUMMY_POS.clone();
+      if(nd.loc) {
+	  if(nd.loc.source) {
+	      pos.url = nd.loc.source;
+	  }
+        pos.start_line = nd.loc.start.line;
+        pos.end_line = nd.loc.start.line;
+      }
+      if(nd.range) {
+        pos.start_offset = nd.range[0];
+        pos.end_offset = nd.range[1];
+      }
+      exports.setAttribute(nd, 'pos', pos);
+    }
+    return exports.getAttribute(nd, 'pos');
+  };
+  
+  exports.setPosition = function(nd, pos) {
+    exports.setAttribute(nd, 'pos', pos);
+  };
+  
+  for(var p in signatures)
+    defconstructor(p, signatures[p]);
+//});
+
+},{"./position":16}],15:[function(require,module,exports){
+/*******************************************************************************
+ * Copyright (c) 2012 IBM Corporation.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
+ *******************************************************************************/
+
+/**
+ * Scope objects keep track of name binding. Each scope object represents
+ * either the global scope, a function scope, a catch clause scope, or
+ * a 'with' scope.
+ */
+
+//if(typeof define !== 'function') {
+//  var define = require('amdefine')(module);
+//}
+//
+//define(function(require, exports) {
+  var decls = require('./decls');
+  
+  // abstract base class of all scopes
+  function Scope(outer, decls) {
+    this.outer = outer;
+    this.decls = decls;
+  }
+  
+  // is x a global variable in this scope?
+  Scope.prototype.isGlobal = function(x) {
+    return !this.isLocal(x) && this.outer.isGlobal(x);
+  };
+  
+  // does x have a declaration at the global level?
+  Scope.prototype.isDeclaredGlobal = function(x) {
+    return this.outer.isDeclaredGlobal();
+  };
+  
+  // look up x among the local declarations in this scope
+  Scope.prototype.localLookup = function(x) {
+    for(var i=0;i<this.decls.length;++i)
+      if(decls.getDeclName(this.decls[i]) === x)
+        return this.decls[i];
+    return null;
+  };
+  
+  // is x a local variable declared in this scope?
+  Scope.prototype.isLocal = function(x) { return !!this.localLookup(x); };
+  
+  // look up x in this or an enclosing scope
+  Scope.prototype.lookup = function(x) {
+    return this.localLookup(x) || this.outer && this.outer.lookup(x);
+  };
+  
+  // object representing the global scope
+  function GlobalScope(root) {
+    Scope.call(this, null, decls.collectDecls(root, []));
+  }
+  GlobalScope.prototype = Object.create(Scope.prototype);
+  
+  GlobalScope.prototype.isGlobal = function(x) { return true; };
+  GlobalScope.prototype.isLocal = function(x) { return false; };
+  GlobalScope.prototype.possibleWithBindings = function(x) { return []; };
+  GlobalScope.prototype.isDeclaredGlobal = function(x) {
+    return !!this.localLookup(x);
+  };
+    
+  // constructor representing a function scope
+  function FunctionScope(outer, fn) {
+    this.fn = fn;
+    Scope.call(this, outer, fn.params.concat(decls.collectDecls(fn.body, [])));
+  }
+  FunctionScope.prototype = Object.create(Scope.prototype);
+  
+  // 'arguments' and (in a named function expression) the function itself are local,
+  // even though they are not declared
+  FunctionScope.prototype.isLocal = function(x) {
+    return x === 'arguments' ||
+           this.fn.type === 'FunctionExpression' && this.fn.id && this.fn.id.name === x ||
+           Scope.prototype.isLocal.call(this, x);
+  };
+  
+  // list of enclosing with statements (represented by the variables they 'with' on) that
+  // may bind x
+  FunctionScope.prototype.possibleWithBindings = function(x) {
+    if(this.isLocal(x))
+      return [];
+    return this.outer.possibleWithBindings(x);
+  };
+  
+  // constructor representing a catch clause scope
+  function CatchScope(outer, cc) {
+    Scope.call(this, outer, [cc.param]);
+  }
+  CatchScope.prototype = Object.create(Scope.prototype);
+  
+  CatchScope.prototype.isLocal = function(x) { return x === this.decls[0].name || this.outer.isLocal(x); };
+  
+  CatchScope.prototype.possibleWithBindings = function(x) {
+    if(x === this.decls[0].name)
+      return [];
+    return this.outer.possibleWithBindings(x);
+  };
+  
+  // constructor representing a with scope
+  function WithScope(outer, with_var) {
+    Scope.call(this, outer, []);
+    this.with_var = with_var;
+  }
+  WithScope.prototype = Object.create(Scope.prototype);
+  
+  WithScope.prototype.isLocal = function(x) { return this.outer.isLocal(x); };
+  
+  WithScope.prototype.possibleWithBindings = function(x) {
+    var bindings = this.outer.possibleWithBindings(x);
+    bindings.unshift(this.with_var);
+    return bindings;
+  };
+  
+  exports.Scope = Scope;
+  exports.GlobalScope = GlobalScope;
+  exports.FunctionScope = FunctionScope;
+  exports.CatchScope = CatchScope;
+  exports.WithScope = WithScope;
+//});
+
+},{"./decls":19}],19:[function(require,module,exports){
+/*******************************************************************************
+ * Copyright (c) 2012 IBM Corporation.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
+ *******************************************************************************/
+
+/**
+ * Utility functions to collect all variable and function declarations in a subtree.
+ */
+//if(typeof define !== 'function') {
+//  var define = require('amdefine')(module);
+//}
+//
+//define(function(require, exports) {
+  var ast = require('../../common/lib/ast');
+
+  function getDeclName(decl) {
+    if(decl.type === 'Identifier')
+      return decl.name;
+    return decl.id.name;
+  }
+
+  function collectDecls(nd, accu) {
+    if(!nd)
+      return accu;
+    
+    if(nd.type === 'FunctionDeclaration') {
+      accu[accu.length] = nd;
+    } else if(nd.type === 'VariableDeclarator') {
+      accu[accu.length] = nd;
+    } else if(nd.type !== 'FunctionExpression') {
+      ast.forEachChild(nd, function(ch) {
+        collectDecls(ch, accu);
+      });
+    }
+    return accu;
+  }
+  
+  exports.collectDecls = collectDecls;
+  exports.getDeclName = getDeclName;
+//});
+
+},{"../../common/lib/ast":14}],27:[function(require,module,exports){
+(function (exports) {
+  exports.validate = validate;
+  exports.mixin = mixin;
+
+  //
+  // ### function validate (object, schema, options)
+  // #### {Object} object the object to validate.
+  // #### {Object} schema (optional) the JSON Schema to validate against.
+  // #### {Object} options (optional) options controlling the validation
+  //      process. See {@link #validate.defaults) for details.
+  // Validate <code>object</code> against a JSON Schema.
+  // If <code>object</code> is self-describing (i.e. has a
+  // <code>$schema</code> property), it will also be validated
+  // against the referenced schema. [TODO]: This behaviour bay be
+  // suppressed by setting the {@link #validate.options.???}
+  // option to <code>???</code>.[/TODO]
+  //
+  // If <code>schema</code> is not specified, and <code>object</code>
+  // is not self-describing, validation always passes.
+  //
+  // <strong>Note:</strong> in order to pass options but no schema,
+  // <code>schema</code> <em>must</em> be specified in the call to
+  // <code>validate()</code>; otherwise, <code>options</code> will
+  // be interpreted as the schema. <code>schema</code> may be passed
+  // as <code>null</code>, <code>undefinded</code>, or the empty object
+  // (<code>{}</code>) in this case.
+  //
+  function validate(object, schema, options) {
+    options = mixin({}, options, validate.defaults);
+    var errors = [];
+
+    validateObject(object, schema, options, errors);
+
+    //
+    // TODO: self-described validation
+    // if (! options.selfDescribing) { ... }
+    //
+
+    return {
+      valid: !(errors.length),
+      errors: errors
+    };
+  };
+
+  /**
+   * Default validation options. Defaults can be overridden by
+   * passing an 'options' hash to {@link #validate}. They can
+   * also be set globally be changing the values in
+   * <code>validate.defaults</code> directly.
+   */
+  validate.defaults = {
+      /**
+       * <p>
+       * Enforce 'format' constraints.
+       * </p><p>
+       * <em>Default: <code>true</code></em>
+       * </p>
+       */
+      validateFormats: true,
+      /**
+       * <p>
+       * When {@link #validateFormats} is <code>true</code>,
+       * treat unrecognized formats as validation errors.
+       * </p><p>
+       * <em>Default: <code>false</code></em>
+       * </p>
+       *
+       * @see validation.formats for default supported formats.
+       */
+      validateFormatsStrict: false,
+      /**
+       * <p>
+       * When {@link #validateFormats} is <code>true</code>,
+       * also validate formats defined in {@link #validate.formatExtensions}.
+       * </p><p>
+       * <em>Default: <code>true</code></em>
+       * </p>
+       */
+      validateFormatExtensions: true
+  };
+
+  /**
+   * Default messages to include with validation errors.
+   */
+  validate.messages = {
+      required:         "is required",
+      minLength:        "is too short (minimum is %{expected} characters)",
+      maxLength:        "is too long (maximum is %{expected} characters)",
+      pattern:          "invalid input",
+      minimum:          "must be greater than or equal to %{expected}",
+      maximum:          "must be less than or equal to %{expected}",
+      exclusiveMinimum: "must be greater than %{expected}",
+      exclusiveMaximum: "must be less than %{expected}",
+      divisibleBy:      "must be divisible by %{expected}",
+      minItems:         "must contain more than %{expected} items",
+      maxItems:         "must contain less than %{expected} items",
+      uniqueItems:      "must hold a unique set of values",
+      format:           "is not a valid %{expected}",
+      conform:          "must conform to given constraint",
+      type:             "must be of %{expected} type"
+  };
+  validate.messages['enum'] = "must be present in given enumerator";
+
+  /**
+   *
+   */
+  validate.formats = {
+    'email':          /^((([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+(\.([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+)*)|((\x22)((((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(([\x01-\x08\x0b\x0c\x0e-\x1f\x7f]|\x21|[\x23-\x5b]|[\x5d-\x7e]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(\\([\x01-\x09\x0b\x0c\x0d-\x7f]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]))))*(((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(\x22)))@((([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.)+(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.?$/i,
+    'ip-address':     /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/i,
+    'ipv6':           /^([0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}$/,
+    'date-time':      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:.\d{1,3})?Z$/,
+    'date':           /^\d{4}-\d{2}-\d{2}$/,
+    'time':           /^\d{2}:\d{2}:\d{2}$/,
+    'color':          /^#[a-z0-9]{6}|#[a-z0-9]{3}|(?:rgb\(\s*(?:[+-]?\d+%?)\s*,\s*(?:[+-]?\d+%?)\s*,\s*(?:[+-]?\d+%?)\s*\))aqua|black|blue|fuchsia|gray|green|lime|maroon|navy|olive|orange|purple|red|silver|teal|white|yellow$/i,
+    //'style':        (not supported)
+    //'phone':        (not supported)
+    //'uri':          (not supported)
+    'host-name':      /^(([a-zA-Z]|[a-zA-Z][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z]|[A-Za-z][A-Za-z0-9\-]*[A-Za-z0-9])/,
+    'utc-millisec':   {
+      test: function (value) {
+        return typeof(value) === 'number' && value >= 0;
+      }
+    },
+    'regex':          {
+      test: function (value) {
+        try { new RegExp(value) }
+        catch (e) { return false }
+
+        return true;
+      }
+    }
+  };
+
+  /**
+   *
+   */
+  validate.formatExtensions = {
+    'url': /^(https?|ftp|git):\/\/(((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:)*@)?(((\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5]))|((([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.)+(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.?)(:\d*)?)(\/((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)+(\/(([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)*)*)?)?(\?((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)|[\uE000-\uF8FF]|\/|\?)*)?(\#((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)|\/|\?)*)?$/i
+  };
+
+  function mixin(obj) {
+    var sources = Array.prototype.slice.call(arguments, 1);
+    while (sources.length) {
+      var source = sources.shift();
+      if (!source) { continue }
+
+      if (typeof(source) !== 'object') {
+        throw new TypeError('mixin non-object');
+      }
+
+      for (var p in source) {
+        if (source.hasOwnProperty(p)) {
+          obj[p] = source[p];
         }
+      }
+    }
+
+    return obj;
+  };
+
+  function validateObject(object, schema, options, errors) {
+    var props, allProps = Object.keys(object),
+        visitedProps = [];
+
+    // see 5.2
+    if (schema.properties) {
+      props = schema.properties;
+      for (var p in props) {
+        if (props.hasOwnProperty(p)) {
+          visitedProps.push(p);
+          validateProperty(object, object[p], p, props[p], options, errors);
+        }
+      }
+    }
+
+    // see 5.3
+    if (schema.patternProperties) {
+      props = schema.patternProperties;
+      for (var p in props) {
+        if (props.hasOwnProperty(p)) {
+          var re = new RegExp(p);
+
+          // Find all object properties that are matching `re`
+          for (var k in object) {
+            if (object.hasOwnProperty(k)) {
+              visitedProps.push(k);
+              if (re.exec(k) !== null) {
+                validateProperty(object, object[k], p, props[p], options, errors);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // see 5.4
+    if (undefined !== schema.additionalProperties) {
+      var i, l;
+
+      var unvisitedProps = allProps.filter(function(k){
+        return -1 === visitedProps.indexOf(k);
+      });
+
+      // Prevent additional properties; each unvisited property is therefore an error
+      if (schema.additionalProperties === false && unvisitedProps.length > 0) {
+        for (i = 0, l = unvisitedProps.length; i < l; i++) {
+          error("additionalProperties", unvisitedProps[i], object[unvisitedProps[i]], false, errors);
+        }
+      }
+      // additionalProperties is a schema and validate unvisited properties against that schema
+      else if (typeof schema.additionalProperties == "object" && unvisitedProps.length > 0) {
+        for (i = 0, l = unvisitedProps.length; i < l; i++) {
+          validateProperty(object, object[unvisitedProps[i]], unvisitedProps[i], schema.unvisitedProperties, options, errors);
+        }
+      }
+    }
+
+  };
+
+  function validateProperty(object, value, property, schema, options, errors) {
+    var format,
+        valid,
+        spec,
+        type;
+
+    function constrain(name, value, assert) {
+      if (schema[name] !== undefined && !assert(value, schema[name])) {
+        error(name, property, value, schema, errors);
+      }
+    }
+
+    if (value === undefined) {
+      if (schema.required && schema.type !== 'any') {
+        return error('required', property, undefined, schema, errors);
+      } else {
+        return;
+      }
+    }
+
+    if (options.cast) {
+      if (('integer' === schema.type || 'number' === schema.type) && value == +value) {
+        value = +value;
+      }
+
+      if ('boolean' === schema.type) {
+        if ('true' === value || '1' === value || 1 === value) {
+          value = true;
+        }
+
+        if ('false' === value || '0' === value || 0 === value) {
+          value = false;
+        }
+      }
+    }
+
+    if (schema.format && options.validateFormats) {
+      format = schema.format;
+
+      if (options.validateFormatExtensions) { spec = validate.formatExtensions[format] }
+      if (!spec) { spec = validate.formats[format] }
+      if (!spec) {
+        if (options.validateFormatsStrict) {
+          return error('format', property, value, schema, errors);
+        }
+      }
+      else {
+        if (!spec.test(value)) {
+          return error('format', property, value, schema, errors);
+        }
+      }
+    }
+
+    if (schema['enum'] && schema['enum'].indexOf(value) === -1) {
+      error('enum', property, value, schema, errors);
+    }
+
+    // Dependencies (see 5.8)
+    if (typeof schema.dependencies === 'string' &&
+        object[schema.dependencies] === undefined) {
+      error('dependencies', property, null, schema, errors);
+    }
+
+    if (isArray(schema.dependencies)) {
+      for (var i = 0, l = schema.dependencies.length; i < l; i++) {
+        if (object[schema.dependencies[i]] === undefined) {
+          error('dependencies', property, null, schema, errors);
+        }
+      }
+    }
+
+    if (typeof schema.dependencies === 'object') {
+      validateObject(object, schema.dependencies, options, errors);
+    }
+
+    checkType(value, schema.type, function(err, type) {
+      if (err) return error('type', property, typeof value, schema, errors);
+
+      constrain('conform', value, function (a, e) { return e(a, object) });
+
+      switch (type || (isArray(value) ? 'array' : typeof value)) {
+        case 'string':
+          constrain('minLength', value.length, function (a, e) { return a >= e });
+          constrain('maxLength', value.length, function (a, e) { return a <= e });
+          constrain('pattern',   value,        function (a, e) {
+            e = typeof e === 'string'
+              ? e = new RegExp(e)
+              : e;
+            return e.test(a)
+          });
+          break;
+        case 'integer':
+        case 'number':
+          constrain('minimum',     value, function (a, e) { return a >= e });
+          constrain('maximum',     value, function (a, e) { return a <= e });
+          constrain('exclusiveMinimum', value, function (a, e) { return a > e });
+          constrain('exclusiveMaximum', value, function (a, e) { return a < e });
+          constrain('divisibleBy', value, function (a, e) {
+            var multiplier = Math.max((a - Math.floor(a)).toString().length - 2, (e - Math.floor(e)).toString().length - 2);
+            multiplier = multiplier > 0 ? Math.pow(10, multiplier) : 1;
+            return (a * multiplier) % (e * multiplier) === 0
+          });
+          break;
+        case 'array':
+          constrain('items', value, function (a, e) {
+            for (var i = 0, l = a.length; i < l; i++) {
+              validateProperty(object, a[i], property, e, options, errors);
+            }
+            return true;
+          });
+          constrain('minItems', value, function (a, e) { return a.length >= e });
+          constrain('maxItems', value, function (a, e) { return a.length <= e });
+          constrain('uniqueItems', value, function (a) {
+            var h = {};
+
+            for (var i = 0, l = a.length; i < l; i++) {
+              var key = JSON.stringify(a[i]);
+              if (h[key]) return false;
+              h[key] = true;
+            }
+
+            return true;
+          });
+          break;
+        case 'object':
+          // Recursive validation
+          if (schema.properties || schema.patternProperties || schema.additionalProperties) {
+            validateObject(value, schema, options, errors);
+          }
+          break;
       }
     });
   };
 
-}).call(this);
+  function checkType(val, type, callback) {
+    var result = false,
+        types = isArray(type) ? type : [type];
 
-},{"revalidator":29}],27:[function(require,module,exports){
+    // No type - no check
+    if (type === undefined) return callback(null, type);
+
+    // Go through available types
+    // And fine first matching
+    for (var i = 0, l = types.length; i < l; i++) {
+      type = types[i].toLowerCase().trim();
+      if (type === 'string' ? typeof val === 'string' :
+          type === 'array' ? isArray(val) :
+          type === 'object' ? val && typeof val === 'object' &&
+                             !isArray(val) :
+          type === 'number' ? typeof val === 'number' :
+          type === 'integer' ? typeof val === 'number' && ~~val === val :
+          type === 'null' ? val === null :
+          type === 'boolean'? typeof val === 'boolean' :
+          type === 'any' ? typeof val !== 'undefined' : false) {
+        return callback(null, type);
+      }
+    };
+
+    callback(true);
+  };
+
+  function error(attribute, property, actual, schema, errors) {
+    var lookup = { expected: schema[attribute], attribute: attribute, property: property };
+    var message = schema.messages && schema.messages[attribute] || schema.message || validate.messages[attribute] || "no default message";
+    message = message.replace(/%\{([a-z]+)\}/ig, function (_, match) { return lookup[match.toLowerCase()] || ''; });
+    errors.push({
+      attribute: attribute,
+      property:  property,
+      expected:  schema[attribute],
+      actual:    actual,
+      message:   message
+    });
+  };
+
+  function isArray(value) {
+    var s = typeof value;
+    if (s === 'object') {
+      if (value) {
+        if (typeof value.length === 'number' &&
+           !(value.propertyIsEnumerable('length')) &&
+           typeof value.splice === 'function') {
+           return true;
+        }
+      }
+    }
+    return false;
+  }
+
+
+})(typeof module !== 'undefined' ? module.exports : (window.json = window.json || {}));
+
+},{}],28:[function(require,module,exports){
 /*
   Copyright (C) 2012-2013 Yusuke Suzuki <utatane.tea@gmail.com>
   Copyright (C) 2012 Ariya Hidayat <ariya.hidayat@gmail.com>
@@ -33623,787 +34407,7 @@ var global=self;/*
 }));
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{}],14:[function(require,module,exports){
-/*******************************************************************************
- * Copyright (c) 2012 IBM Corporation.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *     IBM Corporation - initial API and implementation
- *******************************************************************************/
-
-/**
- * Convenience functions for constructing and navigating ASTs.
- */
-//if(typeof define !== 'function') {
-//  var define = require('amdefine')(module);
-//}
-//
-//define(function(require, exports) {
-  var position = require('./position');
-  
-  // constructor signatures; arguments in angle brackets are terminal children, the others subtrees
-  var signatures = {
-      AssignmentExpression: [ '<operator>', 'left', 'right'],
-      ArrayExpression: [ 'elements' ],
-      BlockStatement: [ 'body' ],
-      BinaryExpression: [ '<operator>', 'left', 'right'],
-      BreakStatement: [ 'label' ],
-      CallExpression: [ 'callee', 'arguments' ],
-      CatchClause: [ 'param', 'body' ],
-      ConditionalExpression: [ 'test', 'consequent', 'alternate' ],
-      ContinueStatement: [ 'label' ],
-      DirectiveStatement: [ ],
-      DoWhileStatement: [ 'body', 'test' ],
-      DebuggerStatement: [ ],
-      EmptyStatement: [ ],
-      ExpressionStatement: [ 'expression' ],
-      ForStatement: [ 'init', 'test', 'update', 'body' ],
-      ForInStatement: [ 'left', 'right', 'body' ],
-      FunctionDeclaration: [ 'id', 'params', 'body' ],
-      FunctionExpression: [ 'id', 'params', 'body' ],
-      Identifier: [ '<name>' ],
-      IfStatement: [ 'test', 'consequent', 'alternate' ],
-      Literal: [ '<value>' ],
-      LabeledStatement: [ 'label', 'body' ],
-      LogicalExpression: [ '<operator>', 'left', 'right' ],
-      MemberExpression: [ 'object', 'property', '<computed>' ],
-      NewExpression: [ 'callee', 'arguments' ],
-      ObjectExpression: [ 'properties' ],
-      Program: [ 'body' ],
-      Property: [ 'key', 'value', '<kind>' ],
-      ReturnStatement: [ 'argument' ],
-      SequenceExpression: [ 'expressions' ],
-      SwitchStatement: [ 'discriminant', 'cases' ],
-      SwitchCase: [ 'test', 'consequent' ],
-      ThisExpression: [ ],
-      ThrowStatement: [ 'argument' ],
-      TryStatement: [ 'block', 'guardedHandlers', 'handlers', 'finalizer' ],
-      UnaryExpression: [ '<operator>', 'argument' ],
-      UpdateExpression: [ '<operator>', 'argument', '<prefix>' ],
-      VariableDeclaration: [ 'declarations', '<kind>' ],
-      VariableDeclarator: [ 'id', 'init' ],
-      WhileStatement: [ 'test', 'body' ],
-      WithStatement: [ 'object', 'body' ]
-  };
-
-  // define a constructor from a signature
-  function defconstructor(tpname, signature) {
-    var child_names = [], nonterminal_children = [];
-    for(var i=0;i<signature.length;++i)
-      if(signature[i][0] === '<') {
-        child_names[child_names.length] = signature[i].substring(1, signature[i].length-1);
-      } else {
-        child_names[child_names.length] = signature[i];
-        nonterminal_children[nonterminal_children.length] = signature[i];
-      }
-    
-    exports[tpname] = function() {
-      this.type = tpname;
-      this.attr = {};
-      for(var i=0;i<arguments.length;++i)
-        this[child_names[i]] = arguments[i];
-      for(;i<child_names.length;++i)
-        this[child_names[i]] = null;
-    };
-    exports[tpname].children = nonterminal_children;
-  }
-  
-  // several convenience methods for accessing subtrees
-  var getNumChild = exports.getNumChild = function(nd) {
-    if(Array.isArray(nd))
-      return nd.length;
-    
-    if(nd && nd.type)
-      return exports[nd.type].children.length;
-    
-    return 0;
-  };
-  
-  var getChild = exports.getChild = function(nd, i) {
-    if(Array.isArray(nd))
-      return nd[i];
-    
-    return nd[exports[nd.type].children[i]];
-  };
-
-  var setChild = exports.setChild = function(nd, i, v) {
-    if(Array.isArray(nd))
-      return nd[i] = v;
-
-    return nd[exports[nd.type].children[i]] = v;
-  };
-  
-  var forEachChild = exports.forEachChild = function(nd, cb) {
-    for(var i = 0, n = getNumChild(nd); i < n; ++i)
-      cb(getChild(nd, i), i);
-  };
-  
-  var mapChildren = exports.mapChildren = function(nd, cb) {
-    var res = [];
-    forEachChild(nd, function(ch, i) {
-      res[res.length] = cb(ch, i);
-    });
-    return res;
-  };
-
-  // simple debug printing function
-  var dump = exports.dump = function(nd) {
-    if(Array.isArray(nd))
-      return "[" + nd.map(dump).join() + "]";
-    
-    if(!nd || !nd.type)
-      return nd+"";
-    
-    return nd.type + "(" + mapChildren(nd, dump).join() + ")";
-  };
-  
-  // we give every AST node a property "attr" for storing attributes
-  exports.getAttribute = function(nd, name) {
-    nd.attr = nd.attr || {};
-    return nd.attr[name];
-  };
-  
-  exports.setAttribute = function(nd, name, value) {
-    nd.attr = nd.attr || {};
-    nd.attr[name] = value;
-    return nd;
-  };
-  
-  // positions are attached as attributes
-  exports.hasPosition = function(nd) {
-      return !!exports.getAttribute(nd, 'pos') || !!nd.loc || !!nd.range;
-  };
-  
-  exports.getPosition = function(nd) {
-      if(!exports.getAttribute(nd, 'pos')) {
-      var pos = position.DUMMY_POS.clone();
-      if(nd.loc) {
-	  if(nd.loc.source) {
-	      pos.url = nd.loc.source;
-	  }
-        pos.start_line = nd.loc.start.line;
-        pos.end_line = nd.loc.start.line;
-      }
-      if(nd.range) {
-        pos.start_offset = nd.range[0];
-        pos.end_offset = nd.range[1];
-      }
-      exports.setAttribute(nd, 'pos', pos);
-    }
-    return exports.getAttribute(nd, 'pos');
-  };
-  
-  exports.setPosition = function(nd, pos) {
-    exports.setAttribute(nd, 'pos', pos);
-  };
-  
-  for(var p in signatures)
-    defconstructor(p, signatures[p]);
-//});
-
-},{"./position":18}],16:[function(require,module,exports){
-/*******************************************************************************
- * Copyright (c) 2012 IBM Corporation.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *     IBM Corporation - initial API and implementation
- *******************************************************************************/
-
-/**
- * Utility functions to collect all variable and function declarations in a subtree.
- */
-//if(typeof define !== 'function') {
-//  var define = require('amdefine')(module);
-//}
-//
-//define(function(require, exports) {
-  var ast = require('../../common/lib/ast');
-
-  function getDeclName(decl) {
-    if(decl.type === 'Identifier')
-      return decl.name;
-    return decl.id.name;
-  }
-
-  function collectDecls(nd, accu) {
-    if(!nd)
-      return accu;
-    
-    if(nd.type === 'FunctionDeclaration') {
-      accu[accu.length] = nd;
-    } else if(nd.type === 'VariableDeclarator') {
-      accu[accu.length] = nd;
-    } else if(nd.type !== 'FunctionExpression') {
-      ast.forEachChild(nd, function(ch) {
-        collectDecls(ch, accu);
-      });
-    }
-    return accu;
-  }
-  
-  exports.collectDecls = collectDecls;
-  exports.getDeclName = getDeclName;
-//});
-
-},{"../../common/lib/ast":14}],17:[function(require,module,exports){
-/*******************************************************************************
- * Copyright (c) 2012 IBM Corporation.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *     IBM Corporation - initial API and implementation
- *******************************************************************************/
-
-/**
- * Scope objects keep track of name binding. Each scope object represents
- * either the global scope, a function scope, a catch clause scope, or
- * a 'with' scope.
- */
-
-//if(typeof define !== 'function') {
-//  var define = require('amdefine')(module);
-//}
-//
-//define(function(require, exports) {
-  var decls = require('./decls');
-  
-  // abstract base class of all scopes
-  function Scope(outer, decls) {
-    this.outer = outer;
-    this.decls = decls;
-  }
-  
-  // is x a global variable in this scope?
-  Scope.prototype.isGlobal = function(x) {
-    return !this.isLocal(x) && this.outer.isGlobal(x);
-  };
-  
-  // does x have a declaration at the global level?
-  Scope.prototype.isDeclaredGlobal = function(x) {
-    return this.outer.isDeclaredGlobal();
-  };
-  
-  // look up x among the local declarations in this scope
-  Scope.prototype.localLookup = function(x) {
-    for(var i=0;i<this.decls.length;++i)
-      if(decls.getDeclName(this.decls[i]) === x)
-        return this.decls[i];
-    return null;
-  };
-  
-  // is x a local variable declared in this scope?
-  Scope.prototype.isLocal = function(x) { return !!this.localLookup(x); };
-  
-  // look up x in this or an enclosing scope
-  Scope.prototype.lookup = function(x) {
-    return this.localLookup(x) || this.outer && this.outer.lookup(x);
-  };
-  
-  // object representing the global scope
-  function GlobalScope(root) {
-    Scope.call(this, null, decls.collectDecls(root, []));
-  }
-  GlobalScope.prototype = Object.create(Scope.prototype);
-  
-  GlobalScope.prototype.isGlobal = function(x) { return true; };
-  GlobalScope.prototype.isLocal = function(x) { return false; };
-  GlobalScope.prototype.possibleWithBindings = function(x) { return []; };
-  GlobalScope.prototype.isDeclaredGlobal = function(x) {
-    return !!this.localLookup(x);
-  };
-    
-  // constructor representing a function scope
-  function FunctionScope(outer, fn) {
-    this.fn = fn;
-    Scope.call(this, outer, fn.params.concat(decls.collectDecls(fn.body, [])));
-  }
-  FunctionScope.prototype = Object.create(Scope.prototype);
-  
-  // 'arguments' and (in a named function expression) the function itself are local,
-  // even though they are not declared
-  FunctionScope.prototype.isLocal = function(x) {
-    return x === 'arguments' ||
-           this.fn.type === 'FunctionExpression' && this.fn.id && this.fn.id.name === x ||
-           Scope.prototype.isLocal.call(this, x);
-  };
-  
-  // list of enclosing with statements (represented by the variables they 'with' on) that
-  // may bind x
-  FunctionScope.prototype.possibleWithBindings = function(x) {
-    if(this.isLocal(x))
-      return [];
-    return this.outer.possibleWithBindings(x);
-  };
-  
-  // constructor representing a catch clause scope
-  function CatchScope(outer, cc) {
-    Scope.call(this, outer, [cc.param]);
-  }
-  CatchScope.prototype = Object.create(Scope.prototype);
-  
-  CatchScope.prototype.isLocal = function(x) { return x === this.decls[0].name || this.outer.isLocal(x); };
-  
-  CatchScope.prototype.possibleWithBindings = function(x) {
-    if(x === this.decls[0].name)
-      return [];
-    return this.outer.possibleWithBindings(x);
-  };
-  
-  // constructor representing a with scope
-  function WithScope(outer, with_var) {
-    Scope.call(this, outer, []);
-    this.with_var = with_var;
-  }
-  WithScope.prototype = Object.create(Scope.prototype);
-  
-  WithScope.prototype.isLocal = function(x) { return this.outer.isLocal(x); };
-  
-  WithScope.prototype.possibleWithBindings = function(x) {
-    var bindings = this.outer.possibleWithBindings(x);
-    bindings.unshift(this.with_var);
-    return bindings;
-  };
-  
-  exports.Scope = Scope;
-  exports.GlobalScope = GlobalScope;
-  exports.FunctionScope = FunctionScope;
-  exports.CatchScope = CatchScope;
-  exports.WithScope = WithScope;
-//});
-
-},{"./decls":16}],29:[function(require,module,exports){
-(function (exports) {
-  exports.validate = validate;
-  exports.mixin = mixin;
-
-  //
-  // ### function validate (object, schema, options)
-  // #### {Object} object the object to validate.
-  // #### {Object} schema (optional) the JSON Schema to validate against.
-  // #### {Object} options (optional) options controlling the validation
-  //      process. See {@link #validate.defaults) for details.
-  // Validate <code>object</code> against a JSON Schema.
-  // If <code>object</code> is self-describing (i.e. has a
-  // <code>$schema</code> property), it will also be validated
-  // against the referenced schema. [TODO]: This behaviour bay be
-  // suppressed by setting the {@link #validate.options.???}
-  // option to <code>???</code>.[/TODO]
-  //
-  // If <code>schema</code> is not specified, and <code>object</code>
-  // is not self-describing, validation always passes.
-  //
-  // <strong>Note:</strong> in order to pass options but no schema,
-  // <code>schema</code> <em>must</em> be specified in the call to
-  // <code>validate()</code>; otherwise, <code>options</code> will
-  // be interpreted as the schema. <code>schema</code> may be passed
-  // as <code>null</code>, <code>undefinded</code>, or the empty object
-  // (<code>{}</code>) in this case.
-  //
-  function validate(object, schema, options) {
-    options = mixin({}, options, validate.defaults);
-    var errors = [];
-
-    validateObject(object, schema, options, errors);
-
-    //
-    // TODO: self-described validation
-    // if (! options.selfDescribing) { ... }
-    //
-
-    return {
-      valid: !(errors.length),
-      errors: errors
-    };
-  };
-
-  /**
-   * Default validation options. Defaults can be overridden by
-   * passing an 'options' hash to {@link #validate}. They can
-   * also be set globally be changing the values in
-   * <code>validate.defaults</code> directly.
-   */
-  validate.defaults = {
-      /**
-       * <p>
-       * Enforce 'format' constraints.
-       * </p><p>
-       * <em>Default: <code>true</code></em>
-       * </p>
-       */
-      validateFormats: true,
-      /**
-       * <p>
-       * When {@link #validateFormats} is <code>true</code>,
-       * treat unrecognized formats as validation errors.
-       * </p><p>
-       * <em>Default: <code>false</code></em>
-       * </p>
-       *
-       * @see validation.formats for default supported formats.
-       */
-      validateFormatsStrict: false,
-      /**
-       * <p>
-       * When {@link #validateFormats} is <code>true</code>,
-       * also validate formats defined in {@link #validate.formatExtensions}.
-       * </p><p>
-       * <em>Default: <code>true</code></em>
-       * </p>
-       */
-      validateFormatExtensions: true
-  };
-
-  /**
-   * Default messages to include with validation errors.
-   */
-  validate.messages = {
-      required:         "is required",
-      minLength:        "is too short (minimum is %{expected} characters)",
-      maxLength:        "is too long (maximum is %{expected} characters)",
-      pattern:          "invalid input",
-      minimum:          "must be greater than or equal to %{expected}",
-      maximum:          "must be less than or equal to %{expected}",
-      exclusiveMinimum: "must be greater than %{expected}",
-      exclusiveMaximum: "must be less than %{expected}",
-      divisibleBy:      "must be divisible by %{expected}",
-      minItems:         "must contain more than %{expected} items",
-      maxItems:         "must contain less than %{expected} items",
-      uniqueItems:      "must hold a unique set of values",
-      format:           "is not a valid %{expected}",
-      conform:          "must conform to given constraint",
-      type:             "must be of %{expected} type"
-  };
-  validate.messages['enum'] = "must be present in given enumerator";
-
-  /**
-   *
-   */
-  validate.formats = {
-    'email':          /^((([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+(\.([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+)*)|((\x22)((((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(([\x01-\x08\x0b\x0c\x0e-\x1f\x7f]|\x21|[\x23-\x5b]|[\x5d-\x7e]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(\\([\x01-\x09\x0b\x0c\x0d-\x7f]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]))))*(((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(\x22)))@((([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.)+(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.?$/i,
-    'ip-address':     /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/i,
-    'ipv6':           /^([0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}$/,
-    'date-time':      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:.\d{1,3})?Z$/,
-    'date':           /^\d{4}-\d{2}-\d{2}$/,
-    'time':           /^\d{2}:\d{2}:\d{2}$/,
-    'color':          /^#[a-z0-9]{6}|#[a-z0-9]{3}|(?:rgb\(\s*(?:[+-]?\d+%?)\s*,\s*(?:[+-]?\d+%?)\s*,\s*(?:[+-]?\d+%?)\s*\))aqua|black|blue|fuchsia|gray|green|lime|maroon|navy|olive|orange|purple|red|silver|teal|white|yellow$/i,
-    //'style':        (not supported)
-    //'phone':        (not supported)
-    //'uri':          (not supported)
-    'host-name':      /^(([a-zA-Z]|[a-zA-Z][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z]|[A-Za-z][A-Za-z0-9\-]*[A-Za-z0-9])/,
-    'utc-millisec':   {
-      test: function (value) {
-        return typeof(value) === 'number' && value >= 0;
-      }
-    },
-    'regex':          {
-      test: function (value) {
-        try { new RegExp(value) }
-        catch (e) { return false }
-
-        return true;
-      }
-    }
-  };
-
-  /**
-   *
-   */
-  validate.formatExtensions = {
-    'url': /^(https?|ftp|git):\/\/(((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:)*@)?(((\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5]))|((([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.)+(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.?)(:\d*)?)(\/((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)+(\/(([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)*)*)?)?(\?((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)|[\uE000-\uF8FF]|\/|\?)*)?(\#((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)|\/|\?)*)?$/i
-  };
-
-  function mixin(obj) {
-    var sources = Array.prototype.slice.call(arguments, 1);
-    while (sources.length) {
-      var source = sources.shift();
-      if (!source) { continue }
-
-      if (typeof(source) !== 'object') {
-        throw new TypeError('mixin non-object');
-      }
-
-      for (var p in source) {
-        if (source.hasOwnProperty(p)) {
-          obj[p] = source[p];
-        }
-      }
-    }
-
-    return obj;
-  };
-
-  function validateObject(object, schema, options, errors) {
-    var props, allProps = Object.keys(object),
-        visitedProps = [];
-
-    // see 5.2
-    if (schema.properties) {
-      props = schema.properties;
-      for (var p in props) {
-        if (props.hasOwnProperty(p)) {
-          visitedProps.push(p);
-          validateProperty(object, object[p], p, props[p], options, errors);
-        }
-      }
-    }
-
-    // see 5.3
-    if (schema.patternProperties) {
-      props = schema.patternProperties;
-      for (var p in props) {
-        if (props.hasOwnProperty(p)) {
-          var re = new RegExp(p);
-
-          // Find all object properties that are matching `re`
-          for (var k in object) {
-            if (object.hasOwnProperty(k)) {
-              visitedProps.push(k);
-              if (re.exec(k) !== null) {
-                validateProperty(object, object[k], p, props[p], options, errors);
-              }
-            }
-          }
-        }
-      }
-    }
-
-    // see 5.4
-    if (undefined !== schema.additionalProperties) {
-      var i, l;
-
-      var unvisitedProps = allProps.filter(function(k){
-        return -1 === visitedProps.indexOf(k);
-      });
-
-      // Prevent additional properties; each unvisited property is therefore an error
-      if (schema.additionalProperties === false && unvisitedProps.length > 0) {
-        for (i = 0, l = unvisitedProps.length; i < l; i++) {
-          error("additionalProperties", unvisitedProps[i], object[unvisitedProps[i]], false, errors);
-        }
-      }
-      // additionalProperties is a schema and validate unvisited properties against that schema
-      else if (typeof schema.additionalProperties == "object" && unvisitedProps.length > 0) {
-        for (i = 0, l = unvisitedProps.length; i < l; i++) {
-          validateProperty(object, object[unvisitedProps[i]], unvisitedProps[i], schema.unvisitedProperties, options, errors);
-        }
-      }
-    }
-
-  };
-
-  function validateProperty(object, value, property, schema, options, errors) {
-    var format,
-        valid,
-        spec,
-        type;
-
-    function constrain(name, value, assert) {
-      if (schema[name] !== undefined && !assert(value, schema[name])) {
-        error(name, property, value, schema, errors);
-      }
-    }
-
-    if (value === undefined) {
-      if (schema.required && schema.type !== 'any') {
-        return error('required', property, undefined, schema, errors);
-      } else {
-        return;
-      }
-    }
-
-    if (options.cast) {
-      if (('integer' === schema.type || 'number' === schema.type) && value == +value) {
-        value = +value;
-      }
-
-      if ('boolean' === schema.type) {
-        if ('true' === value || '1' === value || 1 === value) {
-          value = true;
-        }
-
-        if ('false' === value || '0' === value || 0 === value) {
-          value = false;
-        }
-      }
-    }
-
-    if (schema.format && options.validateFormats) {
-      format = schema.format;
-
-      if (options.validateFormatExtensions) { spec = validate.formatExtensions[format] }
-      if (!spec) { spec = validate.formats[format] }
-      if (!spec) {
-        if (options.validateFormatsStrict) {
-          return error('format', property, value, schema, errors);
-        }
-      }
-      else {
-        if (!spec.test(value)) {
-          return error('format', property, value, schema, errors);
-        }
-      }
-    }
-
-    if (schema['enum'] && schema['enum'].indexOf(value) === -1) {
-      error('enum', property, value, schema, errors);
-    }
-
-    // Dependencies (see 5.8)
-    if (typeof schema.dependencies === 'string' &&
-        object[schema.dependencies] === undefined) {
-      error('dependencies', property, null, schema, errors);
-    }
-
-    if (isArray(schema.dependencies)) {
-      for (var i = 0, l = schema.dependencies.length; i < l; i++) {
-        if (object[schema.dependencies[i]] === undefined) {
-          error('dependencies', property, null, schema, errors);
-        }
-      }
-    }
-
-    if (typeof schema.dependencies === 'object') {
-      validateObject(object, schema.dependencies, options, errors);
-    }
-
-    checkType(value, schema.type, function(err, type) {
-      if (err) return error('type', property, typeof value, schema, errors);
-
-      constrain('conform', value, function (a, e) { return e(a, object) });
-
-      switch (type || (isArray(value) ? 'array' : typeof value)) {
-        case 'string':
-          constrain('minLength', value.length, function (a, e) { return a >= e });
-          constrain('maxLength', value.length, function (a, e) { return a <= e });
-          constrain('pattern',   value,        function (a, e) {
-            e = typeof e === 'string'
-              ? e = new RegExp(e)
-              : e;
-            return e.test(a)
-          });
-          break;
-        case 'integer':
-        case 'number':
-          constrain('minimum',     value, function (a, e) { return a >= e });
-          constrain('maximum',     value, function (a, e) { return a <= e });
-          constrain('exclusiveMinimum', value, function (a, e) { return a > e });
-          constrain('exclusiveMaximum', value, function (a, e) { return a < e });
-          constrain('divisibleBy', value, function (a, e) {
-            var multiplier = Math.max((a - Math.floor(a)).toString().length - 2, (e - Math.floor(e)).toString().length - 2);
-            multiplier = multiplier > 0 ? Math.pow(10, multiplier) : 1;
-            return (a * multiplier) % (e * multiplier) === 0
-          });
-          break;
-        case 'array':
-          constrain('items', value, function (a, e) {
-            for (var i = 0, l = a.length; i < l; i++) {
-              validateProperty(object, a[i], property, e, options, errors);
-            }
-            return true;
-          });
-          constrain('minItems', value, function (a, e) { return a.length >= e });
-          constrain('maxItems', value, function (a, e) { return a.length <= e });
-          constrain('uniqueItems', value, function (a) {
-            var h = {};
-
-            for (var i = 0, l = a.length; i < l; i++) {
-              var key = JSON.stringify(a[i]);
-              if (h[key]) return false;
-              h[key] = true;
-            }
-
-            return true;
-          });
-          break;
-        case 'object':
-          // Recursive validation
-          if (schema.properties || schema.patternProperties || schema.additionalProperties) {
-            validateObject(value, schema, options, errors);
-          }
-          break;
-      }
-    });
-  };
-
-  function checkType(val, type, callback) {
-    var result = false,
-        types = isArray(type) ? type : [type];
-
-    // No type - no check
-    if (type === undefined) return callback(null, type);
-
-    // Go through available types
-    // And fine first matching
-    for (var i = 0, l = types.length; i < l; i++) {
-      type = types[i].toLowerCase().trim();
-      if (type === 'string' ? typeof val === 'string' :
-          type === 'array' ? isArray(val) :
-          type === 'object' ? val && typeof val === 'object' &&
-                             !isArray(val) :
-          type === 'number' ? typeof val === 'number' :
-          type === 'integer' ? typeof val === 'number' && ~~val === val :
-          type === 'null' ? val === null :
-          type === 'boolean'? typeof val === 'boolean' :
-          type === 'any' ? typeof val !== 'undefined' : false) {
-        return callback(null, type);
-      }
-    };
-
-    callback(true);
-  };
-
-  function error(attribute, property, actual, schema, errors) {
-    var lookup = { expected: schema[attribute], attribute: attribute, property: property };
-    var message = schema.messages && schema.messages[attribute] || schema.message || validate.messages[attribute] || "no default message";
-    message = message.replace(/%\{([a-z]+)\}/ig, function (_, match) { return lookup[match.toLowerCase()] || ''; });
-    errors.push({
-      attribute: attribute,
-      property:  property,
-      expected:  schema[attribute],
-      actual:    actual,
-      message:   message
-    });
-  };
-
-  function isArray(value) {
-    var s = typeof value;
-    if (s === 'object') {
-      if (value) {
-        if (typeof value.length === 'number' &&
-           !(value.propertyIsEnumerable('length')) &&
-           typeof value.splice === 'function') {
-           return true;
-        }
-      }
-    }
-    return false;
-  }
-
-
-})(typeof module !== 'undefined' ? module.exports : (window.json = window.json || {}));
-
-},{}],28:[function(require,module,exports){
-/*
- * Copyright 2009-2011 Mozilla Foundation and contributors
- * Licensed under the New BSD license. See LICENSE.txt or:
- * http://opensource.org/licenses/BSD-3-Clause
- */
-exports.SourceMapGenerator = require('./source-map/source-map-generator').SourceMapGenerator;
-exports.SourceMapConsumer = require('./source-map/source-map-consumer').SourceMapConsumer;
-exports.SourceNode = require('./source-map/source-node').SourceNode;
-
-},{"./source-map/source-map-consumer":31,"./source-map/source-map-generator":30,"./source-map/source-node":32}],12:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 /*!
  * JSHint, by JSHint Community.
  *
@@ -39227,7 +39231,17 @@ if (typeof exports === "object" && exports) {
 	exports.JSHINT = JSHINT;
 }
 
-},{"../shared/messages.js":33,"../shared/vars.js":23,"./lex.js":34,"./reg.js":24,"./state.js":26,"./style.js":25,"console-browserify":36,"events":22,"underscore":35}],35:[function(require,module,exports){
+},{"../shared/messages.js":30,"../shared/vars.js":22,"./lex.js":31,"./reg.js":23,"./state.js":24,"./style.js":25,"console-browserify":33,"events":21,"underscore":32}],29:[function(require,module,exports){
+/*
+ * Copyright 2009-2011 Mozilla Foundation and contributors
+ * Licensed under the New BSD license. See LICENSE.txt or:
+ * http://opensource.org/licenses/BSD-3-Clause
+ */
+exports.SourceMapGenerator = require('./source-map/source-map-generator').SourceMapGenerator;
+exports.SourceMapConsumer = require('./source-map/source-map-consumer').SourceMapConsumer;
+exports.SourceNode = require('./source-map/source-node').SourceNode;
+
+},{"./source-map/source-map-consumer":35,"./source-map/source-map-generator":34,"./source-map/source-node":36}],32:[function(require,module,exports){
 //     Underscore.js 1.4.4
 //     http://underscorejs.org
 //     (c) 2009-2013 Jeremy Ashkenas, DocumentCloud Inc.
@@ -40455,94 +40469,7 @@ if (typeof exports === "object" && exports) {
 
 }).call(this);
 
-},{}],36:[function(require,module,exports){
-var global=self;/*global window, global*/
-var util = require("util")
-var assert = require("assert")
-
-var slice = Array.prototype.slice
-var console
-var times = {}
-
-if (typeof global !== "undefined" && global.console) {
-    console = global.console
-} else if (typeof window !== "undefined" && window.console) {
-    console = window.console
-} else {
-    console = window.console = {}
-}
-
-var functions = [
-    [log, "log"]
-    , [info, "info"]
-    , [warn, "warn"]
-    , [error, "error"]
-    , [time, "time"]
-    , [timeEnd, "timeEnd"]
-    , [trace, "trace"]
-    , [dir, "dir"]
-    , [assert, "assert"]
-]
-
-for (var i = 0; i < functions.length; i++) {
-    var tuple = functions[i]
-    var f = tuple[0]
-    var name = tuple[1]
-
-    if (!console[name]) {
-        console[name] = f
-    }
-}
-
-module.exports = console
-
-function log() {}
-
-function info() {
-    console.log.apply(console, arguments)
-}
-
-function warn() {
-    console.log.apply(console, arguments)
-}
-
-function error() {
-    console.warn.apply(console, arguments)
-}
-
-function time(label) {
-    times[label] = Date.now()
-}
-
-function timeEnd(label) {
-    var time = times[label]
-    if (!time) {
-        throw new Error("No such label: " + label)
-    }
-
-    var duration = Date.now() - time
-    console.log(label + ": " + duration + "ms")
-}
-
-function trace() {
-    var err = new Error()
-    err.name = "Trace"
-    err.message = util.format.apply(null, arguments)
-    console.error(err.stack)
-}
-
-function dir(object) {
-    console.log(util.inspect(object) + "\n")
-}
-
-function assert(expression) {
-    if (!expression) {
-        var arr = slice.call(arguments, 1)
-        assert.ok(false, util.format.apply(null, arr))
-    }
-}
-
-},{"assert":38,"util":37}],33:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 "use strict";
 
 var _ = require("underscore");
@@ -40762,7 +40689,7 @@ _.each(info, function (desc, code) {
 	exports.info[code] = { code: code, desc: desc };
 });
 
-},{"underscore":35}],34:[function(require,module,exports){
+},{"underscore":32}],31:[function(require,module,exports){
 /*
  * Lexical analysis and token construction.
  */
@@ -42457,7 +42384,94 @@ Lexer.prototype = {
 
 exports.Lexer = Lexer;
 
-},{"./reg.js":24,"./state.js":26,"events":22,"underscore":35}],37:[function(require,module,exports){
+},{"./reg.js":23,"./state.js":24,"events":21,"underscore":32}],33:[function(require,module,exports){
+var global=self;/*global window, global*/
+var util = require("util")
+var assert = require("assert")
+
+var slice = Array.prototype.slice
+var console
+var times = {}
+
+if (typeof global !== "undefined" && global.console) {
+    console = global.console
+} else if (typeof window !== "undefined" && window.console) {
+    console = window.console
+} else {
+    console = window.console = {}
+}
+
+var functions = [
+    [log, "log"]
+    , [info, "info"]
+    , [warn, "warn"]
+    , [error, "error"]
+    , [time, "time"]
+    , [timeEnd, "timeEnd"]
+    , [trace, "trace"]
+    , [dir, "dir"]
+    , [assert, "assert"]
+]
+
+for (var i = 0; i < functions.length; i++) {
+    var tuple = functions[i]
+    var f = tuple[0]
+    var name = tuple[1]
+
+    if (!console[name]) {
+        console[name] = f
+    }
+}
+
+module.exports = console
+
+function log() {}
+
+function info() {
+    console.log.apply(console, arguments)
+}
+
+function warn() {
+    console.log.apply(console, arguments)
+}
+
+function error() {
+    console.warn.apply(console, arguments)
+}
+
+function time(label) {
+    times[label] = Date.now()
+}
+
+function timeEnd(label) {
+    var time = times[label]
+    if (!time) {
+        throw new Error("No such label: " + label)
+    }
+
+    var duration = Date.now() - time
+    console.log(label + ": " + duration + "ms")
+}
+
+function trace() {
+    var err = new Error()
+    err.name = "Trace"
+    err.message = util.format.apply(null, arguments)
+    console.error(err.stack)
+}
+
+function dir(object) {
+    console.log(util.inspect(object) + "\n")
+}
+
+function assert(expression) {
+    if (!expression) {
+        var arr = slice.call(arguments, 1)
+        assert.ok(false, util.format.apply(null, arr))
+    }
+}
+
+},{"assert":38,"util":37}],37:[function(require,module,exports){
 var events = require('events');
 
 exports.isArray = isArray;
@@ -42804,7 +42818,7 @@ exports.format = function(f) {
   return str;
 };
 
-},{"events":22}],38:[function(require,module,exports){
+},{"events":21}],38:[function(require,module,exports){
 // UTILITY
 var util = require('util');
 var Buffer = require("buffer").Buffer;
@@ -43118,390 +43132,7 @@ assert.doesNotThrow = function(block, /*optional*/error, /*optional*/message) {
 
 assert.ifError = function(err) { if (err) {throw err;}};
 
-},{"buffer":39,"util":37}],30:[function(require,module,exports){
-/* -*- Mode: js; js-indent-level: 2; -*- */
-/*
- * Copyright 2011 Mozilla Foundation and contributors
- * Licensed under the New BSD license. See LICENSE or:
- * http://opensource.org/licenses/BSD-3-Clause
- */
-if (typeof define !== 'function') {
-    var define = require('amdefine')(module, require);
-}
-define(function (require, exports, module) {
-
-  var base64VLQ = require('./base64-vlq');
-  var util = require('./util');
-  var ArraySet = require('./array-set').ArraySet;
-
-  /**
-   * An instance of the SourceMapGenerator represents a source map which is
-   * being built incrementally. To create a new one, you must pass an object
-   * with the following properties:
-   *
-   *   - file: The filename of the generated source.
-   *   - sourceRoot: An optional root for all URLs in this source map.
-   */
-  function SourceMapGenerator(aArgs) {
-    this._file = util.getArg(aArgs, 'file');
-    this._sourceRoot = util.getArg(aArgs, 'sourceRoot', null);
-    this._sources = new ArraySet();
-    this._names = new ArraySet();
-    this._mappings = [];
-    this._sourcesContents = null;
-  }
-
-  SourceMapGenerator.prototype._version = 3;
-
-  /**
-   * Creates a new SourceMapGenerator based on a SourceMapConsumer
-   *
-   * @param aSourceMapConsumer The SourceMap.
-   */
-  SourceMapGenerator.fromSourceMap =
-    function SourceMapGenerator_fromSourceMap(aSourceMapConsumer) {
-      var sourceRoot = aSourceMapConsumer.sourceRoot;
-      var generator = new SourceMapGenerator({
-        file: aSourceMapConsumer.file,
-        sourceRoot: sourceRoot
-      });
-      aSourceMapConsumer.eachMapping(function (mapping) {
-        var newMapping = {
-          generated: {
-            line: mapping.generatedLine,
-            column: mapping.generatedColumn
-          }
-        };
-
-        if (mapping.source) {
-          newMapping.source = mapping.source;
-          if (sourceRoot) {
-            newMapping.source = util.relative(sourceRoot, newMapping.source);
-          }
-
-          newMapping.original = {
-            line: mapping.originalLine,
-            column: mapping.originalColumn
-          };
-
-          if (mapping.name) {
-            newMapping.name = mapping.name;
-          }
-        }
-
-        generator.addMapping(newMapping);
-      });
-      aSourceMapConsumer.sources.forEach(function (sourceFile) {
-        var content = aSourceMapConsumer.sourceContentFor(sourceFile);
-        if (content) {
-          generator.setSourceContent(sourceFile, content);
-        }
-      });
-      return generator;
-    };
-
-  /**
-   * Add a single mapping from original source line and column to the generated
-   * source's line and column for this source map being created. The mapping
-   * object should have the following properties:
-   *
-   *   - generated: An object with the generated line and column positions.
-   *   - original: An object with the original line and column positions.
-   *   - source: The original source file (relative to the sourceRoot).
-   *   - name: An optional original token name for this mapping.
-   */
-  SourceMapGenerator.prototype.addMapping =
-    function SourceMapGenerator_addMapping(aArgs) {
-      var generated = util.getArg(aArgs, 'generated');
-      var original = util.getArg(aArgs, 'original', null);
-      var source = util.getArg(aArgs, 'source', null);
-      var name = util.getArg(aArgs, 'name', null);
-
-      this._validateMapping(generated, original, source, name);
-
-      if (source && !this._sources.has(source)) {
-        this._sources.add(source);
-      }
-
-      if (name && !this._names.has(name)) {
-        this._names.add(name);
-      }
-
-      this._mappings.push({
-        generated: generated,
-        original: original,
-        source: source,
-        name: name
-      });
-    };
-
-  /**
-   * Set the source content for a source file.
-   */
-  SourceMapGenerator.prototype.setSourceContent =
-    function SourceMapGenerator_setSourceContent(aSourceFile, aSourceContent) {
-      var source = aSourceFile;
-      if (this._sourceRoot) {
-        source = util.relative(this._sourceRoot, source);
-      }
-
-      if (aSourceContent !== null) {
-        // Add the source content to the _sourcesContents map.
-        // Create a new _sourcesContents map if the property is null.
-        if (!this._sourcesContents) {
-          this._sourcesContents = {};
-        }
-        this._sourcesContents[util.toSetString(source)] = aSourceContent;
-      } else {
-        // Remove the source file from the _sourcesContents map.
-        // If the _sourcesContents map is empty, set the property to null.
-        delete this._sourcesContents[util.toSetString(source)];
-        if (Object.keys(this._sourcesContents).length === 0) {
-          this._sourcesContents = null;
-        }
-      }
-    };
-
-  /**
-   * Applies the mappings of a sub-source-map for a specific source file to the
-   * source map being generated. Each mapping to the supplied source file is
-   * rewritten using the supplied source map. Note: The resolution for the
-   * resulting mappings is the minimium of this map and the supplied map.
-   *
-   * @param aSourceMapConsumer The source map to be applied.
-   * @param aSourceFile Optional. The filename of the source file.
-   *        If omitted, SourceMapConsumer's file property will be used.
-   */
-  SourceMapGenerator.prototype.applySourceMap =
-    function SourceMapGenerator_applySourceMap(aSourceMapConsumer, aSourceFile) {
-      // If aSourceFile is omitted, we will use the file property of the SourceMap
-      if (!aSourceFile) {
-        aSourceFile = aSourceMapConsumer.file;
-      }
-      var sourceRoot = this._sourceRoot;
-      // Make "aSourceFile" relative if an absolute Url is passed.
-      if (sourceRoot) {
-        aSourceFile = util.relative(sourceRoot, aSourceFile);
-      }
-      // Applying the SourceMap can add and remove items from the sources and
-      // the names array.
-      var newSources = new ArraySet();
-      var newNames = new ArraySet();
-
-      // Find mappings for the "aSourceFile"
-      this._mappings.forEach(function (mapping) {
-        if (mapping.source === aSourceFile && mapping.original) {
-          // Check if it can be mapped by the source map, then update the mapping.
-          var original = aSourceMapConsumer.originalPositionFor({
-            line: mapping.original.line,
-            column: mapping.original.column
-          });
-          if (original.source !== null) {
-            // Copy mapping
-            if (sourceRoot) {
-              mapping.source = util.relative(sourceRoot, original.source);
-            } else {
-              mapping.source = original.source;
-            }
-            mapping.original.line = original.line;
-            mapping.original.column = original.column;
-            if (original.name !== null && mapping.name !== null) {
-              // Only use the identifier name if it's an identifier
-              // in both SourceMaps
-              mapping.name = original.name;
-            }
-          }
-        }
-
-        var source = mapping.source;
-        if (source && !newSources.has(source)) {
-          newSources.add(source);
-        }
-
-        var name = mapping.name;
-        if (name && !newNames.has(name)) {
-          newNames.add(name);
-        }
-
-      }, this);
-      this._sources = newSources;
-      this._names = newNames;
-
-      // Copy sourcesContents of applied map.
-      aSourceMapConsumer.sources.forEach(function (sourceFile) {
-        var content = aSourceMapConsumer.sourceContentFor(sourceFile);
-        if (content) {
-          if (sourceRoot) {
-            sourceFile = util.relative(sourceRoot, sourceFile);
-          }
-          this.setSourceContent(sourceFile, content);
-        }
-      }, this);
-    };
-
-  /**
-   * A mapping can have one of the three levels of data:
-   *
-   *   1. Just the generated position.
-   *   2. The Generated position, original position, and original source.
-   *   3. Generated and original position, original source, as well as a name
-   *      token.
-   *
-   * To maintain consistency, we validate that any new mapping being added falls
-   * in to one of these categories.
-   */
-  SourceMapGenerator.prototype._validateMapping =
-    function SourceMapGenerator_validateMapping(aGenerated, aOriginal, aSource,
-                                                aName) {
-      if (aGenerated && 'line' in aGenerated && 'column' in aGenerated
-          && aGenerated.line > 0 && aGenerated.column >= 0
-          && !aOriginal && !aSource && !aName) {
-        // Case 1.
-        return;
-      }
-      else if (aGenerated && 'line' in aGenerated && 'column' in aGenerated
-               && aOriginal && 'line' in aOriginal && 'column' in aOriginal
-               && aGenerated.line > 0 && aGenerated.column >= 0
-               && aOriginal.line > 0 && aOriginal.column >= 0
-               && aSource) {
-        // Cases 2 and 3.
-        return;
-      }
-      else {
-        throw new Error('Invalid mapping.');
-      }
-    };
-
-  function cmpLocation(loc1, loc2) {
-    var cmp = (loc1 && loc1.line) - (loc2 && loc2.line);
-    return cmp ? cmp : (loc1 && loc1.column) - (loc2 && loc2.column);
-  }
-
-  function strcmp(str1, str2) {
-    str1 = str1 || '';
-    str2 = str2 || '';
-    return (str1 > str2) - (str1 < str2);
-  }
-
-  function cmpMapping(mappingA, mappingB) {
-    return cmpLocation(mappingA.generated, mappingB.generated) ||
-      cmpLocation(mappingA.original, mappingB.original) ||
-      strcmp(mappingA.source, mappingB.source) ||
-      strcmp(mappingA.name, mappingB.name);
-  }
-
-  /**
-   * Serialize the accumulated mappings in to the stream of base 64 VLQs
-   * specified by the source map format.
-   */
-  SourceMapGenerator.prototype._serializeMappings =
-    function SourceMapGenerator_serializeMappings() {
-      var previousGeneratedColumn = 0;
-      var previousGeneratedLine = 1;
-      var previousOriginalColumn = 0;
-      var previousOriginalLine = 0;
-      var previousName = 0;
-      var previousSource = 0;
-      var result = '';
-      var mapping;
-
-      // The mappings must be guaranteed to be in sorted order before we start
-      // serializing them or else the generated line numbers (which are defined
-      // via the ';' separators) will be all messed up. Note: it might be more
-      // performant to maintain the sorting as we insert them, rather than as we
-      // serialize them, but the big O is the same either way.
-      this._mappings.sort(cmpMapping);
-
-      for (var i = 0, len = this._mappings.length; i < len; i++) {
-        mapping = this._mappings[i];
-
-        if (mapping.generated.line !== previousGeneratedLine) {
-          previousGeneratedColumn = 0;
-          while (mapping.generated.line !== previousGeneratedLine) {
-            result += ';';
-            previousGeneratedLine++;
-          }
-        }
-        else {
-          if (i > 0) {
-            if (!cmpMapping(mapping, this._mappings[i - 1])) {
-              continue;
-            }
-            result += ',';
-          }
-        }
-
-        result += base64VLQ.encode(mapping.generated.column
-                                   - previousGeneratedColumn);
-        previousGeneratedColumn = mapping.generated.column;
-
-        if (mapping.source && mapping.original) {
-          result += base64VLQ.encode(this._sources.indexOf(mapping.source)
-                                     - previousSource);
-          previousSource = this._sources.indexOf(mapping.source);
-
-          // lines are stored 0-based in SourceMap spec version 3
-          result += base64VLQ.encode(mapping.original.line - 1
-                                     - previousOriginalLine);
-          previousOriginalLine = mapping.original.line - 1;
-
-          result += base64VLQ.encode(mapping.original.column
-                                     - previousOriginalColumn);
-          previousOriginalColumn = mapping.original.column;
-
-          if (mapping.name) {
-            result += base64VLQ.encode(this._names.indexOf(mapping.name)
-                                       - previousName);
-            previousName = this._names.indexOf(mapping.name);
-          }
-        }
-      }
-
-      return result;
-    };
-
-  /**
-   * Externalize the source map.
-   */
-  SourceMapGenerator.prototype.toJSON =
-    function SourceMapGenerator_toJSON() {
-      var map = {
-        version: this._version,
-        file: this._file,
-        sources: this._sources.toArray(),
-        names: this._names.toArray(),
-        mappings: this._serializeMappings()
-      };
-      if (this._sourceRoot) {
-        map.sourceRoot = this._sourceRoot;
-      }
-      if (this._sourcesContents) {
-        map.sourcesContent = map.sources.map(function (source) {
-          if (map.sourceRoot) {
-            source = util.relative(map.sourceRoot, source);
-          }
-          return Object.prototype.hasOwnProperty.call(
-            this._sourcesContents, util.toSetString(source))
-            ? this._sourcesContents[util.toSetString(source)]
-            : null;
-        }, this);
-      }
-      return map;
-    };
-
-  /**
-   * Render the source map being generated to a string.
-   */
-  SourceMapGenerator.prototype.toString =
-    function SourceMapGenerator_toString() {
-      return JSON.stringify(this);
-    };
-
-  exports.SourceMapGenerator = SourceMapGenerator;
-
-});
-
-},{"./array-set":42,"./base64-vlq":40,"./util":41,"amdefine":43}],31:[function(require,module,exports){
+},{"buffer":39,"util":37}],35:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -43944,7 +43575,390 @@ define(function (require, exports, module) {
 
 });
 
-},{"./array-set":42,"./base64-vlq":40,"./binary-search":44,"./util":41,"amdefine":43}],32:[function(require,module,exports){
+},{"./array-set":42,"./base64-vlq":43,"./binary-search":41,"./util":40,"amdefine":44}],34:[function(require,module,exports){
+/* -*- Mode: js; js-indent-level: 2; -*- */
+/*
+ * Copyright 2011 Mozilla Foundation and contributors
+ * Licensed under the New BSD license. See LICENSE or:
+ * http://opensource.org/licenses/BSD-3-Clause
+ */
+if (typeof define !== 'function') {
+    var define = require('amdefine')(module, require);
+}
+define(function (require, exports, module) {
+
+  var base64VLQ = require('./base64-vlq');
+  var util = require('./util');
+  var ArraySet = require('./array-set').ArraySet;
+
+  /**
+   * An instance of the SourceMapGenerator represents a source map which is
+   * being built incrementally. To create a new one, you must pass an object
+   * with the following properties:
+   *
+   *   - file: The filename of the generated source.
+   *   - sourceRoot: An optional root for all URLs in this source map.
+   */
+  function SourceMapGenerator(aArgs) {
+    this._file = util.getArg(aArgs, 'file');
+    this._sourceRoot = util.getArg(aArgs, 'sourceRoot', null);
+    this._sources = new ArraySet();
+    this._names = new ArraySet();
+    this._mappings = [];
+    this._sourcesContents = null;
+  }
+
+  SourceMapGenerator.prototype._version = 3;
+
+  /**
+   * Creates a new SourceMapGenerator based on a SourceMapConsumer
+   *
+   * @param aSourceMapConsumer The SourceMap.
+   */
+  SourceMapGenerator.fromSourceMap =
+    function SourceMapGenerator_fromSourceMap(aSourceMapConsumer) {
+      var sourceRoot = aSourceMapConsumer.sourceRoot;
+      var generator = new SourceMapGenerator({
+        file: aSourceMapConsumer.file,
+        sourceRoot: sourceRoot
+      });
+      aSourceMapConsumer.eachMapping(function (mapping) {
+        var newMapping = {
+          generated: {
+            line: mapping.generatedLine,
+            column: mapping.generatedColumn
+          }
+        };
+
+        if (mapping.source) {
+          newMapping.source = mapping.source;
+          if (sourceRoot) {
+            newMapping.source = util.relative(sourceRoot, newMapping.source);
+          }
+
+          newMapping.original = {
+            line: mapping.originalLine,
+            column: mapping.originalColumn
+          };
+
+          if (mapping.name) {
+            newMapping.name = mapping.name;
+          }
+        }
+
+        generator.addMapping(newMapping);
+      });
+      aSourceMapConsumer.sources.forEach(function (sourceFile) {
+        var content = aSourceMapConsumer.sourceContentFor(sourceFile);
+        if (content) {
+          generator.setSourceContent(sourceFile, content);
+        }
+      });
+      return generator;
+    };
+
+  /**
+   * Add a single mapping from original source line and column to the generated
+   * source's line and column for this source map being created. The mapping
+   * object should have the following properties:
+   *
+   *   - generated: An object with the generated line and column positions.
+   *   - original: An object with the original line and column positions.
+   *   - source: The original source file (relative to the sourceRoot).
+   *   - name: An optional original token name for this mapping.
+   */
+  SourceMapGenerator.prototype.addMapping =
+    function SourceMapGenerator_addMapping(aArgs) {
+      var generated = util.getArg(aArgs, 'generated');
+      var original = util.getArg(aArgs, 'original', null);
+      var source = util.getArg(aArgs, 'source', null);
+      var name = util.getArg(aArgs, 'name', null);
+
+      this._validateMapping(generated, original, source, name);
+
+      if (source && !this._sources.has(source)) {
+        this._sources.add(source);
+      }
+
+      if (name && !this._names.has(name)) {
+        this._names.add(name);
+      }
+
+      this._mappings.push({
+        generated: generated,
+        original: original,
+        source: source,
+        name: name
+      });
+    };
+
+  /**
+   * Set the source content for a source file.
+   */
+  SourceMapGenerator.prototype.setSourceContent =
+    function SourceMapGenerator_setSourceContent(aSourceFile, aSourceContent) {
+      var source = aSourceFile;
+      if (this._sourceRoot) {
+        source = util.relative(this._sourceRoot, source);
+      }
+
+      if (aSourceContent !== null) {
+        // Add the source content to the _sourcesContents map.
+        // Create a new _sourcesContents map if the property is null.
+        if (!this._sourcesContents) {
+          this._sourcesContents = {};
+        }
+        this._sourcesContents[util.toSetString(source)] = aSourceContent;
+      } else {
+        // Remove the source file from the _sourcesContents map.
+        // If the _sourcesContents map is empty, set the property to null.
+        delete this._sourcesContents[util.toSetString(source)];
+        if (Object.keys(this._sourcesContents).length === 0) {
+          this._sourcesContents = null;
+        }
+      }
+    };
+
+  /**
+   * Applies the mappings of a sub-source-map for a specific source file to the
+   * source map being generated. Each mapping to the supplied source file is
+   * rewritten using the supplied source map. Note: The resolution for the
+   * resulting mappings is the minimium of this map and the supplied map.
+   *
+   * @param aSourceMapConsumer The source map to be applied.
+   * @param aSourceFile Optional. The filename of the source file.
+   *        If omitted, SourceMapConsumer's file property will be used.
+   */
+  SourceMapGenerator.prototype.applySourceMap =
+    function SourceMapGenerator_applySourceMap(aSourceMapConsumer, aSourceFile) {
+      // If aSourceFile is omitted, we will use the file property of the SourceMap
+      if (!aSourceFile) {
+        aSourceFile = aSourceMapConsumer.file;
+      }
+      var sourceRoot = this._sourceRoot;
+      // Make "aSourceFile" relative if an absolute Url is passed.
+      if (sourceRoot) {
+        aSourceFile = util.relative(sourceRoot, aSourceFile);
+      }
+      // Applying the SourceMap can add and remove items from the sources and
+      // the names array.
+      var newSources = new ArraySet();
+      var newNames = new ArraySet();
+
+      // Find mappings for the "aSourceFile"
+      this._mappings.forEach(function (mapping) {
+        if (mapping.source === aSourceFile && mapping.original) {
+          // Check if it can be mapped by the source map, then update the mapping.
+          var original = aSourceMapConsumer.originalPositionFor({
+            line: mapping.original.line,
+            column: mapping.original.column
+          });
+          if (original.source !== null) {
+            // Copy mapping
+            if (sourceRoot) {
+              mapping.source = util.relative(sourceRoot, original.source);
+            } else {
+              mapping.source = original.source;
+            }
+            mapping.original.line = original.line;
+            mapping.original.column = original.column;
+            if (original.name !== null && mapping.name !== null) {
+              // Only use the identifier name if it's an identifier
+              // in both SourceMaps
+              mapping.name = original.name;
+            }
+          }
+        }
+
+        var source = mapping.source;
+        if (source && !newSources.has(source)) {
+          newSources.add(source);
+        }
+
+        var name = mapping.name;
+        if (name && !newNames.has(name)) {
+          newNames.add(name);
+        }
+
+      }, this);
+      this._sources = newSources;
+      this._names = newNames;
+
+      // Copy sourcesContents of applied map.
+      aSourceMapConsumer.sources.forEach(function (sourceFile) {
+        var content = aSourceMapConsumer.sourceContentFor(sourceFile);
+        if (content) {
+          if (sourceRoot) {
+            sourceFile = util.relative(sourceRoot, sourceFile);
+          }
+          this.setSourceContent(sourceFile, content);
+        }
+      }, this);
+    };
+
+  /**
+   * A mapping can have one of the three levels of data:
+   *
+   *   1. Just the generated position.
+   *   2. The Generated position, original position, and original source.
+   *   3. Generated and original position, original source, as well as a name
+   *      token.
+   *
+   * To maintain consistency, we validate that any new mapping being added falls
+   * in to one of these categories.
+   */
+  SourceMapGenerator.prototype._validateMapping =
+    function SourceMapGenerator_validateMapping(aGenerated, aOriginal, aSource,
+                                                aName) {
+      if (aGenerated && 'line' in aGenerated && 'column' in aGenerated
+          && aGenerated.line > 0 && aGenerated.column >= 0
+          && !aOriginal && !aSource && !aName) {
+        // Case 1.
+        return;
+      }
+      else if (aGenerated && 'line' in aGenerated && 'column' in aGenerated
+               && aOriginal && 'line' in aOriginal && 'column' in aOriginal
+               && aGenerated.line > 0 && aGenerated.column >= 0
+               && aOriginal.line > 0 && aOriginal.column >= 0
+               && aSource) {
+        // Cases 2 and 3.
+        return;
+      }
+      else {
+        throw new Error('Invalid mapping.');
+      }
+    };
+
+  function cmpLocation(loc1, loc2) {
+    var cmp = (loc1 && loc1.line) - (loc2 && loc2.line);
+    return cmp ? cmp : (loc1 && loc1.column) - (loc2 && loc2.column);
+  }
+
+  function strcmp(str1, str2) {
+    str1 = str1 || '';
+    str2 = str2 || '';
+    return (str1 > str2) - (str1 < str2);
+  }
+
+  function cmpMapping(mappingA, mappingB) {
+    return cmpLocation(mappingA.generated, mappingB.generated) ||
+      cmpLocation(mappingA.original, mappingB.original) ||
+      strcmp(mappingA.source, mappingB.source) ||
+      strcmp(mappingA.name, mappingB.name);
+  }
+
+  /**
+   * Serialize the accumulated mappings in to the stream of base 64 VLQs
+   * specified by the source map format.
+   */
+  SourceMapGenerator.prototype._serializeMappings =
+    function SourceMapGenerator_serializeMappings() {
+      var previousGeneratedColumn = 0;
+      var previousGeneratedLine = 1;
+      var previousOriginalColumn = 0;
+      var previousOriginalLine = 0;
+      var previousName = 0;
+      var previousSource = 0;
+      var result = '';
+      var mapping;
+
+      // The mappings must be guaranteed to be in sorted order before we start
+      // serializing them or else the generated line numbers (which are defined
+      // via the ';' separators) will be all messed up. Note: it might be more
+      // performant to maintain the sorting as we insert them, rather than as we
+      // serialize them, but the big O is the same either way.
+      this._mappings.sort(cmpMapping);
+
+      for (var i = 0, len = this._mappings.length; i < len; i++) {
+        mapping = this._mappings[i];
+
+        if (mapping.generated.line !== previousGeneratedLine) {
+          previousGeneratedColumn = 0;
+          while (mapping.generated.line !== previousGeneratedLine) {
+            result += ';';
+            previousGeneratedLine++;
+          }
+        }
+        else {
+          if (i > 0) {
+            if (!cmpMapping(mapping, this._mappings[i - 1])) {
+              continue;
+            }
+            result += ',';
+          }
+        }
+
+        result += base64VLQ.encode(mapping.generated.column
+                                   - previousGeneratedColumn);
+        previousGeneratedColumn = mapping.generated.column;
+
+        if (mapping.source && mapping.original) {
+          result += base64VLQ.encode(this._sources.indexOf(mapping.source)
+                                     - previousSource);
+          previousSource = this._sources.indexOf(mapping.source);
+
+          // lines are stored 0-based in SourceMap spec version 3
+          result += base64VLQ.encode(mapping.original.line - 1
+                                     - previousOriginalLine);
+          previousOriginalLine = mapping.original.line - 1;
+
+          result += base64VLQ.encode(mapping.original.column
+                                     - previousOriginalColumn);
+          previousOriginalColumn = mapping.original.column;
+
+          if (mapping.name) {
+            result += base64VLQ.encode(this._names.indexOf(mapping.name)
+                                       - previousName);
+            previousName = this._names.indexOf(mapping.name);
+          }
+        }
+      }
+
+      return result;
+    };
+
+  /**
+   * Externalize the source map.
+   */
+  SourceMapGenerator.prototype.toJSON =
+    function SourceMapGenerator_toJSON() {
+      var map = {
+        version: this._version,
+        file: this._file,
+        sources: this._sources.toArray(),
+        names: this._names.toArray(),
+        mappings: this._serializeMappings()
+      };
+      if (this._sourceRoot) {
+        map.sourceRoot = this._sourceRoot;
+      }
+      if (this._sourcesContents) {
+        map.sourcesContent = map.sources.map(function (source) {
+          if (map.sourceRoot) {
+            source = util.relative(map.sourceRoot, source);
+          }
+          return Object.prototype.hasOwnProperty.call(
+            this._sourcesContents, util.toSetString(source))
+            ? this._sourcesContents[util.toSetString(source)]
+            : null;
+        }, this);
+      }
+      return map;
+    };
+
+  /**
+   * Render the source map being generated to a string.
+   */
+  SourceMapGenerator.prototype.toString =
+    function SourceMapGenerator_toString() {
+      return JSON.stringify(this);
+    };
+
+  exports.SourceMapGenerator = SourceMapGenerator;
+
+});
+
+},{"./array-set":42,"./base64-vlq":43,"./util":40,"amdefine":44}],36:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -44299,7 +44313,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./source-map-generator":30,"./util":41,"amdefine":43}],43:[function(require,module,exports){
+},{"./source-map-generator":34,"./util":40,"amdefine":44}],44:[function(require,module,exports){
 var process=require("__browserify_process"),__filename="/../node_modules/escodegen/node_modules/source-map/node_modules/amdefine/amdefine.js";/** vim: et:ts=4:sw=4:sts=4
  * @license amdefine 0.0.8 Copyright (c) 2011, The Dojo Foundation All Rights Reserved.
  * Available via the MIT or new BSD license.
@@ -44600,7 +44614,7 @@ function amdefine(module, requireFn) {
 
 module.exports = amdefine;
 
-},{"__browserify_process":21,"path":45}],46:[function(require,module,exports){
+},{"__browserify_process":20,"path":45}],46:[function(require,module,exports){
 exports.readIEEE754 = function(buffer, offset, isBE, mLen, nBytes) {
   var e, m,
       eLen = nBytes * 8 - mLen - 1,
@@ -44686,7 +44700,126 @@ exports.writeIEEE754 = function(buffer, value, offset, isBE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128;
 };
 
-},{}],39:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
+/* -*- Mode: js; js-indent-level: 2; -*- */
+/*
+ * Copyright 2011 Mozilla Foundation and contributors
+ * Licensed under the New BSD license. See LICENSE or:
+ * http://opensource.org/licenses/BSD-3-Clause
+ */
+if (typeof define !== 'function') {
+    var define = require('amdefine')(module, require);
+}
+define(function (require, exports, module) {
+
+  /**
+   * This is a helper function for getting values from parameter/options
+   * objects.
+   *
+   * @param args The object we are extracting values from
+   * @param name The name of the property we are getting.
+   * @param defaultValue An optional value to return if the property is missing
+   * from the object. If this is not specified and the property is missing, an
+   * error will be thrown.
+   */
+  function getArg(aArgs, aName, aDefaultValue) {
+    if (aName in aArgs) {
+      return aArgs[aName];
+    } else if (arguments.length === 3) {
+      return aDefaultValue;
+    } else {
+      throw new Error('"' + aName + '" is a required argument.');
+    }
+  }
+  exports.getArg = getArg;
+
+  var urlRegexp = /([\w+\-.]+):\/\/((\w+:\w+)@)?([\w.]+)?(:(\d+))?(\S+)?/;
+
+  function urlParse(aUrl) {
+    var match = aUrl.match(urlRegexp);
+    if (!match) {
+      return null;
+    }
+    return {
+      scheme: match[1],
+      auth: match[3],
+      host: match[4],
+      port: match[6],
+      path: match[7]
+    };
+  }
+  exports.urlParse = urlParse;
+
+  function urlGenerate(aParsedUrl) {
+    var url = aParsedUrl.scheme + "://";
+    if (aParsedUrl.auth) {
+      url += aParsedUrl.auth + "@"
+    }
+    if (aParsedUrl.host) {
+      url += aParsedUrl.host;
+    }
+    if (aParsedUrl.port) {
+      url += ":" + aParsedUrl.port
+    }
+    if (aParsedUrl.path) {
+      url += aParsedUrl.path;
+    }
+    return url;
+  }
+  exports.urlGenerate = urlGenerate;
+
+  function join(aRoot, aPath) {
+    var url;
+
+    if (aPath.match(urlRegexp)) {
+      return aPath;
+    }
+
+    if (aPath.charAt(0) === '/' && (url = urlParse(aRoot))) {
+      url.path = aPath;
+      return urlGenerate(url);
+    }
+
+    return aRoot.replace(/\/$/, '') + '/' + aPath;
+  }
+  exports.join = join;
+
+  /**
+   * Because behavior goes wacky when you set `__proto__` on objects, we
+   * have to prefix all the strings in our set with an arbitrary character.
+   *
+   * See https://github.com/mozilla/source-map/pull/31 and
+   * https://github.com/mozilla/source-map/issues/30
+   *
+   * @param String aStr
+   */
+  function toSetString(aStr) {
+    return '$' + aStr;
+  }
+  exports.toSetString = toSetString;
+
+  function fromSetString(aStr) {
+    return aStr.substr(1);
+  }
+  exports.fromSetString = fromSetString;
+
+  function relative(aRoot, aPath) {
+    aRoot = aRoot.replace(/\/$/, '');
+
+    var url = urlParse(aRoot);
+    if (aPath.charAt(0) == "/" && url && url.path == "/") {
+      return aPath.slice(1);
+    }
+
+    return aPath.indexOf(aRoot + '/') === 0
+      ? aPath.substr(aRoot.length + 1)
+      : aPath;
+  }
+  exports.relative = relative;
+
+});
+
+},{"amdefine":44}],39:[function(require,module,exports){
 var assert = require('assert');
 exports.Buffer = Buffer;
 exports.SlowBuffer = Buffer;
@@ -45769,7 +45902,105 @@ Buffer.prototype.writeDoubleBE = function(value, offset, noAssert) {
   writeDouble(this, value, offset, true, noAssert);
 };
 
-},{"./buffer_ieee754":46,"assert":38,"base64-js":47}],40:[function(require,module,exports){
+},{"./buffer_ieee754":46,"assert":38,"base64-js":47}],42:[function(require,module,exports){
+/* -*- Mode: js; js-indent-level: 2; -*- */
+/*
+ * Copyright 2011 Mozilla Foundation and contributors
+ * Licensed under the New BSD license. See LICENSE or:
+ * http://opensource.org/licenses/BSD-3-Clause
+ */
+if (typeof define !== 'function') {
+    var define = require('amdefine')(module, require);
+}
+define(function (require, exports, module) {
+
+  var util = require('./util');
+
+  /**
+   * A data structure which is a combination of an array and a set. Adding a new
+   * member is O(1), testing for membership is O(1), and finding the index of an
+   * element is O(1). Removing elements from the set is not supported. Only
+   * strings are supported for membership.
+   */
+  function ArraySet() {
+    this._array = [];
+    this._set = {};
+  }
+
+  /**
+   * Static method for creating ArraySet instances from an existing array.
+   */
+  ArraySet.fromArray = function ArraySet_fromArray(aArray) {
+    var set = new ArraySet();
+    for (var i = 0, len = aArray.length; i < len; i++) {
+      set.add(aArray[i]);
+    }
+    return set;
+  };
+
+  /**
+   * Add the given string to this set.
+   *
+   * @param String aStr
+   */
+  ArraySet.prototype.add = function ArraySet_add(aStr) {
+    if (this.has(aStr)) {
+      // Already a member; nothing to do.
+      return;
+    }
+    var idx = this._array.length;
+    this._array.push(aStr);
+    this._set[util.toSetString(aStr)] = idx;
+  };
+
+  /**
+   * Is the given string a member of this set?
+   *
+   * @param String aStr
+   */
+  ArraySet.prototype.has = function ArraySet_has(aStr) {
+    return Object.prototype.hasOwnProperty.call(this._set,
+                                                util.toSetString(aStr));
+  };
+
+  /**
+   * What is the index of the given string in the array?
+   *
+   * @param String aStr
+   */
+  ArraySet.prototype.indexOf = function ArraySet_indexOf(aStr) {
+    if (this.has(aStr)) {
+      return this._set[util.toSetString(aStr)];
+    }
+    throw new Error('"' + aStr + '" is not in the set.');
+  };
+
+  /**
+   * What is the element at the given index?
+   *
+   * @param Number aIdx
+   */
+  ArraySet.prototype.at = function ArraySet_at(aIdx) {
+    if (aIdx >= 0 && aIdx < this._array.length) {
+      return this._array[aIdx];
+    }
+    throw new Error('No element indexed by ' + aIdx);
+  };
+
+  /**
+   * Returns the array representation of this set (which has the proper indices
+   * indicated by indexOf). Note that this is a copy of the internal array used
+   * for storing the members so that no one can mess with internal state.
+   */
+  ArraySet.prototype.toArray = function ArraySet_toArray() {
+    return this._array.slice();
+  };
+
+  exports.ArraySet = ArraySet;
+
+});
+
+},{"./util":40,"amdefine":44}],43:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -45915,224 +46146,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./base64":48,"amdefine":43}],41:[function(require,module,exports){
-/* -*- Mode: js; js-indent-level: 2; -*- */
-/*
- * Copyright 2011 Mozilla Foundation and contributors
- * Licensed under the New BSD license. See LICENSE or:
- * http://opensource.org/licenses/BSD-3-Clause
- */
-if (typeof define !== 'function') {
-    var define = require('amdefine')(module, require);
-}
-define(function (require, exports, module) {
-
-  /**
-   * This is a helper function for getting values from parameter/options
-   * objects.
-   *
-   * @param args The object we are extracting values from
-   * @param name The name of the property we are getting.
-   * @param defaultValue An optional value to return if the property is missing
-   * from the object. If this is not specified and the property is missing, an
-   * error will be thrown.
-   */
-  function getArg(aArgs, aName, aDefaultValue) {
-    if (aName in aArgs) {
-      return aArgs[aName];
-    } else if (arguments.length === 3) {
-      return aDefaultValue;
-    } else {
-      throw new Error('"' + aName + '" is a required argument.');
-    }
-  }
-  exports.getArg = getArg;
-
-  var urlRegexp = /([\w+\-.]+):\/\/((\w+:\w+)@)?([\w.]+)?(:(\d+))?(\S+)?/;
-
-  function urlParse(aUrl) {
-    var match = aUrl.match(urlRegexp);
-    if (!match) {
-      return null;
-    }
-    return {
-      scheme: match[1],
-      auth: match[3],
-      host: match[4],
-      port: match[6],
-      path: match[7]
-    };
-  }
-  exports.urlParse = urlParse;
-
-  function urlGenerate(aParsedUrl) {
-    var url = aParsedUrl.scheme + "://";
-    if (aParsedUrl.auth) {
-      url += aParsedUrl.auth + "@"
-    }
-    if (aParsedUrl.host) {
-      url += aParsedUrl.host;
-    }
-    if (aParsedUrl.port) {
-      url += ":" + aParsedUrl.port
-    }
-    if (aParsedUrl.path) {
-      url += aParsedUrl.path;
-    }
-    return url;
-  }
-  exports.urlGenerate = urlGenerate;
-
-  function join(aRoot, aPath) {
-    var url;
-
-    if (aPath.match(urlRegexp)) {
-      return aPath;
-    }
-
-    if (aPath.charAt(0) === '/' && (url = urlParse(aRoot))) {
-      url.path = aPath;
-      return urlGenerate(url);
-    }
-
-    return aRoot.replace(/\/$/, '') + '/' + aPath;
-  }
-  exports.join = join;
-
-  /**
-   * Because behavior goes wacky when you set `__proto__` on objects, we
-   * have to prefix all the strings in our set with an arbitrary character.
-   *
-   * See https://github.com/mozilla/source-map/pull/31 and
-   * https://github.com/mozilla/source-map/issues/30
-   *
-   * @param String aStr
-   */
-  function toSetString(aStr) {
-    return '$' + aStr;
-  }
-  exports.toSetString = toSetString;
-
-  function fromSetString(aStr) {
-    return aStr.substr(1);
-  }
-  exports.fromSetString = fromSetString;
-
-  function relative(aRoot, aPath) {
-    aRoot = aRoot.replace(/\/$/, '');
-
-    var url = urlParse(aRoot);
-    if (aPath.charAt(0) == "/" && url && url.path == "/") {
-      return aPath.slice(1);
-    }
-
-    return aPath.indexOf(aRoot + '/') === 0
-      ? aPath.substr(aRoot.length + 1)
-      : aPath;
-  }
-  exports.relative = relative;
-
-});
-
-},{"amdefine":43}],42:[function(require,module,exports){
-/* -*- Mode: js; js-indent-level: 2; -*- */
-/*
- * Copyright 2011 Mozilla Foundation and contributors
- * Licensed under the New BSD license. See LICENSE or:
- * http://opensource.org/licenses/BSD-3-Clause
- */
-if (typeof define !== 'function') {
-    var define = require('amdefine')(module, require);
-}
-define(function (require, exports, module) {
-
-  var util = require('./util');
-
-  /**
-   * A data structure which is a combination of an array and a set. Adding a new
-   * member is O(1), testing for membership is O(1), and finding the index of an
-   * element is O(1). Removing elements from the set is not supported. Only
-   * strings are supported for membership.
-   */
-  function ArraySet() {
-    this._array = [];
-    this._set = {};
-  }
-
-  /**
-   * Static method for creating ArraySet instances from an existing array.
-   */
-  ArraySet.fromArray = function ArraySet_fromArray(aArray) {
-    var set = new ArraySet();
-    for (var i = 0, len = aArray.length; i < len; i++) {
-      set.add(aArray[i]);
-    }
-    return set;
-  };
-
-  /**
-   * Add the given string to this set.
-   *
-   * @param String aStr
-   */
-  ArraySet.prototype.add = function ArraySet_add(aStr) {
-    if (this.has(aStr)) {
-      // Already a member; nothing to do.
-      return;
-    }
-    var idx = this._array.length;
-    this._array.push(aStr);
-    this._set[util.toSetString(aStr)] = idx;
-  };
-
-  /**
-   * Is the given string a member of this set?
-   *
-   * @param String aStr
-   */
-  ArraySet.prototype.has = function ArraySet_has(aStr) {
-    return Object.prototype.hasOwnProperty.call(this._set,
-                                                util.toSetString(aStr));
-  };
-
-  /**
-   * What is the index of the given string in the array?
-   *
-   * @param String aStr
-   */
-  ArraySet.prototype.indexOf = function ArraySet_indexOf(aStr) {
-    if (this.has(aStr)) {
-      return this._set[util.toSetString(aStr)];
-    }
-    throw new Error('"' + aStr + '" is not in the set.');
-  };
-
-  /**
-   * What is the element at the given index?
-   *
-   * @param Number aIdx
-   */
-  ArraySet.prototype.at = function ArraySet_at(aIdx) {
-    if (aIdx >= 0 && aIdx < this._array.length) {
-      return this._array[aIdx];
-    }
-    throw new Error('No element indexed by ' + aIdx);
-  };
-
-  /**
-   * Returns the array representation of this set (which has the proper indices
-   * indicated by indexOf). Note that this is a copy of the internal array used
-   * for storing the members so that no one can mess with internal state.
-   */
-  ArraySet.prototype.toArray = function ArraySet_toArray() {
-    return this._array.slice();
-  };
-
-  exports.ArraySet = ArraySet;
-
-});
-
-},{"./util":41,"amdefine":43}],44:[function(require,module,exports){
+},{"./base64":48,"amdefine":44}],41:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -46215,7 +46229,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"amdefine":43}],45:[function(require,module,exports){
+},{"amdefine":44}],45:[function(require,module,exports){
 var process=require("__browserify_process");function filter (xs, fn) {
     var res = [];
     for (var i = 0; i < xs.length; i++) {
@@ -46394,7 +46408,7 @@ exports.relative = function(from, to) {
 
 exports.sep = '/';
 
-},{"__browserify_process":21}],47:[function(require,module,exports){
+},{"__browserify_process":20}],47:[function(require,module,exports){
 (function (exports) {
 	'use strict';
 
@@ -46524,5 +46538,5 @@ define(function (require, exports, module) {
 
 });
 
-},{"amdefine":43}]},{},[5])
+},{"amdefine":44}]},{},[6])
 ;

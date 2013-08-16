@@ -19,6 +19,10 @@ module.exports = (options) ->
       yieldConditionally:
         type: 'boolean'
         required: false
+      requiresThis:
+        type: 'boolean'
+        default: true
+        description: 'Whether leaving off "this" is an error, or just a warning which we work around.'
       executionCosts:
         required: false
       language:

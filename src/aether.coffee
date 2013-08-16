@@ -153,8 +153,6 @@ module.exports = class Aether
 
   #### TODO: this stuff is all the old CodeCombat Cook way of doing it ####
   cook: ->
-    @methodType = @options.methodType or "instance"  # TODO: this is old
-    @requireThis = @options.requireThis ? false  # TODO: this is old
     #wrapped = "function wrapped() {\n\"use strict\";\n#{@raw}\n}"
     wrapped = @raw
     wrapped = @checkCommonMistakes wrapped
@@ -165,35 +163,28 @@ module.exports = class Aether
     wrappedAST = esprima.parse(wrapped, loc: true, range: true, raw: true, comment: true, tolerant: true)
     normalizedAST = normalizer.normalize wrappedAST
     normalizedCode = escodegen.generate normalizedAST
-    morphers = [transforms.instrumentStatements]
+    morphers = [transforms.checkIncompleteMembers, transforms.instrumentStatements]
     morphers.unshift transforms.validateReturns if @options.thisValue?.validateReturn  # TODO: this should be part of Aether
     morphers.unshift transforms.yieldConditionally if @options.yieldConditionally
     morphers.unshift transforms.yieldAutomatically if @options.yieldAutomatically
-    morphers.unshift transforms.addThis unless @requireThis
+    morphers.unshift transforms.addThis unless @options.requireThis
     try
       instrumented = morph normalizedCode, (_.bind m, @ for m in morphers)
     catch error
       # TODO: change this to generating UserCodeProblems instead
       lineNumber = if error.lineNumber? then error.lineNumber - 1 else null
       column = error.column
-      userInfo = thangID: @options.thisValue?.id, thangSpriteName: @options.thisValue?.spriteName, methodName: @options.functionName, methodType: @methodType, lineNumber: lineNumber, column: column
+      methodType = @options.methodType or "instance"  # TODO: this is old, only used for generating UserCodeError keys
+      userInfo = thangID: @options.thisValue?.id, thangSpriteName: @options.thisValue?.spriteName, methodName: @options.functionName, methodType: methodType, lineNumber: lineNumber, column: column
       console.log "Whoa, got me an error!", error, userInfo
       pureError = @purifyError error.message, userInfo
-      @cookedCode = ''
-      return
-    #console.log "Now we have:\n", "return " + instrumented
+      return ''
     traceured = @es6ify "return " + instrumented
-    #console.log "Finally we have:\n", traceured
-    @cookedCode = traceured
-    return @cookedCode
-
-    #f = new Function [], traceured
-    #thisValue = {}
-    #f.apply thisValue
-    #console.log "Now thisValue.wrapped is", thisValue.wrapped
-    #@cookedCode = Aether.getFunctionBody thisValue.wrapped
-    #console.log "Got cookedCode:", @cookedCode
-    #@cookedCode
+    if false
+      console.log "----RAW CODE----: #{@raw.split('\n').length}\n", {code: @raw}
+      console.log "---NORMALIZED---: #{instrumented.split('\n').length}\n", {code: "return " + instrumented}
+      console.log "----TRACEURED---: #{traceured.split('\n').length}\n", {code: traceured}
+    return traceured
 
   getLineNumberForPlannedMethod: (plannedMethod, numMethodsSeen) ->
     n = 0

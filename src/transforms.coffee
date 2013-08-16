@@ -74,9 +74,10 @@ module.exports.gatherLineNumbers = gatherLineNumbers = (node) ->
       else
         console.log "More lines than we can actually handle:", lineNumber, name, "of", @methodLineNumbers.length, "lines"
 
+# TODO: rearrange things so that we can actually get here, because if we punt on lint error, we don't.
 module.exports.checkIncompleteMembers = checkIncompleteMembers = (node) ->
   if node.type is 'ExpressionStatement'
-    lineNumber = Aether.getLineNumberForNode node, true
+    lineNumber = getLineNumberForNode node
     exp = node.expression
     if exp.type is 'MemberExpression'
       # Handle missing parentheses, like in:  this.moveUp;
