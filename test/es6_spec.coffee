@@ -32,7 +32,7 @@ describe "ES6 Test Suite", ->
       expect(hobaby("A yeti!")).toEqual 'name: A yeti!, codes: JavaScript, livesIn: USA'
 
   describe "Conditional yielding", ->
-    aether = new Aether yieldConditionally: true
+    aether = new Aether yieldConditionally: true, functionName: 'foo'
     it "should yield when necessary", ->
       dude =
         charge: -> "attack!"
@@ -51,7 +51,7 @@ describe "ES6 Test Suite", ->
       expect(gen.next().done).toEqual true
 
   describe "Automatic yielding", ->
-    aether = new Aether yieldAutomatically: true
+    aether = new Aether yieldAutomatically: true, functionName: 'foo'
     it "should yield a lot", ->
       dude =
         charge: -> "attack!"

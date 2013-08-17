@@ -33,9 +33,12 @@ module.exports.UserCodeProblem = class UserCodeProblem
       @message = error.message
       # TODO: column range should extend to whole token. Mod Esprima, or extend to end of line?
       @ranges = [[[error.lineNumber - 1 - lineOffset, error.column - 1], [error.lineNumber - 1 - lineOffset, error.column]]]
+    else if source is 'aether'
+      @message = error.message ? problemConfig?.message
+      # TODO: figure out how to do ranges here
     else
       console.log "Unhandled UserCodeProblem source", source
-      @message = problemConfig?.message ? "Unknoooown problem"
+      @message = error.message ? problemConfig?.message ? "Unknoooown problem"
 
   getProblemID: (error, source) ->
     id = switch source
@@ -120,7 +123,7 @@ module.exports.problems = problems =
   aether_UnexpectedIdentifier: {message: 'UnexpectedIdentifier', level: 'error'}
   aether_MissingVarKeyword: {message: 'MissingVarKeyword', level: 'error'}
   aether_UndefinedVariable: {message: 'UndefinedVariable', level: 'error'}
-  aether_MissingThis: {message: 'MissingThis', level: 'error'}
+  aether_MissingThis: {message: 'Missing `this.` keyword.', level: 'error'}
   # ... many more errors ...
 
   # Warnings: things that we think might cause runtime errors or bugs, but aren't sure (statements that don't do anything, variables which are defined and not used, weird operator precedence issues, etc.)

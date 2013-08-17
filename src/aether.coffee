@@ -70,10 +70,23 @@ module.exports = class Aether
     @pure = @purifyCode @raw
     @pure
 
-  lint: (raw) ->
-    prefix = "function wrapped() {\n\"use strict\";\n"
-    suffix = "\n}"
-    strictCode = prefix + raw + suffix
+  addProblem: (problem, problems=null) ->
+    return if problem.level is "ignore"
+    #console.log "found problem:", problem.serialize()
+    (problems ? @problems)[problem.level + "s"].push problem
+
+  wrap: (rawCode) ->
+    @wrappedCodePrefix ?=
+    """
+    function #{@options.functionName or 'foo'}(#{@options.functionParameters.join(', ')}) {
+    \"use strict\";
+
+    """
+    @wrappedCodeSuffix ?= "\n}"
+    @wrappedCodePrefix + rawCode + @wrappedCodeSuffix
+
+  lint: (rawCode) ->
+    wrappedCode = @wrap rawCode
     lintProblems = errors: [], warnings: [], infos: []
 
     # Run it through JSHint first, because that doesn't rely on Esprima
@@ -82,18 +95,19 @@ module.exports = class Aether
     jshintOptions = browser: false, couch: false, devel: false, dojo: false, jquery: false, mootools: false, node: false, nonstandard: false, phantom: false, prototypejs: false, rhino: false, worker: false, wsh: false, yui: false
     jshintGlobals = _.keys(@options.global)
     jshintGlobals = _.zipObject jshintGlobals, (false for g in jshintGlobals)  # JSHint expects {key: writable} globals
-    jshintSuccess = jshint(strictCode, jshintOptions, jshintGlobals)
+    jshintSuccess = jshint(wrappedCode, jshintOptions, jshintGlobals)
     for error in jshint.errors
-      problem = new problems.UserCodeProblem error, strictCode, @, 'jshint', prefix
-      continue if problem.level is "ignore"
-      #console.log "JSHint found problem:", problem.serialize()
-      lintProblems[problem.level + "s"].push problem
+      @addProblem new problems.UserCodeProblem(error, wrappedCode, @, 'jshint', @wrappedCodePrefix), lintProblems
 
     lintProblems
 
   createFunction: ->
     # Return a ready-to-execute, instrumented function from the purified code
-    new Function @options.functionParameters.join(', '), @pure
+    # Because JS_WALA normalizes it to define a wrapper function on this, we need to run the wrapper to get our real function out.
+    wrapper = new Function [], @pure
+    dummyContext = {Math: Math}  # TODO: put real globals in
+    wrapper.call dummyContext
+    dummyContext[@options.functionName or 'foo']
 
   createMethod: ->
     # Like createFunction, but binds method to thisValue if specified
@@ -110,7 +124,7 @@ module.exports = class Aether
     userInfo.lineNumber ?= if errorPos.lineNumber? then errorPos.lineNumber - 2 else undefined
     userInfo.column ?= errorPos.column
     pureError = new Aether.errors.UserCodeError errorMessage, error.level ? "error", userInfo
-    @problems[pureError.level + "s"].push pureError.serialize()
+    @addProblem pureError.serialize()
     #console.log "Purified UserCodeError:", pureError.serialize()
     pureError
 
@@ -149,44 +163,38 @@ module.exports = class Aether
     tree.generatedSource
 
   purifyCode: (rawCode) ->
-    wrappedCode = @checkCommonMistakes rawCode
-    @vars = {}
-    @methodLineNumbers = ([] for i in rawCode.split('\n'))
+    preprocessedCode = @checkCommonMistakes rawCode
+    wrappedCode = @wrap preprocessedCode
+    @vars = {}  # TODO: add in flow analysis
+    @methodLineNumbers = ([] for i in preprocessedCode.split('\n'))  # TODO: add in flow analysis
 
-    # TODO: need to insert 'use strict' after normalization, since otherwise you get tmp2 = 'use strict'
+    preNormalizationTransforms = [transforms.checkThisKeywords, transforms.checkIncompleteMembers]
     try
-      wrappedAST = esprima.parse(wrappedCode, loc: true, range: true, raw: true, comment: true, tolerant: true)
+      transformedCode = morph wrappedCode, (_.bind t, @ for t in preNormalizationTransforms)
+      transformedAST = esprima.parse(transformedCode, loc: true, range: true, raw: true, comment: true, tolerant: true)
     catch error
       problem = new problems.UserCodeProblem error, wrappedCode, @, 'esprima', ''
       if problem.level in ["ignore", "info", "warning"]
         console.log "Esprima can't survive", problem.serialize(), "at level", problem.level
         problem.level = "error"
-      @problems[problem.level + "s"].push problem
-      # Now what? Return an empty string?
+      @addProblem problem
       return ''
 
-    normalizedAST = normalizer.normalize wrappedAST
+    # TODO: need to insert 'use strict' after normalization, since otherwise you get tmp2 = 'use strict'
+    normalizedAST = normalizer.normalize transformedAST
     normalizedCode = escodegen.generate normalizedAST
-    morphers = [transforms.checkIncompleteMembers, transforms.instrumentStatements]
-    morphers.unshift transforms.validateReturns if @options.thisValue?.validateReturn  # TODO: this should be part of Aether
-    morphers.unshift transforms.yieldConditionally if @options.yieldConditionally
-    morphers.unshift transforms.yieldAutomatically if @options.yieldAutomatically
-    morphers.unshift transforms.addThis unless @options.requireThis
-    try
-      instrumentedCode = morph normalizedCode, (_.bind m, @ for m in morphers)
-    catch error
-      # TODO: change this to generating UserCodeProblems instead
-      lineNumber = if error.lineNumber? then error.lineNumber - 1 else null
-      column = error.column
-      methodType = @options.methodType or "instance"  # TODO: this is old, only used for generating UserCodeError keys
-      userInfo = thangID: @options.thisValue?.id, thangSpriteName: @options.thisValue?.spriteName, methodName: @options.functionName, methodType: methodType, lineNumber: lineNumber, column: column
-      console.log "Whoa, got me an error!", error, userInfo
-      pureError = @purifyError error.message, userInfo
-      return ''
+    postNormalizationTransforms = [transforms.instrumentStatements]
+    postNormalizationTransforms.unshift transforms.validateReturns if @options.thisValue?.validateReturn  # TODO: parameter/return validation should be part of Aether, not some half-external function call
+    postNormalizationTransforms.unshift transforms.yieldConditionally if @options.yieldConditionally
+    postNormalizationTransforms.unshift transforms.yieldAutomatically if @options.yieldAutomatically
+    instrumentedCode = morph normalizedCode, (_.bind t, @ for t in postNormalizationTransforms)
     traceuredCode = @es6ify "return " + instrumentedCode
-    if false
+    if true
       console.log "---RAW CODE----: #{rawCode.split('\n').length}\n", {code: rawCode}
-      console.log "---NORMALIZED--: #{instrumentedCode.split('\n').length}\n", {code: "return " + instrumentedCode}
+      console.log "---WRAPPED-----: #{wrappedCode.split('\n').length}\n", {code: wrappedCode}
+      console.log "---TRANSFORMED-: #{transformedCode.split('\n').length}\n", {code: transformedCode}
+      console.log "---NORMALIZED--: #{normalizedCode.split('\n').length}\n", {code: normalizedCode}
+      console.log "---INSTRUMENTED: #{instrumentedCode.split('\n').length}\n", {code: "return " + instrumentedCode}
       console.log "---TRACEURED---: #{traceuredCode.split('\n').length}\n", {code: traceuredCode}
     return traceuredCode
 

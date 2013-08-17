@@ -21195,145 +21195,6 @@ var traceur = (function() {
 
 },{}],3:[function(require,module,exports){
 (function() {
-  var UserCodeError, commonMethods,
-    __hasProp = {}.hasOwnProperty,
-    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
-
-  module.exports.commonMethods = commonMethods = ['moveRight', 'moveLeft', 'moveUp', 'moveDown', 'attackNearbyEnemy', 'say', 'move', 'attackNearestEnemy', 'shootAt', 'rotateTo', 'shoot', 'distance', 'getNearestEnemy', 'getEnemies', 'attack', 'setAction', 'setTarget', 'getFriends', 'patrol'];
-
-  module.exports.UserCodeError = UserCodeError = (function(_super) {
-    __extends(UserCodeError, _super);
-
-    UserCodeError.className = "UserCodeError";
-
-    function UserCodeError(message, level, userInfo) {
-      var key, val,
-        _this = this;
-      this.message = message;
-      this.level = level != null ? level : "error";
-      UserCodeError.__super__.constructor.call(this, message);
-      for (key in userInfo) {
-        if (!__hasProp.call(userInfo, key)) continue;
-        val = userInfo[key];
-        this[key] = val;
-      }
-      if (this.lineNumber != null) {
-        if (this.message.search(/^Line \d+/) !== -1) {
-          this.message = this.message.replace(/^Line \d+/, function(match, n) {
-            return "Line " + _this.lineNumber;
-          });
-        } else {
-          this.message = "Line " + this.lineNumber + ": " + this.message;
-        }
-      }
-      this.name = "UserCodeError";
-      this.key = (this.methodType === 'instance' ? this.thangID : this.thangSpriteName) + "|" + this.methodName + "|" + this.message;
-      if (Error.captureStackTrace != null) {
-        Error.captureStackTrace(this, this.constructor);
-      }
-    }
-
-    UserCodeError.prototype.serialize = function() {
-      var key, o, value;
-      o = {};
-      for (key in this) {
-        if (!__hasProp.call(this, key)) continue;
-        value = this[key];
-        o[key] = value;
-      }
-      return o;
-    };
-
-    UserCodeError.getAnonymousErrorPosition = function(error) {
-      var chromeVersion, column, i, line, lineNumber, lines, stack, _i, _len, _ref, _ref1, _ref2;
-      if (error.lineNumber) {
-        return {
-          lineNumber: error.lineNumber,
-          column: error.column
-        };
-      }
-      stack = error.stack;
-      if (!stack) {
-        return {};
-      }
-      lines = stack.split('\n');
-      for (i = _i = 0, _len = lines.length; _i < _len; i = ++_i) {
-        line = lines[i];
-        if (line.indexOf("Object.eval") === -1) {
-          continue;
-        }
-        lineNumber = (_ref = line.match(/<anonymous>:(\d+):/)) != null ? _ref[1] : void 0;
-        column = (_ref1 = line.match(/<anonymous>:\d+:(\d+)/)) != null ? _ref1[1] : void 0;
-        if (lineNumber != null) {
-          lineNumber = parseInt(lineNumber);
-        }
-        if (column != null) {
-          column = parseInt(column);
-        }
-        chromeVersion = parseInt((typeof navigator !== "undefined" && navigator !== null ? (_ref2 = navigator.appVersion) != null ? _ref2.match(/Chrome\/(\d+)\./)[1] : void 0 : void 0) || "28", 10);
-        if (chromeVersion >= 28) {
-          lineNumber -= 1;
-        }
-        return {
-          lineNumber: lineNumber,
-          column: column
-        };
-      }
-      return {};
-    };
-
-    UserCodeError.explainErrorMessage = function(error, thang) {
-      var closestMatch, closestMatchScore, commonMethod, explained, m, matchScore, method, missingMethodMatch, _i, _len, _ref, _ref1;
-      if (thang == null) {
-        thang = null;
-      }
-      m = error.toString();
-      if (m === "RangeError: Maximum call stack size exceeded") {
-        m += ". (Did you use " + methodName + "() recursively?)";
-      }
-      missingMethodMatch = m.match(/has no method '(.*?)'/);
-      if (missingMethodMatch) {
-        method = missingMethodMatch[1];
-        _ref = ['Murgatroyd Kerfluffle', 0], closestMatch = _ref[0], closestMatchScore = _ref[1];
-        explained = false;
-        for (_i = 0, _len = commonMethods.length; _i < _len; _i++) {
-          commonMethod = commonMethods[_i];
-          if (method === commonMethod) {
-            m += ". (" + missingMethodMatch[1] + " not available in this challenge.)";
-            explained = true;
-            break;
-          } else if (method.toLowerCase() === commonMethod.toLowerCase()) {
-            m = "" + method + " should be " + commonMethod + " because JavaScript is case-sensitive.";
-            explained = true;
-            break;
-          } else {
-            matchScore = typeof string_score !== "undefined" && string_score !== null ? string_score.score(commonMethod, method, 0.5) : void 0;
-            if (matchScore > closestMatchScore) {
-              _ref1 = [commonMethod, matchScore], closestMatch = _ref1[0], closestMatchScore = _ref1[1];
-            }
-          }
-        }
-        if (!explained) {
-          if (closestMatchScore > 0.25) {
-            m += ". (Did you mean " + closestMatch + "?)";
-          }
-        }
-        m = m.replace('TypeError:', 'Error:');
-        if (thang) {
-          m = m.replace("Object #<Object>", thang.id);
-        }
-      }
-      return m;
-    };
-
-    return UserCodeError;
-
-  })(Error);
-
-}).call(this);
-
-},{}],4:[function(require,module,exports){
-(function() {
   var RuntimeError, UserCodeProblem, problems,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
@@ -21343,7 +21204,7 @@ var traceur = (function() {
     UserCodeProblem.className = "UserCodeProblem";
 
     function UserCodeProblem(error, code, aether, source, codePrefix) {
-      var endCol, line, lineOffset, originalLines, problemConfig, startCol, _ref, _ref1;
+      var endCol, line, lineOffset, originalLines, problemConfig, startCol, _ref, _ref1, _ref2, _ref3;
       if (source == null) {
         source = 'unknown';
       }
@@ -21370,9 +21231,11 @@ var traceur = (function() {
       } else if (source === 'esprima') {
         this.message = error.message;
         this.ranges = [[[error.lineNumber - 1 - lineOffset, error.column - 1], [error.lineNumber - 1 - lineOffset, error.column]]];
+      } else if (source === 'aether') {
+        this.message = (_ref1 = error.message) != null ? _ref1 : problemConfig != null ? problemConfig.message : void 0;
       } else {
         console.log("Unhandled UserCodeProblem source", source);
-        this.message = (_ref1 = problemConfig != null ? problemConfig.message : void 0) != null ? _ref1 : "Unknoooown problem";
+        this.message = (_ref2 = (_ref3 = error.message) != null ? _ref3 : problemConfig != null ? problemConfig.message : void 0) != null ? _ref2 : "Unknoooown problem";
       }
     }
 
@@ -21646,7 +21509,7 @@ var traceur = (function() {
       level: 'error'
     },
     aether_MissingThis: {
-      message: 'MissingThis',
+      message: 'Missing `this.` keyword.',
       level: 'error'
     },
     aether_NoEffect: {
@@ -22365,6 +22228,145 @@ var traceur = (function() {
 
 }).call(this);
 
+},{}],4:[function(require,module,exports){
+(function() {
+  var UserCodeError, commonMethods,
+    __hasProp = {}.hasOwnProperty,
+    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+  module.exports.commonMethods = commonMethods = ['moveRight', 'moveLeft', 'moveUp', 'moveDown', 'attackNearbyEnemy', 'say', 'move', 'attackNearestEnemy', 'shootAt', 'rotateTo', 'shoot', 'distance', 'getNearestEnemy', 'getEnemies', 'attack', 'setAction', 'setTarget', 'getFriends', 'patrol'];
+
+  module.exports.UserCodeError = UserCodeError = (function(_super) {
+    __extends(UserCodeError, _super);
+
+    UserCodeError.className = "UserCodeError";
+
+    function UserCodeError(message, level, userInfo) {
+      var key, val,
+        _this = this;
+      this.message = message;
+      this.level = level != null ? level : "error";
+      UserCodeError.__super__.constructor.call(this, message);
+      for (key in userInfo) {
+        if (!__hasProp.call(userInfo, key)) continue;
+        val = userInfo[key];
+        this[key] = val;
+      }
+      if (this.lineNumber != null) {
+        if (this.message.search(/^Line \d+/) !== -1) {
+          this.message = this.message.replace(/^Line \d+/, function(match, n) {
+            return "Line " + _this.lineNumber;
+          });
+        } else {
+          this.message = "Line " + this.lineNumber + ": " + this.message;
+        }
+      }
+      this.name = "UserCodeError";
+      this.key = (this.methodType === 'instance' ? this.thangID : this.thangSpriteName) + "|" + this.methodName + "|" + this.message;
+      if (Error.captureStackTrace != null) {
+        Error.captureStackTrace(this, this.constructor);
+      }
+    }
+
+    UserCodeError.prototype.serialize = function() {
+      var key, o, value;
+      o = {};
+      for (key in this) {
+        if (!__hasProp.call(this, key)) continue;
+        value = this[key];
+        o[key] = value;
+      }
+      return o;
+    };
+
+    UserCodeError.getAnonymousErrorPosition = function(error) {
+      var chromeVersion, column, i, line, lineNumber, lines, stack, _i, _len, _ref, _ref1, _ref2;
+      if (error.lineNumber) {
+        return {
+          lineNumber: error.lineNumber,
+          column: error.column
+        };
+      }
+      stack = error.stack;
+      if (!stack) {
+        return {};
+      }
+      lines = stack.split('\n');
+      for (i = _i = 0, _len = lines.length; _i < _len; i = ++_i) {
+        line = lines[i];
+        if (line.indexOf("Object.eval") === -1) {
+          continue;
+        }
+        lineNumber = (_ref = line.match(/<anonymous>:(\d+):/)) != null ? _ref[1] : void 0;
+        column = (_ref1 = line.match(/<anonymous>:\d+:(\d+)/)) != null ? _ref1[1] : void 0;
+        if (lineNumber != null) {
+          lineNumber = parseInt(lineNumber);
+        }
+        if (column != null) {
+          column = parseInt(column);
+        }
+        chromeVersion = parseInt((typeof navigator !== "undefined" && navigator !== null ? (_ref2 = navigator.appVersion) != null ? _ref2.match(/Chrome\/(\d+)\./)[1] : void 0 : void 0) || "28", 10);
+        if (chromeVersion >= 28) {
+          lineNumber -= 1;
+        }
+        return {
+          lineNumber: lineNumber,
+          column: column
+        };
+      }
+      return {};
+    };
+
+    UserCodeError.explainErrorMessage = function(error, thang) {
+      var closestMatch, closestMatchScore, commonMethod, explained, m, matchScore, method, missingMethodMatch, _i, _len, _ref, _ref1;
+      if (thang == null) {
+        thang = null;
+      }
+      m = error.toString();
+      if (m === "RangeError: Maximum call stack size exceeded") {
+        m += ". (Did you use " + methodName + "() recursively?)";
+      }
+      missingMethodMatch = m.match(/has no method '(.*?)'/);
+      if (missingMethodMatch) {
+        method = missingMethodMatch[1];
+        _ref = ['Murgatroyd Kerfluffle', 0], closestMatch = _ref[0], closestMatchScore = _ref[1];
+        explained = false;
+        for (_i = 0, _len = commonMethods.length; _i < _len; _i++) {
+          commonMethod = commonMethods[_i];
+          if (method === commonMethod) {
+            m += ". (" + missingMethodMatch[1] + " not available in this challenge.)";
+            explained = true;
+            break;
+          } else if (method.toLowerCase() === commonMethod.toLowerCase()) {
+            m = "" + method + " should be " + commonMethod + " because JavaScript is case-sensitive.";
+            explained = true;
+            break;
+          } else {
+            matchScore = typeof string_score !== "undefined" && string_score !== null ? string_score.score(commonMethod, method, 0.5) : void 0;
+            if (matchScore > closestMatchScore) {
+              _ref1 = [commonMethod, matchScore], closestMatch = _ref1[0], closestMatchScore = _ref1[1];
+            }
+          }
+        }
+        if (!explained) {
+          if (closestMatchScore > 0.25) {
+            m += ". (Did you mean " + closestMatch + "?)";
+          }
+        }
+        m = m.replace('TypeError:', 'Error:');
+        if (thang) {
+          m = m.replace("Object #<Object>", thang.id);
+        }
+      }
+      return m;
+    };
+
+    return UserCodeError;
+
+  })(Error);
+
+}).call(this);
+
 },{}],5:[function(require,module,exports){
 var global=self;(function() {
   var Aether, defaults, errors, escodegen, esprima, execution, jshint, morph, normalizer, optionsValidator, problems, traceur, transforms, _, _ref, _ref1, _ref2, _ref3, _ref4, _ref5;
@@ -22482,11 +22484,29 @@ var global=self;(function() {
       return this.pure;
     };
 
-    Aether.prototype.lint = function(raw) {
-      var error, g, jshintGlobals, jshintOptions, jshintSuccess, lintProblems, prefix, problem, strictCode, suffix, _i, _len, _ref6;
-      prefix = "function wrapped() {\n\"use strict\";\n";
-      suffix = "\n}";
-      strictCode = prefix + raw + suffix;
+    Aether.prototype.addProblem = function(problem, problems) {
+      if (problems == null) {
+        problems = null;
+      }
+      if (problem.level === "ignore") {
+        return;
+      }
+      return (problems != null ? problems : this.problems)[problem.level + "s"].push(problem);
+    };
+
+    Aether.prototype.wrap = function(rawCode) {
+      if (this.wrappedCodePrefix == null) {
+        this.wrappedCodePrefix = "function " + (this.options.functionName || 'foo') + "(" + (this.options.functionParameters.join(', ')) + ") {\n\"use strict\";\n";
+      }
+      if (this.wrappedCodeSuffix == null) {
+        this.wrappedCodeSuffix = "\n}";
+      }
+      return this.wrappedCodePrefix + rawCode + this.wrappedCodeSuffix;
+    };
+
+    Aether.prototype.lint = function(rawCode) {
+      var error, g, jshintGlobals, jshintOptions, jshintSuccess, lintProblems, wrappedCode, _i, _len, _ref6;
+      wrappedCode = this.wrap(rawCode);
       lintProblems = {
         errors: [],
         warnings: [],
@@ -22518,21 +22538,23 @@ var global=self;(function() {
         }
         return _results;
       })());
-      jshintSuccess = jshint(strictCode, jshintOptions, jshintGlobals);
+      jshintSuccess = jshint(wrappedCode, jshintOptions, jshintGlobals);
       _ref6 = jshint.errors;
       for (_i = 0, _len = _ref6.length; _i < _len; _i++) {
         error = _ref6[_i];
-        problem = new problems.UserCodeProblem(error, strictCode, this, 'jshint', prefix);
-        if (problem.level === "ignore") {
-          continue;
-        }
-        lintProblems[problem.level + "s"].push(problem);
+        this.addProblem(new problems.UserCodeProblem(error, wrappedCode, this, 'jshint', this.wrappedCodePrefix), lintProblems);
       }
       return lintProblems;
     };
 
     Aether.prototype.createFunction = function() {
-      return new Function(this.options.functionParameters.join(', '), this.pure);
+      var dummyContext, wrapper;
+      wrapper = new Function([], this.pure);
+      dummyContext = {
+        Math: Math
+      };
+      wrapper.call(dummyContext);
+      return dummyContext[this.options.functionName || 'foo'];
     };
 
     Aether.prototype.createMethod = function() {
@@ -22558,7 +22580,7 @@ var global=self;(function() {
         userInfo.column = errorPos.column;
       }
       pureError = new Aether.errors.UserCodeError(errorMessage, (_ref6 = error.level) != null ? _ref6 : "error", userInfo);
-      this.problems[pureError.level + "s"].push(pureError.serialize());
+      this.addProblem(pureError.serialize());
       return pureError;
     };
 
@@ -22613,12 +22635,13 @@ var global=self;(function() {
     };
 
     Aether.prototype.purifyCode = function(rawCode) {
-      var column, error, i, instrumentedCode, lineNumber, m, methodType, morphers, normalizedAST, normalizedCode, problem, pureError, traceuredCode, userInfo, wrappedAST, wrappedCode, _ref6, _ref7, _ref8, _ref9;
-      wrappedCode = this.checkCommonMistakes(rawCode);
+      var error, i, instrumentedCode, normalizedAST, normalizedCode, postNormalizationTransforms, preNormalizationTransforms, preprocessedCode, problem, t, traceuredCode, transformedAST, transformedCode, wrappedCode, _ref6, _ref7;
+      preprocessedCode = this.checkCommonMistakes(rawCode);
+      wrappedCode = this.wrap(preprocessedCode);
       this.vars = {};
       this.methodLineNumbers = (function() {
         var _i, _len, _ref6, _results;
-        _ref6 = rawCode.split('\n');
+        _ref6 = preprocessedCode.split('\n');
         _results = [];
         for (_i = 0, _len = _ref6.length; _i < _len; _i++) {
           i = _ref6[_i];
@@ -22626,8 +22649,18 @@ var global=self;(function() {
         }
         return _results;
       })();
+      preNormalizationTransforms = [transforms.checkThisKeywords, transforms.checkIncompleteMembers];
       try {
-        wrappedAST = esprima.parse(wrappedCode, {
+        transformedCode = morph(wrappedCode, (function() {
+          var _i, _len, _results;
+          _results = [];
+          for (_i = 0, _len = preNormalizationTransforms.length; _i < _len; _i++) {
+            t = preNormalizationTransforms[_i];
+            _results.push(_.bind(t, this));
+          }
+          return _results;
+        }).call(this));
+        transformedAST = esprima.parse(transformedCode, {
           loc: true,
           range: true,
           raw: true,
@@ -22641,57 +22674,45 @@ var global=self;(function() {
           console.log("Esprima can't survive", problem.serialize(), "at level", problem.level);
           problem.level = "error";
         }
-        this.problems[problem.level + "s"].push(problem);
+        this.addProblem(problem);
         return '';
       }
-      normalizedAST = normalizer.normalize(wrappedAST);
+      normalizedAST = normalizer.normalize(transformedAST);
       normalizedCode = escodegen.generate(normalizedAST);
-      morphers = [transforms.checkIncompleteMembers, transforms.instrumentStatements];
+      postNormalizationTransforms = [transforms.instrumentStatements];
       if ((_ref7 = this.options.thisValue) != null ? _ref7.validateReturn : void 0) {
-        morphers.unshift(transforms.validateReturns);
+        postNormalizationTransforms.unshift(transforms.validateReturns);
       }
       if (this.options.yieldConditionally) {
-        morphers.unshift(transforms.yieldConditionally);
+        postNormalizationTransforms.unshift(transforms.yieldConditionally);
       }
       if (this.options.yieldAutomatically) {
-        morphers.unshift(transforms.yieldAutomatically);
+        postNormalizationTransforms.unshift(transforms.yieldAutomatically);
       }
-      if (!this.options.requireThis) {
-        morphers.unshift(transforms.addThis);
-      }
-      try {
-        instrumentedCode = morph(normalizedCode, (function() {
-          var _i, _len, _results;
-          _results = [];
-          for (_i = 0, _len = morphers.length; _i < _len; _i++) {
-            m = morphers[_i];
-            _results.push(_.bind(m, this));
-          }
-          return _results;
-        }).call(this));
-      } catch (_error) {
-        error = _error;
-        lineNumber = error.lineNumber != null ? error.lineNumber - 1 : null;
-        column = error.column;
-        methodType = this.options.methodType || "instance";
-        userInfo = {
-          thangID: (_ref8 = this.options.thisValue) != null ? _ref8.id : void 0,
-          thangSpriteName: (_ref9 = this.options.thisValue) != null ? _ref9.spriteName : void 0,
-          methodName: this.options.functionName,
-          methodType: methodType,
-          lineNumber: lineNumber,
-          column: column
-        };
-        console.log("Whoa, got me an error!", error, userInfo);
-        pureError = this.purifyError(error.message, userInfo);
-        return '';
-      }
+      instrumentedCode = morph(normalizedCode, (function() {
+        var _i, _len, _results;
+        _results = [];
+        for (_i = 0, _len = postNormalizationTransforms.length; _i < _len; _i++) {
+          t = postNormalizationTransforms[_i];
+          _results.push(_.bind(t, this));
+        }
+        return _results;
+      }).call(this));
       traceuredCode = this.es6ify("return " + instrumentedCode);
-      if (false) {
+      if (true) {
         console.log("---RAW CODE----: " + (rawCode.split('\n').length) + "\n", {
           code: rawCode
         });
-        console.log("---NORMALIZED--: " + (instrumentedCode.split('\n').length) + "\n", {
+        console.log("---WRAPPED-----: " + (wrappedCode.split('\n').length) + "\n", {
+          code: wrappedCode
+        });
+        console.log("---TRANSFORMED-: " + (transformedCode.split('\n').length) + "\n", {
+          code: transformedCode
+        });
+        console.log("---NORMALIZED--: " + (normalizedCode.split('\n').length) + "\n", {
+          code: normalizedCode
+        });
+        console.log("---INSTRUMENTED: " + (instrumentedCode.split('\n').length) + "\n", {
           code: "return " + instrumentedCode
         });
         console.log("---TRACEURED---: " + (traceuredCode.split('\n').length) + "\n", {
@@ -22756,7 +22777,7 @@ var global=self;(function() {
 
 }).call(this);
 
-},{"./defaults":6,"./errors":3,"./execution":2,"./morph":7,"./problems":4,"./transforms":8,"./validators/options":9,"JS_WALA/normalizer/lib/normalizer":10,"escodegen":13,"esprima":11,"jshint":12,"lodash":1,"traceur":1}],6:[function(require,module,exports){
+},{"./defaults":6,"./errors":4,"./execution":2,"./morph":7,"./problems":3,"./transforms":8,"./validators/options":9,"JS_WALA/normalizer/lib/normalizer":10,"escodegen":13,"esprima":11,"jshint":12,"lodash":1,"traceur":1}],6:[function(require,module,exports){
 (function() {
   var defaults, execution;
 
@@ -29499,7 +29520,7 @@ parseYieldExpression: true
 //}
 //
 //define(function(require, exports) {
-  Array.prototype.flatmap = function(fn, thisArg) {
+  var flatmap = function(fn, thisArg) {  
     var res = [];
     for(var i=0;i<this.length;++i) {
       var r = fn.call(thisArg, this[i], i, this);
@@ -29508,6 +29529,13 @@ parseYieldExpression: true
     }
     return res;
   };
+  if(typeof Object.defineProperty !== 'undefined')
+    Object.defineProperty(Array.prototype, 'flatmap', {
+      value: flatmap,
+      enumerable: false
+    });
+  else
+    Array.prototype.flatmap = flatmap;
 //});
 
 },{}],7:[function(require,module,exports){
@@ -29583,8 +29611,10 @@ var global=self;(function() {
 
 },{"esprima":11,"lodash":1}],8:[function(require,module,exports){
 (function() {
-  var S, addThis, checkIncompleteMembers, esprima, gatherLineNumbers, getLineNumberForNode, instrumentStatements, possiblyGeneratorifyAncestorFunction, statements, validateReturns, yieldAutomatically, yieldConditionally,
+  var S, checkIncompleteMembers, checkThisKeywords, esprima, gatherLineNumbers, getLineNumberForNode, instrumentStatements, possiblyGeneratorifyAncestorFunction, problems, statements, validateReturns, yieldAutomatically, yieldConditionally,
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+
+  problems = require('./problems');
 
   esprima = require('esprima');
 
@@ -29608,35 +29638,24 @@ var global=self;(function() {
     return line;
   };
 
-  possiblyGeneratorifyAncestorFunction = function(node) {
-    while (node.type !== S.FunctionExpression) {
-      node = node.parent;
-    }
-    return node.mustBecomeGeneratorFunction = true;
-  };
-
-  module.exports.yieldConditionally = yieldConditionally = function(node) {
-    var grandparent, _ref;
-    grandparent = (_ref = node.parent) != null ? _ref.parent : void 0;
-    if (node.type === S.CallExpression && (grandparent != null ? grandparent.type : void 0) === S.ExpressionStatement) {
-      grandparent.update("" + (grandparent.source()) + " if (__global._shouldYield) { var __yieldValue = __global._shouldYield; __global._shouldYield = false; yield __yieldValue; }");
-      grandparent.yields = true;
-      return possiblyGeneratorifyAncestorFunction(grandparent);
-    } else if (node.mustBecomeGeneratorFunction) {
-      return node.update(node.source().replace(/^function \(/, 'function* ('));
-    }
-  };
-
-  module.exports.yieldAutomatically = yieldAutomatically = function(node) {
-    var _ref, _ref1;
-    if (_ref = node.type, __indexOf.call(statements, _ref) >= 0) {
-      if (((_ref1 = node.parent) != null ? _ref1.type : void 0) !== S.Program) {
-        node.update("" + (node.source()) + " yield 'waiting...';");
-        node.yields = true;
-        return possiblyGeneratorifyAncestorFunction(node);
+  module.exports.checkThisKeywords = checkThisKeywords = function(node) {
+    var error, problem, v;
+    if (node.type === S.VariableDeclarator) {
+      return this.vars[node.id] = true;
+    } else if (node.type === S.CallExpression) {
+      v = node.callee.name;
+      if (v && !this.vars[v] && !this.options.global[v]) {
+        error = {
+          id: "MissingThis",
+          message: "Missing `this.` keyword; should be `this." + v + "`.",
+          hint: "There is no function `" + v + "`, but `this` has a method `" + v + "`."
+        };
+        problem = new problems.UserCodeProblem(error, this.raw, this, 'aether', '');
+        this.addProblem(problem);
+        if (!this.options.requiresThis) {
+          return node.update("this." + (node.source()));
+        }
       }
-    } else if (node.mustBecomeGeneratorFunction) {
-      return node.update(node.source().replace(/^function \(/, 'function* ('));
     }
   };
 
@@ -29646,16 +29665,6 @@ var global=self;(function() {
       return node.update("return this.validateReturn('" + this.options.functionName + "', null);");
     } else if (((_ref = node.parent) != null ? _ref.type : void 0) === S.ReturnStatement) {
       return node.update("this.validateReturn('" + this.options.functionName + "', (" + (node.source()) + "))");
-    }
-  };
-
-  module.exports.addThis = addThis = function(node) {
-    if (node.type === S.VariableDeclarator) {
-      return this.vars[node.id] = true;
-    } else if (node.type === S.CallExpression) {
-      if (node.callee.name && !this.vars[node.callee.name] && !this.options.global[node.callee.name]) {
-        return node.update("this." + (node.source()));
-      }
     }
   };
 
@@ -29702,11 +29711,52 @@ var global=self;(function() {
     }
   };
 
+  possiblyGeneratorifyAncestorFunction = function(node) {
+    while (node.type !== S.FunctionExpression) {
+      node = node.parent;
+    }
+    return node.mustBecomeGeneratorFunction = true;
+  };
+
+  module.exports.yieldConditionally = yieldConditionally = function(node) {
+    var grandparent, _ref;
+    grandparent = (_ref = node.parent) != null ? _ref.parent : void 0;
+    if (node.type === S.CallExpression && (grandparent != null ? grandparent.type : void 0) === S.ExpressionStatement) {
+      grandparent.update("" + (grandparent.source()) + " if (this._shouldYield) { var __yieldValue = this._shouldYield; this._shouldYield = false; yield __yieldValue; }");
+      grandparent.yields = true;
+      return possiblyGeneratorifyAncestorFunction(grandparent);
+    } else if (node.mustBecomeGeneratorFunction) {
+      return node.update(node.source().replace(/^function \(/, 'function* ('));
+    }
+  };
+
+  module.exports.yieldAutomatically = yieldAutomatically = function(node) {
+    var nFunctionParents, p, _ref;
+    if (_ref = node.type, __indexOf.call(statements, _ref) >= 0) {
+      nFunctionParents = 0;
+      p = node.parent;
+      while (p) {
+        if (p.type === S.FunctionExpression) {
+          ++nFunctionParents;
+        }
+        p = p.parent;
+      }
+      if (!(nFunctionParents > 1)) {
+        return;
+      }
+      node.update("" + (node.source()) + " yield 'waiting...';");
+      node.yields = true;
+      return possiblyGeneratorifyAncestorFunction(node);
+    } else if (node.mustBecomeGeneratorFunction) {
+      return node.update(node.source().replace(/^function \(/, 'function* ('));
+    }
+  };
+
   module.exports.instrumentStatements = instrumentStatements = function(node) {};
 
 }).call(this);
 
-},{"esprima":11}],20:[function(require,module,exports){
+},{"./problems":3,"esprima":11}],20:[function(require,module,exports){
 module.exports={
   "name": "escodegen",
   "description": "ECMAScript code generator",
@@ -29770,7 +29820,7 @@ module.exports={
     "url": "https://github.com/Constellation/escodegen/issues"
   },
   "_id": "escodegen@0.0.25",
-  "_from": "escodegen@"
+  "_from": "escodegen@0.0.25"
 }
 
 },{}],21:[function(require,module,exports){
@@ -30071,8 +30121,6 @@ exports.ecmaIdentifiers = {
 // Global variables commonly provided by a web browser environment.
 
 exports.browser = {
-	ArrayBuffer          : false,
-	ArrayBufferView      : false,
 	Audio                : false,
 	Blob                 : false,
 	addEventListener     : false,
@@ -30085,7 +30133,6 @@ exports.browser = {
 	close                : false,
 	closed               : false,
 	CustomEvent          : false,
-	DataView             : false,
 	DOMParser            : false,
 	defaultStatus        : false,
 	document             : false,
@@ -30093,8 +30140,6 @@ exports.browser = {
 	ElementTimeControl   : false,
 	event                : false,
 	FileReader           : false,
-	Float32Array         : false,
-	Float64Array         : false,
 	FormData             : false,
 	focus                : false,
 	frames               : false,
@@ -30154,9 +30199,6 @@ exports.browser = {
 	HTMLUListElement     : false,
 	HTMLVideoElement     : false,
 	history              : false,
-	Int16Array           : false,
-	Int32Array           : false,
-	Int8Array            : false,
 	Image                : false,
 	length               : false,
 	localStorage         : false,
@@ -30354,10 +30396,6 @@ exports.browser = {
 	SVGZoomAndPan        : false,
 	TimeEvent            : false,
 	top                  : false,
-	Uint16Array          : false,
-	Uint32Array          : false,
-	Uint8Array           : false,
-	Uint8ClampedArray    : false,
 	WebSocket            : false,
 	window               : false,
 	Worker               : false,
@@ -30412,7 +30450,6 @@ exports.node = {
 	__filename    : false,
 	__dirname     : false,
 	Buffer        : false,
-	DataView      : false,
 	console       : false,
 	exports       : true,  // In Node it is ok to exports = module.exports = foo();
 	GLOBAL        : false,
@@ -30431,7 +30468,9 @@ exports.node = {
 exports.phantom = {
 	phantom      : true,
 	require      : true,
-	WebPage      : true
+	WebPage      : true,
+	console      : true, // in examples, but undocumented
+	exports      : true  // v1.7+
 };
 
 exports.rhino = {
@@ -30484,6 +30523,21 @@ exports.shelljs = {
 	tempdir      : false
 };
 
+exports.typed = {
+	ArrayBuffer         : false,
+	ArrayBufferView     : false,
+	DataView            : false,
+	Float32Array        : false,
+	Float64Array        : false,
+	Int16Array          : false,
+	Int32Array          : false,
+	Int8Array           : false,
+	Uint16Array         : false,
+	Uint32Array         : false,
+	Uint8Array          : false,
+	Uint8ClampedArray   : false
+};
+
 exports.wsh = {
 	ActiveXObject            : true,
 	Enumerator               : true,
@@ -30504,7 +30558,7 @@ exports.dojo = {
 	dojo     : false,
 	dijit    : false,
 	dojox    : false,
-	define	 : false,
+	define   : false,
 	"require": false
 };
 
@@ -34010,428 +34064,7 @@ var global=self;/*
   exports.WithScope = WithScope;
 //});
 
-},{"./decls":16}],29:[function(require,module,exports){
-(function (exports) {
-  exports.validate = validate;
-  exports.mixin = mixin;
-
-  //
-  // ### function validate (object, schema, options)
-  // #### {Object} object the object to validate.
-  // #### {Object} schema (optional) the JSON Schema to validate against.
-  // #### {Object} options (optional) options controlling the validation
-  //      process. See {@link #validate.defaults) for details.
-  // Validate <code>object</code> against a JSON Schema.
-  // If <code>object</code> is self-describing (i.e. has a
-  // <code>$schema</code> property), it will also be validated
-  // against the referenced schema. [TODO]: This behaviour bay be
-  // suppressed by setting the {@link #validate.options.???}
-  // option to <code>???</code>.[/TODO]
-  //
-  // If <code>schema</code> is not specified, and <code>object</code>
-  // is not self-describing, validation always passes.
-  //
-  // <strong>Note:</strong> in order to pass options but no schema,
-  // <code>schema</code> <em>must</em> be specified in the call to
-  // <code>validate()</code>; otherwise, <code>options</code> will
-  // be interpreted as the schema. <code>schema</code> may be passed
-  // as <code>null</code>, <code>undefinded</code>, or the empty object
-  // (<code>{}</code>) in this case.
-  //
-  function validate(object, schema, options) {
-    options = mixin({}, options, validate.defaults);
-    var errors = [];
-
-    validateObject(object, schema, options, errors);
-
-    //
-    // TODO: self-described validation
-    // if (! options.selfDescribing) { ... }
-    //
-
-    return {
-      valid: !(errors.length),
-      errors: errors
-    };
-  };
-
-  /**
-   * Default validation options. Defaults can be overridden by
-   * passing an 'options' hash to {@link #validate}. They can
-   * also be set globally be changing the values in
-   * <code>validate.defaults</code> directly.
-   */
-  validate.defaults = {
-      /**
-       * <p>
-       * Enforce 'format' constraints.
-       * </p><p>
-       * <em>Default: <code>true</code></em>
-       * </p>
-       */
-      validateFormats: true,
-      /**
-       * <p>
-       * When {@link #validateFormats} is <code>true</code>,
-       * treat unrecognized formats as validation errors.
-       * </p><p>
-       * <em>Default: <code>false</code></em>
-       * </p>
-       *
-       * @see validation.formats for default supported formats.
-       */
-      validateFormatsStrict: false,
-      /**
-       * <p>
-       * When {@link #validateFormats} is <code>true</code>,
-       * also validate formats defined in {@link #validate.formatExtensions}.
-       * </p><p>
-       * <em>Default: <code>true</code></em>
-       * </p>
-       */
-      validateFormatExtensions: true
-  };
-
-  /**
-   * Default messages to include with validation errors.
-   */
-  validate.messages = {
-      required:         "is required",
-      minLength:        "is too short (minimum is %{expected} characters)",
-      maxLength:        "is too long (maximum is %{expected} characters)",
-      pattern:          "invalid input",
-      minimum:          "must be greater than or equal to %{expected}",
-      maximum:          "must be less than or equal to %{expected}",
-      exclusiveMinimum: "must be greater than %{expected}",
-      exclusiveMaximum: "must be less than %{expected}",
-      divisibleBy:      "must be divisible by %{expected}",
-      minItems:         "must contain more than %{expected} items",
-      maxItems:         "must contain less than %{expected} items",
-      uniqueItems:      "must hold a unique set of values",
-      format:           "is not a valid %{expected}",
-      conform:          "must conform to given constraint",
-      type:             "must be of %{expected} type"
-  };
-  validate.messages['enum'] = "must be present in given enumerator";
-
-  /**
-   *
-   */
-  validate.formats = {
-    'email':          /^((([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+(\.([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+)*)|((\x22)((((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(([\x01-\x08\x0b\x0c\x0e-\x1f\x7f]|\x21|[\x23-\x5b]|[\x5d-\x7e]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(\\([\x01-\x09\x0b\x0c\x0d-\x7f]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]))))*(((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(\x22)))@((([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.)+(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.?$/i,
-    'ip-address':     /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/i,
-    'ipv6':           /^([0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}$/,
-    'date-time':      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:.\d{1,3})?Z$/,
-    'date':           /^\d{4}-\d{2}-\d{2}$/,
-    'time':           /^\d{2}:\d{2}:\d{2}$/,
-    'color':          /^#[a-z0-9]{6}|#[a-z0-9]{3}|(?:rgb\(\s*(?:[+-]?\d+%?)\s*,\s*(?:[+-]?\d+%?)\s*,\s*(?:[+-]?\d+%?)\s*\))aqua|black|blue|fuchsia|gray|green|lime|maroon|navy|olive|orange|purple|red|silver|teal|white|yellow$/i,
-    //'style':        (not supported)
-    //'phone':        (not supported)
-    //'uri':          (not supported)
-    'host-name':      /^(([a-zA-Z]|[a-zA-Z][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z]|[A-Za-z][A-Za-z0-9\-]*[A-Za-z0-9])/,
-    'utc-millisec':   {
-      test: function (value) {
-        return typeof(value) === 'number' && value >= 0;
-      }
-    },
-    'regex':          {
-      test: function (value) {
-        try { new RegExp(value) }
-        catch (e) { return false }
-
-        return true;
-      }
-    }
-  };
-
-  /**
-   *
-   */
-  validate.formatExtensions = {
-    'url': /^(https?|ftp|git):\/\/(((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:)*@)?(((\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5]))|((([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.)+(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.?)(:\d*)?)(\/((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)+(\/(([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)*)*)?)?(\?((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)|[\uE000-\uF8FF]|\/|\?)*)?(\#((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)|\/|\?)*)?$/i
-  };
-
-  function mixin(obj) {
-    var sources = Array.prototype.slice.call(arguments, 1);
-    while (sources.length) {
-      var source = sources.shift();
-      if (!source) { continue }
-
-      if (typeof(source) !== 'object') {
-        throw new TypeError('mixin non-object');
-      }
-
-      for (var p in source) {
-        if (source.hasOwnProperty(p)) {
-          obj[p] = source[p];
-        }
-      }
-    }
-
-    return obj;
-  };
-
-  function validateObject(object, schema, options, errors) {
-    var props, allProps = Object.keys(object),
-        visitedProps = [];
-
-    // see 5.2
-    if (schema.properties) {
-      props = schema.properties;
-      for (var p in props) {
-        if (props.hasOwnProperty(p)) {
-          visitedProps.push(p);
-          validateProperty(object, object[p], p, props[p], options, errors);
-        }
-      }
-    }
-
-    // see 5.3
-    if (schema.patternProperties) {
-      props = schema.patternProperties;
-      for (var p in props) {
-        if (props.hasOwnProperty(p)) {
-          var re = new RegExp(p);
-
-          // Find all object properties that are matching `re`
-          for (var k in object) {
-            if (object.hasOwnProperty(k)) {
-              visitedProps.push(k);
-              if (re.exec(k) !== null) {
-                validateProperty(object, object[k], p, props[p], options, errors);
-              }
-            }
-          }
-        }
-      }
-    }
-
-    // see 5.4
-    if (undefined !== schema.additionalProperties) {
-      var i, l;
-
-      var unvisitedProps = allProps.filter(function(k){
-        return -1 === visitedProps.indexOf(k);
-      });
-
-      // Prevent additional properties; each unvisited property is therefore an error
-      if (schema.additionalProperties === false && unvisitedProps.length > 0) {
-        for (i = 0, l = unvisitedProps.length; i < l; i++) {
-          error("additionalProperties", unvisitedProps[i], object[unvisitedProps[i]], false, errors);
-        }
-      }
-      // additionalProperties is a schema and validate unvisited properties against that schema
-      else if (typeof schema.additionalProperties == "object" && unvisitedProps.length > 0) {
-        for (i = 0, l = unvisitedProps.length; i < l; i++) {
-          validateProperty(object, object[unvisitedProps[i]], unvisitedProps[i], schema.unvisitedProperties, options, errors);
-        }
-      }
-    }
-
-  };
-
-  function validateProperty(object, value, property, schema, options, errors) {
-    var format,
-        valid,
-        spec,
-        type;
-
-    function constrain(name, value, assert) {
-      if (schema[name] !== undefined && !assert(value, schema[name])) {
-        error(name, property, value, schema, errors);
-      }
-    }
-
-    if (value === undefined) {
-      if (schema.required && schema.type !== 'any') {
-        return error('required', property, undefined, schema, errors);
-      } else {
-        return;
-      }
-    }
-
-    if (options.cast) {
-      if (('integer' === schema.type || 'number' === schema.type) && value == +value) {
-        value = +value;
-      }
-
-      if ('boolean' === schema.type) {
-        if ('true' === value || '1' === value || 1 === value) {
-          value = true;
-        }
-
-        if ('false' === value || '0' === value || 0 === value) {
-          value = false;
-        }
-      }
-    }
-
-    if (schema.format && options.validateFormats) {
-      format = schema.format;
-
-      if (options.validateFormatExtensions) { spec = validate.formatExtensions[format] }
-      if (!spec) { spec = validate.formats[format] }
-      if (!spec) {
-        if (options.validateFormatsStrict) {
-          return error('format', property, value, schema, errors);
-        }
-      }
-      else {
-        if (!spec.test(value)) {
-          return error('format', property, value, schema, errors);
-        }
-      }
-    }
-
-    if (schema['enum'] && schema['enum'].indexOf(value) === -1) {
-      error('enum', property, value, schema, errors);
-    }
-
-    // Dependencies (see 5.8)
-    if (typeof schema.dependencies === 'string' &&
-        object[schema.dependencies] === undefined) {
-      error('dependencies', property, null, schema, errors);
-    }
-
-    if (isArray(schema.dependencies)) {
-      for (var i = 0, l = schema.dependencies.length; i < l; i++) {
-        if (object[schema.dependencies[i]] === undefined) {
-          error('dependencies', property, null, schema, errors);
-        }
-      }
-    }
-
-    if (typeof schema.dependencies === 'object') {
-      validateObject(object, schema.dependencies, options, errors);
-    }
-
-    checkType(value, schema.type, function(err, type) {
-      if (err) return error('type', property, typeof value, schema, errors);
-
-      constrain('conform', value, function (a, e) { return e(a, object) });
-
-      switch (type || (isArray(value) ? 'array' : typeof value)) {
-        case 'string':
-          constrain('minLength', value.length, function (a, e) { return a >= e });
-          constrain('maxLength', value.length, function (a, e) { return a <= e });
-          constrain('pattern',   value,        function (a, e) {
-            e = typeof e === 'string'
-              ? e = new RegExp(e)
-              : e;
-            return e.test(a)
-          });
-          break;
-        case 'integer':
-        case 'number':
-          constrain('minimum',     value, function (a, e) { return a >= e });
-          constrain('maximum',     value, function (a, e) { return a <= e });
-          constrain('exclusiveMinimum', value, function (a, e) { return a > e });
-          constrain('exclusiveMaximum', value, function (a, e) { return a < e });
-          constrain('divisibleBy', value, function (a, e) {
-            var multiplier = Math.max((a - Math.floor(a)).toString().length - 2, (e - Math.floor(e)).toString().length - 2);
-            multiplier = multiplier > 0 ? Math.pow(10, multiplier) : 1;
-            return (a * multiplier) % (e * multiplier) === 0
-          });
-          break;
-        case 'array':
-          constrain('items', value, function (a, e) {
-            for (var i = 0, l = a.length; i < l; i++) {
-              validateProperty(object, a[i], property, e, options, errors);
-            }
-            return true;
-          });
-          constrain('minItems', value, function (a, e) { return a.length >= e });
-          constrain('maxItems', value, function (a, e) { return a.length <= e });
-          constrain('uniqueItems', value, function (a) {
-            var h = {};
-
-            for (var i = 0, l = a.length; i < l; i++) {
-              var key = JSON.stringify(a[i]);
-              if (h[key]) return false;
-              h[key] = true;
-            }
-
-            return true;
-          });
-          break;
-        case 'object':
-          // Recursive validation
-          if (schema.properties || schema.patternProperties || schema.additionalProperties) {
-            validateObject(value, schema, options, errors);
-          }
-          break;
-      }
-    });
-  };
-
-  function checkType(val, type, callback) {
-    var result = false,
-        types = isArray(type) ? type : [type];
-
-    // No type - no check
-    if (type === undefined) return callback(null, type);
-
-    // Go through available types
-    // And fine first matching
-    for (var i = 0, l = types.length; i < l; i++) {
-      type = types[i].toLowerCase().trim();
-      if (type === 'string' ? typeof val === 'string' :
-          type === 'array' ? isArray(val) :
-          type === 'object' ? val && typeof val === 'object' &&
-                             !isArray(val) :
-          type === 'number' ? typeof val === 'number' :
-          type === 'integer' ? typeof val === 'number' && ~~val === val :
-          type === 'null' ? val === null :
-          type === 'boolean'? typeof val === 'boolean' :
-          type === 'any' ? typeof val !== 'undefined' : false) {
-        return callback(null, type);
-      }
-    };
-
-    callback(true);
-  };
-
-  function error(attribute, property, actual, schema, errors) {
-    var lookup = { expected: schema[attribute], attribute: attribute, property: property };
-    var message = schema.messages && schema.messages[attribute] || schema.message || validate.messages[attribute] || "no default message";
-    message = message.replace(/%\{([a-z]+)\}/ig, function (_, match) { return lookup[match.toLowerCase()] || ''; });
-    errors.push({
-      attribute: attribute,
-      property:  property,
-      expected:  schema[attribute],
-      actual:    actual,
-      message:   message
-    });
-  };
-
-  function isArray(value) {
-    var s = typeof value;
-    if (s === 'object') {
-      if (value) {
-        if (typeof value.length === 'number' &&
-           !(value.propertyIsEnumerable('length')) &&
-           typeof value.splice === 'function') {
-           return true;
-        }
-      }
-    }
-    return false;
-  }
-
-
-})(typeof module !== 'undefined' ? module.exports : (window.json = window.json || {}));
-
-},{}],28:[function(require,module,exports){
-/*
- * Copyright 2009-2011 Mozilla Foundation and contributors
- * Licensed under the New BSD license. See LICENSE.txt or:
- * http://opensource.org/licenses/BSD-3-Clause
- */
-exports.SourceMapGenerator = require('./source-map/source-map-generator').SourceMapGenerator;
-exports.SourceMapConsumer = require('./source-map/source-map-consumer').SourceMapConsumer;
-exports.SourceNode = require('./source-map/source-node').SourceNode;
-
-},{"./source-map/source-map-consumer":31,"./source-map/source-map-generator":30,"./source-map/source-node":32}],12:[function(require,module,exports){
+},{"./decls":16}],12:[function(require,module,exports){
 /*!
  * JSHint, by JSHint Community.
  *
@@ -34468,8 +34101,8 @@ exports.SourceNode = require('./source-map/source-node').SourceNode;
 
 var _        = require("underscore");
 var events   = require("events");
-var vars     = require("../shared/vars.js");
-var messages = require("../shared/messages.js");
+var vars     = require("./vars.js");
+var messages = require("./messages.js");
 var Lexer    = require("./lex.js").Lexer;
 var reg      = require("./reg.js");
 var state    = require("./state.js").state;
@@ -34562,6 +34195,7 @@ var JSHINT = (function () {
 			                    // predefined
 			rhino       : true, // if the Rhino environment globals should be predefined
 			shelljs     : true, // if ShellJS globals should be predefined
+			typed       : true, // if typed array globals should be predefined
 			undef       : true, // if variables should be declared before used
 			scripturl   : true, // if script-targeted URLs should be tolerated
 			shadow      : true, // if variable shadowing should be tolerated
@@ -34767,6 +34401,9 @@ var JSHINT = (function () {
 			combine(predefined, vars.shelljs);
 			combine(predefined, vars.node);
 		}
+		if (state.option.typed) {
+			combine(predefined, vars.typed);
+		}
 
 		if (state.option.phantom) {
 			combine(predefined, vars.phantom);
@@ -34778,6 +34415,7 @@ var JSHINT = (function () {
 
 		if (state.option.node) {
 			combine(predefined, vars.node);
+			combine(predefined, vars.typed);
 		}
 
 		if (state.option.devel) {
@@ -34790,6 +34428,7 @@ var JSHINT = (function () {
 
 		if (state.option.browser) {
 			combine(predefined, vars.browser);
+			combine(predefined, vars.typed);
 		}
 
 		if (state.option.nonstandard) {
@@ -35016,8 +34655,8 @@ var JSHINT = (function () {
 		if (nt.type === "globals") {
 			body.forEach(function (g) {
 				g = g.split(":");
-				var key = g[0];
-				var val = g[1];
+				var key = (g[0] || "").trim();
+				var val = (g[1] || "").trim();
 
 				if (key.charAt(0) === "-") {
 					key = key.slice(1);
@@ -36930,7 +36569,17 @@ var JSHINT = (function () {
 		res.exps = true;
 		funct["(comparray)"].stack();
 
-		res.right = expression(10);
+		// Handle reversed for expressions, used in spidermonkey
+		var reversed = false;
+		if (state.tokens.next.value !== "for") {
+			reversed = true;
+			if (!state.option.inMoz(true)) {
+				warning("W116", state.tokens.next, "for", state.tokens.next.value);
+			}
+			funct["(comparray)"].setState("use");
+			res.right = expression(10);
+		}
+
 		advance("for");
 		if (state.tokens.next.value === "each") {
 			advance("each");
@@ -36940,7 +36589,15 @@ var JSHINT = (function () {
 		}
 		advance("(");
 		funct["(comparray)"].setState("define");
-		res.left = expression(10);
+		res.left = expression(130);
+		if (_.contains(["in", "of"], state.tokens.next.value)) {
+			advance();
+		} else {
+			error("E045", state.tokens.curr);
+		}
+		funct["(comparray)"].setState("generate");
+		expression(10);
+
 		advance(")");
 		if (state.tokens.next.value === "if") {
 			advance("if");
@@ -36949,6 +36606,12 @@ var JSHINT = (function () {
 			res.filter = expression(10);
 			advance(")");
 		}
+
+		if (!reversed) {
+			funct["(comparray)"].setState("use");
+			res.right = expression(10);
+		}
+
 		advance("]");
 		funct["(comparray)"].unstack();
 		return res;
@@ -36957,8 +36620,8 @@ var JSHINT = (function () {
 	prefix("[", function () {
 		var blocktype = lookupBlockType(true);
 		if (blocktype.isCompArray) {
-			if (!state.option.inMoz(true)) {
-				warning("W118", state.tokens.curr, "array comprehension");
+			if (!state.option.inESNext()) {
+				warning("W119", state.tokens.curr, "array comprehension");
 			}
 			return comprehensiveArrayExpression();
 		} else if (blocktype.isDestAssign && !state.option.inESNext()) {
@@ -38079,7 +37742,7 @@ var JSHINT = (function () {
 
 	stmt("debugger", function () {
 		if (!state.option.debug) {
-			warning("W087");
+			warning("W087", this);
 		}
 		return this;
 	}).exps = true;
@@ -38486,17 +38149,13 @@ var JSHINT = (function () {
 
 	var lookupBlockType = function () {
 		var pn, pn1;
-		var i = 0;
+		var i = -1;
 		var bracketStack = 0;
 		var ret = {};
 		if (_.contains(["[", "{"], state.tokens.curr.value))
 			bracketStack += 1;
-		if (_.contains(["[", "{"], state.tokens.next.value))
-			bracketStack += 1;
-		if (_.contains(["]", "}"], state.tokens.next.value))
-			bracketStack -= 1;
 		do {
-			pn = peek(i);
+			pn = (i === -1) ? state.tokens.next : peek(i);
 			pn1 = peek(i + 1);
 			i = i + 1;
 			if (_.contains(["[", "{"], pn.value)) {
@@ -38509,7 +38168,7 @@ var JSHINT = (function () {
 				ret.notJson = true;
 				break;
 			}
-			if (_.contains(["}", "]"], pn.value) && pn1.value === "=") {
+			if (_.contains(["}", "]"], pn.value) && pn1.value === "=" && bracketStack === 0) {
 				ret.isDestAssign = true;
 				ret.notJson = true;
 				break;
@@ -38591,32 +38250,45 @@ var JSHINT = (function () {
 						if (v.undef)
 							isundef(v.funct, "W117", v.token, v.value);
 					});
-					_carrays.splice(_carrays[_carrays.length - 1], 1);
+					_carrays.splice(-1, 1);
 					_current = _carrays[_carrays.length - 1];
 				},
 				setState: function (s) {
-					if (_.contains(["use", "define", "filter"], s))
+					if (_.contains(["use", "define", "generate", "filter"], s))
 						_current.mode = s;
 				},
 				check: function (v) {
+					if (!_current) {
+						return;
+					}
 					// When we are in "use" state of the list comp, we enqueue that var
 					if (_current && _current.mode === "use") {
-						_current.variables.push({funct: funct,
-													token: state.tokens.curr,
-													value: v,
-													undef: true,
-													unused: false});
+						if (use(v)) {
+							_current.variables.push({
+								funct: funct,
+								token: state.tokens.curr,
+								value: v,
+								undef: true,
+								unused: false
+							});
+						}
 						return true;
 					// When we are in "define" state of the list comp,
 					} else if (_current && _current.mode === "define") {
 						// check if the variable has been used previously
 						if (!declare(v)) {
-							_current.variables.push({funct: funct,
-														token: state.tokens.curr,
-														value: v,
-														undef: false,
-														unused: true});
+							_current.variables.push({
+								funct: funct,
+								token: state.tokens.curr,
+								value: v,
+								undef: false,
+								unused: true
+							});
 						}
+						return true;
+					// When we are in the "generate" state of the list comp,
+					} else if (_current && _current.mode === "generate") {
+						isundef(funct, "W117", state.tokens.curr, v);
 						return true;
 					// When we are in "filter" state,
 					} else if (_current && _current.mode === "filter") {
@@ -38971,7 +38643,7 @@ var JSHINT = (function () {
 				directives();
 
 				if (state.directive["use strict"]) {
-					if (!state.option.globalstrict && !state.option.node) {
+					if (!state.option.globalstrict && !(state.option.node || state.option.phantom)) {
 						warning("W097", state.tokens.prev);
 					}
 				}
@@ -39255,7 +38927,418 @@ if (typeof exports === "object" && exports) {
 	exports.JSHINT = JSHINT;
 }
 
-},{"../shared/messages.js":33,"../shared/vars.js":23,"./lex.js":34,"./reg.js":24,"./state.js":25,"./style.js":26,"console-browserify":36,"events":22,"underscore":35}],35:[function(require,module,exports){
+},{"./lex.js":31,"./messages.js":30,"./reg.js":24,"./state.js":25,"./style.js":26,"./vars.js":23,"console-browserify":33,"events":22,"underscore":32}],29:[function(require,module,exports){
+(function (exports) {
+  exports.validate = validate;
+  exports.mixin = mixin;
+
+  //
+  // ### function validate (object, schema, options)
+  // #### {Object} object the object to validate.
+  // #### {Object} schema (optional) the JSON Schema to validate against.
+  // #### {Object} options (optional) options controlling the validation
+  //      process. See {@link #validate.defaults) for details.
+  // Validate <code>object</code> against a JSON Schema.
+  // If <code>object</code> is self-describing (i.e. has a
+  // <code>$schema</code> property), it will also be validated
+  // against the referenced schema. [TODO]: This behaviour bay be
+  // suppressed by setting the {@link #validate.options.???}
+  // option to <code>???</code>.[/TODO]
+  //
+  // If <code>schema</code> is not specified, and <code>object</code>
+  // is not self-describing, validation always passes.
+  //
+  // <strong>Note:</strong> in order to pass options but no schema,
+  // <code>schema</code> <em>must</em> be specified in the call to
+  // <code>validate()</code>; otherwise, <code>options</code> will
+  // be interpreted as the schema. <code>schema</code> may be passed
+  // as <code>null</code>, <code>undefinded</code>, or the empty object
+  // (<code>{}</code>) in this case.
+  //
+  function validate(object, schema, options) {
+    options = mixin({}, options, validate.defaults);
+    var errors = [];
+
+    validateObject(object, schema, options, errors);
+
+    //
+    // TODO: self-described validation
+    // if (! options.selfDescribing) { ... }
+    //
+
+    return {
+      valid: !(errors.length),
+      errors: errors
+    };
+  };
+
+  /**
+   * Default validation options. Defaults can be overridden by
+   * passing an 'options' hash to {@link #validate}. They can
+   * also be set globally be changing the values in
+   * <code>validate.defaults</code> directly.
+   */
+  validate.defaults = {
+      /**
+       * <p>
+       * Enforce 'format' constraints.
+       * </p><p>
+       * <em>Default: <code>true</code></em>
+       * </p>
+       */
+      validateFormats: true,
+      /**
+       * <p>
+       * When {@link #validateFormats} is <code>true</code>,
+       * treat unrecognized formats as validation errors.
+       * </p><p>
+       * <em>Default: <code>false</code></em>
+       * </p>
+       *
+       * @see validation.formats for default supported formats.
+       */
+      validateFormatsStrict: false,
+      /**
+       * <p>
+       * When {@link #validateFormats} is <code>true</code>,
+       * also validate formats defined in {@link #validate.formatExtensions}.
+       * </p><p>
+       * <em>Default: <code>true</code></em>
+       * </p>
+       */
+      validateFormatExtensions: true
+  };
+
+  /**
+   * Default messages to include with validation errors.
+   */
+  validate.messages = {
+      required:         "is required",
+      minLength:        "is too short (minimum is %{expected} characters)",
+      maxLength:        "is too long (maximum is %{expected} characters)",
+      pattern:          "invalid input",
+      minimum:          "must be greater than or equal to %{expected}",
+      maximum:          "must be less than or equal to %{expected}",
+      exclusiveMinimum: "must be greater than %{expected}",
+      exclusiveMaximum: "must be less than %{expected}",
+      divisibleBy:      "must be divisible by %{expected}",
+      minItems:         "must contain more than %{expected} items",
+      maxItems:         "must contain less than %{expected} items",
+      uniqueItems:      "must hold a unique set of values",
+      format:           "is not a valid %{expected}",
+      conform:          "must conform to given constraint",
+      type:             "must be of %{expected} type"
+  };
+  validate.messages['enum'] = "must be present in given enumerator";
+
+  /**
+   *
+   */
+  validate.formats = {
+    'email':          /^((([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+(\.([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+)*)|((\x22)((((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(([\x01-\x08\x0b\x0c\x0e-\x1f\x7f]|\x21|[\x23-\x5b]|[\x5d-\x7e]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(\\([\x01-\x09\x0b\x0c\x0d-\x7f]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]))))*(((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(\x22)))@((([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.)+(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.?$/i,
+    'ip-address':     /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/i,
+    'ipv6':           /^([0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}$/,
+    'date-time':      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:.\d{1,3})?Z$/,
+    'date':           /^\d{4}-\d{2}-\d{2}$/,
+    'time':           /^\d{2}:\d{2}:\d{2}$/,
+    'color':          /^#[a-z0-9]{6}|#[a-z0-9]{3}|(?:rgb\(\s*(?:[+-]?\d+%?)\s*,\s*(?:[+-]?\d+%?)\s*,\s*(?:[+-]?\d+%?)\s*\))aqua|black|blue|fuchsia|gray|green|lime|maroon|navy|olive|orange|purple|red|silver|teal|white|yellow$/i,
+    //'style':        (not supported)
+    //'phone':        (not supported)
+    //'uri':          (not supported)
+    'host-name':      /^(([a-zA-Z]|[a-zA-Z][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z]|[A-Za-z][A-Za-z0-9\-]*[A-Za-z0-9])/,
+    'utc-millisec':   {
+      test: function (value) {
+        return typeof(value) === 'number' && value >= 0;
+      }
+    },
+    'regex':          {
+      test: function (value) {
+        try { new RegExp(value) }
+        catch (e) { return false }
+
+        return true;
+      }
+    }
+  };
+
+  /**
+   *
+   */
+  validate.formatExtensions = {
+    'url': /^(https?|ftp|git):\/\/(((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:)*@)?(((\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5]))|((([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.)+(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.?)(:\d*)?)(\/((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)+(\/(([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)*)*)?)?(\?((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)|[\uE000-\uF8FF]|\/|\?)*)?(\#((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)|\/|\?)*)?$/i
+  };
+
+  function mixin(obj) {
+    var sources = Array.prototype.slice.call(arguments, 1);
+    while (sources.length) {
+      var source = sources.shift();
+      if (!source) { continue }
+
+      if (typeof(source) !== 'object') {
+        throw new TypeError('mixin non-object');
+      }
+
+      for (var p in source) {
+        if (source.hasOwnProperty(p)) {
+          obj[p] = source[p];
+        }
+      }
+    }
+
+    return obj;
+  };
+
+  function validateObject(object, schema, options, errors) {
+    var props, allProps = Object.keys(object),
+        visitedProps = [];
+
+    // see 5.2
+    if (schema.properties) {
+      props = schema.properties;
+      for (var p in props) {
+        if (props.hasOwnProperty(p)) {
+          visitedProps.push(p);
+          validateProperty(object, object[p], p, props[p], options, errors);
+        }
+      }
+    }
+
+    // see 5.3
+    if (schema.patternProperties) {
+      props = schema.patternProperties;
+      for (var p in props) {
+        if (props.hasOwnProperty(p)) {
+          var re = new RegExp(p);
+
+          // Find all object properties that are matching `re`
+          for (var k in object) {
+            if (object.hasOwnProperty(k)) {
+              visitedProps.push(k);
+              if (re.exec(k) !== null) {
+                validateProperty(object, object[k], p, props[p], options, errors);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // see 5.4
+    if (undefined !== schema.additionalProperties) {
+      var i, l;
+
+      var unvisitedProps = allProps.filter(function(k){
+        return -1 === visitedProps.indexOf(k);
+      });
+
+      // Prevent additional properties; each unvisited property is therefore an error
+      if (schema.additionalProperties === false && unvisitedProps.length > 0) {
+        for (i = 0, l = unvisitedProps.length; i < l; i++) {
+          error("additionalProperties", unvisitedProps[i], object[unvisitedProps[i]], false, errors);
+        }
+      }
+      // additionalProperties is a schema and validate unvisited properties against that schema
+      else if (typeof schema.additionalProperties == "object" && unvisitedProps.length > 0) {
+        for (i = 0, l = unvisitedProps.length; i < l; i++) {
+          validateProperty(object, object[unvisitedProps[i]], unvisitedProps[i], schema.unvisitedProperties, options, errors);
+        }
+      }
+    }
+
+  };
+
+  function validateProperty(object, value, property, schema, options, errors) {
+    var format,
+        valid,
+        spec,
+        type;
+
+    function constrain(name, value, assert) {
+      if (schema[name] !== undefined && !assert(value, schema[name])) {
+        error(name, property, value, schema, errors);
+      }
+    }
+
+    if (value === undefined) {
+      if (schema.required && schema.type !== 'any') {
+        return error('required', property, undefined, schema, errors);
+      } else {
+        return;
+      }
+    }
+
+    if (options.cast) {
+      if (('integer' === schema.type || 'number' === schema.type) && value == +value) {
+        value = +value;
+      }
+
+      if ('boolean' === schema.type) {
+        if ('true' === value || '1' === value || 1 === value) {
+          value = true;
+        }
+
+        if ('false' === value || '0' === value || 0 === value) {
+          value = false;
+        }
+      }
+    }
+
+    if (schema.format && options.validateFormats) {
+      format = schema.format;
+
+      if (options.validateFormatExtensions) { spec = validate.formatExtensions[format] }
+      if (!spec) { spec = validate.formats[format] }
+      if (!spec) {
+        if (options.validateFormatsStrict) {
+          return error('format', property, value, schema, errors);
+        }
+      }
+      else {
+        if (!spec.test(value)) {
+          return error('format', property, value, schema, errors);
+        }
+      }
+    }
+
+    if (schema['enum'] && schema['enum'].indexOf(value) === -1) {
+      error('enum', property, value, schema, errors);
+    }
+
+    // Dependencies (see 5.8)
+    if (typeof schema.dependencies === 'string' &&
+        object[schema.dependencies] === undefined) {
+      error('dependencies', property, null, schema, errors);
+    }
+
+    if (isArray(schema.dependencies)) {
+      for (var i = 0, l = schema.dependencies.length; i < l; i++) {
+        if (object[schema.dependencies[i]] === undefined) {
+          error('dependencies', property, null, schema, errors);
+        }
+      }
+    }
+
+    if (typeof schema.dependencies === 'object') {
+      validateObject(object, schema.dependencies, options, errors);
+    }
+
+    checkType(value, schema.type, function(err, type) {
+      if (err) return error('type', property, typeof value, schema, errors);
+
+      constrain('conform', value, function (a, e) { return e(a, object) });
+
+      switch (type || (isArray(value) ? 'array' : typeof value)) {
+        case 'string':
+          constrain('minLength', value.length, function (a, e) { return a >= e });
+          constrain('maxLength', value.length, function (a, e) { return a <= e });
+          constrain('pattern',   value,        function (a, e) {
+            e = typeof e === 'string'
+              ? e = new RegExp(e)
+              : e;
+            return e.test(a)
+          });
+          break;
+        case 'integer':
+        case 'number':
+          constrain('minimum',     value, function (a, e) { return a >= e });
+          constrain('maximum',     value, function (a, e) { return a <= e });
+          constrain('exclusiveMinimum', value, function (a, e) { return a > e });
+          constrain('exclusiveMaximum', value, function (a, e) { return a < e });
+          constrain('divisibleBy', value, function (a, e) {
+            var multiplier = Math.max((a - Math.floor(a)).toString().length - 2, (e - Math.floor(e)).toString().length - 2);
+            multiplier = multiplier > 0 ? Math.pow(10, multiplier) : 1;
+            return (a * multiplier) % (e * multiplier) === 0
+          });
+          break;
+        case 'array':
+          constrain('items', value, function (a, e) {
+            for (var i = 0, l = a.length; i < l; i++) {
+              validateProperty(object, a[i], property, e, options, errors);
+            }
+            return true;
+          });
+          constrain('minItems', value, function (a, e) { return a.length >= e });
+          constrain('maxItems', value, function (a, e) { return a.length <= e });
+          constrain('uniqueItems', value, function (a) {
+            var h = {};
+
+            for (var i = 0, l = a.length; i < l; i++) {
+              var key = JSON.stringify(a[i]);
+              if (h[key]) return false;
+              h[key] = true;
+            }
+
+            return true;
+          });
+          break;
+        case 'object':
+          // Recursive validation
+          if (schema.properties || schema.patternProperties || schema.additionalProperties) {
+            validateObject(value, schema, options, errors);
+          }
+          break;
+      }
+    });
+  };
+
+  function checkType(val, type, callback) {
+    var result = false,
+        types = isArray(type) ? type : [type];
+
+    // No type - no check
+    if (type === undefined) return callback(null, type);
+
+    // Go through available types
+    // And fine first matching
+    for (var i = 0, l = types.length; i < l; i++) {
+      type = types[i].toLowerCase().trim();
+      if (type === 'string' ? typeof val === 'string' :
+          type === 'array' ? isArray(val) :
+          type === 'object' ? val && typeof val === 'object' &&
+                             !isArray(val) :
+          type === 'number' ? typeof val === 'number' :
+          type === 'integer' ? typeof val === 'number' && ~~val === val :
+          type === 'null' ? val === null :
+          type === 'boolean'? typeof val === 'boolean' :
+          type === 'any' ? typeof val !== 'undefined' : false) {
+        return callback(null, type);
+      }
+    };
+
+    callback(true);
+  };
+
+  function error(attribute, property, actual, schema, errors) {
+    var lookup = { expected: schema[attribute], attribute: attribute, property: property };
+    var message = schema.messages && schema.messages[attribute] || schema.message || validate.messages[attribute] || "no default message";
+    message = message.replace(/%\{([a-z]+)\}/ig, function (_, match) { return lookup[match.toLowerCase()] || ''; });
+    errors.push({
+      attribute: attribute,
+      property:  property,
+      expected:  schema[attribute],
+      actual:    actual,
+      message:   message
+    });
+  };
+
+  function isArray(value) {
+    var s = typeof value;
+    if (s === 'object') {
+      if (value) {
+        if (typeof value.length === 'number' &&
+           !(value.propertyIsEnumerable('length')) &&
+           typeof value.splice === 'function') {
+           return true;
+        }
+      }
+    }
+    return false;
+  }
+
+
+})(typeof module !== 'undefined' ? module.exports : (window.json = window.json || {}));
+
+},{}],32:[function(require,module,exports){
 //     Underscore.js 1.4.4
 //     http://underscorejs.org
 //     (c) 2009-2013 Jeremy Ashkenas, DocumentCloud Inc.
@@ -40483,94 +40566,17 @@ if (typeof exports === "object" && exports) {
 
 }).call(this);
 
-},{}],36:[function(require,module,exports){
-var global=self;/*global window, global*/
-var util = require("util")
-var assert = require("assert")
+},{}],28:[function(require,module,exports){
+/*
+ * Copyright 2009-2011 Mozilla Foundation and contributors
+ * Licensed under the New BSD license. See LICENSE.txt or:
+ * http://opensource.org/licenses/BSD-3-Clause
+ */
+exports.SourceMapGenerator = require('./source-map/source-map-generator').SourceMapGenerator;
+exports.SourceMapConsumer = require('./source-map/source-map-consumer').SourceMapConsumer;
+exports.SourceNode = require('./source-map/source-node').SourceNode;
 
-var slice = Array.prototype.slice
-var console
-var times = {}
-
-if (typeof global !== "undefined" && global.console) {
-    console = global.console
-} else if (typeof window !== "undefined" && window.console) {
-    console = window.console
-} else {
-    console = window.console = {}
-}
-
-var functions = [
-    [log, "log"]
-    , [info, "info"]
-    , [warn, "warn"]
-    , [error, "error"]
-    , [time, "time"]
-    , [timeEnd, "timeEnd"]
-    , [trace, "trace"]
-    , [dir, "dir"]
-    , [assert, "assert"]
-]
-
-for (var i = 0; i < functions.length; i++) {
-    var tuple = functions[i]
-    var f = tuple[0]
-    var name = tuple[1]
-
-    if (!console[name]) {
-        console[name] = f
-    }
-}
-
-module.exports = console
-
-function log() {}
-
-function info() {
-    console.log.apply(console, arguments)
-}
-
-function warn() {
-    console.log.apply(console, arguments)
-}
-
-function error() {
-    console.warn.apply(console, arguments)
-}
-
-function time(label) {
-    times[label] = Date.now()
-}
-
-function timeEnd(label) {
-    var time = times[label]
-    if (!time) {
-        throw new Error("No such label: " + label)
-    }
-
-    var duration = Date.now() - time
-    console.log(label + ": " + duration + "ms")
-}
-
-function trace() {
-    var err = new Error()
-    err.name = "Trace"
-    err.message = util.format.apply(null, arguments)
-    console.error(err.stack)
-}
-
-function dir(object) {
-    console.log(util.inspect(object) + "\n")
-}
-
-function assert(expression) {
-    if (!expression) {
-        var arr = slice.call(arguments, 1)
-        assert.ok(false, util.format.apply(null, arr))
-    }
-}
-
-},{"assert":38,"util":37}],33:[function(require,module,exports){
+},{"./source-map/source-map-consumer":34,"./source-map/source-map-generator":36,"./source-map/source-node":35}],30:[function(require,module,exports){
 "use strict";
 
 var _ = require("underscore");
@@ -40790,7 +40796,7 @@ _.each(info, function (desc, code) {
 	exports.info[code] = { code: code, desc: desc };
 });
 
-},{"underscore":35}],34:[function(require,module,exports){
+},{"underscore":32}],31:[function(require,module,exports){
 /*
  * Lexical analysis and token construction.
  */
@@ -42485,7 +42491,94 @@ Lexer.prototype = {
 
 exports.Lexer = Lexer;
 
-},{"./reg.js":24,"./state.js":25,"events":22,"underscore":35}],37:[function(require,module,exports){
+},{"./reg.js":24,"./state.js":25,"events":22,"underscore":32}],33:[function(require,module,exports){
+var global=self;/*global window, global*/
+var util = require("util")
+var assert = require("assert")
+
+var slice = Array.prototype.slice
+var console
+var times = {}
+
+if (typeof global !== "undefined" && global.console) {
+    console = global.console
+} else if (typeof window !== "undefined" && window.console) {
+    console = window.console
+} else {
+    console = window.console = {}
+}
+
+var functions = [
+    [log, "log"]
+    , [info, "info"]
+    , [warn, "warn"]
+    , [error, "error"]
+    , [time, "time"]
+    , [timeEnd, "timeEnd"]
+    , [trace, "trace"]
+    , [dir, "dir"]
+    , [assert, "assert"]
+]
+
+for (var i = 0; i < functions.length; i++) {
+    var tuple = functions[i]
+    var f = tuple[0]
+    var name = tuple[1]
+
+    if (!console[name]) {
+        console[name] = f
+    }
+}
+
+module.exports = console
+
+function log() {}
+
+function info() {
+    console.log.apply(console, arguments)
+}
+
+function warn() {
+    console.log.apply(console, arguments)
+}
+
+function error() {
+    console.warn.apply(console, arguments)
+}
+
+function time(label) {
+    times[label] = Date.now()
+}
+
+function timeEnd(label) {
+    var time = times[label]
+    if (!time) {
+        throw new Error("No such label: " + label)
+    }
+
+    var duration = Date.now() - time
+    console.log(label + ": " + duration + "ms")
+}
+
+function trace() {
+    var err = new Error()
+    err.name = "Trace"
+    err.message = util.format.apply(null, arguments)
+    console.error(err.stack)
+}
+
+function dir(object) {
+    console.log(util.inspect(object) + "\n")
+}
+
+function assert(expression) {
+    if (!expression) {
+        var arr = slice.call(arguments, 1)
+        assert.ok(false, util.format.apply(null, arr))
+    }
+}
+
+},{"assert":38,"util":37}],37:[function(require,module,exports){
 var events = require('events');
 
 exports.isArray = isArray;
@@ -43146,7 +43239,7 @@ assert.doesNotThrow = function(block, /*optional*/error, /*optional*/message) {
 
 assert.ifError = function(err) { if (err) {throw err;}};
 
-},{"buffer":39,"util":37}],31:[function(require,module,exports){
+},{"buffer":39,"util":37}],34:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -43589,7 +43682,362 @@ define(function (require, exports, module) {
 
 });
 
-},{"./array-set":42,"./base64-vlq":43,"./binary-search":41,"./util":40,"amdefine":44}],30:[function(require,module,exports){
+},{"./array-set":42,"./base64-vlq":43,"./binary-search":41,"./util":40,"amdefine":44}],35:[function(require,module,exports){
+/* -*- Mode: js; js-indent-level: 2; -*- */
+/*
+ * Copyright 2011 Mozilla Foundation and contributors
+ * Licensed under the New BSD license. See LICENSE or:
+ * http://opensource.org/licenses/BSD-3-Clause
+ */
+if (typeof define !== 'function') {
+    var define = require('amdefine')(module, require);
+}
+define(function (require, exports, module) {
+
+  var SourceMapGenerator = require('./source-map-generator').SourceMapGenerator;
+  var util = require('./util');
+
+  /**
+   * SourceNodes provide a way to abstract over interpolating/concatenating
+   * snippets of generated JavaScript source code while maintaining the line and
+   * column information associated with the original source code.
+   *
+   * @param aLine The original line number.
+   * @param aColumn The original column number.
+   * @param aSource The original source's filename.
+   * @param aChunks Optional. An array of strings which are snippets of
+   *        generated JS, or other SourceNodes.
+   * @param aName The original identifier.
+   */
+  function SourceNode(aLine, aColumn, aSource, aChunks, aName) {
+    this.children = [];
+    this.sourceContents = {};
+    this.line = aLine === undefined ? null : aLine;
+    this.column = aColumn === undefined ? null : aColumn;
+    this.source = aSource === undefined ? null : aSource;
+    this.name = aName === undefined ? null : aName;
+    if (aChunks != null) this.add(aChunks);
+  }
+
+  /**
+   * Creates a SourceNode from generated code and a SourceMapConsumer.
+   *
+   * @param aGeneratedCode The generated code
+   * @param aSourceMapConsumer The SourceMap for the generated code
+   */
+  SourceNode.fromStringWithSourceMap =
+    function SourceNode_fromStringWithSourceMap(aGeneratedCode, aSourceMapConsumer) {
+      // The SourceNode we want to fill with the generated code
+      // and the SourceMap
+      var node = new SourceNode();
+
+      // The generated code
+      // Processed fragments are removed from this array.
+      var remainingLines = aGeneratedCode.split('\n');
+
+      // We need to remember the position of "remainingLines"
+      var lastGeneratedLine = 1, lastGeneratedColumn = 0;
+
+      // The generate SourceNodes we need a code range.
+      // To extract it current and last mapping is used.
+      // Here we store the last mapping.
+      var lastMapping = null;
+
+      aSourceMapConsumer.eachMapping(function (mapping) {
+        if (lastMapping === null) {
+          // We add the generated code until the first mapping
+          // to the SourceNode without any mapping.
+          // Each line is added as separate string.
+          while (lastGeneratedLine < mapping.generatedLine) {
+            node.add(remainingLines.shift() + "\n");
+            lastGeneratedLine++;
+          }
+          if (lastGeneratedColumn < mapping.generatedColumn) {
+            var nextLine = remainingLines[0];
+            node.add(nextLine.substr(0, mapping.generatedColumn));
+            remainingLines[0] = nextLine.substr(mapping.generatedColumn);
+            lastGeneratedColumn = mapping.generatedColumn;
+          }
+        } else {
+          // We add the code from "lastMapping" to "mapping":
+          // First check if there is a new line in between.
+          if (lastGeneratedLine < mapping.generatedLine) {
+            var code = "";
+            // Associate full lines with "lastMapping"
+            do {
+              code += remainingLines.shift() + "\n";
+              lastGeneratedLine++;
+              lastGeneratedColumn = 0;
+            } while (lastGeneratedLine < mapping.generatedLine);
+            // When we reached the correct line, we add code until we
+            // reach the correct column too.
+            if (lastGeneratedColumn < mapping.generatedColumn) {
+              var nextLine = remainingLines[0];
+              code += nextLine.substr(0, mapping.generatedColumn);
+              remainingLines[0] = nextLine.substr(mapping.generatedColumn);
+              lastGeneratedColumn = mapping.generatedColumn;
+            }
+            // Create the SourceNode.
+            addMappingWithCode(lastMapping, code);
+          } else {
+            // There is no new line in between.
+            // Associate the code between "lastGeneratedColumn" and
+            // "mapping.generatedColumn" with "lastMapping"
+            var nextLine = remainingLines[0];
+            var code = nextLine.substr(0, mapping.generatedColumn -
+                                          lastGeneratedColumn);
+            remainingLines[0] = nextLine.substr(mapping.generatedColumn -
+                                                lastGeneratedColumn);
+            lastGeneratedColumn = mapping.generatedColumn;
+            addMappingWithCode(lastMapping, code);
+          }
+        }
+        lastMapping = mapping;
+      }, this);
+      // We have processed all mappings.
+      // Associate the remaining code in the current line with "lastMapping"
+      // and add the remaining lines without any mapping
+      addMappingWithCode(lastMapping, remainingLines.join("\n"));
+
+      // Copy sourcesContent into SourceNode
+      aSourceMapConsumer.sources.forEach(function (sourceFile) {
+        var content = aSourceMapConsumer.sourceContentFor(sourceFile);
+        if (content) {
+          node.setSourceContent(sourceFile, content);
+        }
+      });
+
+      return node;
+
+      function addMappingWithCode(mapping, code) {
+        if (mapping === null || mapping.source === undefined) {
+          node.add(code);
+        } else {
+          node.add(new SourceNode(mapping.originalLine,
+                                  mapping.originalColumn,
+                                  mapping.source,
+                                  code,
+                                  mapping.name));
+        }
+      }
+    };
+
+  /**
+   * Add a chunk of generated JS to this source node.
+   *
+   * @param aChunk A string snippet of generated JS code, another instance of
+   *        SourceNode, or an array where each member is one of those things.
+   */
+  SourceNode.prototype.add = function SourceNode_add(aChunk) {
+    if (Array.isArray(aChunk)) {
+      aChunk.forEach(function (chunk) {
+        this.add(chunk);
+      }, this);
+    }
+    else if (aChunk instanceof SourceNode || typeof aChunk === "string") {
+      if (aChunk) {
+        this.children.push(aChunk);
+      }
+    }
+    else {
+      throw new TypeError(
+        "Expected a SourceNode, string, or an array of SourceNodes and strings. Got " + aChunk
+      );
+    }
+    return this;
+  };
+
+  /**
+   * Add a chunk of generated JS to the beginning of this source node.
+   *
+   * @param aChunk A string snippet of generated JS code, another instance of
+   *        SourceNode, or an array where each member is one of those things.
+   */
+  SourceNode.prototype.prepend = function SourceNode_prepend(aChunk) {
+    if (Array.isArray(aChunk)) {
+      for (var i = aChunk.length-1; i >= 0; i--) {
+        this.prepend(aChunk[i]);
+      }
+    }
+    else if (aChunk instanceof SourceNode || typeof aChunk === "string") {
+      this.children.unshift(aChunk);
+    }
+    else {
+      throw new TypeError(
+        "Expected a SourceNode, string, or an array of SourceNodes and strings. Got " + aChunk
+      );
+    }
+    return this;
+  };
+
+  /**
+   * Walk over the tree of JS snippets in this node and its children. The
+   * walking function is called once for each snippet of JS and is passed that
+   * snippet and the its original associated source's line/column location.
+   *
+   * @param aFn The traversal function.
+   */
+  SourceNode.prototype.walk = function SourceNode_walk(aFn) {
+    this.children.forEach(function (chunk) {
+      if (chunk instanceof SourceNode) {
+        chunk.walk(aFn);
+      }
+      else {
+        if (chunk !== '') {
+          aFn(chunk, { source: this.source,
+                       line: this.line,
+                       column: this.column,
+                       name: this.name });
+        }
+      }
+    }, this);
+  };
+
+  /**
+   * Like `String.prototype.join` except for SourceNodes. Inserts `aStr` between
+   * each of `this.children`.
+   *
+   * @param aSep The separator.
+   */
+  SourceNode.prototype.join = function SourceNode_join(aSep) {
+    var newChildren;
+    var i;
+    var len = this.children.length;
+    if (len > 0) {
+      newChildren = [];
+      for (i = 0; i < len-1; i++) {
+        newChildren.push(this.children[i]);
+        newChildren.push(aSep);
+      }
+      newChildren.push(this.children[i]);
+      this.children = newChildren;
+    }
+    return this;
+  };
+
+  /**
+   * Call String.prototype.replace on the very right-most source snippet. Useful
+   * for trimming whitespace from the end of a source node, etc.
+   *
+   * @param aPattern The pattern to replace.
+   * @param aReplacement The thing to replace the pattern with.
+   */
+  SourceNode.prototype.replaceRight = function SourceNode_replaceRight(aPattern, aReplacement) {
+    var lastChild = this.children[this.children.length - 1];
+    if (lastChild instanceof SourceNode) {
+      lastChild.replaceRight(aPattern, aReplacement);
+    }
+    else if (typeof lastChild === 'string') {
+      this.children[this.children.length - 1] = lastChild.replace(aPattern, aReplacement);
+    }
+    else {
+      this.children.push(''.replace(aPattern, aReplacement));
+    }
+    return this;
+  };
+
+  /**
+   * Set the source content for a source file. This will be added to the SourceMapGenerator
+   * in the sourcesContent field.
+   *
+   * @param aSourceFile The filename of the source file
+   * @param aSourceContent The content of the source file
+   */
+  SourceNode.prototype.setSourceContent =
+    function SourceNode_setSourceContent(aSourceFile, aSourceContent) {
+      this.sourceContents[util.toSetString(aSourceFile)] = aSourceContent;
+    };
+
+  /**
+   * Walk over the tree of SourceNodes. The walking function is called for each
+   * source file content and is passed the filename and source content.
+   *
+   * @param aFn The traversal function.
+   */
+  SourceNode.prototype.walkSourceContents =
+    function SourceNode_walkSourceContents(aFn) {
+      this.children.forEach(function (chunk) {
+        if (chunk instanceof SourceNode) {
+          chunk.walkSourceContents(aFn);
+        }
+      }, this);
+      Object.keys(this.sourceContents).forEach(function (sourceFileKey) {
+        aFn(util.fromSetString(sourceFileKey), this.sourceContents[sourceFileKey]);
+      }, this);
+    };
+
+  /**
+   * Return the string representation of this source node. Walks over the tree
+   * and concatenates all the various snippets together to one string.
+   */
+  SourceNode.prototype.toString = function SourceNode_toString() {
+    var str = "";
+    this.walk(function (chunk) {
+      str += chunk;
+    });
+    return str;
+  };
+
+  /**
+   * Returns the string representation of this source node along with a source
+   * map.
+   */
+  SourceNode.prototype.toStringWithSourceMap = function SourceNode_toStringWithSourceMap(aArgs) {
+    var generated = {
+      code: "",
+      line: 1,
+      column: 0
+    };
+    var map = new SourceMapGenerator(aArgs);
+    var sourceMappingActive = false;
+    this.walk(function (chunk, original) {
+      generated.code += chunk;
+      if (original.source !== null
+          && original.line !== null
+          && original.column !== null) {
+        map.addMapping({
+          source: original.source,
+          original: {
+            line: original.line,
+            column: original.column
+          },
+          generated: {
+            line: generated.line,
+            column: generated.column
+          },
+          name: original.name
+        });
+        sourceMappingActive = true;
+      } else if (sourceMappingActive) {
+        map.addMapping({
+          generated: {
+            line: generated.line,
+            column: generated.column
+          }
+        });
+        sourceMappingActive = false;
+      }
+      chunk.split('').forEach(function (ch) {
+        if (ch === '\n') {
+          generated.line++;
+          generated.column = 0;
+        } else {
+          generated.column++;
+        }
+      });
+    });
+    this.walkSourceContents(function (sourceFile, sourceContent) {
+      map.setSourceContent(sourceFile, sourceContent);
+    });
+
+    return { code: generated.code, map: map };
+  };
+
+  exports.SourceNode = SourceNode;
+
+});
+
+},{"./source-map-generator":36,"./util":40,"amdefine":44}],36:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -43972,663 +44420,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./array-set":42,"./base64-vlq":43,"./util":40,"amdefine":44}],32:[function(require,module,exports){
-/* -*- Mode: js; js-indent-level: 2; -*- */
-/*
- * Copyright 2011 Mozilla Foundation and contributors
- * Licensed under the New BSD license. See LICENSE or:
- * http://opensource.org/licenses/BSD-3-Clause
- */
-if (typeof define !== 'function') {
-    var define = require('amdefine')(module, require);
-}
-define(function (require, exports, module) {
-
-  var SourceMapGenerator = require('./source-map-generator').SourceMapGenerator;
-  var util = require('./util');
-
-  /**
-   * SourceNodes provide a way to abstract over interpolating/concatenating
-   * snippets of generated JavaScript source code while maintaining the line and
-   * column information associated with the original source code.
-   *
-   * @param aLine The original line number.
-   * @param aColumn The original column number.
-   * @param aSource The original source's filename.
-   * @param aChunks Optional. An array of strings which are snippets of
-   *        generated JS, or other SourceNodes.
-   * @param aName The original identifier.
-   */
-  function SourceNode(aLine, aColumn, aSource, aChunks, aName) {
-    this.children = [];
-    this.sourceContents = {};
-    this.line = aLine === undefined ? null : aLine;
-    this.column = aColumn === undefined ? null : aColumn;
-    this.source = aSource === undefined ? null : aSource;
-    this.name = aName === undefined ? null : aName;
-    if (aChunks != null) this.add(aChunks);
-  }
-
-  /**
-   * Creates a SourceNode from generated code and a SourceMapConsumer.
-   *
-   * @param aGeneratedCode The generated code
-   * @param aSourceMapConsumer The SourceMap for the generated code
-   */
-  SourceNode.fromStringWithSourceMap =
-    function SourceNode_fromStringWithSourceMap(aGeneratedCode, aSourceMapConsumer) {
-      // The SourceNode we want to fill with the generated code
-      // and the SourceMap
-      var node = new SourceNode();
-
-      // The generated code
-      // Processed fragments are removed from this array.
-      var remainingLines = aGeneratedCode.split('\n');
-
-      // We need to remember the position of "remainingLines"
-      var lastGeneratedLine = 1, lastGeneratedColumn = 0;
-
-      // The generate SourceNodes we need a code range.
-      // To extract it current and last mapping is used.
-      // Here we store the last mapping.
-      var lastMapping = null;
-
-      aSourceMapConsumer.eachMapping(function (mapping) {
-        if (lastMapping === null) {
-          // We add the generated code until the first mapping
-          // to the SourceNode without any mapping.
-          // Each line is added as separate string.
-          while (lastGeneratedLine < mapping.generatedLine) {
-            node.add(remainingLines.shift() + "\n");
-            lastGeneratedLine++;
-          }
-          if (lastGeneratedColumn < mapping.generatedColumn) {
-            var nextLine = remainingLines[0];
-            node.add(nextLine.substr(0, mapping.generatedColumn));
-            remainingLines[0] = nextLine.substr(mapping.generatedColumn);
-            lastGeneratedColumn = mapping.generatedColumn;
-          }
-        } else {
-          // We add the code from "lastMapping" to "mapping":
-          // First check if there is a new line in between.
-          if (lastGeneratedLine < mapping.generatedLine) {
-            var code = "";
-            // Associate full lines with "lastMapping"
-            do {
-              code += remainingLines.shift() + "\n";
-              lastGeneratedLine++;
-              lastGeneratedColumn = 0;
-            } while (lastGeneratedLine < mapping.generatedLine);
-            // When we reached the correct line, we add code until we
-            // reach the correct column too.
-            if (lastGeneratedColumn < mapping.generatedColumn) {
-              var nextLine = remainingLines[0];
-              code += nextLine.substr(0, mapping.generatedColumn);
-              remainingLines[0] = nextLine.substr(mapping.generatedColumn);
-              lastGeneratedColumn = mapping.generatedColumn;
-            }
-            // Create the SourceNode.
-            addMappingWithCode(lastMapping, code);
-          } else {
-            // There is no new line in between.
-            // Associate the code between "lastGeneratedColumn" and
-            // "mapping.generatedColumn" with "lastMapping"
-            var nextLine = remainingLines[0];
-            var code = nextLine.substr(0, mapping.generatedColumn -
-                                          lastGeneratedColumn);
-            remainingLines[0] = nextLine.substr(mapping.generatedColumn -
-                                                lastGeneratedColumn);
-            lastGeneratedColumn = mapping.generatedColumn;
-            addMappingWithCode(lastMapping, code);
-          }
-        }
-        lastMapping = mapping;
-      }, this);
-      // We have processed all mappings.
-      // Associate the remaining code in the current line with "lastMapping"
-      // and add the remaining lines without any mapping
-      addMappingWithCode(lastMapping, remainingLines.join("\n"));
-
-      // Copy sourcesContent into SourceNode
-      aSourceMapConsumer.sources.forEach(function (sourceFile) {
-        var content = aSourceMapConsumer.sourceContentFor(sourceFile);
-        if (content) {
-          node.setSourceContent(sourceFile, content);
-        }
-      });
-
-      return node;
-
-      function addMappingWithCode(mapping, code) {
-        if (mapping === null || mapping.source === undefined) {
-          node.add(code);
-        } else {
-          node.add(new SourceNode(mapping.originalLine,
-                                  mapping.originalColumn,
-                                  mapping.source,
-                                  code,
-                                  mapping.name));
-        }
-      }
-    };
-
-  /**
-   * Add a chunk of generated JS to this source node.
-   *
-   * @param aChunk A string snippet of generated JS code, another instance of
-   *        SourceNode, or an array where each member is one of those things.
-   */
-  SourceNode.prototype.add = function SourceNode_add(aChunk) {
-    if (Array.isArray(aChunk)) {
-      aChunk.forEach(function (chunk) {
-        this.add(chunk);
-      }, this);
-    }
-    else if (aChunk instanceof SourceNode || typeof aChunk === "string") {
-      if (aChunk) {
-        this.children.push(aChunk);
-      }
-    }
-    else {
-      throw new TypeError(
-        "Expected a SourceNode, string, or an array of SourceNodes and strings. Got " + aChunk
-      );
-    }
-    return this;
-  };
-
-  /**
-   * Add a chunk of generated JS to the beginning of this source node.
-   *
-   * @param aChunk A string snippet of generated JS code, another instance of
-   *        SourceNode, or an array where each member is one of those things.
-   */
-  SourceNode.prototype.prepend = function SourceNode_prepend(aChunk) {
-    if (Array.isArray(aChunk)) {
-      for (var i = aChunk.length-1; i >= 0; i--) {
-        this.prepend(aChunk[i]);
-      }
-    }
-    else if (aChunk instanceof SourceNode || typeof aChunk === "string") {
-      this.children.unshift(aChunk);
-    }
-    else {
-      throw new TypeError(
-        "Expected a SourceNode, string, or an array of SourceNodes and strings. Got " + aChunk
-      );
-    }
-    return this;
-  };
-
-  /**
-   * Walk over the tree of JS snippets in this node and its children. The
-   * walking function is called once for each snippet of JS and is passed that
-   * snippet and the its original associated source's line/column location.
-   *
-   * @param aFn The traversal function.
-   */
-  SourceNode.prototype.walk = function SourceNode_walk(aFn) {
-    this.children.forEach(function (chunk) {
-      if (chunk instanceof SourceNode) {
-        chunk.walk(aFn);
-      }
-      else {
-        if (chunk !== '') {
-          aFn(chunk, { source: this.source,
-                       line: this.line,
-                       column: this.column,
-                       name: this.name });
-        }
-      }
-    }, this);
-  };
-
-  /**
-   * Like `String.prototype.join` except for SourceNodes. Inserts `aStr` between
-   * each of `this.children`.
-   *
-   * @param aSep The separator.
-   */
-  SourceNode.prototype.join = function SourceNode_join(aSep) {
-    var newChildren;
-    var i;
-    var len = this.children.length;
-    if (len > 0) {
-      newChildren = [];
-      for (i = 0; i < len-1; i++) {
-        newChildren.push(this.children[i]);
-        newChildren.push(aSep);
-      }
-      newChildren.push(this.children[i]);
-      this.children = newChildren;
-    }
-    return this;
-  };
-
-  /**
-   * Call String.prototype.replace on the very right-most source snippet. Useful
-   * for trimming whitespace from the end of a source node, etc.
-   *
-   * @param aPattern The pattern to replace.
-   * @param aReplacement The thing to replace the pattern with.
-   */
-  SourceNode.prototype.replaceRight = function SourceNode_replaceRight(aPattern, aReplacement) {
-    var lastChild = this.children[this.children.length - 1];
-    if (lastChild instanceof SourceNode) {
-      lastChild.replaceRight(aPattern, aReplacement);
-    }
-    else if (typeof lastChild === 'string') {
-      this.children[this.children.length - 1] = lastChild.replace(aPattern, aReplacement);
-    }
-    else {
-      this.children.push(''.replace(aPattern, aReplacement));
-    }
-    return this;
-  };
-
-  /**
-   * Set the source content for a source file. This will be added to the SourceMapGenerator
-   * in the sourcesContent field.
-   *
-   * @param aSourceFile The filename of the source file
-   * @param aSourceContent The content of the source file
-   */
-  SourceNode.prototype.setSourceContent =
-    function SourceNode_setSourceContent(aSourceFile, aSourceContent) {
-      this.sourceContents[util.toSetString(aSourceFile)] = aSourceContent;
-    };
-
-  /**
-   * Walk over the tree of SourceNodes. The walking function is called for each
-   * source file content and is passed the filename and source content.
-   *
-   * @param aFn The traversal function.
-   */
-  SourceNode.prototype.walkSourceContents =
-    function SourceNode_walkSourceContents(aFn) {
-      this.children.forEach(function (chunk) {
-        if (chunk instanceof SourceNode) {
-          chunk.walkSourceContents(aFn);
-        }
-      }, this);
-      Object.keys(this.sourceContents).forEach(function (sourceFileKey) {
-        aFn(util.fromSetString(sourceFileKey), this.sourceContents[sourceFileKey]);
-      }, this);
-    };
-
-  /**
-   * Return the string representation of this source node. Walks over the tree
-   * and concatenates all the various snippets together to one string.
-   */
-  SourceNode.prototype.toString = function SourceNode_toString() {
-    var str = "";
-    this.walk(function (chunk) {
-      str += chunk;
-    });
-    return str;
-  };
-
-  /**
-   * Returns the string representation of this source node along with a source
-   * map.
-   */
-  SourceNode.prototype.toStringWithSourceMap = function SourceNode_toStringWithSourceMap(aArgs) {
-    var generated = {
-      code: "",
-      line: 1,
-      column: 0
-    };
-    var map = new SourceMapGenerator(aArgs);
-    var sourceMappingActive = false;
-    this.walk(function (chunk, original) {
-      generated.code += chunk;
-      if (original.source !== null
-          && original.line !== null
-          && original.column !== null) {
-        map.addMapping({
-          source: original.source,
-          original: {
-            line: original.line,
-            column: original.column
-          },
-          generated: {
-            line: generated.line,
-            column: generated.column
-          },
-          name: original.name
-        });
-        sourceMappingActive = true;
-      } else if (sourceMappingActive) {
-        map.addMapping({
-          generated: {
-            line: generated.line,
-            column: generated.column
-          }
-        });
-        sourceMappingActive = false;
-      }
-      chunk.split('').forEach(function (ch) {
-        if (ch === '\n') {
-          generated.line++;
-          generated.column = 0;
-        } else {
-          generated.column++;
-        }
-      });
-    });
-    this.walkSourceContents(function (sourceFile, sourceContent) {
-      map.setSourceContent(sourceFile, sourceContent);
-    });
-
-    return { code: generated.code, map: map };
-  };
-
-  exports.SourceNode = SourceNode;
-
-});
-
-},{"./source-map-generator":30,"./util":40,"amdefine":44}],44:[function(require,module,exports){
-var process=require("__browserify_process"),__filename="/../node_modules/escodegen/node_modules/source-map/node_modules/amdefine/amdefine.js";/** vim: et:ts=4:sw=4:sts=4
- * @license amdefine 0.0.8 Copyright (c) 2011, The Dojo Foundation All Rights Reserved.
- * Available via the MIT or new BSD license.
- * see: http://github.com/jrburke/amdefine for details
- */
-
-/*jslint node: true */
-/*global module, process */
-'use strict';
-
-/**
- * Creates a define for node.
- * @param {Object} module the "module" object that is defined by Node for the
- * current module.
- * @param {Function} [requireFn]. Node's require function for the current module.
- * It only needs to be passed in Node versions before 0.5, when module.require
- * did not exist.
- * @returns {Function} a define function that is usable for the current node
- * module.
- */
-function amdefine(module, requireFn) {
-    'use strict';
-    var defineCache = {},
-        loaderCache = {},
-        alreadyCalled = false,
-        path = require('path'),
-        makeRequire, stringRequire;
-
-    /**
-     * Trims the . and .. from an array of path segments.
-     * It will keep a leading path segment if a .. will become
-     * the first path segment, to help with module name lookups,
-     * which act like paths, but can be remapped. But the end result,
-     * all paths that use this function should look normalized.
-     * NOTE: this method MODIFIES the input array.
-     * @param {Array} ary the array of path segments.
-     */
-    function trimDots(ary) {
-        var i, part;
-        for (i = 0; ary[i]; i+= 1) {
-            part = ary[i];
-            if (part === '.') {
-                ary.splice(i, 1);
-                i -= 1;
-            } else if (part === '..') {
-                if (i === 1 && (ary[2] === '..' || ary[0] === '..')) {
-                    //End of the line. Keep at least one non-dot
-                    //path segment at the front so it can be mapped
-                    //correctly to disk. Otherwise, there is likely
-                    //no path mapping for a path starting with '..'.
-                    //This can still fail, but catches the most reasonable
-                    //uses of ..
-                    break;
-                } else if (i > 0) {
-                    ary.splice(i - 1, 2);
-                    i -= 2;
-                }
-            }
-        }
-    }
-
-    function normalize(name, baseName) {
-        var baseParts;
-
-        //Adjust any relative paths.
-        if (name && name.charAt(0) === '.') {
-            //If have a base name, try to normalize against it,
-            //otherwise, assume it is a top-level require that will
-            //be relative to baseUrl in the end.
-            if (baseName) {
-                baseParts = baseName.split('/');
-                baseParts = baseParts.slice(0, baseParts.length - 1);
-                baseParts = baseParts.concat(name.split('/'));
-                trimDots(baseParts);
-                name = baseParts.join('/');
-            }
-        }
-
-        return name;
-    }
-
-    /**
-     * Create the normalize() function passed to a loader plugin's
-     * normalize method.
-     */
-    function makeNormalize(relName) {
-        return function (name) {
-            return normalize(name, relName);
-        };
-    }
-
-    function makeLoad(id) {
-        function load(value) {
-            loaderCache[id] = value;
-        }
-
-        load.fromText = function (id, text) {
-            //This one is difficult because the text can/probably uses
-            //define, and any relative paths and requires should be relative
-            //to that id was it would be found on disk. But this would require
-            //bootstrapping a module/require fairly deeply from node core.
-            //Not sure how best to go about that yet.
-            throw new Error('amdefine does not implement load.fromText');
-        };
-
-        return load;
-    }
-
-    makeRequire = function (systemRequire, exports, module, relId) {
-        function amdRequire(deps, callback) {
-            if (typeof deps === 'string') {
-                //Synchronous, single module require('')
-                return stringRequire(systemRequire, exports, module, deps, relId);
-            } else {
-                //Array of dependencies with a callback.
-
-                //Convert the dependencies to modules.
-                deps = deps.map(function (depName) {
-                    return stringRequire(systemRequire, exports, module, depName, relId);
-                });
-
-                //Wait for next tick to call back the require call.
-                process.nextTick(function () {
-                    callback.apply(null, deps);
-                });
-            }
-        }
-
-        amdRequire.toUrl = function (filePath) {
-            if (filePath.indexOf('.') === 0) {
-                return normalize(filePath, path.dirname(module.filename));
-            } else {
-                return filePath;
-            }
-        };
-
-        return amdRequire;
-    };
-
-    //Favor explicit value, passed in if the module wants to support Node 0.4.
-    requireFn = requireFn || function req() {
-        return module.require.apply(module, arguments);
-    };
-
-    function runFactory(id, deps, factory) {
-        var r, e, m, result;
-
-        if (id) {
-            e = loaderCache[id] = {};
-            m = {
-                id: id,
-                uri: __filename,
-                exports: e
-            };
-            r = makeRequire(requireFn, e, m, id);
-        } else {
-            //Only support one define call per file
-            if (alreadyCalled) {
-                throw new Error('amdefine with no module ID cannot be called more than once per file.');
-            }
-            alreadyCalled = true;
-
-            //Use the real variables from node
-            //Use module.exports for exports, since
-            //the exports in here is amdefine exports.
-            e = module.exports;
-            m = module;
-            r = makeRequire(requireFn, e, m, module.id);
-        }
-
-        //If there are dependencies, they are strings, so need
-        //to convert them to dependency values.
-        if (deps) {
-            deps = deps.map(function (depName) {
-                return r(depName);
-            });
-        }
-
-        //Call the factory with the right dependencies.
-        if (typeof factory === 'function') {
-            result = factory.apply(m.exports, deps);
-        } else {
-            result = factory;
-        }
-
-        if (result !== undefined) {
-            m.exports = result;
-            if (id) {
-                loaderCache[id] = m.exports;
-            }
-        }
-    }
-
-    stringRequire = function (systemRequire, exports, module, id, relId) {
-        //Split the ID by a ! so that
-        var index = id.indexOf('!'),
-            originalId = id,
-            prefix, plugin;
-
-        if (index === -1) {
-            id = normalize(id, relId);
-
-            //Straight module lookup. If it is one of the special dependencies,
-            //deal with it, otherwise, delegate to node.
-            if (id === 'require') {
-                return makeRequire(systemRequire, exports, module, relId);
-            } else if (id === 'exports') {
-                return exports;
-            } else if (id === 'module') {
-                return module;
-            } else if (loaderCache.hasOwnProperty(id)) {
-                return loaderCache[id];
-            } else if (defineCache[id]) {
-                runFactory.apply(null, defineCache[id]);
-                return loaderCache[id];
-            } else {
-                if(systemRequire) {
-                    return systemRequire(originalId);
-                } else {
-                    throw new Error('No module with ID: ' + id);
-                }
-            }
-        } else {
-            //There is a plugin in play.
-            prefix = id.substring(0, index);
-            id = id.substring(index + 1, id.length);
-
-            plugin = stringRequire(systemRequire, exports, module, prefix, relId);
-
-            if (plugin.normalize) {
-                id = plugin.normalize(id, makeNormalize(relId));
-            } else {
-                //Normalize the ID normally.
-                id = normalize(id, relId);
-            }
-
-            if (loaderCache[id]) {
-                return loaderCache[id];
-            } else {
-                plugin.load(id, makeRequire(systemRequire, exports, module, relId), makeLoad(id), {});
-
-                return loaderCache[id];
-            }
-        }
-    };
-
-    //Create a define function specific to the module asking for amdefine.
-    function define(id, deps, factory) {
-        if (Array.isArray(id)) {
-            factory = deps;
-            deps = id;
-            id = undefined;
-        } else if (typeof id !== 'string') {
-            factory = id;
-            id = deps = undefined;
-        }
-
-        if (deps && !Array.isArray(deps)) {
-            factory = deps;
-            deps = undefined;
-        }
-
-        if (!deps) {
-            deps = ['require', 'exports', 'module'];
-        }
-
-        //Set up properties for this module. If an ID, then use
-        //internal cache. If no ID, then use the external variables
-        //for this node module.
-        if (id) {
-            //Put the module in deep freeze until there is a
-            //require call for it.
-            defineCache[id] = [id, deps, factory];
-        } else {
-            runFactory(id, deps, factory);
-        }
-    }
-
-    //define.require, which has access to all the values in the
-    //cache. Useful for AMD modules that all have IDs in the file,
-    //but need to finally export a value to node based on one of those
-    //IDs.
-    define.require = function (id) {
-        if (loaderCache[id]) {
-            return loaderCache[id];
-        }
-
-        if (defineCache[id]) {
-            runFactory.apply(null, defineCache[id]);
-            return loaderCache[id];
-        }
-    };
-
-    define.amd = {};
-
-    return define;
-}
-
-module.exports = amdefine;
-
-},{"__browserify_process":21,"path":45}],46:[function(require,module,exports){
+},{"./array-set":42,"./base64-vlq":43,"./util":40,"amdefine":44}],45:[function(require,module,exports){
 exports.readIEEE754 = function(buffer, offset, isBE, mLen, nBytes) {
   var e, m,
       eLen = nBytes * 8 - mLen - 1,
@@ -45797,7 +45589,394 @@ Buffer.prototype.writeDoubleBE = function(value, offset, noAssert) {
   writeDouble(this, value, offset, true, noAssert);
 };
 
-},{"./buffer_ieee754":46,"assert":38,"base64-js":47}],40:[function(require,module,exports){
+},{"./buffer_ieee754":45,"assert":38,"base64-js":46}],44:[function(require,module,exports){
+var process=require("__browserify_process"),__filename="/../node_modules/escodegen/node_modules/source-map/node_modules/amdefine/amdefine.js";/** vim: et:ts=4:sw=4:sts=4
+ * @license amdefine 0.0.8 Copyright (c) 2011, The Dojo Foundation All Rights Reserved.
+ * Available via the MIT or new BSD license.
+ * see: http://github.com/jrburke/amdefine for details
+ */
+
+/*jslint node: true */
+/*global module, process */
+'use strict';
+
+/**
+ * Creates a define for node.
+ * @param {Object} module the "module" object that is defined by Node for the
+ * current module.
+ * @param {Function} [requireFn]. Node's require function for the current module.
+ * It only needs to be passed in Node versions before 0.5, when module.require
+ * did not exist.
+ * @returns {Function} a define function that is usable for the current node
+ * module.
+ */
+function amdefine(module, requireFn) {
+    'use strict';
+    var defineCache = {},
+        loaderCache = {},
+        alreadyCalled = false,
+        path = require('path'),
+        makeRequire, stringRequire;
+
+    /**
+     * Trims the . and .. from an array of path segments.
+     * It will keep a leading path segment if a .. will become
+     * the first path segment, to help with module name lookups,
+     * which act like paths, but can be remapped. But the end result,
+     * all paths that use this function should look normalized.
+     * NOTE: this method MODIFIES the input array.
+     * @param {Array} ary the array of path segments.
+     */
+    function trimDots(ary) {
+        var i, part;
+        for (i = 0; ary[i]; i+= 1) {
+            part = ary[i];
+            if (part === '.') {
+                ary.splice(i, 1);
+                i -= 1;
+            } else if (part === '..') {
+                if (i === 1 && (ary[2] === '..' || ary[0] === '..')) {
+                    //End of the line. Keep at least one non-dot
+                    //path segment at the front so it can be mapped
+                    //correctly to disk. Otherwise, there is likely
+                    //no path mapping for a path starting with '..'.
+                    //This can still fail, but catches the most reasonable
+                    //uses of ..
+                    break;
+                } else if (i > 0) {
+                    ary.splice(i - 1, 2);
+                    i -= 2;
+                }
+            }
+        }
+    }
+
+    function normalize(name, baseName) {
+        var baseParts;
+
+        //Adjust any relative paths.
+        if (name && name.charAt(0) === '.') {
+            //If have a base name, try to normalize against it,
+            //otherwise, assume it is a top-level require that will
+            //be relative to baseUrl in the end.
+            if (baseName) {
+                baseParts = baseName.split('/');
+                baseParts = baseParts.slice(0, baseParts.length - 1);
+                baseParts = baseParts.concat(name.split('/'));
+                trimDots(baseParts);
+                name = baseParts.join('/');
+            }
+        }
+
+        return name;
+    }
+
+    /**
+     * Create the normalize() function passed to a loader plugin's
+     * normalize method.
+     */
+    function makeNormalize(relName) {
+        return function (name) {
+            return normalize(name, relName);
+        };
+    }
+
+    function makeLoad(id) {
+        function load(value) {
+            loaderCache[id] = value;
+        }
+
+        load.fromText = function (id, text) {
+            //This one is difficult because the text can/probably uses
+            //define, and any relative paths and requires should be relative
+            //to that id was it would be found on disk. But this would require
+            //bootstrapping a module/require fairly deeply from node core.
+            //Not sure how best to go about that yet.
+            throw new Error('amdefine does not implement load.fromText');
+        };
+
+        return load;
+    }
+
+    makeRequire = function (systemRequire, exports, module, relId) {
+        function amdRequire(deps, callback) {
+            if (typeof deps === 'string') {
+                //Synchronous, single module require('')
+                return stringRequire(systemRequire, exports, module, deps, relId);
+            } else {
+                //Array of dependencies with a callback.
+
+                //Convert the dependencies to modules.
+                deps = deps.map(function (depName) {
+                    return stringRequire(systemRequire, exports, module, depName, relId);
+                });
+
+                //Wait for next tick to call back the require call.
+                process.nextTick(function () {
+                    callback.apply(null, deps);
+                });
+            }
+        }
+
+        amdRequire.toUrl = function (filePath) {
+            if (filePath.indexOf('.') === 0) {
+                return normalize(filePath, path.dirname(module.filename));
+            } else {
+                return filePath;
+            }
+        };
+
+        return amdRequire;
+    };
+
+    //Favor explicit value, passed in if the module wants to support Node 0.4.
+    requireFn = requireFn || function req() {
+        return module.require.apply(module, arguments);
+    };
+
+    function runFactory(id, deps, factory) {
+        var r, e, m, result;
+
+        if (id) {
+            e = loaderCache[id] = {};
+            m = {
+                id: id,
+                uri: __filename,
+                exports: e
+            };
+            r = makeRequire(requireFn, e, m, id);
+        } else {
+            //Only support one define call per file
+            if (alreadyCalled) {
+                throw new Error('amdefine with no module ID cannot be called more than once per file.');
+            }
+            alreadyCalled = true;
+
+            //Use the real variables from node
+            //Use module.exports for exports, since
+            //the exports in here is amdefine exports.
+            e = module.exports;
+            m = module;
+            r = makeRequire(requireFn, e, m, module.id);
+        }
+
+        //If there are dependencies, they are strings, so need
+        //to convert them to dependency values.
+        if (deps) {
+            deps = deps.map(function (depName) {
+                return r(depName);
+            });
+        }
+
+        //Call the factory with the right dependencies.
+        if (typeof factory === 'function') {
+            result = factory.apply(m.exports, deps);
+        } else {
+            result = factory;
+        }
+
+        if (result !== undefined) {
+            m.exports = result;
+            if (id) {
+                loaderCache[id] = m.exports;
+            }
+        }
+    }
+
+    stringRequire = function (systemRequire, exports, module, id, relId) {
+        //Split the ID by a ! so that
+        var index = id.indexOf('!'),
+            originalId = id,
+            prefix, plugin;
+
+        if (index === -1) {
+            id = normalize(id, relId);
+
+            //Straight module lookup. If it is one of the special dependencies,
+            //deal with it, otherwise, delegate to node.
+            if (id === 'require') {
+                return makeRequire(systemRequire, exports, module, relId);
+            } else if (id === 'exports') {
+                return exports;
+            } else if (id === 'module') {
+                return module;
+            } else if (loaderCache.hasOwnProperty(id)) {
+                return loaderCache[id];
+            } else if (defineCache[id]) {
+                runFactory.apply(null, defineCache[id]);
+                return loaderCache[id];
+            } else {
+                if(systemRequire) {
+                    return systemRequire(originalId);
+                } else {
+                    throw new Error('No module with ID: ' + id);
+                }
+            }
+        } else {
+            //There is a plugin in play.
+            prefix = id.substring(0, index);
+            id = id.substring(index + 1, id.length);
+
+            plugin = stringRequire(systemRequire, exports, module, prefix, relId);
+
+            if (plugin.normalize) {
+                id = plugin.normalize(id, makeNormalize(relId));
+            } else {
+                //Normalize the ID normally.
+                id = normalize(id, relId);
+            }
+
+            if (loaderCache[id]) {
+                return loaderCache[id];
+            } else {
+                plugin.load(id, makeRequire(systemRequire, exports, module, relId), makeLoad(id), {});
+
+                return loaderCache[id];
+            }
+        }
+    };
+
+    //Create a define function specific to the module asking for amdefine.
+    function define(id, deps, factory) {
+        if (Array.isArray(id)) {
+            factory = deps;
+            deps = id;
+            id = undefined;
+        } else if (typeof id !== 'string') {
+            factory = id;
+            id = deps = undefined;
+        }
+
+        if (deps && !Array.isArray(deps)) {
+            factory = deps;
+            deps = undefined;
+        }
+
+        if (!deps) {
+            deps = ['require', 'exports', 'module'];
+        }
+
+        //Set up properties for this module. If an ID, then use
+        //internal cache. If no ID, then use the external variables
+        //for this node module.
+        if (id) {
+            //Put the module in deep freeze until there is a
+            //require call for it.
+            defineCache[id] = [id, deps, factory];
+        } else {
+            runFactory(id, deps, factory);
+        }
+    }
+
+    //define.require, which has access to all the values in the
+    //cache. Useful for AMD modules that all have IDs in the file,
+    //but need to finally export a value to node based on one of those
+    //IDs.
+    define.require = function (id) {
+        if (loaderCache[id]) {
+            return loaderCache[id];
+        }
+
+        if (defineCache[id]) {
+            runFactory.apply(null, defineCache[id]);
+            return loaderCache[id];
+        }
+    };
+
+    define.amd = {};
+
+    return define;
+}
+
+module.exports = amdefine;
+
+},{"__browserify_process":21,"path":47}],46:[function(require,module,exports){
+(function (exports) {
+	'use strict';
+
+	var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+
+	function b64ToByteArray(b64) {
+		var i, j, l, tmp, placeHolders, arr;
+	
+		if (b64.length % 4 > 0) {
+			throw 'Invalid string. Length must be a multiple of 4';
+		}
+
+		// the number of equal signs (place holders)
+		// if there are two placeholders, than the two characters before it
+		// represent one byte
+		// if there is only one, then the three characters before it represent 2 bytes
+		// this is just a cheap hack to not do indexOf twice
+		placeHolders = b64.indexOf('=');
+		placeHolders = placeHolders > 0 ? b64.length - placeHolders : 0;
+
+		// base64 is 4/3 + up to two characters of the original data
+		arr = [];//new Uint8Array(b64.length * 3 / 4 - placeHolders);
+
+		// if there are placeholders, only get up to the last complete 4 chars
+		l = placeHolders > 0 ? b64.length - 4 : b64.length;
+
+		for (i = 0, j = 0; i < l; i += 4, j += 3) {
+			tmp = (lookup.indexOf(b64[i]) << 18) | (lookup.indexOf(b64[i + 1]) << 12) | (lookup.indexOf(b64[i + 2]) << 6) | lookup.indexOf(b64[i + 3]);
+			arr.push((tmp & 0xFF0000) >> 16);
+			arr.push((tmp & 0xFF00) >> 8);
+			arr.push(tmp & 0xFF);
+		}
+
+		if (placeHolders === 2) {
+			tmp = (lookup.indexOf(b64[i]) << 2) | (lookup.indexOf(b64[i + 1]) >> 4);
+			arr.push(tmp & 0xFF);
+		} else if (placeHolders === 1) {
+			tmp = (lookup.indexOf(b64[i]) << 10) | (lookup.indexOf(b64[i + 1]) << 4) | (lookup.indexOf(b64[i + 2]) >> 2);
+			arr.push((tmp >> 8) & 0xFF);
+			arr.push(tmp & 0xFF);
+		}
+
+		return arr;
+	}
+
+	function uint8ToBase64(uint8) {
+		var i,
+			extraBytes = uint8.length % 3, // if we have 1 byte left, pad 2 bytes
+			output = "",
+			temp, length;
+
+		function tripletToBase64 (num) {
+			return lookup[num >> 18 & 0x3F] + lookup[num >> 12 & 0x3F] + lookup[num >> 6 & 0x3F] + lookup[num & 0x3F];
+		};
+
+		// go through the array every three bytes, we'll deal with trailing stuff later
+		for (i = 0, length = uint8.length - extraBytes; i < length; i += 3) {
+			temp = (uint8[i] << 16) + (uint8[i + 1] << 8) + (uint8[i + 2]);
+			output += tripletToBase64(temp);
+		}
+
+		// pad the end with zeros, but make sure to not forget the extra bytes
+		switch (extraBytes) {
+			case 1:
+				temp = uint8[uint8.length - 1];
+				output += lookup[temp >> 2];
+				output += lookup[(temp << 4) & 0x3F];
+				output += '==';
+				break;
+			case 2:
+				temp = (uint8[uint8.length - 2] << 8) + (uint8[uint8.length - 1]);
+				output += lookup[temp >> 10];
+				output += lookup[(temp >> 4) & 0x3F];
+				output += lookup[(temp << 2) & 0x3F];
+				output += '=';
+				break;
+		}
+
+		return output;
+	}
+
+	module.exports.toByteArray = b64ToByteArray;
+	module.exports.fromByteArray = uint8ToBase64;
+}());
+
+},{}],40:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -46243,7 +46422,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./base64":48,"amdefine":44}],45:[function(require,module,exports){
+},{"./base64":48,"amdefine":44}],47:[function(require,module,exports){
 var process=require("__browserify_process");function filter (xs, fn) {
     var res = [];
     for (var i = 0; i < xs.length; i++) {
@@ -46422,93 +46601,7 @@ exports.relative = function(from, to) {
 
 exports.sep = '/';
 
-},{"__browserify_process":21}],47:[function(require,module,exports){
-(function (exports) {
-	'use strict';
-
-	var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
-
-	function b64ToByteArray(b64) {
-		var i, j, l, tmp, placeHolders, arr;
-	
-		if (b64.length % 4 > 0) {
-			throw 'Invalid string. Length must be a multiple of 4';
-		}
-
-		// the number of equal signs (place holders)
-		// if there are two placeholders, than the two characters before it
-		// represent one byte
-		// if there is only one, then the three characters before it represent 2 bytes
-		// this is just a cheap hack to not do indexOf twice
-		placeHolders = b64.indexOf('=');
-		placeHolders = placeHolders > 0 ? b64.length - placeHolders : 0;
-
-		// base64 is 4/3 + up to two characters of the original data
-		arr = [];//new Uint8Array(b64.length * 3 / 4 - placeHolders);
-
-		// if there are placeholders, only get up to the last complete 4 chars
-		l = placeHolders > 0 ? b64.length - 4 : b64.length;
-
-		for (i = 0, j = 0; i < l; i += 4, j += 3) {
-			tmp = (lookup.indexOf(b64[i]) << 18) | (lookup.indexOf(b64[i + 1]) << 12) | (lookup.indexOf(b64[i + 2]) << 6) | lookup.indexOf(b64[i + 3]);
-			arr.push((tmp & 0xFF0000) >> 16);
-			arr.push((tmp & 0xFF00) >> 8);
-			arr.push(tmp & 0xFF);
-		}
-
-		if (placeHolders === 2) {
-			tmp = (lookup.indexOf(b64[i]) << 2) | (lookup.indexOf(b64[i + 1]) >> 4);
-			arr.push(tmp & 0xFF);
-		} else if (placeHolders === 1) {
-			tmp = (lookup.indexOf(b64[i]) << 10) | (lookup.indexOf(b64[i + 1]) << 4) | (lookup.indexOf(b64[i + 2]) >> 2);
-			arr.push((tmp >> 8) & 0xFF);
-			arr.push(tmp & 0xFF);
-		}
-
-		return arr;
-	}
-
-	function uint8ToBase64(uint8) {
-		var i,
-			extraBytes = uint8.length % 3, // if we have 1 byte left, pad 2 bytes
-			output = "",
-			temp, length;
-
-		function tripletToBase64 (num) {
-			return lookup[num >> 18 & 0x3F] + lookup[num >> 12 & 0x3F] + lookup[num >> 6 & 0x3F] + lookup[num & 0x3F];
-		};
-
-		// go through the array every three bytes, we'll deal with trailing stuff later
-		for (i = 0, length = uint8.length - extraBytes; i < length; i += 3) {
-			temp = (uint8[i] << 16) + (uint8[i + 1] << 8) + (uint8[i + 2]);
-			output += tripletToBase64(temp);
-		}
-
-		// pad the end with zeros, but make sure to not forget the extra bytes
-		switch (extraBytes) {
-			case 1:
-				temp = uint8[uint8.length - 1];
-				output += lookup[temp >> 2];
-				output += lookup[(temp << 4) & 0x3F];
-				output += '==';
-				break;
-			case 2:
-				temp = (uint8[uint8.length - 2] << 8) + (uint8[uint8.length - 1]);
-				output += lookup[temp >> 10];
-				output += lookup[(temp >> 4) & 0x3F];
-				output += lookup[(temp << 2) & 0x3F];
-				output += '=';
-				break;
-		}
-
-		return output;
-	}
-
-	module.exports.toByteArray = b64ToByteArray;
-	module.exports.fromByteArray = uint8ToBase64;
-}());
-
-},{}],48:[function(require,module,exports){
+},{"__browserify_process":21}],48:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
