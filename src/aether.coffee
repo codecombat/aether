@@ -189,7 +189,7 @@ module.exports = class Aether
     postNormalizationTransforms.unshift transforms.yieldAutomatically if @options.yieldAutomatically
     instrumentedCode = morph normalizedCode, (_.bind t, @ for t in postNormalizationTransforms)
     traceuredCode = @es6ify "return " + instrumentedCode
-    if true
+    if false
       console.log "---RAW CODE----: #{rawCode.split('\n').length}\n", {code: rawCode}
       console.log "---WRAPPED-----: #{wrappedCode.split('\n').length}\n", {code: wrappedCode}
       console.log "---TRANSFORMED-: #{transformedCode.split('\n').length}\n", {code: transformedCode}
