@@ -239,9 +239,9 @@ aether.style;
         // ... many more
     },
     identifiers: {
-        variableNames: [dx, dy, enemies, nearestEnemy, nearestDistance, enemy], //names of variables used, perhaps will contain function parameters, properties of non 'this' objects
-        functionNames: [distance_squared], //names of functions used
-        propertyNames: [] //properties of 'this' objects
+        variableNames: ["dx", "dy", "enemies", "nearestEnemy", "nearestDistance", "enemy"],  // names of variables used, perhaps will contain function parameters, properties of non 'this' objects
+        functionNames: ["distance_squared"],  // names of functions used
+        propertyNames: []  // properties of 'this' objects
     }
     // what else?
 }
