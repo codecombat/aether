@@ -4,47 +4,14 @@
 # More: https://github.com/mdevils/node-jscs/blob/master/lib/checker.js
 # More: https://github.com/nzakas/eslint/tree/master/lib/rules
 
-#{ranges: [[[22, 1], [22, 13]], [[15, 1], [15, 18]], [[18, 1], [18, 14]]], id: 'ArgumentError', message: '`getNearestEnemy()` should return a `Thang` or `null`, not a string (`"Goreball"`).', hint: 'You returned `nearestEnemy`, which had value `"Goreball"`. Check lines 15 and 18 for mistakes setting `nearestEnemy`.', callNumber: 118, statementNumber: 25, userInfo: {frameNumber: 25} }
-
+# Base class for UserCodeProblems
 module.exports.UserCodeProblem = class UserCodeProblem
-  @className: "UserCodeProblem"
-  constructor: (error, code, aether, source='unknown', codePrefix="function wrapped() {\n\"use strict\";\n") ->
-    #console.log "Converting", error, "to a UserCodeProblem"
-    originalLines = code.slice(codePrefix.length).split '\n'
-    lineOffset = codePrefix.split('\n').length - 1
-    @id = @getProblemID error, source
-    problemConfig = aether.options.problems[@id]
-    @type = 'transpile'
-    @level = problemConfig?.level ? "error"
-    #@message = problemConfig?.message ? "Unknown problem." # TODO: we don't actually do anything good with this message
-    @hint = problemConfig?.hint
-
-    if source is 'jshint'
-      @message = error.reason
-      line = error.line - codePrefix.split('\n').length
-      if line >= 0
-        startCol = originalLines[line].indexOf error.evidence
-        endCol = startCol + error.evidence.length
-        @ranges = [[[line, startCol], [line, endCol]]]
-      else
-        # TODO: if we type an unmatched {, for example, then it thinks that line -2's function wrapped() { is unmatched...
-        @ranges = [[[0, 0], [originalLines.length - 1, originalLines[originalLines.length - 1].length - 1]]]
-    else if source is 'esprima'
-      @message = error.message
-      # TODO: column range should extend to whole token. Mod Esprima, or extend to end of line?
-      @ranges = [[[error.lineNumber - 1 - lineOffset, error.column - 1], [error.lineNumber - 1 - lineOffset, error.column]]]
-    else if source is 'aether'
-      @message = error.message ? problemConfig?.message
-      # TODO: figure out how to do ranges here
-    else
-      console.log "Unhandled UserCodeProblem source", source
-      @message = error.message ? problemConfig?.message ? "Unknoooown problem"
-
-  getProblemID: (error, source) ->
-    id = switch source
-      when 'jshint' then error.code
-      else error.id or "Unknown"
-    source + "_" + id
+  constructor: (aether, reporter='unknown', kind="Unknown") ->
+    @id = reporter + "_" + kind
+    config = aether.options.problems[@id] ? {message: "Unknown problem", level: "error"}
+    @message = config.message
+    @hint = config.hint
+    @level = config.level
 
   serialize: ->
     o = {}
@@ -52,12 +19,108 @@ module.exports.UserCodeProblem = class UserCodeProblem
       o[key] = value
     o
 
-module.exports.RuntimeError = class RuntimeError extends UserCodeProblem
-  @className: "RuntimeError"
-  constructor: (args...) ->
-    super args...
+# {ranges: [[[15, 15], [15, 22]]], id: 'aether_MissingThis', message: 'Missing `this.` keyword; should be `this.getEnemies`.' hint: 'There is no function `getEnemys`, but `this` has a method `getEnemies`.', level: "warning"}
+module.exports.TranspileProblem = class TranspileProblem extends UserCodeProblem
+  constructor: (aether, reporter, kind, error, @userInfo, code='', codePrefix="function wrapped() {\n\"use strict\";\n") ->
+    #console.log "Converting", error, "to a UserCodeProblem"
+    super aether, reporter, kind
+    @type = 'transpile'
+    @userInfo ?= {}
+    code ?= @raw  # hmm...
+    originalLines = code.slice(codePrefix.length).split '\n'
+    lineOffset = codePrefix.split('\n').length - 1
+
+    switch reporter
+      when 'jshint'
+        @message = error.reason
+        line = error.line - codePrefix.split('\n').length
+        if line >= 0
+          startCol = originalLines[line].indexOf error.evidence
+          endCol = startCol + error.evidence.length
+          @ranges = [[[line, startCol], [line, endCol]]]
+        else
+          # TODO: if we type an unmatched {, for example, then it thinks that line -2's function wrapped() { is unmatched...
+          @ranges = [[[0, 0], [originalLines.length - 1, originalLines[originalLines.length - 1].length - 1]]]
+      when 'esprima'
+        @message = error.message
+        # TODO: column range should extend to whole token. Mod Esprima, or extend to end of line?
+        @ranges = [[[error.lineNumber - 1 - lineOffset, error.column - 1], [error.lineNumber - 1 - lineOffset, error.column]]]
+      when 'aether'
+        @message = error.message if error.message
+        # TODO: figure out how to do ranges here
+      else
+        console.log "Unhandled UserCodeProblem reporter", reporter
+        @message = error.message if error.message
+
+# {ranges: [[[22, 1], [22, 13]], [[15, 1], [15, 18]], [[18, 1], [18, 14]]], id: 'ArgumentError', message: '`getNearestEnemy()` should return a `Thang` or `null`, not a string (`"Goreball"`).', hint: 'You returned `nearestEnemy`, which had value `"Goreball"`. Check lines 15 and 18 for mistakes setting `nearestEnemy`.', level: "error", callNumber: 118, statementNumber: 25, userInfo: {frameNumber: 25} }
+module.exports.RuntimeProblem = class RuntimeProblem extends UserCodeProblem
+  constructor: (aether, error, @userInfo) ->
+    kind = error.name  # Will this pick up: [Error, EvalError, RangeError, ReferenceError, SyntaxError, TypeError, URIError, DOMException] ?
+    super aether, 'runtime', kind
     @type = 'runtime'
-    # what are we doing here?
+    @userInfo ?= {}
+    @message = RuntimeError.explainErrorMessage error  # TODO: this should be done with configurable rules
+    @ranges = [RuntimeProblem.getAnonymousErrorRange error]  # later this will go away because we'll instrument all the statements
+    if @ranges
+      lineNumber = @ranges[0][0][0]
+      if @message.search(/^Line \d+/) != -1
+        @message = @message.replace /^Line \d+/, (match, n) => "Line #{lineNumber}"
+      else
+        @message = "Line #{lineNumber}: #{@message}"
+
+  @getAnonymousErrorRange: (error) ->
+    # Cross-browser stack trace libs like TraceKit throw away the eval line number, as it's inline with another line number. And only Chrome gives the anonymous line number. So we don't actually need a cross-browser solution.
+    return [[error.lineNumber, error.column], [error.lineNumber, error.column + 1]] if error.lineNumber  # useful?
+    stack = error.stack
+    return null unless stack
+    lines = stack.split('\n')
+    for line, i in lines
+      continue unless line.indexOf("Object.eval") != -1
+      lineNumber = line.match(/<anonymous>:(\d+):/)?[1]
+      column = line.match(/<anonymous>:\d+:(\d+)/)?[1]
+      lineNumber = parseInt lineNumber if lineNumber?
+      column = parseInt column if column?
+      chromeVersion = parseInt navigator?.appVersion?.match(/Chrome\/(\d+)\./)[1] or "28", 10
+      if chromeVersion >= 28
+        lineNumber -= 1  # Apparently the indexing has changed in version 28
+      #console.log "Parsed", lineNumber, column, "from stack", stack
+      return [[lineNumber, column], [lineNumber, column + 1]]
+    #console.log "Couldn't parse stack:", stack
+    return null
+
+  @explainErrorMessage: (error) ->
+    m = error.toString()  # or maybe error.message?
+    if m is "RangeError: Maximum call stack size exceeded"
+      m += ". (Did you use #{methodName}() recursively?)"
+
+    missingMethodMatch = m.match /has no method '(.*?)'/
+    if missingMethodMatch
+      method = missingMethodMatch[1]
+      [closestMatch, closestMatchScore] = ['Murgatroyd Kerfluffle', 0]
+      explained = false
+      for commonMethod in commonMethods
+        if method is commonMethod
+          m += ". (#{missingMethodMatch[1]} not available in this challenge.)"
+          explained = true
+          break
+        else if method.toLowerCase() is commonMethod.toLowerCase()
+          m = "#{method} should be #{commonMethod} because JavaScript is case-sensitive."
+          explained = true
+          break
+        else
+          matchScore = string_score?.score commonMethod, method, 0.5
+          if matchScore > closestMatchScore
+            [closestMatch, closestMatchScore] = [commonMethod, matchScore]
+      unless explained
+        if closestMatchScore > 0.25
+          m += ". (Did you mean #{closestMatch}?)"
+
+      m = m.replace 'TypeError:', 'Error:'
+
+    m
+
+module.exports.commonMethods = commonMethods = ['moveRight', 'moveLeft', 'moveUp', 'moveDown', 'attackNearbyEnemy', 'say', 'move', 'attackNearestEnemy', 'shootAt', 'rotateTo', 'shoot', 'distance', 'getNearestEnemy', 'getEnemies', 'attack', 'setAction', 'setTarget', 'getFriends', 'patrol']  # TODO: should be part of user configuration
+
 
 
 module.exports.problems = problems =

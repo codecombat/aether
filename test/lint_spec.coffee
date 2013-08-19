@@ -11,7 +11,7 @@ describe "Linting Test Suite", ->
 
   describe "Custom lint levels", ->
     it "should allow ignoring of warnings", ->
-      options = problems: {jshint_W033: 'ignore'}
+      options = problems: {jshint_W033: {level: 'ignore'}}
       aether = new Aether options
       code = "var bandersnatch = 'frumious'"
       warnings = aether.lint(code).warnings

@@ -21124,62 +21124,28 @@ var traceur = (function() {
 
 },{}],2:[function(require,module,exports){
 (function() {
-  var RuntimeError, UserCodeProblem, problems,
+  var RuntimeProblem, TranspileProblem, UserCodeProblem, commonMethods, problems,
     __hasProp = {}.hasOwnProperty,
-    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
-    __slice = [].slice;
+    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   module.exports.UserCodeProblem = UserCodeProblem = (function() {
-    UserCodeProblem.className = "UserCodeProblem";
-
-    function UserCodeProblem(error, code, aether, source, codePrefix) {
-      var endCol, line, lineOffset, originalLines, problemConfig, startCol, _ref, _ref1, _ref2, _ref3;
-      if (source == null) {
-        source = 'unknown';
+    function UserCodeProblem(aether, reporter, kind) {
+      var config, _ref;
+      if (reporter == null) {
+        reporter = 'unknown';
       }
-      if (codePrefix == null) {
-        codePrefix = "function wrapped() {\n\"use strict\";\n";
+      if (kind == null) {
+        kind = "Unknown";
       }
-      originalLines = code.slice(codePrefix.length).split('\n');
-      lineOffset = codePrefix.split('\n').length - 1;
-      this.id = this.getProblemID(error, source);
-      problemConfig = aether.options.problems[this.id];
-      this.type = 'transpile';
-      this.level = (_ref = problemConfig != null ? problemConfig.level : void 0) != null ? _ref : "error";
-      this.hint = problemConfig != null ? problemConfig.hint : void 0;
-      if (source === 'jshint') {
-        this.message = error.reason;
-        line = error.line - codePrefix.split('\n').length;
-        if (line >= 0) {
-          startCol = originalLines[line].indexOf(error.evidence);
-          endCol = startCol + error.evidence.length;
-          this.ranges = [[[line, startCol], [line, endCol]]];
-        } else {
-          this.ranges = [[[0, 0], [originalLines.length - 1, originalLines[originalLines.length - 1].length - 1]]];
-        }
-      } else if (source === 'esprima') {
-        this.message = error.message;
-        this.ranges = [[[error.lineNumber - 1 - lineOffset, error.column - 1], [error.lineNumber - 1 - lineOffset, error.column]]];
-      } else if (source === 'aether') {
-        this.message = (_ref1 = error.message) != null ? _ref1 : problemConfig != null ? problemConfig.message : void 0;
-      } else {
-        console.log("Unhandled UserCodeProblem source", source);
-        this.message = (_ref2 = (_ref3 = error.message) != null ? _ref3 : problemConfig != null ? problemConfig.message : void 0) != null ? _ref2 : "Unknoooown problem";
-      }
+      this.id = reporter + "_" + kind;
+      config = (_ref = aether.options.problems[this.id]) != null ? _ref : {
+        message: "Unknown problem",
+        level: "error"
+      };
+      this.message = config.message;
+      this.hint = config.hint;
+      this.level = config.level;
     }
-
-    UserCodeProblem.prototype.getProblemID = function(error, source) {
-      var id;
-      id = (function() {
-        switch (source) {
-          case 'jshint':
-            return error.code;
-          default:
-            return error.id || "Unknown";
-        }
-      })();
-      return source + "_" + id;
-    };
 
     UserCodeProblem.prototype.serialize = function() {
       var key, o, value;
@@ -21196,21 +21162,163 @@ var traceur = (function() {
 
   })();
 
-  module.exports.RuntimeError = RuntimeError = (function(_super) {
-    __extends(RuntimeError, _super);
+  module.exports.TranspileProblem = TranspileProblem = (function(_super) {
+    __extends(TranspileProblem, _super);
 
-    RuntimeError.className = "RuntimeError";
-
-    function RuntimeError() {
-      var args;
-      args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-      RuntimeError.__super__.constructor.apply(this, args);
-      this.type = 'runtime';
+    function TranspileProblem(aether, reporter, kind, error, userInfo, code, codePrefix) {
+      var endCol, line, lineOffset, originalLines, startCol;
+      this.userInfo = userInfo;
+      if (code == null) {
+        code = '';
+      }
+      if (codePrefix == null) {
+        codePrefix = "function wrapped() {\n\"use strict\";\n";
+      }
+      TranspileProblem.__super__.constructor.call(this, aether, reporter, kind);
+      this.type = 'transpile';
+      if (this.userInfo == null) {
+        this.userInfo = {};
+      }
+      if (code == null) {
+        code = this.raw;
+      }
+      originalLines = code.slice(codePrefix.length).split('\n');
+      lineOffset = codePrefix.split('\n').length - 1;
+      switch (reporter) {
+        case 'jshint':
+          this.message = error.reason;
+          line = error.line - codePrefix.split('\n').length;
+          if (line >= 0) {
+            startCol = originalLines[line].indexOf(error.evidence);
+            endCol = startCol + error.evidence.length;
+            this.ranges = [[[line, startCol], [line, endCol]]];
+          } else {
+            this.ranges = [[[0, 0], [originalLines.length - 1, originalLines[originalLines.length - 1].length - 1]]];
+          }
+          break;
+        case 'esprima':
+          this.message = error.message;
+          this.ranges = [[[error.lineNumber - 1 - lineOffset, error.column - 1], [error.lineNumber - 1 - lineOffset, error.column]]];
+          break;
+        case 'aether':
+          if (error.message) {
+            this.message = error.message;
+          }
+          break;
+        default:
+          console.log("Unhandled UserCodeProblem reporter", reporter);
+          if (error.message) {
+            this.message = error.message;
+          }
+      }
     }
 
-    return RuntimeError;
+    return TranspileProblem;
 
   })(UserCodeProblem);
+
+  module.exports.RuntimeProblem = RuntimeProblem = (function(_super) {
+    __extends(RuntimeProblem, _super);
+
+    function RuntimeProblem(aether, error, userInfo) {
+      var kind, lineNumber,
+        _this = this;
+      this.userInfo = userInfo;
+      kind = error.name;
+      RuntimeProblem.__super__.constructor.call(this, aether, 'runtime', kind);
+      this.type = 'runtime';
+      if (this.userInfo == null) {
+        this.userInfo = {};
+      }
+      this.message = RuntimeError.explainErrorMessage(error);
+      this.ranges = [RuntimeProblem.getAnonymousErrorRange(error)];
+      if (this.ranges) {
+        lineNumber = this.ranges[0][0][0];
+        if (this.message.search(/^Line \d+/) !== -1) {
+          this.message = this.message.replace(/^Line \d+/, function(match, n) {
+            return "Line " + lineNumber;
+          });
+        } else {
+          this.message = "Line " + lineNumber + ": " + this.message;
+        }
+      }
+    }
+
+    RuntimeProblem.getAnonymousErrorRange = function(error) {
+      var chromeVersion, column, i, line, lineNumber, lines, stack, _i, _len, _ref, _ref1, _ref2;
+      if (error.lineNumber) {
+        return [[error.lineNumber, error.column], [error.lineNumber, error.column + 1]];
+      }
+      stack = error.stack;
+      if (!stack) {
+        return null;
+      }
+      lines = stack.split('\n');
+      for (i = _i = 0, _len = lines.length; _i < _len; i = ++_i) {
+        line = lines[i];
+        if (line.indexOf("Object.eval") === -1) {
+          continue;
+        }
+        lineNumber = (_ref = line.match(/<anonymous>:(\d+):/)) != null ? _ref[1] : void 0;
+        column = (_ref1 = line.match(/<anonymous>:\d+:(\d+)/)) != null ? _ref1[1] : void 0;
+        if (lineNumber != null) {
+          lineNumber = parseInt(lineNumber);
+        }
+        if (column != null) {
+          column = parseInt(column);
+        }
+        chromeVersion = parseInt((typeof navigator !== "undefined" && navigator !== null ? (_ref2 = navigator.appVersion) != null ? _ref2.match(/Chrome\/(\d+)\./)[1] : void 0 : void 0) || "28", 10);
+        if (chromeVersion >= 28) {
+          lineNumber -= 1;
+        }
+        return [[lineNumber, column], [lineNumber, column + 1]];
+      }
+      return null;
+    };
+
+    RuntimeProblem.explainErrorMessage = function(error) {
+      var closestMatch, closestMatchScore, commonMethod, explained, m, matchScore, method, missingMethodMatch, _i, _len, _ref, _ref1;
+      m = error.toString();
+      if (m === "RangeError: Maximum call stack size exceeded") {
+        m += ". (Did you use " + methodName + "() recursively?)";
+      }
+      missingMethodMatch = m.match(/has no method '(.*?)'/);
+      if (missingMethodMatch) {
+        method = missingMethodMatch[1];
+        _ref = ['Murgatroyd Kerfluffle', 0], closestMatch = _ref[0], closestMatchScore = _ref[1];
+        explained = false;
+        for (_i = 0, _len = commonMethods.length; _i < _len; _i++) {
+          commonMethod = commonMethods[_i];
+          if (method === commonMethod) {
+            m += ". (" + missingMethodMatch[1] + " not available in this challenge.)";
+            explained = true;
+            break;
+          } else if (method.toLowerCase() === commonMethod.toLowerCase()) {
+            m = "" + method + " should be " + commonMethod + " because JavaScript is case-sensitive.";
+            explained = true;
+            break;
+          } else {
+            matchScore = typeof string_score !== "undefined" && string_score !== null ? string_score.score(commonMethod, method, 0.5) : void 0;
+            if (matchScore > closestMatchScore) {
+              _ref1 = [commonMethod, matchScore], closestMatch = _ref1[0], closestMatchScore = _ref1[1];
+            }
+          }
+        }
+        if (!explained) {
+          if (closestMatchScore > 0.25) {
+            m += ". (Did you mean " + closestMatch + "?)";
+          }
+        }
+        m = m.replace('TypeError:', 'Error:');
+      }
+      return m;
+    };
+
+    return RuntimeProblem;
+
+  })(UserCodeProblem);
+
+  module.exports.commonMethods = commonMethods = ['moveRight', 'moveLeft', 'moveUp', 'moveDown', 'attackNearbyEnemy', 'say', 'move', 'attackNearestEnemy', 'shootAt', 'rotateTo', 'shoot', 'distance', 'getNearestEnemy', 'getEnemies', 'attack', 'setAction', 'setTarget', 'getFriends', 'patrol'];
 
   module.exports.problems = problems = {
     unknown_Unknown: {
@@ -22229,147 +22337,8 @@ var traceur = (function() {
 }).call(this);
 
 },{}],4:[function(require,module,exports){
-(function() {
-  var UserCodeError, commonMethods,
-    __hasProp = {}.hasOwnProperty,
-    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
-
-  module.exports.commonMethods = commonMethods = ['moveRight', 'moveLeft', 'moveUp', 'moveDown', 'attackNearbyEnemy', 'say', 'move', 'attackNearestEnemy', 'shootAt', 'rotateTo', 'shoot', 'distance', 'getNearestEnemy', 'getEnemies', 'attack', 'setAction', 'setTarget', 'getFriends', 'patrol'];
-
-  module.exports.UserCodeError = UserCodeError = (function(_super) {
-    __extends(UserCodeError, _super);
-
-    UserCodeError.className = "UserCodeError";
-
-    function UserCodeError(message, level, userInfo) {
-      var key, val,
-        _this = this;
-      this.message = message;
-      this.level = level != null ? level : "error";
-      UserCodeError.__super__.constructor.call(this, message);
-      for (key in userInfo) {
-        if (!__hasProp.call(userInfo, key)) continue;
-        val = userInfo[key];
-        this[key] = val;
-      }
-      if (this.lineNumber != null) {
-        if (this.message.search(/^Line \d+/) !== -1) {
-          this.message = this.message.replace(/^Line \d+/, function(match, n) {
-            return "Line " + _this.lineNumber;
-          });
-        } else {
-          this.message = "Line " + this.lineNumber + ": " + this.message;
-        }
-      }
-      this.name = "UserCodeError";
-      this.key = (this.methodType === 'instance' ? this.thangID : this.thangSpriteName) + "|" + this.methodName + "|" + this.message;
-      if (Error.captureStackTrace != null) {
-        Error.captureStackTrace(this, this.constructor);
-      }
-    }
-
-    UserCodeError.prototype.serialize = function() {
-      var key, o, value;
-      o = {};
-      for (key in this) {
-        if (!__hasProp.call(this, key)) continue;
-        value = this[key];
-        o[key] = value;
-      }
-      return o;
-    };
-
-    UserCodeError.getAnonymousErrorPosition = function(error) {
-      var chromeVersion, column, i, line, lineNumber, lines, stack, _i, _len, _ref, _ref1, _ref2;
-      if (error.lineNumber) {
-        return {
-          lineNumber: error.lineNumber,
-          column: error.column
-        };
-      }
-      stack = error.stack;
-      if (!stack) {
-        return {};
-      }
-      lines = stack.split('\n');
-      for (i = _i = 0, _len = lines.length; _i < _len; i = ++_i) {
-        line = lines[i];
-        if (line.indexOf("Object.eval") === -1) {
-          continue;
-        }
-        lineNumber = (_ref = line.match(/<anonymous>:(\d+):/)) != null ? _ref[1] : void 0;
-        column = (_ref1 = line.match(/<anonymous>:\d+:(\d+)/)) != null ? _ref1[1] : void 0;
-        if (lineNumber != null) {
-          lineNumber = parseInt(lineNumber);
-        }
-        if (column != null) {
-          column = parseInt(column);
-        }
-        chromeVersion = parseInt((typeof navigator !== "undefined" && navigator !== null ? (_ref2 = navigator.appVersion) != null ? _ref2.match(/Chrome\/(\d+)\./)[1] : void 0 : void 0) || "28", 10);
-        if (chromeVersion >= 28) {
-          lineNumber -= 1;
-        }
-        return {
-          lineNumber: lineNumber,
-          column: column
-        };
-      }
-      return {};
-    };
-
-    UserCodeError.explainErrorMessage = function(error, thang) {
-      var closestMatch, closestMatchScore, commonMethod, explained, m, matchScore, method, missingMethodMatch, _i, _len, _ref, _ref1;
-      if (thang == null) {
-        thang = null;
-      }
-      m = error.toString();
-      if (m === "RangeError: Maximum call stack size exceeded") {
-        m += ". (Did you use " + methodName + "() recursively?)";
-      }
-      missingMethodMatch = m.match(/has no method '(.*?)'/);
-      if (missingMethodMatch) {
-        method = missingMethodMatch[1];
-        _ref = ['Murgatroyd Kerfluffle', 0], closestMatch = _ref[0], closestMatchScore = _ref[1];
-        explained = false;
-        for (_i = 0, _len = commonMethods.length; _i < _len; _i++) {
-          commonMethod = commonMethods[_i];
-          if (method === commonMethod) {
-            m += ". (" + missingMethodMatch[1] + " not available in this challenge.)";
-            explained = true;
-            break;
-          } else if (method.toLowerCase() === commonMethod.toLowerCase()) {
-            m = "" + method + " should be " + commonMethod + " because JavaScript is case-sensitive.";
-            explained = true;
-            break;
-          } else {
-            matchScore = typeof string_score !== "undefined" && string_score !== null ? string_score.score(commonMethod, method, 0.5) : void 0;
-            if (matchScore > closestMatchScore) {
-              _ref1 = [commonMethod, matchScore], closestMatch = _ref1[0], closestMatchScore = _ref1[1];
-            }
-          }
-        }
-        if (!explained) {
-          if (closestMatchScore > 0.25) {
-            m += ". (Did you mean " + closestMatch + "?)";
-          }
-        }
-        m = m.replace('TypeError:', 'Error:');
-        if (thang) {
-          m = m.replace("Object #<Object>", thang.id);
-        }
-      }
-      return m;
-    };
-
-    return UserCodeError;
-
-  })(Error);
-
-}).call(this);
-
-},{}],5:[function(require,module,exports){
 var global=self;(function() {
-  var Aether, defaults, errors, escodegen, esprima, execution, jshint, morph, normalizer, optionsValidator, problems, traceur, transforms, _, _ref, _ref1, _ref2, _ref3, _ref4, _ref5;
+  var Aether, defaults, escodegen, esprima, execution, jshint, morph, normalizer, optionsValidator, problems, traceur, transforms, _, _ref, _ref1, _ref2, _ref3, _ref4, _ref5;
 
   _ = (_ref = (_ref1 = (_ref2 = typeof window !== "undefined" && window !== null ? window._ : void 0) != null ? _ref2 : typeof self !== "undefined" && self !== null ? self._ : void 0) != null ? _ref1 : typeof global !== "undefined" && global !== null ? global._ : void 0) != null ? _ref : require('lodash');
 
@@ -22389,8 +22358,6 @@ var global=self;(function() {
 
   execution = require('./execution');
 
-  errors = require('./errors');
-
   morph = require('./morph');
 
   transforms = require('./transforms');
@@ -22403,8 +22370,6 @@ var global=self;(function() {
     Aether.problems = problems.problems;
 
     Aether.execution = execution;
-
-    Aether.errors = errors;
 
     function Aether(options) {
       var optionsValidation;
@@ -22491,7 +22456,8 @@ var global=self;(function() {
       if (problem.level === "ignore") {
         return;
       }
-      return (problems != null ? problems : this.problems)[problem.level + "s"].push(problem);
+      (problems != null ? problems : this.problems)[problem.level + "s"].push(problem);
+      return problem;
     };
 
     Aether.prototype.wrap = function(rawCode) {
@@ -22542,7 +22508,7 @@ var global=self;(function() {
       _ref6 = jshint.errors;
       for (_i = 0, _len = _ref6.length; _i < _len; _i++) {
         error = _ref6[_i];
-        this.addProblem(new problems.UserCodeProblem(error, wrappedCode, this, 'jshint', this.wrappedCodePrefix), lintProblems);
+        this.addProblem(new problems.TranspileProblem(this, 'jshint', error.code, error, {}, wrappedCode, this.wrappedCodePrefix), lintProblems);
       }
       return lintProblems;
     };
@@ -22564,24 +22530,6 @@ var global=self;(function() {
         func = _.bind(func, this.options.thisValue);
       }
       return func;
-    };
-
-    Aether.prototype.purifyError = function(error, userInfo) {
-      var errorMessage, errorPos, pureError, _ref6;
-      errorPos = Aether.errors.UserCodeError.getAnonymousErrorPosition(error);
-      errorMessage = Aether.errors.UserCodeError.explainErrorMessage(error);
-      if (userInfo == null) {
-        userInfo = {};
-      }
-      if (userInfo.lineNumber == null) {
-        userInfo.lineNumber = errorPos.lineNumber != null ? errorPos.lineNumber - 2 : void 0;
-      }
-      if (userInfo.column == null) {
-        userInfo.column = errorPos.column;
-      }
-      pureError = new Aether.errors.UserCodeError(errorMessage, (_ref6 = error.level) != null ? _ref6 : "error", userInfo);
-      this.addProblem(pureError.serialize());
-      return pureError;
     };
 
     Aether.prototype.getAllProblems = function() {
@@ -22669,7 +22617,7 @@ var global=self;(function() {
         });
       } catch (_error) {
         error = _error;
-        problem = new problems.UserCodeProblem(error, wrappedCode, this, 'esprima', '');
+        problem = new problems.TranspileProblem(this, 'esprima', error.id, error, {}, wrappedCode, '');
         if ((_ref6 = problem.level) === "ignore" || _ref6 === "info" || _ref6 === "warning") {
           console.log("Esprima can't survive", problem.serialize(), "at level", problem.level);
           problem.level = "error";
@@ -22777,7 +22725,7 @@ var global=self;(function() {
 
 }).call(this);
 
-},{"./defaults":6,"./errors":4,"./execution":3,"./morph":7,"./problems":2,"./transforms":8,"./validators/options":9,"JS_WALA/normalizer/lib/normalizer":10,"escodegen":12,"esprima":13,"jshint":11,"lodash":1,"traceur":1}],6:[function(require,module,exports){
+},{"./defaults":5,"./execution":3,"./morph":6,"./problems":2,"./transforms":7,"./validators/options":8,"JS_WALA/normalizer/lib/normalizer":9,"escodegen":12,"esprima":11,"jshint":10,"lodash":1,"traceur":1}],5:[function(require,module,exports){
 (function() {
   var defaults, execution;
 
@@ -22806,7 +22754,7 @@ var global=self;(function() {
 
 }).call(this);
 
-},{"./execution":3}],13:[function(require,module,exports){
+},{"./execution":3}],11:[function(require,module,exports){
 /*
   Copyright (C) 2013 Ariya Hidayat <ariya.hidayat@gmail.com>
   Copyright (C) 2013 Thaddee Tyl <thaddee.tyl@gmail.com>
@@ -28353,7 +28301,7 @@ parseYieldExpression: true
 }));
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{}],10:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 /*******************************************************************************
  * Copyright (c) 2012 IBM Corporation.
  * All rights reserved. This program and the accompanying materials
@@ -29395,7 +29343,7 @@ parseYieldExpression: true
   exports.normalize = normalize;
 //});
 
-},{"../../common/lib/ast":14,"../../common/lib/position":18,"./cflow":15,"./decls":16,"./scope":17,"./util":19}],15:[function(require,module,exports){
+},{"../../common/lib/ast":13,"../../common/lib/position":18,"./cflow":14,"./decls":15,"./scope":16,"./util":17}],14:[function(require,module,exports){
 /*******************************************************************************
  * Copyright (c) 2012 IBM Corporation.
  * All rights reserved. This program and the accompanying materials
@@ -29436,6 +29384,44 @@ parseYieldExpression: true
       return true;
     }
   };
+//});
+
+},{}],17:[function(require,module,exports){
+/*******************************************************************************
+ * Copyright (c) 2012 IBM Corporation.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
+ *******************************************************************************/
+
+/**
+ * Utility methods. 
+ */
+//if(typeof define !== 'function') {
+//  var define = require('amdefine')(module);
+//}
+//
+//define(function(require, exports) {
+  var flatmap = function(fn, thisArg) {  
+    var res = [];
+    for(var i=0;i<this.length;++i) {
+      var r = fn.call(thisArg, this[i], i, this);
+      for(var j=0;j<r.length;++j)
+        res[res.length] = r[j];
+    }
+    return res;
+  };
+  if(typeof Object.defineProperty !== 'undefined')
+    Object.defineProperty(Array.prototype, 'flatmap', {
+      value: flatmap,
+      enumerable: false
+    });
+  else
+    Array.prototype.flatmap = flatmap;
 //});
 
 },{}],18:[function(require,module,exports){
@@ -29500,45 +29486,7 @@ parseYieldExpression: true
   exports.DUMMY_POS = DUMMY_POS;
 //});
 
-},{}],19:[function(require,module,exports){
-/*******************************************************************************
- * Copyright (c) 2012 IBM Corporation.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *     IBM Corporation - initial API and implementation
- *******************************************************************************/
-
-/**
- * Utility methods. 
- */
-//if(typeof define !== 'function') {
-//  var define = require('amdefine')(module);
-//}
-//
-//define(function(require, exports) {
-  var flatmap = function(fn, thisArg) {  
-    var res = [];
-    for(var i=0;i<this.length;++i) {
-      var r = fn.call(thisArg, this[i], i, this);
-      for(var j=0;j<r.length;++j)
-        res[res.length] = r[j];
-    }
-    return res;
-  };
-  if(typeof Object.defineProperty !== 'undefined')
-    Object.defineProperty(Array.prototype, 'flatmap', {
-      value: flatmap,
-      enumerable: false
-    });
-  else
-    Array.prototype.flatmap = flatmap;
-//});
-
-},{}],7:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 var global=self;(function() {
   var esprima, insertHelpers, morph, _, _ref, _ref1, _ref2;
 
@@ -29609,7 +29557,7 @@ var global=self;(function() {
 
 }).call(this);
 
-},{"esprima":13,"lodash":1}],8:[function(require,module,exports){
+},{"esprima":11,"lodash":1}],7:[function(require,module,exports){
 (function() {
   var S, checkIncompleteMembers, checkThisKeywords, esprima, gatherLineNumbers, getLineNumberForNode, instrumentStatements, possiblyGeneratorifyAncestorFunction, problems, statements, validateReturns, yieldAutomatically, yieldConditionally,
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
@@ -29639,18 +29587,15 @@ var global=self;(function() {
   };
 
   module.exports.checkThisKeywords = checkThisKeywords = function(node) {
-    var error, problem, v;
+    var problem, v;
     if (node.type === S.VariableDeclarator) {
       return this.vars[node.id] = true;
     } else if (node.type === S.CallExpression) {
       v = node.callee.name;
       if (v && !this.vars[v] && !this.options.global[v]) {
-        error = {
-          id: "MissingThis",
-          message: "Missing `this.` keyword; should be `this." + v + "`.",
-          hint: "There is no function `" + v + "`, but `this` has a method `" + v + "`."
-        };
-        problem = new problems.UserCodeProblem(error, this.raw, this, 'aether', '');
+        problem = new problems.TranspileProblem(this, 'aether', 'MissingThis', {}, '', '');
+        problem.message = "Missing `this.` keyword; should be `this." + v + "`.";
+        problem.hint = "There is no function `" + v + "`, but `this` has a method `" + v + "`.";
         this.addProblem(problem);
         if (!this.options.requiresThis) {
           return node.update("this." + (node.source()));
@@ -29756,7 +29701,7 @@ var global=self;(function() {
 
 }).call(this);
 
-},{"./problems":2,"esprima":13}],20:[function(require,module,exports){
+},{"./problems":2,"esprima":11}],19:[function(require,module,exports){
 module.exports={
   "name": "escodegen",
   "description": "ECMAScript code generator",
@@ -29823,7 +29768,7 @@ module.exports={
   "_from": "escodegen@0.0.25"
 }
 
-},{}],21:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -29877,7 +29822,7 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
-},{}],22:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 var process=require("__browserify_process");if (!process.EventEmitter) process.EventEmitter = function () {};
 
 var EventEmitter = exports.EventEmitter = process.EventEmitter;
@@ -30073,7 +30018,7 @@ EventEmitter.listenerCount = function(emitter, type) {
   return ret;
 };
 
-},{"__browserify_process":21}],23:[function(require,module,exports){
+},{"__browserify_process":20}],22:[function(require,module,exports){
 // jshint -W001
 
 "use strict";
@@ -30663,7 +30608,7 @@ exports.yui = {
 };
 
 
-},{}],24:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 /*
  * Regular expressions. Some of these are stupidly long.
  */
@@ -30699,33 +30644,7 @@ exports.javascriptURL = /^(?:javascript|jscript|ecmascript|vbscript|mocha|livesc
 // Catches /* falls through */ comments (ft)
 exports.fallsThrough = /^\s*\/\*\s*falls?\sthrough\s*\*\/\s*$/;
 
-},{}],25:[function(require,module,exports){
-"use strict";
-
-var state = {
-	syntax: {},
-
-	reset: function () {
-		this.tokens = {
-			prev: null,
-			next: null,
-			curr: null
-		};
-
-		this.option = {};
-		this.ignored = {};
-		this.directive = {};
-		this.jsonMode = false;
-		this.jsonWarnings = [];
-		this.lines = [];
-		this.tab = "";
-		this.cache = {}; // Node.JS doesn't have Map. Sniff.
-	}
-};
-
-exports.state = state;
-
-},{}],26:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 "use strict";
 
 exports.register = function (linter) {
@@ -30897,6 +30816,32 @@ exports.register = function (linter) {
 		}
 	});
 };
+},{}],25:[function(require,module,exports){
+"use strict";
+
+var state = {
+	syntax: {},
+
+	reset: function () {
+		this.tokens = {
+			prev: null,
+			next: null,
+			curr: null
+		};
+
+		this.option = {};
+		this.ignored = {};
+		this.directive = {};
+		this.jsonMode = false;
+		this.jsonWarnings = [];
+		this.lines = [];
+		this.tab = "";
+		this.cache = {}; // Node.JS doesn't have Map. Sniff.
+	}
+};
+
+exports.state = state;
+
 },{}],12:[function(require,module,exports){
 var global=self;/*
   Copyright (C) 2012-2013 Yusuke Suzuki <utatane.tea@gmail.com>
@@ -32964,7 +32909,7 @@ var global=self;/*
 }());
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{"./package.json":20,"estraverse":27,"source-map":28}],9:[function(require,module,exports){
+},{"./package.json":19,"estraverse":26,"source-map":27}],8:[function(require,module,exports){
 (function() {
   var revalidator;
 
@@ -33025,7 +32970,7 @@ var global=self;/*
 
 }).call(this);
 
-},{"revalidator":29}],27:[function(require,module,exports){
+},{"revalidator":28}],26:[function(require,module,exports){
 /*
   Copyright (C) 2012-2013 Yusuke Suzuki <utatane.tea@gmail.com>
   Copyright (C) 2012 Ariya Hidayat <ariya.hidayat@gmail.com>
@@ -33705,7 +33650,7 @@ var global=self;/*
 }));
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{}],14:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 /*******************************************************************************
  * Copyright (c) 2012 IBM Corporation.
  * All rights reserved. This program and the accompanying materials
@@ -33887,7 +33832,7 @@ var global=self;/*
     defconstructor(p, signatures[p]);
 //});
 
-},{"./position":18}],16:[function(require,module,exports){
+},{"./position":18}],15:[function(require,module,exports){
 /*******************************************************************************
  * Copyright (c) 2012 IBM Corporation.
  * All rights reserved. This program and the accompanying materials
@@ -33935,7 +33880,7 @@ var global=self;/*
   exports.getDeclName = getDeclName;
 //});
 
-},{"../../common/lib/ast":14}],17:[function(require,module,exports){
+},{"../../common/lib/ast":13}],16:[function(require,module,exports){
 /*******************************************************************************
  * Copyright (c) 2012 IBM Corporation.
  * All rights reserved. This program and the accompanying materials
@@ -34064,7 +34009,7 @@ var global=self;/*
   exports.WithScope = WithScope;
 //});
 
-},{"./decls":16}],11:[function(require,module,exports){
+},{"./decls":15}],10:[function(require,module,exports){
 /*!
  * JSHint, by JSHint Community.
  *
@@ -38927,7 +38872,7 @@ if (typeof exports === "object" && exports) {
 	exports.JSHINT = JSHINT;
 }
 
-},{"./lex.js":31,"./messages.js":30,"./reg.js":24,"./state.js":25,"./style.js":26,"./vars.js":23,"console-browserify":33,"events":22,"underscore":32}],29:[function(require,module,exports){
+},{"./lex.js":30,"./messages.js":29,"./reg.js":23,"./state.js":25,"./style.js":24,"./vars.js":22,"console-browserify":32,"events":21,"underscore":31}],28:[function(require,module,exports){
 (function (exports) {
   exports.validate = validate;
   exports.mixin = mixin;
@@ -39338,7 +39283,7 @@ if (typeof exports === "object" && exports) {
 
 })(typeof module !== 'undefined' ? module.exports : (window.json = window.json || {}));
 
-},{}],32:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 //     Underscore.js 1.4.4
 //     http://underscorejs.org
 //     (c) 2009-2013 Jeremy Ashkenas, DocumentCloud Inc.
@@ -40566,7 +40511,7 @@ if (typeof exports === "object" && exports) {
 
 }).call(this);
 
-},{}],28:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 /*
  * Copyright 2009-2011 Mozilla Foundation and contributors
  * Licensed under the New BSD license. See LICENSE.txt or:
@@ -40576,7 +40521,7 @@ exports.SourceMapGenerator = require('./source-map/source-map-generator').Source
 exports.SourceMapConsumer = require('./source-map/source-map-consumer').SourceMapConsumer;
 exports.SourceNode = require('./source-map/source-node').SourceNode;
 
-},{"./source-map/source-map-consumer":35,"./source-map/source-map-generator":34,"./source-map/source-node":36}],30:[function(require,module,exports){
+},{"./source-map/source-map-consumer":34,"./source-map/source-map-generator":33,"./source-map/source-node":35}],29:[function(require,module,exports){
 "use strict";
 
 var _ = require("underscore");
@@ -40796,7 +40741,7 @@ _.each(info, function (desc, code) {
 	exports.info[code] = { code: code, desc: desc };
 });
 
-},{"underscore":32}],31:[function(require,module,exports){
+},{"underscore":31}],30:[function(require,module,exports){
 /*
  * Lexical analysis and token construction.
  */
@@ -42491,7 +42436,7 @@ Lexer.prototype = {
 
 exports.Lexer = Lexer;
 
-},{"./reg.js":24,"./state.js":25,"events":22,"underscore":32}],33:[function(require,module,exports){
+},{"./reg.js":23,"./state.js":25,"events":21,"underscore":31}],32:[function(require,module,exports){
 var global=self;/*global window, global*/
 var util = require("util")
 var assert = require("assert")
@@ -42578,7 +42523,7 @@ function assert(expression) {
     }
 }
 
-},{"assert":38,"util":37}],37:[function(require,module,exports){
+},{"assert":37,"util":36}],36:[function(require,module,exports){
 var events = require('events');
 
 exports.isArray = isArray;
@@ -42925,7 +42870,7 @@ exports.format = function(f) {
   return str;
 };
 
-},{"events":22}],38:[function(require,module,exports){
+},{"events":21}],37:[function(require,module,exports){
 // UTILITY
 var util = require('util');
 var Buffer = require("buffer").Buffer;
@@ -43239,7 +43184,7 @@ assert.doesNotThrow = function(block, /*optional*/error, /*optional*/message) {
 
 assert.ifError = function(err) { if (err) {throw err;}};
 
-},{"buffer":39,"util":37}],34:[function(require,module,exports){
+},{"buffer":38,"util":36}],33:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -43622,7 +43567,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./array-set":42,"./base64-vlq":40,"./util":41,"amdefine":43}],35:[function(require,module,exports){
+},{"./array-set":41,"./base64-vlq":39,"./util":40,"amdefine":42}],34:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -44065,7 +44010,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./array-set":42,"./base64-vlq":40,"./binary-search":44,"./util":41,"amdefine":43}],36:[function(require,module,exports){
+},{"./array-set":41,"./base64-vlq":39,"./binary-search":43,"./util":40,"amdefine":42}],35:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -44420,7 +44365,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./source-map-generator":34,"./util":41,"amdefine":43}],45:[function(require,module,exports){
+},{"./source-map-generator":33,"./util":40,"amdefine":42}],44:[function(require,module,exports){
 exports.readIEEE754 = function(buffer, offset, isBE, mLen, nBytes) {
   var e, m,
       eLen = nBytes * 8 - mLen - 1,
@@ -44506,7 +44451,7 @@ exports.writeIEEE754 = function(buffer, value, offset, isBE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128;
 };
 
-},{}],39:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 var assert = require('assert');
 exports.Buffer = Buffer;
 exports.SlowBuffer = Buffer;
@@ -45589,7 +45534,7 @@ Buffer.prototype.writeDoubleBE = function(value, offset, noAssert) {
   writeDouble(this, value, offset, true, noAssert);
 };
 
-},{"./buffer_ieee754":45,"assert":38,"base64-js":46}],43:[function(require,module,exports){
+},{"./buffer_ieee754":44,"assert":37,"base64-js":45}],42:[function(require,module,exports){
 var process=require("__browserify_process"),__filename="/../node_modules/escodegen/node_modules/source-map/node_modules/amdefine/amdefine.js";/** vim: et:ts=4:sw=4:sts=4
  * @license amdefine 0.0.8 Copyright (c) 2011, The Dojo Foundation All Rights Reserved.
  * Available via the MIT or new BSD license.
@@ -45890,7 +45835,7 @@ function amdefine(module, requireFn) {
 
 module.exports = amdefine;
 
-},{"__browserify_process":21,"path":47}],46:[function(require,module,exports){
+},{"__browserify_process":20,"path":46}],45:[function(require,module,exports){
 (function (exports) {
 	'use strict';
 
@@ -45976,7 +45921,7 @@ module.exports = amdefine;
 	module.exports.fromByteArray = uint8ToBase64;
 }());
 
-},{}],40:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -46122,7 +46067,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./base64":48,"amdefine":43}],41:[function(require,module,exports){
+},{"./base64":47,"amdefine":42}],40:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -46241,7 +46186,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"amdefine":43}],42:[function(require,module,exports){
+},{"amdefine":42}],41:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -46339,7 +46284,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./util":41,"amdefine":43}],44:[function(require,module,exports){
+},{"./util":40,"amdefine":42}],43:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -46422,7 +46367,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"amdefine":43}],47:[function(require,module,exports){
+},{"amdefine":42}],46:[function(require,module,exports){
 var process=require("__browserify_process");function filter (xs, fn) {
     var res = [];
     for (var i = 0; i < xs.length; i++) {
@@ -46601,7 +46546,7 @@ exports.relative = function(from, to) {
 
 exports.sep = '/';
 
-},{"__browserify_process":21}],48:[function(require,module,exports){
+},{"__browserify_process":20}],47:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -46645,5 +46590,5 @@ define(function (require, exports, module) {
 
 });
 
-},{"amdefine":43}]},{},[5])
+},{"amdefine":42}]},{},[4])
 ;

@@ -25,8 +25,9 @@ module.exports.checkThisKeywords = checkThisKeywords = (node) ->
   else if node.type is S.CallExpression
     v = node.callee.name
     if v and not @vars[v] and not @options.global[v]
-      error = id: "MissingThis", message: "Missing `this.` keyword; should be `this.#{v}`.", hint: "There is no function `#{v}`, but `this` has a method `#{v}`."
-      problem = new problems.UserCodeProblem error, @raw, @, 'aether', ''
+      problem = new problems.TranspileProblem @, 'aether', 'MissingThis', {}, '', ''  # TODO: last args
+      problem.message = "Missing `this.` keyword; should be `this.#{v}`."
+      problem.hint = "There is no function `#{v}`, but `this` has a method `#{v}`."
       @addProblem problem
       if not @options.requiresThis
         node.update "this.#{node.source()}"

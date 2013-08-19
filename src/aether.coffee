@@ -9,7 +9,6 @@ escodegen = require 'escodegen'
 defaults = require './defaults'
 problems = require './problems'
 execution = require './execution'
-errors = require './errors'
 morph = require './morph'
 transforms = require './transforms'
 
@@ -19,7 +18,6 @@ module.exports = class Aether
   @defaults: defaults
   @problems: problems.problems
   @execution: execution
-  @errors: errors
   constructor: (options) ->
     @originalOptions = _.cloneDeep options
     options ?= {}
@@ -28,7 +26,7 @@ module.exports = class Aether
       options.problems = _.merge _.cloneDeep(Aether.problems), options.problems
 
     optionsValidation = optionsValidator options
-    throw new Error("Options array is not valid: " + JSON.stringify(optionsValidation.errors,null,4)) if not optionsValidation.valid
+    throw new Error("Options array is not valid: " + JSON.stringify(optionsValidation.errors, null, 4)) if not optionsValidation.valid
 
     @options = _.merge _.cloneDeep(Aether.defaults), options
     @reset()
@@ -74,6 +72,7 @@ module.exports = class Aether
     return if problem.level is "ignore"
     #console.log "found problem:", problem.serialize()
     (problems ? @problems)[problem.level + "s"].push problem
+    problem
 
   wrap: (rawCode) ->
     @wrappedCodePrefix ?=
@@ -97,7 +96,7 @@ module.exports = class Aether
     jshintGlobals = _.zipObject jshintGlobals, (false for g in jshintGlobals)  # JSHint expects {key: writable} globals
     jshintSuccess = jshint(wrappedCode, jshintOptions, jshintGlobals)
     for error in jshint.errors
-      @addProblem new problems.UserCodeProblem(error, wrappedCode, @, 'jshint', @wrappedCodePrefix), lintProblems
+      @addProblem new problems.TranspileProblem(@, 'jshint', error.code, error, {}, wrappedCode, @wrappedCodePrefix), lintProblems
 
     lintProblems
 
@@ -114,19 +113,6 @@ module.exports = class Aether
     func = @createFunction()
     func = _.bind func, @options.thisValue if @options.thisValue
     func
-
-  purifyError: (error, userInfo) ->
-    # Fill in the context and attach to our list of errors
-    # TODO: change it into a RuntimeError (UserCodeProblem) instead of the old UserCodeError
-    errorPos = Aether.errors.UserCodeError.getAnonymousErrorPosition error
-    errorMessage = Aether.errors.UserCodeError.explainErrorMessage error#, @  # TODO: preserve thang explanation in message somehow
-    userInfo ?= {}
-    userInfo.lineNumber ?= if errorPos.lineNumber? then errorPos.lineNumber - 2 else undefined
-    userInfo.column ?= errorPos.column
-    pureError = new Aether.errors.UserCodeError errorMessage, error.level ? "error", userInfo
-    @addProblem pureError.serialize()
-    #console.log "Purified UserCodeError:", pureError.serialize()
-    pureError
 
   getAllProblems: ->
     _.flatten _.values @problems
@@ -173,7 +159,7 @@ module.exports = class Aether
       transformedCode = morph wrappedCode, (_.bind t, @ for t in preNormalizationTransforms)
       transformedAST = esprima.parse(transformedCode, loc: true, range: true, raw: true, comment: true, tolerant: true)
     catch error
-      problem = new problems.UserCodeProblem error, wrappedCode, @, 'esprima', ''
+      problem = new problems.TranspileProblem @, 'esprima', error.id, error, {}, wrappedCode, ''
       if problem.level in ["ignore", "info", "warning"]
         console.log "Esprima can't survive", problem.serialize(), "at level", problem.level
         problem.level = "error"
