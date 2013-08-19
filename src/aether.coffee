@@ -5,6 +5,7 @@ esprima = require 'esprima'  # getting our Esprima Harmony
 jshint = require('jshint').JSHINT
 normalizer = require 'JS_WALA/normalizer/lib/normalizer'
 escodegen = require 'escodegen'
+#infer = require 'tern/lib/infer'  # Not enough time to figure out how to integrate this yet
 
 defaults = require './defaults'
 problems = require './problems'
@@ -16,14 +17,14 @@ optionsValidator = require './validators/options'
 
 module.exports = class Aether
   @defaults: defaults
-  @problems: problems.problems
+  @problems: problems
   @execution: execution
   constructor: (options) ->
     @originalOptions = _.cloneDeep options
     options ?= {}
     options.problems ?= {}
     unless options.excludeDefaultProblems
-      options.problems = _.merge _.cloneDeep(Aether.problems), options.problems
+      options.problems = _.merge _.cloneDeep(Aether.problems.problems), options.problems
 
     optionsValidation = optionsValidator options
     throw new Error("Options array is not valid: " + JSON.stringify(optionsValidation.errors, null, 4)) if not optionsValidation.valid
@@ -153,6 +154,13 @@ module.exports = class Aether
     wrappedCode = @wrap preprocessedCode
     @vars = {}  # TODO: add in flow analysis
     @methodLineNumbers = ([] for i in preprocessedCode.split('\n'))  # TODO: add in flow analysis
+
+    ## Trying out tern's inference: http://ternjs.net/doc/manual.html#infer
+    # Actually, I have no idea how to get useful data out of this
+    #context = new infer.Context([])
+    #infer.withContext context, =>
+    #  ternAST = infer.parse(wrappedCode)
+    #  infer.analyze ternAST, @options.functionName
 
     preNormalizationTransforms = [transforms.checkThisKeywords, transforms.checkIncompleteMembers]
     try

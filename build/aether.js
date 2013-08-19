@@ -21124,6 +21124,77 @@ var traceur = (function() {
 
 },{}],2:[function(require,module,exports){
 (function() {
+  var execution;
+
+  module.exports = execution = {
+    ArrayExpression: 1,
+    ArrayPattern: 1,
+    ArrowFunctionExpression: 1,
+    AssignmentExpression: 1,
+    BinaryExpression: 1,
+    BlockStatement: 1,
+    BreakStatement: 1,
+    CallExpression: 1,
+    CatchClause: 1,
+    ClassBody: 1,
+    ClassDeclaration: 1,
+    ClassExpression: 1,
+    ClassHeritage: 1,
+    ComprehensionBlock: 1,
+    ComprehensionExpression: 1,
+    ConditionalExpression: 1,
+    ContinueStatement: 1,
+    DebuggerStatement: 1,
+    DoWhileStatement: 1,
+    EmptyStatement: 1,
+    ExportDeclaration: 1,
+    ExportBatchSpecifier: 1,
+    ExportSpecifier: 1,
+    ExpressionStatement: 1,
+    ForInStatement: 1,
+    ForOfStatement: 1,
+    ForStatement: 1,
+    FunctionDeclaration: 1,
+    FunctionExpression: 1,
+    Identifier: 1,
+    IfStatement: 1,
+    ImportDeclaration: 1,
+    ImportSpecifier: 1,
+    LabeledStatement: 1,
+    Literal: 1,
+    LogicalExpression: 1,
+    MemberExpression: 1,
+    MethodDefinition: 1,
+    ModuleDeclaration: 1,
+    NewExpression: 1,
+    ObjectExpression: 1,
+    ObjectPattern: 1,
+    Program: 1,
+    Property: 1,
+    ReturnStatement: 1,
+    SequenceExpression: 1,
+    SpreadElement: 1,
+    SwitchCase: 1,
+    SwitchStatement: 1,
+    TaggedTemplateExpression: 1,
+    TemplateElement: 1,
+    TemplateLiteral: 1,
+    ThisExpression: 1,
+    ThrowStatement: 1,
+    TryStatement: 1,
+    UnaryExpression: 1,
+    UpdateExpression: 1,
+    VariableDeclaration: 1,
+    VariableDeclarator: 1,
+    WhileStatement: 1,
+    WithStatement: 1,
+    YieldExpression: 1
+  };
+
+}).call(this);
+
+},{}],3:[function(require,module,exports){
+(function() {
   var RuntimeProblem, TranspileProblem, UserCodeProblem, commonMethods, problems,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -21221,7 +21292,7 @@ var traceur = (function() {
     __extends(RuntimeProblem, _super);
 
     function RuntimeProblem(aether, error, userInfo) {
-      var kind, lineNumber,
+      var kind, lineNumber, _ref,
         _this = this;
       this.userInfo = userInfo;
       kind = error.name;
@@ -21230,9 +21301,10 @@ var traceur = (function() {
       if (this.userInfo == null) {
         this.userInfo = {};
       }
-      this.message = RuntimeError.explainErrorMessage(error);
-      this.ranges = [RuntimeProblem.getAnonymousErrorRange(error)];
-      if (this.ranges) {
+      this.message = RuntimeProblem.explainErrorMessage(error);
+      this.ranges = RuntimeProblem.getAnonymousErrorRanges(error);
+      if ((_ref = this.ranges) != null ? _ref.length : void 0) {
+        console.log("Got ranges:", this.ranges);
         lineNumber = this.ranges[0][0][0];
         if (this.message.search(/^Line \d+/) !== -1) {
           this.message = this.message.replace(/^Line \d+/, function(match, n) {
@@ -21244,10 +21316,10 @@ var traceur = (function() {
       }
     }
 
-    RuntimeProblem.getAnonymousErrorRange = function(error) {
+    RuntimeProblem.getAnonymousErrorRanges = function(error) {
       var chromeVersion, column, i, line, lineNumber, lines, stack, _i, _len, _ref, _ref1, _ref2;
       if (error.lineNumber) {
-        return [[error.lineNumber, error.column], [error.lineNumber, error.column + 1]];
+        return [[[error.lineNumber, error.column], [error.lineNumber, error.column + 1]]];
       }
       stack = error.stack;
       if (!stack) {
@@ -21271,7 +21343,7 @@ var traceur = (function() {
         if (chromeVersion >= 28) {
           lineNumber -= 1;
         }
-        return [[lineNumber, column], [lineNumber, column + 1]];
+        return [[[lineNumber, column], [lineNumber, column + 1]]];
       }
       return null;
     };
@@ -22265,77 +22337,6 @@ var traceur = (function() {
 
 }).call(this);
 
-},{}],3:[function(require,module,exports){
-(function() {
-  var execution;
-
-  module.exports = execution = {
-    ArrayExpression: 1,
-    ArrayPattern: 1,
-    ArrowFunctionExpression: 1,
-    AssignmentExpression: 1,
-    BinaryExpression: 1,
-    BlockStatement: 1,
-    BreakStatement: 1,
-    CallExpression: 1,
-    CatchClause: 1,
-    ClassBody: 1,
-    ClassDeclaration: 1,
-    ClassExpression: 1,
-    ClassHeritage: 1,
-    ComprehensionBlock: 1,
-    ComprehensionExpression: 1,
-    ConditionalExpression: 1,
-    ContinueStatement: 1,
-    DebuggerStatement: 1,
-    DoWhileStatement: 1,
-    EmptyStatement: 1,
-    ExportDeclaration: 1,
-    ExportBatchSpecifier: 1,
-    ExportSpecifier: 1,
-    ExpressionStatement: 1,
-    ForInStatement: 1,
-    ForOfStatement: 1,
-    ForStatement: 1,
-    FunctionDeclaration: 1,
-    FunctionExpression: 1,
-    Identifier: 1,
-    IfStatement: 1,
-    ImportDeclaration: 1,
-    ImportSpecifier: 1,
-    LabeledStatement: 1,
-    Literal: 1,
-    LogicalExpression: 1,
-    MemberExpression: 1,
-    MethodDefinition: 1,
-    ModuleDeclaration: 1,
-    NewExpression: 1,
-    ObjectExpression: 1,
-    ObjectPattern: 1,
-    Program: 1,
-    Property: 1,
-    ReturnStatement: 1,
-    SequenceExpression: 1,
-    SpreadElement: 1,
-    SwitchCase: 1,
-    SwitchStatement: 1,
-    TaggedTemplateExpression: 1,
-    TemplateElement: 1,
-    TemplateLiteral: 1,
-    ThisExpression: 1,
-    ThrowStatement: 1,
-    TryStatement: 1,
-    UnaryExpression: 1,
-    UpdateExpression: 1,
-    VariableDeclaration: 1,
-    VariableDeclarator: 1,
-    WhileStatement: 1,
-    WithStatement: 1,
-    YieldExpression: 1
-  };
-
-}).call(this);
-
 },{}],4:[function(require,module,exports){
 var global=self;(function() {
   var Aether, defaults, escodegen, esprima, execution, jshint, morph, normalizer, optionsValidator, problems, traceur, transforms, _, _ref, _ref1, _ref2, _ref3, _ref4, _ref5;
@@ -22367,7 +22368,7 @@ var global=self;(function() {
   module.exports = Aether = (function() {
     Aether.defaults = defaults;
 
-    Aether.problems = problems.problems;
+    Aether.problems = problems;
 
     Aether.execution = execution;
 
@@ -22381,7 +22382,7 @@ var global=self;(function() {
         options.problems = {};
       }
       if (!options.excludeDefaultProblems) {
-        options.problems = _.merge(_.cloneDeep(Aether.problems), options.problems);
+        options.problems = _.merge(_.cloneDeep(Aether.problems.problems), options.problems);
       }
       optionsValidation = optionsValidator(options);
       if (!optionsValidation.valid) {
@@ -22725,7 +22726,7 @@ var global=self;(function() {
 
 }).call(this);
 
-},{"./defaults":5,"./execution":3,"./morph":6,"./problems":2,"./transforms":7,"./validators/options":8,"JS_WALA/normalizer/lib/normalizer":9,"escodegen":12,"esprima":11,"jshint":10,"lodash":1,"traceur":1}],5:[function(require,module,exports){
+},{"./defaults":5,"./execution":2,"./morph":6,"./problems":3,"./transforms":7,"./validators/options":8,"JS_WALA/normalizer/lib/normalizer":9,"escodegen":12,"esprima":10,"jshint":11,"lodash":1,"traceur":1}],5:[function(require,module,exports){
 (function() {
   var defaults, execution;
 
@@ -22754,7 +22755,7 @@ var global=self;(function() {
 
 }).call(this);
 
-},{"./execution":3}],11:[function(require,module,exports){
+},{"./execution":2}],10:[function(require,module,exports){
 /*
   Copyright (C) 2013 Ariya Hidayat <ariya.hidayat@gmail.com>
   Copyright (C) 2013 Thaddee Tyl <thaddee.tyl@gmail.com>
@@ -29343,150 +29344,7 @@ parseYieldExpression: true
   exports.normalize = normalize;
 //});
 
-},{"../../common/lib/ast":13,"../../common/lib/position":18,"./cflow":14,"./decls":15,"./scope":16,"./util":17}],14:[function(require,module,exports){
-/*******************************************************************************
- * Copyright (c) 2012 IBM Corporation.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *     IBM Corporation - initial API and implementation
- *******************************************************************************/
-
-/**
- * Helper function for determining whether a piece of code may terminate normally, or whether
- * it always returns/breaks/throws an exception.
- */
-//if(typeof define !== 'function') {
-//  var define = require('amdefine')(module);
-//}
-//
-//define(function(require, exports) {
-  var mayCompleteNormally = exports.mayCompleteNormally = function(nd) {
-    switch(nd.type) {
-    case 'ReturnStatement':
-    case 'BreakStatement':
-    case 'ContinueStatement':
-    case 'ThrowStatement':
-      return false;
-    case 'IfStatement':
-      return mayCompleteNormally(nd.consequent) || nd.alternate && mayCompleteNormally(nd.alternate);
-    case 'WithStatement':
-      return mayCompleteNormally(nd.body);
-    case 'BlockStatement':
-      for(var i=0;i<nd.body.length;++i)
-        if(!mayCompleteNormally(nd.body[i]))
-          return false;
-      return true;
-    default:
-      return true;
-    }
-  };
-//});
-
-},{}],17:[function(require,module,exports){
-/*******************************************************************************
- * Copyright (c) 2012 IBM Corporation.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *     IBM Corporation - initial API and implementation
- *******************************************************************************/
-
-/**
- * Utility methods. 
- */
-//if(typeof define !== 'function') {
-//  var define = require('amdefine')(module);
-//}
-//
-//define(function(require, exports) {
-  var flatmap = function(fn, thisArg) {  
-    var res = [];
-    for(var i=0;i<this.length;++i) {
-      var r = fn.call(thisArg, this[i], i, this);
-      for(var j=0;j<r.length;++j)
-        res[res.length] = r[j];
-    }
-    return res;
-  };
-  if(typeof Object.defineProperty !== 'undefined')
-    Object.defineProperty(Array.prototype, 'flatmap', {
-      value: flatmap,
-      enumerable: false
-    });
-  else
-    Array.prototype.flatmap = flatmap;
-//});
-
-},{}],18:[function(require,module,exports){
-/*******************************************************************************
- * Copyright (c) 2012 IBM Corporation.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *     IBM Corporation - initial API and implementation
- *******************************************************************************/
-
-/**
- * ADT for representing source positions identified by a URL, a start line, a start
- * offset (i.e., character offset from the beginning of the file), an end line, and
- * an end offset.
- * 
- * The start line corresponds to Esprima's loc.start.line, the start offset to
- * range[0], and similar for the end line and end offset.
- * 
- * For compatibility with Esprima, line numbering should normally be 1-based.
- */
-
-//if(typeof define !== 'function') {
-//  var define = require('amdefine')(module);
-//}
-//
-//define(function(require, exports) {
-  function Position(url, start_line, start_offset, end_line, end_offset) {
-    this.url = url || "<unknown>";
-    this.start_line = start_line;
-    this.start_offset = start_offset;
-    this.end_line = end_line;
-    this.end_offset = end_offset;
-  }
-  
-  Position.prototype.toString = function(short) {
-    if(short)
-      return this.start_line + ":" + this.start_offset;
-    return this.url + "/" + this.start_line + ":" + this.start_offset + "-" + this.end_line + ":" + this.end_offset;
-  };
-  
-  Position.prototype.clone = function() {
-    return new Position(this.url, this.start_line, this.start_offset, this.end_line, this.end_offset);
-  };
-  
-  Position.prototype.equals = function(o) {
-    if(!(o instanceof Position))
-      return false;
-    return o.url === this.url &&
-           o.start_line === this.start_line &&
-           o.start_offset === this.start_offset &&
-           o.end_line === this.end_line &&
-           o.end_offset === this.end_offset;
-  };
-  
-  var DUMMY_POS = new Position(null, -1, -1, -1, -1);
-  
-  exports.Position = Position;
-  exports.DUMMY_POS = DUMMY_POS;
-//});
-
-},{}],6:[function(require,module,exports){
+},{"../../common/lib/ast":13,"../../common/lib/position":16,"./cflow":14,"./decls":15,"./scope":17,"./util":18}],6:[function(require,module,exports){
 var global=self;(function() {
   var esprima, insertHelpers, morph, _, _ref, _ref1, _ref2;
 
@@ -29557,7 +29415,7 @@ var global=self;(function() {
 
 }).call(this);
 
-},{"esprima":11,"lodash":1}],7:[function(require,module,exports){
+},{"esprima":10,"lodash":1}],7:[function(require,module,exports){
 (function() {
   var S, checkIncompleteMembers, checkThisKeywords, esprima, gatherLineNumbers, getLineNumberForNode, instrumentStatements, possiblyGeneratorifyAncestorFunction, problems, statements, validateReturns, yieldAutomatically, yieldConditionally,
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
@@ -29701,7 +29559,150 @@ var global=self;(function() {
 
 }).call(this);
 
-},{"./problems":2,"esprima":11}],19:[function(require,module,exports){
+},{"./problems":3,"esprima":10}],14:[function(require,module,exports){
+/*******************************************************************************
+ * Copyright (c) 2012 IBM Corporation.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
+ *******************************************************************************/
+
+/**
+ * Helper function for determining whether a piece of code may terminate normally, or whether
+ * it always returns/breaks/throws an exception.
+ */
+//if(typeof define !== 'function') {
+//  var define = require('amdefine')(module);
+//}
+//
+//define(function(require, exports) {
+  var mayCompleteNormally = exports.mayCompleteNormally = function(nd) {
+    switch(nd.type) {
+    case 'ReturnStatement':
+    case 'BreakStatement':
+    case 'ContinueStatement':
+    case 'ThrowStatement':
+      return false;
+    case 'IfStatement':
+      return mayCompleteNormally(nd.consequent) || nd.alternate && mayCompleteNormally(nd.alternate);
+    case 'WithStatement':
+      return mayCompleteNormally(nd.body);
+    case 'BlockStatement':
+      for(var i=0;i<nd.body.length;++i)
+        if(!mayCompleteNormally(nd.body[i]))
+          return false;
+      return true;
+    default:
+      return true;
+    }
+  };
+//});
+
+},{}],16:[function(require,module,exports){
+/*******************************************************************************
+ * Copyright (c) 2012 IBM Corporation.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
+ *******************************************************************************/
+
+/**
+ * ADT for representing source positions identified by a URL, a start line, a start
+ * offset (i.e., character offset from the beginning of the file), an end line, and
+ * an end offset.
+ * 
+ * The start line corresponds to Esprima's loc.start.line, the start offset to
+ * range[0], and similar for the end line and end offset.
+ * 
+ * For compatibility with Esprima, line numbering should normally be 1-based.
+ */
+
+//if(typeof define !== 'function') {
+//  var define = require('amdefine')(module);
+//}
+//
+//define(function(require, exports) {
+  function Position(url, start_line, start_offset, end_line, end_offset) {
+    this.url = url || "<unknown>";
+    this.start_line = start_line;
+    this.start_offset = start_offset;
+    this.end_line = end_line;
+    this.end_offset = end_offset;
+  }
+  
+  Position.prototype.toString = function(short) {
+    if(short)
+      return this.start_line + ":" + this.start_offset;
+    return this.url + "/" + this.start_line + ":" + this.start_offset + "-" + this.end_line + ":" + this.end_offset;
+  };
+  
+  Position.prototype.clone = function() {
+    return new Position(this.url, this.start_line, this.start_offset, this.end_line, this.end_offset);
+  };
+  
+  Position.prototype.equals = function(o) {
+    if(!(o instanceof Position))
+      return false;
+    return o.url === this.url &&
+           o.start_line === this.start_line &&
+           o.start_offset === this.start_offset &&
+           o.end_line === this.end_line &&
+           o.end_offset === this.end_offset;
+  };
+  
+  var DUMMY_POS = new Position(null, -1, -1, -1, -1);
+  
+  exports.Position = Position;
+  exports.DUMMY_POS = DUMMY_POS;
+//});
+
+},{}],18:[function(require,module,exports){
+/*******************************************************************************
+ * Copyright (c) 2012 IBM Corporation.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
+ *******************************************************************************/
+
+/**
+ * Utility methods. 
+ */
+//if(typeof define !== 'function') {
+//  var define = require('amdefine')(module);
+//}
+//
+//define(function(require, exports) {
+  var flatmap = function(fn, thisArg) {  
+    var res = [];
+    for(var i=0;i<this.length;++i) {
+      var r = fn.call(thisArg, this[i], i, this);
+      for(var j=0;j<r.length;++j)
+        res[res.length] = r[j];
+    }
+    return res;
+  };
+  if(typeof Object.defineProperty !== 'undefined')
+    Object.defineProperty(Array.prototype, 'flatmap', {
+      value: flatmap,
+      enumerable: false
+    });
+  else
+    Array.prototype.flatmap = flatmap;
+//});
+
+},{}],19:[function(require,module,exports){
 module.exports={
   "name": "escodegen",
   "description": "ECMAScript code generator",
@@ -29769,256 +29770,6 @@ module.exports={
 }
 
 },{}],20:[function(require,module,exports){
-// shim for using process in browser
-
-var process = module.exports = {};
-
-process.nextTick = (function () {
-    var canSetImmediate = typeof window !== 'undefined'
-    && window.setImmediate;
-    var canPost = typeof window !== 'undefined'
-    && window.postMessage && window.addEventListener
-    ;
-
-    if (canSetImmediate) {
-        return function (f) { return window.setImmediate(f) };
-    }
-
-    if (canPost) {
-        var queue = [];
-        window.addEventListener('message', function (ev) {
-            if (ev.source === window && ev.data === 'process-tick') {
-                ev.stopPropagation();
-                if (queue.length > 0) {
-                    var fn = queue.shift();
-                    fn();
-                }
-            }
-        }, true);
-
-        return function nextTick(fn) {
-            queue.push(fn);
-            window.postMessage('process-tick', '*');
-        };
-    }
-
-    return function nextTick(fn) {
-        setTimeout(fn, 0);
-    };
-})();
-
-process.title = 'browser';
-process.browser = true;
-process.env = {};
-process.argv = [];
-
-process.binding = function (name) {
-    throw new Error('process.binding is not supported');
-}
-
-// TODO(shtylman)
-process.cwd = function () { return '/' };
-process.chdir = function (dir) {
-    throw new Error('process.chdir is not supported');
-};
-
-},{}],21:[function(require,module,exports){
-var process=require("__browserify_process");if (!process.EventEmitter) process.EventEmitter = function () {};
-
-var EventEmitter = exports.EventEmitter = process.EventEmitter;
-var isArray = typeof Array.isArray === 'function'
-    ? Array.isArray
-    : function (xs) {
-        return Object.prototype.toString.call(xs) === '[object Array]'
-    }
-;
-function indexOf (xs, x) {
-    if (xs.indexOf) return xs.indexOf(x);
-    for (var i = 0; i < xs.length; i++) {
-        if (x === xs[i]) return i;
-    }
-    return -1;
-}
-
-// By default EventEmitters will print a warning if more than
-// 10 listeners are added to it. This is a useful default which
-// helps finding memory leaks.
-//
-// Obviously not all Emitters should be limited to 10. This function allows
-// that to be increased. Set to zero for unlimited.
-var defaultMaxListeners = 10;
-EventEmitter.prototype.setMaxListeners = function(n) {
-  if (!this._events) this._events = {};
-  this._events.maxListeners = n;
-};
-
-
-EventEmitter.prototype.emit = function(type) {
-  // If there is no 'error' event listener then throw.
-  if (type === 'error') {
-    if (!this._events || !this._events.error ||
-        (isArray(this._events.error) && !this._events.error.length))
-    {
-      if (arguments[1] instanceof Error) {
-        throw arguments[1]; // Unhandled 'error' event
-      } else {
-        throw new Error("Uncaught, unspecified 'error' event.");
-      }
-      return false;
-    }
-  }
-
-  if (!this._events) return false;
-  var handler = this._events[type];
-  if (!handler) return false;
-
-  if (typeof handler == 'function') {
-    switch (arguments.length) {
-      // fast cases
-      case 1:
-        handler.call(this);
-        break;
-      case 2:
-        handler.call(this, arguments[1]);
-        break;
-      case 3:
-        handler.call(this, arguments[1], arguments[2]);
-        break;
-      // slower
-      default:
-        var args = Array.prototype.slice.call(arguments, 1);
-        handler.apply(this, args);
-    }
-    return true;
-
-  } else if (isArray(handler)) {
-    var args = Array.prototype.slice.call(arguments, 1);
-
-    var listeners = handler.slice();
-    for (var i = 0, l = listeners.length; i < l; i++) {
-      listeners[i].apply(this, args);
-    }
-    return true;
-
-  } else {
-    return false;
-  }
-};
-
-// EventEmitter is defined in src/node_events.cc
-// EventEmitter.prototype.emit() is also defined there.
-EventEmitter.prototype.addListener = function(type, listener) {
-  if ('function' !== typeof listener) {
-    throw new Error('addListener only takes instances of Function');
-  }
-
-  if (!this._events) this._events = {};
-
-  // To avoid recursion in the case that type == "newListeners"! Before
-  // adding it to the listeners, first emit "newListeners".
-  this.emit('newListener', type, listener);
-
-  if (!this._events[type]) {
-    // Optimize the case of one listener. Don't need the extra array object.
-    this._events[type] = listener;
-  } else if (isArray(this._events[type])) {
-
-    // Check for listener leak
-    if (!this._events[type].warned) {
-      var m;
-      if (this._events.maxListeners !== undefined) {
-        m = this._events.maxListeners;
-      } else {
-        m = defaultMaxListeners;
-      }
-
-      if (m && m > 0 && this._events[type].length > m) {
-        this._events[type].warned = true;
-        console.error('(node) warning: possible EventEmitter memory ' +
-                      'leak detected. %d listeners added. ' +
-                      'Use emitter.setMaxListeners() to increase limit.',
-                      this._events[type].length);
-        console.trace();
-      }
-    }
-
-    // If we've already got an array, just append.
-    this._events[type].push(listener);
-  } else {
-    // Adding the second element, need to change to array.
-    this._events[type] = [this._events[type], listener];
-  }
-
-  return this;
-};
-
-EventEmitter.prototype.on = EventEmitter.prototype.addListener;
-
-EventEmitter.prototype.once = function(type, listener) {
-  var self = this;
-  self.on(type, function g() {
-    self.removeListener(type, g);
-    listener.apply(this, arguments);
-  });
-
-  return this;
-};
-
-EventEmitter.prototype.removeListener = function(type, listener) {
-  if ('function' !== typeof listener) {
-    throw new Error('removeListener only takes instances of Function');
-  }
-
-  // does not use listeners(), so no side effect of creating _events[type]
-  if (!this._events || !this._events[type]) return this;
-
-  var list = this._events[type];
-
-  if (isArray(list)) {
-    var i = indexOf(list, listener);
-    if (i < 0) return this;
-    list.splice(i, 1);
-    if (list.length == 0)
-      delete this._events[type];
-  } else if (this._events[type] === listener) {
-    delete this._events[type];
-  }
-
-  return this;
-};
-
-EventEmitter.prototype.removeAllListeners = function(type) {
-  if (arguments.length === 0) {
-    this._events = {};
-    return this;
-  }
-
-  // does not use listeners(), so no side effect of creating _events[type]
-  if (type && this._events && this._events[type]) this._events[type] = null;
-  return this;
-};
-
-EventEmitter.prototype.listeners = function(type) {
-  if (!this._events) this._events = {};
-  if (!this._events[type]) this._events[type] = [];
-  if (!isArray(this._events[type])) {
-    this._events[type] = [this._events[type]];
-  }
-  return this._events[type];
-};
-
-EventEmitter.listenerCount = function(emitter, type) {
-  var ret;
-  if (!emitter._events || !emitter._events[type])
-    ret = 0;
-  else if (typeof emitter._events[type] === 'function')
-    ret = 1;
-  else
-    ret = emitter._events[type].length;
-  return ret;
-};
-
-},{"__browserify_process":20}],22:[function(require,module,exports){
 // jshint -W001
 
 "use strict";
@@ -30608,7 +30359,257 @@ exports.yui = {
 };
 
 
-},{}],23:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
+// shim for using process in browser
+
+var process = module.exports = {};
+
+process.nextTick = (function () {
+    var canSetImmediate = typeof window !== 'undefined'
+    && window.setImmediate;
+    var canPost = typeof window !== 'undefined'
+    && window.postMessage && window.addEventListener
+    ;
+
+    if (canSetImmediate) {
+        return function (f) { return window.setImmediate(f) };
+    }
+
+    if (canPost) {
+        var queue = [];
+        window.addEventListener('message', function (ev) {
+            if (ev.source === window && ev.data === 'process-tick') {
+                ev.stopPropagation();
+                if (queue.length > 0) {
+                    var fn = queue.shift();
+                    fn();
+                }
+            }
+        }, true);
+
+        return function nextTick(fn) {
+            queue.push(fn);
+            window.postMessage('process-tick', '*');
+        };
+    }
+
+    return function nextTick(fn) {
+        setTimeout(fn, 0);
+    };
+})();
+
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
+}
+
+// TODO(shtylman)
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
+};
+
+},{}],22:[function(require,module,exports){
+var process=require("__browserify_process");if (!process.EventEmitter) process.EventEmitter = function () {};
+
+var EventEmitter = exports.EventEmitter = process.EventEmitter;
+var isArray = typeof Array.isArray === 'function'
+    ? Array.isArray
+    : function (xs) {
+        return Object.prototype.toString.call(xs) === '[object Array]'
+    }
+;
+function indexOf (xs, x) {
+    if (xs.indexOf) return xs.indexOf(x);
+    for (var i = 0; i < xs.length; i++) {
+        if (x === xs[i]) return i;
+    }
+    return -1;
+}
+
+// By default EventEmitters will print a warning if more than
+// 10 listeners are added to it. This is a useful default which
+// helps finding memory leaks.
+//
+// Obviously not all Emitters should be limited to 10. This function allows
+// that to be increased. Set to zero for unlimited.
+var defaultMaxListeners = 10;
+EventEmitter.prototype.setMaxListeners = function(n) {
+  if (!this._events) this._events = {};
+  this._events.maxListeners = n;
+};
+
+
+EventEmitter.prototype.emit = function(type) {
+  // If there is no 'error' event listener then throw.
+  if (type === 'error') {
+    if (!this._events || !this._events.error ||
+        (isArray(this._events.error) && !this._events.error.length))
+    {
+      if (arguments[1] instanceof Error) {
+        throw arguments[1]; // Unhandled 'error' event
+      } else {
+        throw new Error("Uncaught, unspecified 'error' event.");
+      }
+      return false;
+    }
+  }
+
+  if (!this._events) return false;
+  var handler = this._events[type];
+  if (!handler) return false;
+
+  if (typeof handler == 'function') {
+    switch (arguments.length) {
+      // fast cases
+      case 1:
+        handler.call(this);
+        break;
+      case 2:
+        handler.call(this, arguments[1]);
+        break;
+      case 3:
+        handler.call(this, arguments[1], arguments[2]);
+        break;
+      // slower
+      default:
+        var args = Array.prototype.slice.call(arguments, 1);
+        handler.apply(this, args);
+    }
+    return true;
+
+  } else if (isArray(handler)) {
+    var args = Array.prototype.slice.call(arguments, 1);
+
+    var listeners = handler.slice();
+    for (var i = 0, l = listeners.length; i < l; i++) {
+      listeners[i].apply(this, args);
+    }
+    return true;
+
+  } else {
+    return false;
+  }
+};
+
+// EventEmitter is defined in src/node_events.cc
+// EventEmitter.prototype.emit() is also defined there.
+EventEmitter.prototype.addListener = function(type, listener) {
+  if ('function' !== typeof listener) {
+    throw new Error('addListener only takes instances of Function');
+  }
+
+  if (!this._events) this._events = {};
+
+  // To avoid recursion in the case that type == "newListeners"! Before
+  // adding it to the listeners, first emit "newListeners".
+  this.emit('newListener', type, listener);
+
+  if (!this._events[type]) {
+    // Optimize the case of one listener. Don't need the extra array object.
+    this._events[type] = listener;
+  } else if (isArray(this._events[type])) {
+
+    // Check for listener leak
+    if (!this._events[type].warned) {
+      var m;
+      if (this._events.maxListeners !== undefined) {
+        m = this._events.maxListeners;
+      } else {
+        m = defaultMaxListeners;
+      }
+
+      if (m && m > 0 && this._events[type].length > m) {
+        this._events[type].warned = true;
+        console.error('(node) warning: possible EventEmitter memory ' +
+                      'leak detected. %d listeners added. ' +
+                      'Use emitter.setMaxListeners() to increase limit.',
+                      this._events[type].length);
+        console.trace();
+      }
+    }
+
+    // If we've already got an array, just append.
+    this._events[type].push(listener);
+  } else {
+    // Adding the second element, need to change to array.
+    this._events[type] = [this._events[type], listener];
+  }
+
+  return this;
+};
+
+EventEmitter.prototype.on = EventEmitter.prototype.addListener;
+
+EventEmitter.prototype.once = function(type, listener) {
+  var self = this;
+  self.on(type, function g() {
+    self.removeListener(type, g);
+    listener.apply(this, arguments);
+  });
+
+  return this;
+};
+
+EventEmitter.prototype.removeListener = function(type, listener) {
+  if ('function' !== typeof listener) {
+    throw new Error('removeListener only takes instances of Function');
+  }
+
+  // does not use listeners(), so no side effect of creating _events[type]
+  if (!this._events || !this._events[type]) return this;
+
+  var list = this._events[type];
+
+  if (isArray(list)) {
+    var i = indexOf(list, listener);
+    if (i < 0) return this;
+    list.splice(i, 1);
+    if (list.length == 0)
+      delete this._events[type];
+  } else if (this._events[type] === listener) {
+    delete this._events[type];
+  }
+
+  return this;
+};
+
+EventEmitter.prototype.removeAllListeners = function(type) {
+  if (arguments.length === 0) {
+    this._events = {};
+    return this;
+  }
+
+  // does not use listeners(), so no side effect of creating _events[type]
+  if (type && this._events && this._events[type]) this._events[type] = null;
+  return this;
+};
+
+EventEmitter.prototype.listeners = function(type) {
+  if (!this._events) this._events = {};
+  if (!this._events[type]) this._events[type] = [];
+  if (!isArray(this._events[type])) {
+    this._events[type] = [this._events[type]];
+  }
+  return this._events[type];
+};
+
+EventEmitter.listenerCount = function(emitter, type) {
+  var ret;
+  if (!emitter._events || !emitter._events[type])
+    ret = 0;
+  else if (typeof emitter._events[type] === 'function')
+    ret = 1;
+  else
+    ret = emitter._events[type].length;
+  return ret;
+};
+
+},{"__browserify_process":21}],23:[function(require,module,exports){
 /*
  * Regular expressions. Some of these are stupidly long.
  */
@@ -30645,6 +30646,32 @@ exports.javascriptURL = /^(?:javascript|jscript|ecmascript|vbscript|mocha|livesc
 exports.fallsThrough = /^\s*\/\*\s*falls?\sthrough\s*\*\/\s*$/;
 
 },{}],24:[function(require,module,exports){
+"use strict";
+
+var state = {
+	syntax: {},
+
+	reset: function () {
+		this.tokens = {
+			prev: null,
+			next: null,
+			curr: null
+		};
+
+		this.option = {};
+		this.ignored = {};
+		this.directive = {};
+		this.jsonMode = false;
+		this.jsonWarnings = [];
+		this.lines = [];
+		this.tab = "";
+		this.cache = {}; // Node.JS doesn't have Map. Sniff.
+	}
+};
+
+exports.state = state;
+
+},{}],25:[function(require,module,exports){
 "use strict";
 
 exports.register = function (linter) {
@@ -30816,32 +30843,6 @@ exports.register = function (linter) {
 		}
 	});
 };
-},{}],25:[function(require,module,exports){
-"use strict";
-
-var state = {
-	syntax: {},
-
-	reset: function () {
-		this.tokens = {
-			prev: null,
-			next: null,
-			curr: null
-		};
-
-		this.option = {};
-		this.ignored = {};
-		this.directive = {};
-		this.jsonMode = false;
-		this.jsonWarnings = [];
-		this.lines = [];
-		this.tab = "";
-		this.cache = {}; // Node.JS doesn't have Map. Sniff.
-	}
-};
-
-exports.state = state;
-
 },{}],12:[function(require,module,exports){
 var global=self;/*
   Copyright (C) 2012-2013 Yusuke Suzuki <utatane.tea@gmail.com>
@@ -32909,7 +32910,7 @@ var global=self;/*
 }());
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{"./package.json":19,"estraverse":26,"source-map":27}],8:[function(require,module,exports){
+},{"./package.json":19,"estraverse":27,"source-map":26}],8:[function(require,module,exports){
 (function() {
   var revalidator;
 
@@ -32970,7 +32971,7 @@ var global=self;/*
 
 }).call(this);
 
-},{"revalidator":28}],26:[function(require,module,exports){
+},{"revalidator":28}],27:[function(require,module,exports){
 /*
   Copyright (C) 2012-2013 Yusuke Suzuki <utatane.tea@gmail.com>
   Copyright (C) 2012 Ariya Hidayat <ariya.hidayat@gmail.com>
@@ -33650,7 +33651,55 @@ var global=self;/*
 }));
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{}],13:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
+/*******************************************************************************
+ * Copyright (c) 2012 IBM Corporation.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
+ *******************************************************************************/
+
+/**
+ * Utility functions to collect all variable and function declarations in a subtree.
+ */
+//if(typeof define !== 'function') {
+//  var define = require('amdefine')(module);
+//}
+//
+//define(function(require, exports) {
+  var ast = require('../../common/lib/ast');
+
+  function getDeclName(decl) {
+    if(decl.type === 'Identifier')
+      return decl.name;
+    return decl.id.name;
+  }
+
+  function collectDecls(nd, accu) {
+    if(!nd)
+      return accu;
+    
+    if(nd.type === 'FunctionDeclaration') {
+      accu[accu.length] = nd;
+    } else if(nd.type === 'VariableDeclarator') {
+      accu[accu.length] = nd;
+    } else if(nd.type !== 'FunctionExpression') {
+      ast.forEachChild(nd, function(ch) {
+        collectDecls(ch, accu);
+      });
+    }
+    return accu;
+  }
+  
+  exports.collectDecls = collectDecls;
+  exports.getDeclName = getDeclName;
+//});
+
+},{"../../common/lib/ast":13}],13:[function(require,module,exports){
 /*******************************************************************************
  * Copyright (c) 2012 IBM Corporation.
  * All rights reserved. This program and the accompanying materials
@@ -33832,55 +33881,7 @@ var global=self;/*
     defconstructor(p, signatures[p]);
 //});
 
-},{"./position":18}],15:[function(require,module,exports){
-/*******************************************************************************
- * Copyright (c) 2012 IBM Corporation.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *     IBM Corporation - initial API and implementation
- *******************************************************************************/
-
-/**
- * Utility functions to collect all variable and function declarations in a subtree.
- */
-//if(typeof define !== 'function') {
-//  var define = require('amdefine')(module);
-//}
-//
-//define(function(require, exports) {
-  var ast = require('../../common/lib/ast');
-
-  function getDeclName(decl) {
-    if(decl.type === 'Identifier')
-      return decl.name;
-    return decl.id.name;
-  }
-
-  function collectDecls(nd, accu) {
-    if(!nd)
-      return accu;
-    
-    if(nd.type === 'FunctionDeclaration') {
-      accu[accu.length] = nd;
-    } else if(nd.type === 'VariableDeclarator') {
-      accu[accu.length] = nd;
-    } else if(nd.type !== 'FunctionExpression') {
-      ast.forEachChild(nd, function(ch) {
-        collectDecls(ch, accu);
-      });
-    }
-    return accu;
-  }
-  
-  exports.collectDecls = collectDecls;
-  exports.getDeclName = getDeclName;
-//});
-
-},{"../../common/lib/ast":13}],16:[function(require,module,exports){
+},{"./position":16}],17:[function(require,module,exports){
 /*******************************************************************************
  * Copyright (c) 2012 IBM Corporation.
  * All rights reserved. This program and the accompanying materials
@@ -34009,7 +34010,418 @@ var global=self;/*
   exports.WithScope = WithScope;
 //});
 
-},{"./decls":15}],10:[function(require,module,exports){
+},{"./decls":15}],28:[function(require,module,exports){
+(function (exports) {
+  exports.validate = validate;
+  exports.mixin = mixin;
+
+  //
+  // ### function validate (object, schema, options)
+  // #### {Object} object the object to validate.
+  // #### {Object} schema (optional) the JSON Schema to validate against.
+  // #### {Object} options (optional) options controlling the validation
+  //      process. See {@link #validate.defaults) for details.
+  // Validate <code>object</code> against a JSON Schema.
+  // If <code>object</code> is self-describing (i.e. has a
+  // <code>$schema</code> property), it will also be validated
+  // against the referenced schema. [TODO]: This behaviour bay be
+  // suppressed by setting the {@link #validate.options.???}
+  // option to <code>???</code>.[/TODO]
+  //
+  // If <code>schema</code> is not specified, and <code>object</code>
+  // is not self-describing, validation always passes.
+  //
+  // <strong>Note:</strong> in order to pass options but no schema,
+  // <code>schema</code> <em>must</em> be specified in the call to
+  // <code>validate()</code>; otherwise, <code>options</code> will
+  // be interpreted as the schema. <code>schema</code> may be passed
+  // as <code>null</code>, <code>undefinded</code>, or the empty object
+  // (<code>{}</code>) in this case.
+  //
+  function validate(object, schema, options) {
+    options = mixin({}, options, validate.defaults);
+    var errors = [];
+
+    validateObject(object, schema, options, errors);
+
+    //
+    // TODO: self-described validation
+    // if (! options.selfDescribing) { ... }
+    //
+
+    return {
+      valid: !(errors.length),
+      errors: errors
+    };
+  };
+
+  /**
+   * Default validation options. Defaults can be overridden by
+   * passing an 'options' hash to {@link #validate}. They can
+   * also be set globally be changing the values in
+   * <code>validate.defaults</code> directly.
+   */
+  validate.defaults = {
+      /**
+       * <p>
+       * Enforce 'format' constraints.
+       * </p><p>
+       * <em>Default: <code>true</code></em>
+       * </p>
+       */
+      validateFormats: true,
+      /**
+       * <p>
+       * When {@link #validateFormats} is <code>true</code>,
+       * treat unrecognized formats as validation errors.
+       * </p><p>
+       * <em>Default: <code>false</code></em>
+       * </p>
+       *
+       * @see validation.formats for default supported formats.
+       */
+      validateFormatsStrict: false,
+      /**
+       * <p>
+       * When {@link #validateFormats} is <code>true</code>,
+       * also validate formats defined in {@link #validate.formatExtensions}.
+       * </p><p>
+       * <em>Default: <code>true</code></em>
+       * </p>
+       */
+      validateFormatExtensions: true
+  };
+
+  /**
+   * Default messages to include with validation errors.
+   */
+  validate.messages = {
+      required:         "is required",
+      minLength:        "is too short (minimum is %{expected} characters)",
+      maxLength:        "is too long (maximum is %{expected} characters)",
+      pattern:          "invalid input",
+      minimum:          "must be greater than or equal to %{expected}",
+      maximum:          "must be less than or equal to %{expected}",
+      exclusiveMinimum: "must be greater than %{expected}",
+      exclusiveMaximum: "must be less than %{expected}",
+      divisibleBy:      "must be divisible by %{expected}",
+      minItems:         "must contain more than %{expected} items",
+      maxItems:         "must contain less than %{expected} items",
+      uniqueItems:      "must hold a unique set of values",
+      format:           "is not a valid %{expected}",
+      conform:          "must conform to given constraint",
+      type:             "must be of %{expected} type"
+  };
+  validate.messages['enum'] = "must be present in given enumerator";
+
+  /**
+   *
+   */
+  validate.formats = {
+    'email':          /^((([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+(\.([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+)*)|((\x22)((((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(([\x01-\x08\x0b\x0c\x0e-\x1f\x7f]|\x21|[\x23-\x5b]|[\x5d-\x7e]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(\\([\x01-\x09\x0b\x0c\x0d-\x7f]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]))))*(((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(\x22)))@((([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.)+(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.?$/i,
+    'ip-address':     /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/i,
+    'ipv6':           /^([0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}$/,
+    'date-time':      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:.\d{1,3})?Z$/,
+    'date':           /^\d{4}-\d{2}-\d{2}$/,
+    'time':           /^\d{2}:\d{2}:\d{2}$/,
+    'color':          /^#[a-z0-9]{6}|#[a-z0-9]{3}|(?:rgb\(\s*(?:[+-]?\d+%?)\s*,\s*(?:[+-]?\d+%?)\s*,\s*(?:[+-]?\d+%?)\s*\))aqua|black|blue|fuchsia|gray|green|lime|maroon|navy|olive|orange|purple|red|silver|teal|white|yellow$/i,
+    //'style':        (not supported)
+    //'phone':        (not supported)
+    //'uri':          (not supported)
+    'host-name':      /^(([a-zA-Z]|[a-zA-Z][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z]|[A-Za-z][A-Za-z0-9\-]*[A-Za-z0-9])/,
+    'utc-millisec':   {
+      test: function (value) {
+        return typeof(value) === 'number' && value >= 0;
+      }
+    },
+    'regex':          {
+      test: function (value) {
+        try { new RegExp(value) }
+        catch (e) { return false }
+
+        return true;
+      }
+    }
+  };
+
+  /**
+   *
+   */
+  validate.formatExtensions = {
+    'url': /^(https?|ftp|git):\/\/(((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:)*@)?(((\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5]))|((([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.)+(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.?)(:\d*)?)(\/((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)+(\/(([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)*)*)?)?(\?((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)|[\uE000-\uF8FF]|\/|\?)*)?(\#((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)|\/|\?)*)?$/i
+  };
+
+  function mixin(obj) {
+    var sources = Array.prototype.slice.call(arguments, 1);
+    while (sources.length) {
+      var source = sources.shift();
+      if (!source) { continue }
+
+      if (typeof(source) !== 'object') {
+        throw new TypeError('mixin non-object');
+      }
+
+      for (var p in source) {
+        if (source.hasOwnProperty(p)) {
+          obj[p] = source[p];
+        }
+      }
+    }
+
+    return obj;
+  };
+
+  function validateObject(object, schema, options, errors) {
+    var props, allProps = Object.keys(object),
+        visitedProps = [];
+
+    // see 5.2
+    if (schema.properties) {
+      props = schema.properties;
+      for (var p in props) {
+        if (props.hasOwnProperty(p)) {
+          visitedProps.push(p);
+          validateProperty(object, object[p], p, props[p], options, errors);
+        }
+      }
+    }
+
+    // see 5.3
+    if (schema.patternProperties) {
+      props = schema.patternProperties;
+      for (var p in props) {
+        if (props.hasOwnProperty(p)) {
+          var re = new RegExp(p);
+
+          // Find all object properties that are matching `re`
+          for (var k in object) {
+            if (object.hasOwnProperty(k)) {
+              visitedProps.push(k);
+              if (re.exec(k) !== null) {
+                validateProperty(object, object[k], p, props[p], options, errors);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // see 5.4
+    if (undefined !== schema.additionalProperties) {
+      var i, l;
+
+      var unvisitedProps = allProps.filter(function(k){
+        return -1 === visitedProps.indexOf(k);
+      });
+
+      // Prevent additional properties; each unvisited property is therefore an error
+      if (schema.additionalProperties === false && unvisitedProps.length > 0) {
+        for (i = 0, l = unvisitedProps.length; i < l; i++) {
+          error("additionalProperties", unvisitedProps[i], object[unvisitedProps[i]], false, errors);
+        }
+      }
+      // additionalProperties is a schema and validate unvisited properties against that schema
+      else if (typeof schema.additionalProperties == "object" && unvisitedProps.length > 0) {
+        for (i = 0, l = unvisitedProps.length; i < l; i++) {
+          validateProperty(object, object[unvisitedProps[i]], unvisitedProps[i], schema.unvisitedProperties, options, errors);
+        }
+      }
+    }
+
+  };
+
+  function validateProperty(object, value, property, schema, options, errors) {
+    var format,
+        valid,
+        spec,
+        type;
+
+    function constrain(name, value, assert) {
+      if (schema[name] !== undefined && !assert(value, schema[name])) {
+        error(name, property, value, schema, errors);
+      }
+    }
+
+    if (value === undefined) {
+      if (schema.required && schema.type !== 'any') {
+        return error('required', property, undefined, schema, errors);
+      } else {
+        return;
+      }
+    }
+
+    if (options.cast) {
+      if (('integer' === schema.type || 'number' === schema.type) && value == +value) {
+        value = +value;
+      }
+
+      if ('boolean' === schema.type) {
+        if ('true' === value || '1' === value || 1 === value) {
+          value = true;
+        }
+
+        if ('false' === value || '0' === value || 0 === value) {
+          value = false;
+        }
+      }
+    }
+
+    if (schema.format && options.validateFormats) {
+      format = schema.format;
+
+      if (options.validateFormatExtensions) { spec = validate.formatExtensions[format] }
+      if (!spec) { spec = validate.formats[format] }
+      if (!spec) {
+        if (options.validateFormatsStrict) {
+          return error('format', property, value, schema, errors);
+        }
+      }
+      else {
+        if (!spec.test(value)) {
+          return error('format', property, value, schema, errors);
+        }
+      }
+    }
+
+    if (schema['enum'] && schema['enum'].indexOf(value) === -1) {
+      error('enum', property, value, schema, errors);
+    }
+
+    // Dependencies (see 5.8)
+    if (typeof schema.dependencies === 'string' &&
+        object[schema.dependencies] === undefined) {
+      error('dependencies', property, null, schema, errors);
+    }
+
+    if (isArray(schema.dependencies)) {
+      for (var i = 0, l = schema.dependencies.length; i < l; i++) {
+        if (object[schema.dependencies[i]] === undefined) {
+          error('dependencies', property, null, schema, errors);
+        }
+      }
+    }
+
+    if (typeof schema.dependencies === 'object') {
+      validateObject(object, schema.dependencies, options, errors);
+    }
+
+    checkType(value, schema.type, function(err, type) {
+      if (err) return error('type', property, typeof value, schema, errors);
+
+      constrain('conform', value, function (a, e) { return e(a, object) });
+
+      switch (type || (isArray(value) ? 'array' : typeof value)) {
+        case 'string':
+          constrain('minLength', value.length, function (a, e) { return a >= e });
+          constrain('maxLength', value.length, function (a, e) { return a <= e });
+          constrain('pattern',   value,        function (a, e) {
+            e = typeof e === 'string'
+              ? e = new RegExp(e)
+              : e;
+            return e.test(a)
+          });
+          break;
+        case 'integer':
+        case 'number':
+          constrain('minimum',     value, function (a, e) { return a >= e });
+          constrain('maximum',     value, function (a, e) { return a <= e });
+          constrain('exclusiveMinimum', value, function (a, e) { return a > e });
+          constrain('exclusiveMaximum', value, function (a, e) { return a < e });
+          constrain('divisibleBy', value, function (a, e) {
+            var multiplier = Math.max((a - Math.floor(a)).toString().length - 2, (e - Math.floor(e)).toString().length - 2);
+            multiplier = multiplier > 0 ? Math.pow(10, multiplier) : 1;
+            return (a * multiplier) % (e * multiplier) === 0
+          });
+          break;
+        case 'array':
+          constrain('items', value, function (a, e) {
+            for (var i = 0, l = a.length; i < l; i++) {
+              validateProperty(object, a[i], property, e, options, errors);
+            }
+            return true;
+          });
+          constrain('minItems', value, function (a, e) { return a.length >= e });
+          constrain('maxItems', value, function (a, e) { return a.length <= e });
+          constrain('uniqueItems', value, function (a) {
+            var h = {};
+
+            for (var i = 0, l = a.length; i < l; i++) {
+              var key = JSON.stringify(a[i]);
+              if (h[key]) return false;
+              h[key] = true;
+            }
+
+            return true;
+          });
+          break;
+        case 'object':
+          // Recursive validation
+          if (schema.properties || schema.patternProperties || schema.additionalProperties) {
+            validateObject(value, schema, options, errors);
+          }
+          break;
+      }
+    });
+  };
+
+  function checkType(val, type, callback) {
+    var result = false,
+        types = isArray(type) ? type : [type];
+
+    // No type - no check
+    if (type === undefined) return callback(null, type);
+
+    // Go through available types
+    // And fine first matching
+    for (var i = 0, l = types.length; i < l; i++) {
+      type = types[i].toLowerCase().trim();
+      if (type === 'string' ? typeof val === 'string' :
+          type === 'array' ? isArray(val) :
+          type === 'object' ? val && typeof val === 'object' &&
+                             !isArray(val) :
+          type === 'number' ? typeof val === 'number' :
+          type === 'integer' ? typeof val === 'number' && ~~val === val :
+          type === 'null' ? val === null :
+          type === 'boolean'? typeof val === 'boolean' :
+          type === 'any' ? typeof val !== 'undefined' : false) {
+        return callback(null, type);
+      }
+    };
+
+    callback(true);
+  };
+
+  function error(attribute, property, actual, schema, errors) {
+    var lookup = { expected: schema[attribute], attribute: attribute, property: property };
+    var message = schema.messages && schema.messages[attribute] || schema.message || validate.messages[attribute] || "no default message";
+    message = message.replace(/%\{([a-z]+)\}/ig, function (_, match) { return lookup[match.toLowerCase()] || ''; });
+    errors.push({
+      attribute: attribute,
+      property:  property,
+      expected:  schema[attribute],
+      actual:    actual,
+      message:   message
+    });
+  };
+
+  function isArray(value) {
+    var s = typeof value;
+    if (s === 'object') {
+      if (value) {
+        if (typeof value.length === 'number' &&
+           !(value.propertyIsEnumerable('length')) &&
+           typeof value.splice === 'function') {
+           return true;
+        }
+      }
+    }
+    return false;
+  }
+
+
+})(typeof module !== 'undefined' ? module.exports : (window.json = window.json || {}));
+
+},{}],11:[function(require,module,exports){
 /*!
  * JSHint, by JSHint Community.
  *
@@ -38872,418 +39284,7 @@ if (typeof exports === "object" && exports) {
 	exports.JSHINT = JSHINT;
 }
 
-},{"./lex.js":30,"./messages.js":29,"./reg.js":23,"./state.js":25,"./style.js":24,"./vars.js":22,"console-browserify":32,"events":21,"underscore":31}],28:[function(require,module,exports){
-(function (exports) {
-  exports.validate = validate;
-  exports.mixin = mixin;
-
-  //
-  // ### function validate (object, schema, options)
-  // #### {Object} object the object to validate.
-  // #### {Object} schema (optional) the JSON Schema to validate against.
-  // #### {Object} options (optional) options controlling the validation
-  //      process. See {@link #validate.defaults) for details.
-  // Validate <code>object</code> against a JSON Schema.
-  // If <code>object</code> is self-describing (i.e. has a
-  // <code>$schema</code> property), it will also be validated
-  // against the referenced schema. [TODO]: This behaviour bay be
-  // suppressed by setting the {@link #validate.options.???}
-  // option to <code>???</code>.[/TODO]
-  //
-  // If <code>schema</code> is not specified, and <code>object</code>
-  // is not self-describing, validation always passes.
-  //
-  // <strong>Note:</strong> in order to pass options but no schema,
-  // <code>schema</code> <em>must</em> be specified in the call to
-  // <code>validate()</code>; otherwise, <code>options</code> will
-  // be interpreted as the schema. <code>schema</code> may be passed
-  // as <code>null</code>, <code>undefinded</code>, or the empty object
-  // (<code>{}</code>) in this case.
-  //
-  function validate(object, schema, options) {
-    options = mixin({}, options, validate.defaults);
-    var errors = [];
-
-    validateObject(object, schema, options, errors);
-
-    //
-    // TODO: self-described validation
-    // if (! options.selfDescribing) { ... }
-    //
-
-    return {
-      valid: !(errors.length),
-      errors: errors
-    };
-  };
-
-  /**
-   * Default validation options. Defaults can be overridden by
-   * passing an 'options' hash to {@link #validate}. They can
-   * also be set globally be changing the values in
-   * <code>validate.defaults</code> directly.
-   */
-  validate.defaults = {
-      /**
-       * <p>
-       * Enforce 'format' constraints.
-       * </p><p>
-       * <em>Default: <code>true</code></em>
-       * </p>
-       */
-      validateFormats: true,
-      /**
-       * <p>
-       * When {@link #validateFormats} is <code>true</code>,
-       * treat unrecognized formats as validation errors.
-       * </p><p>
-       * <em>Default: <code>false</code></em>
-       * </p>
-       *
-       * @see validation.formats for default supported formats.
-       */
-      validateFormatsStrict: false,
-      /**
-       * <p>
-       * When {@link #validateFormats} is <code>true</code>,
-       * also validate formats defined in {@link #validate.formatExtensions}.
-       * </p><p>
-       * <em>Default: <code>true</code></em>
-       * </p>
-       */
-      validateFormatExtensions: true
-  };
-
-  /**
-   * Default messages to include with validation errors.
-   */
-  validate.messages = {
-      required:         "is required",
-      minLength:        "is too short (minimum is %{expected} characters)",
-      maxLength:        "is too long (maximum is %{expected} characters)",
-      pattern:          "invalid input",
-      minimum:          "must be greater than or equal to %{expected}",
-      maximum:          "must be less than or equal to %{expected}",
-      exclusiveMinimum: "must be greater than %{expected}",
-      exclusiveMaximum: "must be less than %{expected}",
-      divisibleBy:      "must be divisible by %{expected}",
-      minItems:         "must contain more than %{expected} items",
-      maxItems:         "must contain less than %{expected} items",
-      uniqueItems:      "must hold a unique set of values",
-      format:           "is not a valid %{expected}",
-      conform:          "must conform to given constraint",
-      type:             "must be of %{expected} type"
-  };
-  validate.messages['enum'] = "must be present in given enumerator";
-
-  /**
-   *
-   */
-  validate.formats = {
-    'email':          /^((([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+(\.([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+)*)|((\x22)((((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(([\x01-\x08\x0b\x0c\x0e-\x1f\x7f]|\x21|[\x23-\x5b]|[\x5d-\x7e]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(\\([\x01-\x09\x0b\x0c\x0d-\x7f]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]))))*(((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(\x22)))@((([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.)+(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.?$/i,
-    'ip-address':     /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/i,
-    'ipv6':           /^([0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}$/,
-    'date-time':      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:.\d{1,3})?Z$/,
-    'date':           /^\d{4}-\d{2}-\d{2}$/,
-    'time':           /^\d{2}:\d{2}:\d{2}$/,
-    'color':          /^#[a-z0-9]{6}|#[a-z0-9]{3}|(?:rgb\(\s*(?:[+-]?\d+%?)\s*,\s*(?:[+-]?\d+%?)\s*,\s*(?:[+-]?\d+%?)\s*\))aqua|black|blue|fuchsia|gray|green|lime|maroon|navy|olive|orange|purple|red|silver|teal|white|yellow$/i,
-    //'style':        (not supported)
-    //'phone':        (not supported)
-    //'uri':          (not supported)
-    'host-name':      /^(([a-zA-Z]|[a-zA-Z][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z]|[A-Za-z][A-Za-z0-9\-]*[A-Za-z0-9])/,
-    'utc-millisec':   {
-      test: function (value) {
-        return typeof(value) === 'number' && value >= 0;
-      }
-    },
-    'regex':          {
-      test: function (value) {
-        try { new RegExp(value) }
-        catch (e) { return false }
-
-        return true;
-      }
-    }
-  };
-
-  /**
-   *
-   */
-  validate.formatExtensions = {
-    'url': /^(https?|ftp|git):\/\/(((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:)*@)?(((\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5]))|((([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.)+(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.?)(:\d*)?)(\/((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)+(\/(([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)*)*)?)?(\?((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)|[\uE000-\uF8FF]|\/|\?)*)?(\#((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)|\/|\?)*)?$/i
-  };
-
-  function mixin(obj) {
-    var sources = Array.prototype.slice.call(arguments, 1);
-    while (sources.length) {
-      var source = sources.shift();
-      if (!source) { continue }
-
-      if (typeof(source) !== 'object') {
-        throw new TypeError('mixin non-object');
-      }
-
-      for (var p in source) {
-        if (source.hasOwnProperty(p)) {
-          obj[p] = source[p];
-        }
-      }
-    }
-
-    return obj;
-  };
-
-  function validateObject(object, schema, options, errors) {
-    var props, allProps = Object.keys(object),
-        visitedProps = [];
-
-    // see 5.2
-    if (schema.properties) {
-      props = schema.properties;
-      for (var p in props) {
-        if (props.hasOwnProperty(p)) {
-          visitedProps.push(p);
-          validateProperty(object, object[p], p, props[p], options, errors);
-        }
-      }
-    }
-
-    // see 5.3
-    if (schema.patternProperties) {
-      props = schema.patternProperties;
-      for (var p in props) {
-        if (props.hasOwnProperty(p)) {
-          var re = new RegExp(p);
-
-          // Find all object properties that are matching `re`
-          for (var k in object) {
-            if (object.hasOwnProperty(k)) {
-              visitedProps.push(k);
-              if (re.exec(k) !== null) {
-                validateProperty(object, object[k], p, props[p], options, errors);
-              }
-            }
-          }
-        }
-      }
-    }
-
-    // see 5.4
-    if (undefined !== schema.additionalProperties) {
-      var i, l;
-
-      var unvisitedProps = allProps.filter(function(k){
-        return -1 === visitedProps.indexOf(k);
-      });
-
-      // Prevent additional properties; each unvisited property is therefore an error
-      if (schema.additionalProperties === false && unvisitedProps.length > 0) {
-        for (i = 0, l = unvisitedProps.length; i < l; i++) {
-          error("additionalProperties", unvisitedProps[i], object[unvisitedProps[i]], false, errors);
-        }
-      }
-      // additionalProperties is a schema and validate unvisited properties against that schema
-      else if (typeof schema.additionalProperties == "object" && unvisitedProps.length > 0) {
-        for (i = 0, l = unvisitedProps.length; i < l; i++) {
-          validateProperty(object, object[unvisitedProps[i]], unvisitedProps[i], schema.unvisitedProperties, options, errors);
-        }
-      }
-    }
-
-  };
-
-  function validateProperty(object, value, property, schema, options, errors) {
-    var format,
-        valid,
-        spec,
-        type;
-
-    function constrain(name, value, assert) {
-      if (schema[name] !== undefined && !assert(value, schema[name])) {
-        error(name, property, value, schema, errors);
-      }
-    }
-
-    if (value === undefined) {
-      if (schema.required && schema.type !== 'any') {
-        return error('required', property, undefined, schema, errors);
-      } else {
-        return;
-      }
-    }
-
-    if (options.cast) {
-      if (('integer' === schema.type || 'number' === schema.type) && value == +value) {
-        value = +value;
-      }
-
-      if ('boolean' === schema.type) {
-        if ('true' === value || '1' === value || 1 === value) {
-          value = true;
-        }
-
-        if ('false' === value || '0' === value || 0 === value) {
-          value = false;
-        }
-      }
-    }
-
-    if (schema.format && options.validateFormats) {
-      format = schema.format;
-
-      if (options.validateFormatExtensions) { spec = validate.formatExtensions[format] }
-      if (!spec) { spec = validate.formats[format] }
-      if (!spec) {
-        if (options.validateFormatsStrict) {
-          return error('format', property, value, schema, errors);
-        }
-      }
-      else {
-        if (!spec.test(value)) {
-          return error('format', property, value, schema, errors);
-        }
-      }
-    }
-
-    if (schema['enum'] && schema['enum'].indexOf(value) === -1) {
-      error('enum', property, value, schema, errors);
-    }
-
-    // Dependencies (see 5.8)
-    if (typeof schema.dependencies === 'string' &&
-        object[schema.dependencies] === undefined) {
-      error('dependencies', property, null, schema, errors);
-    }
-
-    if (isArray(schema.dependencies)) {
-      for (var i = 0, l = schema.dependencies.length; i < l; i++) {
-        if (object[schema.dependencies[i]] === undefined) {
-          error('dependencies', property, null, schema, errors);
-        }
-      }
-    }
-
-    if (typeof schema.dependencies === 'object') {
-      validateObject(object, schema.dependencies, options, errors);
-    }
-
-    checkType(value, schema.type, function(err, type) {
-      if (err) return error('type', property, typeof value, schema, errors);
-
-      constrain('conform', value, function (a, e) { return e(a, object) });
-
-      switch (type || (isArray(value) ? 'array' : typeof value)) {
-        case 'string':
-          constrain('minLength', value.length, function (a, e) { return a >= e });
-          constrain('maxLength', value.length, function (a, e) { return a <= e });
-          constrain('pattern',   value,        function (a, e) {
-            e = typeof e === 'string'
-              ? e = new RegExp(e)
-              : e;
-            return e.test(a)
-          });
-          break;
-        case 'integer':
-        case 'number':
-          constrain('minimum',     value, function (a, e) { return a >= e });
-          constrain('maximum',     value, function (a, e) { return a <= e });
-          constrain('exclusiveMinimum', value, function (a, e) { return a > e });
-          constrain('exclusiveMaximum', value, function (a, e) { return a < e });
-          constrain('divisibleBy', value, function (a, e) {
-            var multiplier = Math.max((a - Math.floor(a)).toString().length - 2, (e - Math.floor(e)).toString().length - 2);
-            multiplier = multiplier > 0 ? Math.pow(10, multiplier) : 1;
-            return (a * multiplier) % (e * multiplier) === 0
-          });
-          break;
-        case 'array':
-          constrain('items', value, function (a, e) {
-            for (var i = 0, l = a.length; i < l; i++) {
-              validateProperty(object, a[i], property, e, options, errors);
-            }
-            return true;
-          });
-          constrain('minItems', value, function (a, e) { return a.length >= e });
-          constrain('maxItems', value, function (a, e) { return a.length <= e });
-          constrain('uniqueItems', value, function (a) {
-            var h = {};
-
-            for (var i = 0, l = a.length; i < l; i++) {
-              var key = JSON.stringify(a[i]);
-              if (h[key]) return false;
-              h[key] = true;
-            }
-
-            return true;
-          });
-          break;
-        case 'object':
-          // Recursive validation
-          if (schema.properties || schema.patternProperties || schema.additionalProperties) {
-            validateObject(value, schema, options, errors);
-          }
-          break;
-      }
-    });
-  };
-
-  function checkType(val, type, callback) {
-    var result = false,
-        types = isArray(type) ? type : [type];
-
-    // No type - no check
-    if (type === undefined) return callback(null, type);
-
-    // Go through available types
-    // And fine first matching
-    for (var i = 0, l = types.length; i < l; i++) {
-      type = types[i].toLowerCase().trim();
-      if (type === 'string' ? typeof val === 'string' :
-          type === 'array' ? isArray(val) :
-          type === 'object' ? val && typeof val === 'object' &&
-                             !isArray(val) :
-          type === 'number' ? typeof val === 'number' :
-          type === 'integer' ? typeof val === 'number' && ~~val === val :
-          type === 'null' ? val === null :
-          type === 'boolean'? typeof val === 'boolean' :
-          type === 'any' ? typeof val !== 'undefined' : false) {
-        return callback(null, type);
-      }
-    };
-
-    callback(true);
-  };
-
-  function error(attribute, property, actual, schema, errors) {
-    var lookup = { expected: schema[attribute], attribute: attribute, property: property };
-    var message = schema.messages && schema.messages[attribute] || schema.message || validate.messages[attribute] || "no default message";
-    message = message.replace(/%\{([a-z]+)\}/ig, function (_, match) { return lookup[match.toLowerCase()] || ''; });
-    errors.push({
-      attribute: attribute,
-      property:  property,
-      expected:  schema[attribute],
-      actual:    actual,
-      message:   message
-    });
-  };
-
-  function isArray(value) {
-    var s = typeof value;
-    if (s === 'object') {
-      if (value) {
-        if (typeof value.length === 'number' &&
-           !(value.propertyIsEnumerable('length')) &&
-           typeof value.splice === 'function') {
-           return true;
-        }
-      }
-    }
-    return false;
-  }
-
-
-})(typeof module !== 'undefined' ? module.exports : (window.json = window.json || {}));
-
-},{}],31:[function(require,module,exports){
+},{"./lex.js":30,"./messages.js":29,"./reg.js":23,"./state.js":24,"./style.js":25,"./vars.js":20,"console-browserify":32,"events":22,"underscore":31}],31:[function(require,module,exports){
 //     Underscore.js 1.4.4
 //     http://underscorejs.org
 //     (c) 2009-2013 Jeremy Ashkenas, DocumentCloud Inc.
@@ -40511,7 +40512,7 @@ if (typeof exports === "object" && exports) {
 
 }).call(this);
 
-},{}],27:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 /*
  * Copyright 2009-2011 Mozilla Foundation and contributors
  * Licensed under the New BSD license. See LICENSE.txt or:
@@ -40521,7 +40522,7 @@ exports.SourceMapGenerator = require('./source-map/source-map-generator').Source
 exports.SourceMapConsumer = require('./source-map/source-map-consumer').SourceMapConsumer;
 exports.SourceNode = require('./source-map/source-node').SourceNode;
 
-},{"./source-map/source-map-consumer":34,"./source-map/source-map-generator":33,"./source-map/source-node":35}],29:[function(require,module,exports){
+},{"./source-map/source-map-consumer":33,"./source-map/source-map-generator":34,"./source-map/source-node":35}],29:[function(require,module,exports){
 "use strict";
 
 var _ = require("underscore");
@@ -42436,7 +42437,7 @@ Lexer.prototype = {
 
 exports.Lexer = Lexer;
 
-},{"./reg.js":23,"./state.js":25,"events":21,"underscore":31}],32:[function(require,module,exports){
+},{"./reg.js":23,"./state.js":24,"events":22,"underscore":31}],32:[function(require,module,exports){
 var global=self;/*global window, global*/
 var util = require("util")
 var assert = require("assert")
@@ -42870,7 +42871,7 @@ exports.format = function(f) {
   return str;
 };
 
-},{"events":21}],37:[function(require,module,exports){
+},{"events":22}],37:[function(require,module,exports){
 // UTILITY
 var util = require('util');
 var Buffer = require("buffer").Buffer;
@@ -43185,389 +43186,6 @@ assert.doesNotThrow = function(block, /*optional*/error, /*optional*/message) {
 assert.ifError = function(err) { if (err) {throw err;}};
 
 },{"buffer":38,"util":36}],33:[function(require,module,exports){
-/* -*- Mode: js; js-indent-level: 2; -*- */
-/*
- * Copyright 2011 Mozilla Foundation and contributors
- * Licensed under the New BSD license. See LICENSE or:
- * http://opensource.org/licenses/BSD-3-Clause
- */
-if (typeof define !== 'function') {
-    var define = require('amdefine')(module, require);
-}
-define(function (require, exports, module) {
-
-  var base64VLQ = require('./base64-vlq');
-  var util = require('./util');
-  var ArraySet = require('./array-set').ArraySet;
-
-  /**
-   * An instance of the SourceMapGenerator represents a source map which is
-   * being built incrementally. To create a new one, you must pass an object
-   * with the following properties:
-   *
-   *   - file: The filename of the generated source.
-   *   - sourceRoot: An optional root for all URLs in this source map.
-   */
-  function SourceMapGenerator(aArgs) {
-    this._file = util.getArg(aArgs, 'file');
-    this._sourceRoot = util.getArg(aArgs, 'sourceRoot', null);
-    this._sources = new ArraySet();
-    this._names = new ArraySet();
-    this._mappings = [];
-    this._sourcesContents = null;
-  }
-
-  SourceMapGenerator.prototype._version = 3;
-
-  /**
-   * Creates a new SourceMapGenerator based on a SourceMapConsumer
-   *
-   * @param aSourceMapConsumer The SourceMap.
-   */
-  SourceMapGenerator.fromSourceMap =
-    function SourceMapGenerator_fromSourceMap(aSourceMapConsumer) {
-      var sourceRoot = aSourceMapConsumer.sourceRoot;
-      var generator = new SourceMapGenerator({
-        file: aSourceMapConsumer.file,
-        sourceRoot: sourceRoot
-      });
-      aSourceMapConsumer.eachMapping(function (mapping) {
-        var newMapping = {
-          generated: {
-            line: mapping.generatedLine,
-            column: mapping.generatedColumn
-          }
-        };
-
-        if (mapping.source) {
-          newMapping.source = mapping.source;
-          if (sourceRoot) {
-            newMapping.source = util.relative(sourceRoot, newMapping.source);
-          }
-
-          newMapping.original = {
-            line: mapping.originalLine,
-            column: mapping.originalColumn
-          };
-
-          if (mapping.name) {
-            newMapping.name = mapping.name;
-          }
-        }
-
-        generator.addMapping(newMapping);
-      });
-      aSourceMapConsumer.sources.forEach(function (sourceFile) {
-        var content = aSourceMapConsumer.sourceContentFor(sourceFile);
-        if (content) {
-          generator.setSourceContent(sourceFile, content);
-        }
-      });
-      return generator;
-    };
-
-  /**
-   * Add a single mapping from original source line and column to the generated
-   * source's line and column for this source map being created. The mapping
-   * object should have the following properties:
-   *
-   *   - generated: An object with the generated line and column positions.
-   *   - original: An object with the original line and column positions.
-   *   - source: The original source file (relative to the sourceRoot).
-   *   - name: An optional original token name for this mapping.
-   */
-  SourceMapGenerator.prototype.addMapping =
-    function SourceMapGenerator_addMapping(aArgs) {
-      var generated = util.getArg(aArgs, 'generated');
-      var original = util.getArg(aArgs, 'original', null);
-      var source = util.getArg(aArgs, 'source', null);
-      var name = util.getArg(aArgs, 'name', null);
-
-      this._validateMapping(generated, original, source, name);
-
-      if (source && !this._sources.has(source)) {
-        this._sources.add(source);
-      }
-
-      if (name && !this._names.has(name)) {
-        this._names.add(name);
-      }
-
-      this._mappings.push({
-        generated: generated,
-        original: original,
-        source: source,
-        name: name
-      });
-    };
-
-  /**
-   * Set the source content for a source file.
-   */
-  SourceMapGenerator.prototype.setSourceContent =
-    function SourceMapGenerator_setSourceContent(aSourceFile, aSourceContent) {
-      var source = aSourceFile;
-      if (this._sourceRoot) {
-        source = util.relative(this._sourceRoot, source);
-      }
-
-      if (aSourceContent !== null) {
-        // Add the source content to the _sourcesContents map.
-        // Create a new _sourcesContents map if the property is null.
-        if (!this._sourcesContents) {
-          this._sourcesContents = {};
-        }
-        this._sourcesContents[util.toSetString(source)] = aSourceContent;
-      } else {
-        // Remove the source file from the _sourcesContents map.
-        // If the _sourcesContents map is empty, set the property to null.
-        delete this._sourcesContents[util.toSetString(source)];
-        if (Object.keys(this._sourcesContents).length === 0) {
-          this._sourcesContents = null;
-        }
-      }
-    };
-
-  /**
-   * Applies the mappings of a sub-source-map for a specific source file to the
-   * source map being generated. Each mapping to the supplied source file is
-   * rewritten using the supplied source map. Note: The resolution for the
-   * resulting mappings is the minimium of this map and the supplied map.
-   *
-   * @param aSourceMapConsumer The source map to be applied.
-   * @param aSourceFile Optional. The filename of the source file.
-   *        If omitted, SourceMapConsumer's file property will be used.
-   */
-  SourceMapGenerator.prototype.applySourceMap =
-    function SourceMapGenerator_applySourceMap(aSourceMapConsumer, aSourceFile) {
-      // If aSourceFile is omitted, we will use the file property of the SourceMap
-      if (!aSourceFile) {
-        aSourceFile = aSourceMapConsumer.file;
-      }
-      var sourceRoot = this._sourceRoot;
-      // Make "aSourceFile" relative if an absolute Url is passed.
-      if (sourceRoot) {
-        aSourceFile = util.relative(sourceRoot, aSourceFile);
-      }
-      // Applying the SourceMap can add and remove items from the sources and
-      // the names array.
-      var newSources = new ArraySet();
-      var newNames = new ArraySet();
-
-      // Find mappings for the "aSourceFile"
-      this._mappings.forEach(function (mapping) {
-        if (mapping.source === aSourceFile && mapping.original) {
-          // Check if it can be mapped by the source map, then update the mapping.
-          var original = aSourceMapConsumer.originalPositionFor({
-            line: mapping.original.line,
-            column: mapping.original.column
-          });
-          if (original.source !== null) {
-            // Copy mapping
-            if (sourceRoot) {
-              mapping.source = util.relative(sourceRoot, original.source);
-            } else {
-              mapping.source = original.source;
-            }
-            mapping.original.line = original.line;
-            mapping.original.column = original.column;
-            if (original.name !== null && mapping.name !== null) {
-              // Only use the identifier name if it's an identifier
-              // in both SourceMaps
-              mapping.name = original.name;
-            }
-          }
-        }
-
-        var source = mapping.source;
-        if (source && !newSources.has(source)) {
-          newSources.add(source);
-        }
-
-        var name = mapping.name;
-        if (name && !newNames.has(name)) {
-          newNames.add(name);
-        }
-
-      }, this);
-      this._sources = newSources;
-      this._names = newNames;
-
-      // Copy sourcesContents of applied map.
-      aSourceMapConsumer.sources.forEach(function (sourceFile) {
-        var content = aSourceMapConsumer.sourceContentFor(sourceFile);
-        if (content) {
-          if (sourceRoot) {
-            sourceFile = util.relative(sourceRoot, sourceFile);
-          }
-          this.setSourceContent(sourceFile, content);
-        }
-      }, this);
-    };
-
-  /**
-   * A mapping can have one of the three levels of data:
-   *
-   *   1. Just the generated position.
-   *   2. The Generated position, original position, and original source.
-   *   3. Generated and original position, original source, as well as a name
-   *      token.
-   *
-   * To maintain consistency, we validate that any new mapping being added falls
-   * in to one of these categories.
-   */
-  SourceMapGenerator.prototype._validateMapping =
-    function SourceMapGenerator_validateMapping(aGenerated, aOriginal, aSource,
-                                                aName) {
-      if (aGenerated && 'line' in aGenerated && 'column' in aGenerated
-          && aGenerated.line > 0 && aGenerated.column >= 0
-          && !aOriginal && !aSource && !aName) {
-        // Case 1.
-        return;
-      }
-      else if (aGenerated && 'line' in aGenerated && 'column' in aGenerated
-               && aOriginal && 'line' in aOriginal && 'column' in aOriginal
-               && aGenerated.line > 0 && aGenerated.column >= 0
-               && aOriginal.line > 0 && aOriginal.column >= 0
-               && aSource) {
-        // Cases 2 and 3.
-        return;
-      }
-      else {
-        throw new Error('Invalid mapping.');
-      }
-    };
-
-  function cmpLocation(loc1, loc2) {
-    var cmp = (loc1 && loc1.line) - (loc2 && loc2.line);
-    return cmp ? cmp : (loc1 && loc1.column) - (loc2 && loc2.column);
-  }
-
-  function strcmp(str1, str2) {
-    str1 = str1 || '';
-    str2 = str2 || '';
-    return (str1 > str2) - (str1 < str2);
-  }
-
-  function cmpMapping(mappingA, mappingB) {
-    return cmpLocation(mappingA.generated, mappingB.generated) ||
-      cmpLocation(mappingA.original, mappingB.original) ||
-      strcmp(mappingA.source, mappingB.source) ||
-      strcmp(mappingA.name, mappingB.name);
-  }
-
-  /**
-   * Serialize the accumulated mappings in to the stream of base 64 VLQs
-   * specified by the source map format.
-   */
-  SourceMapGenerator.prototype._serializeMappings =
-    function SourceMapGenerator_serializeMappings() {
-      var previousGeneratedColumn = 0;
-      var previousGeneratedLine = 1;
-      var previousOriginalColumn = 0;
-      var previousOriginalLine = 0;
-      var previousName = 0;
-      var previousSource = 0;
-      var result = '';
-      var mapping;
-
-      // The mappings must be guaranteed to be in sorted order before we start
-      // serializing them or else the generated line numbers (which are defined
-      // via the ';' separators) will be all messed up. Note: it might be more
-      // performant to maintain the sorting as we insert them, rather than as we
-      // serialize them, but the big O is the same either way.
-      this._mappings.sort(cmpMapping);
-
-      for (var i = 0, len = this._mappings.length; i < len; i++) {
-        mapping = this._mappings[i];
-
-        if (mapping.generated.line !== previousGeneratedLine) {
-          previousGeneratedColumn = 0;
-          while (mapping.generated.line !== previousGeneratedLine) {
-            result += ';';
-            previousGeneratedLine++;
-          }
-        }
-        else {
-          if (i > 0) {
-            if (!cmpMapping(mapping, this._mappings[i - 1])) {
-              continue;
-            }
-            result += ',';
-          }
-        }
-
-        result += base64VLQ.encode(mapping.generated.column
-                                   - previousGeneratedColumn);
-        previousGeneratedColumn = mapping.generated.column;
-
-        if (mapping.source && mapping.original) {
-          result += base64VLQ.encode(this._sources.indexOf(mapping.source)
-                                     - previousSource);
-          previousSource = this._sources.indexOf(mapping.source);
-
-          // lines are stored 0-based in SourceMap spec version 3
-          result += base64VLQ.encode(mapping.original.line - 1
-                                     - previousOriginalLine);
-          previousOriginalLine = mapping.original.line - 1;
-
-          result += base64VLQ.encode(mapping.original.column
-                                     - previousOriginalColumn);
-          previousOriginalColumn = mapping.original.column;
-
-          if (mapping.name) {
-            result += base64VLQ.encode(this._names.indexOf(mapping.name)
-                                       - previousName);
-            previousName = this._names.indexOf(mapping.name);
-          }
-        }
-      }
-
-      return result;
-    };
-
-  /**
-   * Externalize the source map.
-   */
-  SourceMapGenerator.prototype.toJSON =
-    function SourceMapGenerator_toJSON() {
-      var map = {
-        version: this._version,
-        file: this._file,
-        sources: this._sources.toArray(),
-        names: this._names.toArray(),
-        mappings: this._serializeMappings()
-      };
-      if (this._sourceRoot) {
-        map.sourceRoot = this._sourceRoot;
-      }
-      if (this._sourcesContents) {
-        map.sourcesContent = map.sources.map(function (source) {
-          if (map.sourceRoot) {
-            source = util.relative(map.sourceRoot, source);
-          }
-          return Object.prototype.hasOwnProperty.call(
-            this._sourcesContents, util.toSetString(source))
-            ? this._sourcesContents[util.toSetString(source)]
-            : null;
-        }, this);
-      }
-      return map;
-    };
-
-  /**
-   * Render the source map being generated to a string.
-   */
-  SourceMapGenerator.prototype.toString =
-    function SourceMapGenerator_toString() {
-      return JSON.stringify(this);
-    };
-
-  exports.SourceMapGenerator = SourceMapGenerator;
-
-});
-
-},{"./array-set":41,"./base64-vlq":39,"./util":40,"amdefine":42}],34:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -44010,7 +43628,390 @@ define(function (require, exports, module) {
 
 });
 
-},{"./array-set":41,"./base64-vlq":39,"./binary-search":43,"./util":40,"amdefine":42}],35:[function(require,module,exports){
+},{"./array-set":41,"./base64-vlq":42,"./binary-search":40,"./util":39,"amdefine":43}],34:[function(require,module,exports){
+/* -*- Mode: js; js-indent-level: 2; -*- */
+/*
+ * Copyright 2011 Mozilla Foundation and contributors
+ * Licensed under the New BSD license. See LICENSE or:
+ * http://opensource.org/licenses/BSD-3-Clause
+ */
+if (typeof define !== 'function') {
+    var define = require('amdefine')(module, require);
+}
+define(function (require, exports, module) {
+
+  var base64VLQ = require('./base64-vlq');
+  var util = require('./util');
+  var ArraySet = require('./array-set').ArraySet;
+
+  /**
+   * An instance of the SourceMapGenerator represents a source map which is
+   * being built incrementally. To create a new one, you must pass an object
+   * with the following properties:
+   *
+   *   - file: The filename of the generated source.
+   *   - sourceRoot: An optional root for all URLs in this source map.
+   */
+  function SourceMapGenerator(aArgs) {
+    this._file = util.getArg(aArgs, 'file');
+    this._sourceRoot = util.getArg(aArgs, 'sourceRoot', null);
+    this._sources = new ArraySet();
+    this._names = new ArraySet();
+    this._mappings = [];
+    this._sourcesContents = null;
+  }
+
+  SourceMapGenerator.prototype._version = 3;
+
+  /**
+   * Creates a new SourceMapGenerator based on a SourceMapConsumer
+   *
+   * @param aSourceMapConsumer The SourceMap.
+   */
+  SourceMapGenerator.fromSourceMap =
+    function SourceMapGenerator_fromSourceMap(aSourceMapConsumer) {
+      var sourceRoot = aSourceMapConsumer.sourceRoot;
+      var generator = new SourceMapGenerator({
+        file: aSourceMapConsumer.file,
+        sourceRoot: sourceRoot
+      });
+      aSourceMapConsumer.eachMapping(function (mapping) {
+        var newMapping = {
+          generated: {
+            line: mapping.generatedLine,
+            column: mapping.generatedColumn
+          }
+        };
+
+        if (mapping.source) {
+          newMapping.source = mapping.source;
+          if (sourceRoot) {
+            newMapping.source = util.relative(sourceRoot, newMapping.source);
+          }
+
+          newMapping.original = {
+            line: mapping.originalLine,
+            column: mapping.originalColumn
+          };
+
+          if (mapping.name) {
+            newMapping.name = mapping.name;
+          }
+        }
+
+        generator.addMapping(newMapping);
+      });
+      aSourceMapConsumer.sources.forEach(function (sourceFile) {
+        var content = aSourceMapConsumer.sourceContentFor(sourceFile);
+        if (content) {
+          generator.setSourceContent(sourceFile, content);
+        }
+      });
+      return generator;
+    };
+
+  /**
+   * Add a single mapping from original source line and column to the generated
+   * source's line and column for this source map being created. The mapping
+   * object should have the following properties:
+   *
+   *   - generated: An object with the generated line and column positions.
+   *   - original: An object with the original line and column positions.
+   *   - source: The original source file (relative to the sourceRoot).
+   *   - name: An optional original token name for this mapping.
+   */
+  SourceMapGenerator.prototype.addMapping =
+    function SourceMapGenerator_addMapping(aArgs) {
+      var generated = util.getArg(aArgs, 'generated');
+      var original = util.getArg(aArgs, 'original', null);
+      var source = util.getArg(aArgs, 'source', null);
+      var name = util.getArg(aArgs, 'name', null);
+
+      this._validateMapping(generated, original, source, name);
+
+      if (source && !this._sources.has(source)) {
+        this._sources.add(source);
+      }
+
+      if (name && !this._names.has(name)) {
+        this._names.add(name);
+      }
+
+      this._mappings.push({
+        generated: generated,
+        original: original,
+        source: source,
+        name: name
+      });
+    };
+
+  /**
+   * Set the source content for a source file.
+   */
+  SourceMapGenerator.prototype.setSourceContent =
+    function SourceMapGenerator_setSourceContent(aSourceFile, aSourceContent) {
+      var source = aSourceFile;
+      if (this._sourceRoot) {
+        source = util.relative(this._sourceRoot, source);
+      }
+
+      if (aSourceContent !== null) {
+        // Add the source content to the _sourcesContents map.
+        // Create a new _sourcesContents map if the property is null.
+        if (!this._sourcesContents) {
+          this._sourcesContents = {};
+        }
+        this._sourcesContents[util.toSetString(source)] = aSourceContent;
+      } else {
+        // Remove the source file from the _sourcesContents map.
+        // If the _sourcesContents map is empty, set the property to null.
+        delete this._sourcesContents[util.toSetString(source)];
+        if (Object.keys(this._sourcesContents).length === 0) {
+          this._sourcesContents = null;
+        }
+      }
+    };
+
+  /**
+   * Applies the mappings of a sub-source-map for a specific source file to the
+   * source map being generated. Each mapping to the supplied source file is
+   * rewritten using the supplied source map. Note: The resolution for the
+   * resulting mappings is the minimium of this map and the supplied map.
+   *
+   * @param aSourceMapConsumer The source map to be applied.
+   * @param aSourceFile Optional. The filename of the source file.
+   *        If omitted, SourceMapConsumer's file property will be used.
+   */
+  SourceMapGenerator.prototype.applySourceMap =
+    function SourceMapGenerator_applySourceMap(aSourceMapConsumer, aSourceFile) {
+      // If aSourceFile is omitted, we will use the file property of the SourceMap
+      if (!aSourceFile) {
+        aSourceFile = aSourceMapConsumer.file;
+      }
+      var sourceRoot = this._sourceRoot;
+      // Make "aSourceFile" relative if an absolute Url is passed.
+      if (sourceRoot) {
+        aSourceFile = util.relative(sourceRoot, aSourceFile);
+      }
+      // Applying the SourceMap can add and remove items from the sources and
+      // the names array.
+      var newSources = new ArraySet();
+      var newNames = new ArraySet();
+
+      // Find mappings for the "aSourceFile"
+      this._mappings.forEach(function (mapping) {
+        if (mapping.source === aSourceFile && mapping.original) {
+          // Check if it can be mapped by the source map, then update the mapping.
+          var original = aSourceMapConsumer.originalPositionFor({
+            line: mapping.original.line,
+            column: mapping.original.column
+          });
+          if (original.source !== null) {
+            // Copy mapping
+            if (sourceRoot) {
+              mapping.source = util.relative(sourceRoot, original.source);
+            } else {
+              mapping.source = original.source;
+            }
+            mapping.original.line = original.line;
+            mapping.original.column = original.column;
+            if (original.name !== null && mapping.name !== null) {
+              // Only use the identifier name if it's an identifier
+              // in both SourceMaps
+              mapping.name = original.name;
+            }
+          }
+        }
+
+        var source = mapping.source;
+        if (source && !newSources.has(source)) {
+          newSources.add(source);
+        }
+
+        var name = mapping.name;
+        if (name && !newNames.has(name)) {
+          newNames.add(name);
+        }
+
+      }, this);
+      this._sources = newSources;
+      this._names = newNames;
+
+      // Copy sourcesContents of applied map.
+      aSourceMapConsumer.sources.forEach(function (sourceFile) {
+        var content = aSourceMapConsumer.sourceContentFor(sourceFile);
+        if (content) {
+          if (sourceRoot) {
+            sourceFile = util.relative(sourceRoot, sourceFile);
+          }
+          this.setSourceContent(sourceFile, content);
+        }
+      }, this);
+    };
+
+  /**
+   * A mapping can have one of the three levels of data:
+   *
+   *   1. Just the generated position.
+   *   2. The Generated position, original position, and original source.
+   *   3. Generated and original position, original source, as well as a name
+   *      token.
+   *
+   * To maintain consistency, we validate that any new mapping being added falls
+   * in to one of these categories.
+   */
+  SourceMapGenerator.prototype._validateMapping =
+    function SourceMapGenerator_validateMapping(aGenerated, aOriginal, aSource,
+                                                aName) {
+      if (aGenerated && 'line' in aGenerated && 'column' in aGenerated
+          && aGenerated.line > 0 && aGenerated.column >= 0
+          && !aOriginal && !aSource && !aName) {
+        // Case 1.
+        return;
+      }
+      else if (aGenerated && 'line' in aGenerated && 'column' in aGenerated
+               && aOriginal && 'line' in aOriginal && 'column' in aOriginal
+               && aGenerated.line > 0 && aGenerated.column >= 0
+               && aOriginal.line > 0 && aOriginal.column >= 0
+               && aSource) {
+        // Cases 2 and 3.
+        return;
+      }
+      else {
+        throw new Error('Invalid mapping.');
+      }
+    };
+
+  function cmpLocation(loc1, loc2) {
+    var cmp = (loc1 && loc1.line) - (loc2 && loc2.line);
+    return cmp ? cmp : (loc1 && loc1.column) - (loc2 && loc2.column);
+  }
+
+  function strcmp(str1, str2) {
+    str1 = str1 || '';
+    str2 = str2 || '';
+    return (str1 > str2) - (str1 < str2);
+  }
+
+  function cmpMapping(mappingA, mappingB) {
+    return cmpLocation(mappingA.generated, mappingB.generated) ||
+      cmpLocation(mappingA.original, mappingB.original) ||
+      strcmp(mappingA.source, mappingB.source) ||
+      strcmp(mappingA.name, mappingB.name);
+  }
+
+  /**
+   * Serialize the accumulated mappings in to the stream of base 64 VLQs
+   * specified by the source map format.
+   */
+  SourceMapGenerator.prototype._serializeMappings =
+    function SourceMapGenerator_serializeMappings() {
+      var previousGeneratedColumn = 0;
+      var previousGeneratedLine = 1;
+      var previousOriginalColumn = 0;
+      var previousOriginalLine = 0;
+      var previousName = 0;
+      var previousSource = 0;
+      var result = '';
+      var mapping;
+
+      // The mappings must be guaranteed to be in sorted order before we start
+      // serializing them or else the generated line numbers (which are defined
+      // via the ';' separators) will be all messed up. Note: it might be more
+      // performant to maintain the sorting as we insert them, rather than as we
+      // serialize them, but the big O is the same either way.
+      this._mappings.sort(cmpMapping);
+
+      for (var i = 0, len = this._mappings.length; i < len; i++) {
+        mapping = this._mappings[i];
+
+        if (mapping.generated.line !== previousGeneratedLine) {
+          previousGeneratedColumn = 0;
+          while (mapping.generated.line !== previousGeneratedLine) {
+            result += ';';
+            previousGeneratedLine++;
+          }
+        }
+        else {
+          if (i > 0) {
+            if (!cmpMapping(mapping, this._mappings[i - 1])) {
+              continue;
+            }
+            result += ',';
+          }
+        }
+
+        result += base64VLQ.encode(mapping.generated.column
+                                   - previousGeneratedColumn);
+        previousGeneratedColumn = mapping.generated.column;
+
+        if (mapping.source && mapping.original) {
+          result += base64VLQ.encode(this._sources.indexOf(mapping.source)
+                                     - previousSource);
+          previousSource = this._sources.indexOf(mapping.source);
+
+          // lines are stored 0-based in SourceMap spec version 3
+          result += base64VLQ.encode(mapping.original.line - 1
+                                     - previousOriginalLine);
+          previousOriginalLine = mapping.original.line - 1;
+
+          result += base64VLQ.encode(mapping.original.column
+                                     - previousOriginalColumn);
+          previousOriginalColumn = mapping.original.column;
+
+          if (mapping.name) {
+            result += base64VLQ.encode(this._names.indexOf(mapping.name)
+                                       - previousName);
+            previousName = this._names.indexOf(mapping.name);
+          }
+        }
+      }
+
+      return result;
+    };
+
+  /**
+   * Externalize the source map.
+   */
+  SourceMapGenerator.prototype.toJSON =
+    function SourceMapGenerator_toJSON() {
+      var map = {
+        version: this._version,
+        file: this._file,
+        sources: this._sources.toArray(),
+        names: this._names.toArray(),
+        mappings: this._serializeMappings()
+      };
+      if (this._sourceRoot) {
+        map.sourceRoot = this._sourceRoot;
+      }
+      if (this._sourcesContents) {
+        map.sourcesContent = map.sources.map(function (source) {
+          if (map.sourceRoot) {
+            source = util.relative(map.sourceRoot, source);
+          }
+          return Object.prototype.hasOwnProperty.call(
+            this._sourcesContents, util.toSetString(source))
+            ? this._sourcesContents[util.toSetString(source)]
+            : null;
+        }, this);
+      }
+      return map;
+    };
+
+  /**
+   * Render the source map being generated to a string.
+   */
+  SourceMapGenerator.prototype.toString =
+    function SourceMapGenerator_toString() {
+      return JSON.stringify(this);
+    };
+
+  exports.SourceMapGenerator = SourceMapGenerator;
+
+});
+
+},{"./array-set":41,"./base64-vlq":42,"./util":39,"amdefine":43}],35:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -44318,23 +44319,36 @@ define(function (require, exports, module) {
     };
     var map = new SourceMapGenerator(aArgs);
     var sourceMappingActive = false;
+    var lastOriginalSource = null;
+    var lastOriginalLine = null;
+    var lastOriginalColumn = null;
+    var lastOriginalName = null;
     this.walk(function (chunk, original) {
       generated.code += chunk;
       if (original.source !== null
           && original.line !== null
           && original.column !== null) {
-        map.addMapping({
-          source: original.source,
-          original: {
-            line: original.line,
-            column: original.column
-          },
-          generated: {
-            line: generated.line,
-            column: generated.column
-          },
-          name: original.name
-        });
+        if(lastOriginalSource !== original.source
+           || lastOriginalLine !== original.line
+           || lastOriginalColumn !== original.column
+           || lastOriginalName !== original.name) {
+          map.addMapping({
+            source: original.source,
+            original: {
+              line: original.line,
+              column: original.column
+            },
+            generated: {
+              line: generated.line,
+              column: generated.column
+            },
+            name: original.name
+          });
+        }
+        lastOriginalSource = original.source;
+        lastOriginalLine = original.line;
+        lastOriginalColumn = original.column;
+        lastOriginalName = original.name;
         sourceMappingActive = true;
       } else if (sourceMappingActive) {
         map.addMapping({
@@ -44343,6 +44357,7 @@ define(function (require, exports, module) {
             column: generated.column
           }
         });
+        lastOriginalSource = null;
         sourceMappingActive = false;
       }
       chunk.split('').forEach(function (ch) {
@@ -44365,7 +44380,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./source-map-generator":33,"./util":40,"amdefine":42}],44:[function(require,module,exports){
+},{"./source-map-generator":34,"./util":39,"amdefine":43}],44:[function(require,module,exports){
 exports.readIEEE754 = function(buffer, offset, isBE, mLen, nBytes) {
   var e, m,
       eLen = nBytes * 8 - mLen - 1,
@@ -45534,7 +45549,7 @@ Buffer.prototype.writeDoubleBE = function(value, offset, noAssert) {
   writeDouble(this, value, offset, true, noAssert);
 };
 
-},{"./buffer_ieee754":44,"assert":37,"base64-js":45}],42:[function(require,module,exports){
+},{"./buffer_ieee754":44,"assert":37,"base64-js":45}],43:[function(require,module,exports){
 var process=require("__browserify_process"),__filename="/../node_modules/escodegen/node_modules/source-map/node_modules/amdefine/amdefine.js";/** vim: et:ts=4:sw=4:sts=4
  * @license amdefine 0.0.8 Copyright (c) 2011, The Dojo Foundation All Rights Reserved.
  * Available via the MIT or new BSD license.
@@ -45835,7 +45850,126 @@ function amdefine(module, requireFn) {
 
 module.exports = amdefine;
 
-},{"__browserify_process":20,"path":46}],45:[function(require,module,exports){
+},{"__browserify_process":21,"path":46}],39:[function(require,module,exports){
+/* -*- Mode: js; js-indent-level: 2; -*- */
+/*
+ * Copyright 2011 Mozilla Foundation and contributors
+ * Licensed under the New BSD license. See LICENSE or:
+ * http://opensource.org/licenses/BSD-3-Clause
+ */
+if (typeof define !== 'function') {
+    var define = require('amdefine')(module, require);
+}
+define(function (require, exports, module) {
+
+  /**
+   * This is a helper function for getting values from parameter/options
+   * objects.
+   *
+   * @param args The object we are extracting values from
+   * @param name The name of the property we are getting.
+   * @param defaultValue An optional value to return if the property is missing
+   * from the object. If this is not specified and the property is missing, an
+   * error will be thrown.
+   */
+  function getArg(aArgs, aName, aDefaultValue) {
+    if (aName in aArgs) {
+      return aArgs[aName];
+    } else if (arguments.length === 3) {
+      return aDefaultValue;
+    } else {
+      throw new Error('"' + aName + '" is a required argument.');
+    }
+  }
+  exports.getArg = getArg;
+
+  var urlRegexp = /([\w+\-.]+):\/\/((\w+:\w+)@)?([\w.]+)?(:(\d+))?(\S+)?/;
+
+  function urlParse(aUrl) {
+    var match = aUrl.match(urlRegexp);
+    if (!match) {
+      return null;
+    }
+    return {
+      scheme: match[1],
+      auth: match[3],
+      host: match[4],
+      port: match[6],
+      path: match[7]
+    };
+  }
+  exports.urlParse = urlParse;
+
+  function urlGenerate(aParsedUrl) {
+    var url = aParsedUrl.scheme + "://";
+    if (aParsedUrl.auth) {
+      url += aParsedUrl.auth + "@"
+    }
+    if (aParsedUrl.host) {
+      url += aParsedUrl.host;
+    }
+    if (aParsedUrl.port) {
+      url += ":" + aParsedUrl.port
+    }
+    if (aParsedUrl.path) {
+      url += aParsedUrl.path;
+    }
+    return url;
+  }
+  exports.urlGenerate = urlGenerate;
+
+  function join(aRoot, aPath) {
+    var url;
+
+    if (aPath.match(urlRegexp)) {
+      return aPath;
+    }
+
+    if (aPath.charAt(0) === '/' && (url = urlParse(aRoot))) {
+      url.path = aPath;
+      return urlGenerate(url);
+    }
+
+    return aRoot.replace(/\/$/, '') + '/' + aPath;
+  }
+  exports.join = join;
+
+  /**
+   * Because behavior goes wacky when you set `__proto__` on objects, we
+   * have to prefix all the strings in our set with an arbitrary character.
+   *
+   * See https://github.com/mozilla/source-map/pull/31 and
+   * https://github.com/mozilla/source-map/issues/30
+   *
+   * @param String aStr
+   */
+  function toSetString(aStr) {
+    return '$' + aStr;
+  }
+  exports.toSetString = toSetString;
+
+  function fromSetString(aStr) {
+    return aStr.substr(1);
+  }
+  exports.fromSetString = fromSetString;
+
+  function relative(aRoot, aPath) {
+    aRoot = aRoot.replace(/\/$/, '');
+
+    var url = urlParse(aRoot);
+    if (aPath.charAt(0) == "/" && url && url.path == "/") {
+      return aPath.slice(1);
+    }
+
+    return aPath.indexOf(aRoot + '/') === 0
+      ? aPath.substr(aRoot.length + 1)
+      : aPath;
+  }
+  exports.relative = relative;
+
+});
+
+},{"amdefine":43}],45:[function(require,module,exports){
 (function (exports) {
 	'use strict';
 
@@ -45921,7 +46055,188 @@ module.exports = amdefine;
 	module.exports.fromByteArray = uint8ToBase64;
 }());
 
-},{}],39:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
+/* -*- Mode: js; js-indent-level: 2; -*- */
+/*
+ * Copyright 2011 Mozilla Foundation and contributors
+ * Licensed under the New BSD license. See LICENSE or:
+ * http://opensource.org/licenses/BSD-3-Clause
+ */
+if (typeof define !== 'function') {
+    var define = require('amdefine')(module, require);
+}
+define(function (require, exports, module) {
+
+  /**
+   * Recursive implementation of binary search.
+   *
+   * @param aLow Indices here and lower do not contain the needle.
+   * @param aHigh Indices here and higher do not contain the needle.
+   * @param aNeedle The element being searched for.
+   * @param aHaystack The non-empty array being searched.
+   * @param aCompare Function which takes two elements and returns -1, 0, or 1.
+   */
+  function recursiveSearch(aLow, aHigh, aNeedle, aHaystack, aCompare) {
+    // This function terminates when one of the following is true:
+    //
+    //   1. We find the exact element we are looking for.
+    //
+    //   2. We did not find the exact element, but we can return the next
+    //      closest element that is less than that element.
+    //
+    //   3. We did not find the exact element, and there is no next-closest
+    //      element which is less than the one we are searching for, so we
+    //      return null.
+    var mid = Math.floor((aHigh - aLow) / 2) + aLow;
+    var cmp = aCompare(aNeedle, aHaystack[mid]);
+    if (cmp === 0) {
+      // Found the element we are looking for.
+      return aHaystack[mid];
+    }
+    else if (cmp > 0) {
+      // aHaystack[mid] is greater than our needle.
+      if (aHigh - mid > 1) {
+        // The element is in the upper half.
+        return recursiveSearch(mid, aHigh, aNeedle, aHaystack, aCompare);
+      }
+      // We did not find an exact match, return the next closest one
+      // (termination case 2).
+      return aHaystack[mid];
+    }
+    else {
+      // aHaystack[mid] is less than our needle.
+      if (mid - aLow > 1) {
+        // The element is in the lower half.
+        return recursiveSearch(aLow, mid, aNeedle, aHaystack, aCompare);
+      }
+      // The exact needle element was not found in this haystack. Determine if
+      // we are in termination case (2) or (3) and return the appropriate thing.
+      return aLow < 0
+        ? null
+        : aHaystack[aLow];
+    }
+  }
+
+  /**
+   * This is an implementation of binary search which will always try and return
+   * the next lowest value checked if there is no exact hit. This is because
+   * mappings between original and generated line/col pairs are single points,
+   * and there is an implicit region between each of them, so a miss just means
+   * that you aren't on the very start of a region.
+   *
+   * @param aNeedle The element you are looking for.
+   * @param aHaystack The array that is being searched.
+   * @param aCompare A function which takes the needle and an element in the
+   *     array and returns -1, 0, or 1 depending on whether the needle is less
+   *     than, equal to, or greater than the element, respectively.
+   */
+  exports.search = function search(aNeedle, aHaystack, aCompare) {
+    return aHaystack.length > 0
+      ? recursiveSearch(-1, aHaystack.length, aNeedle, aHaystack, aCompare)
+      : null;
+  };
+
+});
+
+},{"amdefine":43}],41:[function(require,module,exports){
+/* -*- Mode: js; js-indent-level: 2; -*- */
+/*
+ * Copyright 2011 Mozilla Foundation and contributors
+ * Licensed under the New BSD license. See LICENSE or:
+ * http://opensource.org/licenses/BSD-3-Clause
+ */
+if (typeof define !== 'function') {
+    var define = require('amdefine')(module, require);
+}
+define(function (require, exports, module) {
+
+  var util = require('./util');
+
+  /**
+   * A data structure which is a combination of an array and a set. Adding a new
+   * member is O(1), testing for membership is O(1), and finding the index of an
+   * element is O(1). Removing elements from the set is not supported. Only
+   * strings are supported for membership.
+   */
+  function ArraySet() {
+    this._array = [];
+    this._set = {};
+  }
+
+  /**
+   * Static method for creating ArraySet instances from an existing array.
+   */
+  ArraySet.fromArray = function ArraySet_fromArray(aArray) {
+    var set = new ArraySet();
+    for (var i = 0, len = aArray.length; i < len; i++) {
+      set.add(aArray[i]);
+    }
+    return set;
+  };
+
+  /**
+   * Add the given string to this set.
+   *
+   * @param String aStr
+   */
+  ArraySet.prototype.add = function ArraySet_add(aStr) {
+    if (this.has(aStr)) {
+      // Already a member; nothing to do.
+      return;
+    }
+    var idx = this._array.length;
+    this._array.push(aStr);
+    this._set[util.toSetString(aStr)] = idx;
+  };
+
+  /**
+   * Is the given string a member of this set?
+   *
+   * @param String aStr
+   */
+  ArraySet.prototype.has = function ArraySet_has(aStr) {
+    return Object.prototype.hasOwnProperty.call(this._set,
+                                                util.toSetString(aStr));
+  };
+
+  /**
+   * What is the index of the given string in the array?
+   *
+   * @param String aStr
+   */
+  ArraySet.prototype.indexOf = function ArraySet_indexOf(aStr) {
+    if (this.has(aStr)) {
+      return this._set[util.toSetString(aStr)];
+    }
+    throw new Error('"' + aStr + '" is not in the set.');
+  };
+
+  /**
+   * What is the element at the given index?
+   *
+   * @param Number aIdx
+   */
+  ArraySet.prototype.at = function ArraySet_at(aIdx) {
+    if (aIdx >= 0 && aIdx < this._array.length) {
+      return this._array[aIdx];
+    }
+    throw new Error('No element indexed by ' + aIdx);
+  };
+
+  /**
+   * Returns the array representation of this set (which has the proper indices
+   * indicated by indexOf). Note that this is a copy of the internal array used
+   * for storing the members so that no one can mess with internal state.
+   */
+  ArraySet.prototype.toArray = function ArraySet_toArray() {
+    return this._array.slice();
+  };
+
+  exports.ArraySet = ArraySet;
+
+});
+
+},{"./util":39,"amdefine":43}],42:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -46067,307 +46382,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./base64":47,"amdefine":42}],40:[function(require,module,exports){
-/* -*- Mode: js; js-indent-level: 2; -*- */
-/*
- * Copyright 2011 Mozilla Foundation and contributors
- * Licensed under the New BSD license. See LICENSE or:
- * http://opensource.org/licenses/BSD-3-Clause
- */
-if (typeof define !== 'function') {
-    var define = require('amdefine')(module, require);
-}
-define(function (require, exports, module) {
-
-  /**
-   * This is a helper function for getting values from parameter/options
-   * objects.
-   *
-   * @param args The object we are extracting values from
-   * @param name The name of the property we are getting.
-   * @param defaultValue An optional value to return if the property is missing
-   * from the object. If this is not specified and the property is missing, an
-   * error will be thrown.
-   */
-  function getArg(aArgs, aName, aDefaultValue) {
-    if (aName in aArgs) {
-      return aArgs[aName];
-    } else if (arguments.length === 3) {
-      return aDefaultValue;
-    } else {
-      throw new Error('"' + aName + '" is a required argument.');
-    }
-  }
-  exports.getArg = getArg;
-
-  var urlRegexp = /([\w+\-.]+):\/\/((\w+:\w+)@)?([\w.]+)?(:(\d+))?(\S+)?/;
-
-  function urlParse(aUrl) {
-    var match = aUrl.match(urlRegexp);
-    if (!match) {
-      return null;
-    }
-    return {
-      scheme: match[1],
-      auth: match[3],
-      host: match[4],
-      port: match[6],
-      path: match[7]
-    };
-  }
-  exports.urlParse = urlParse;
-
-  function urlGenerate(aParsedUrl) {
-    var url = aParsedUrl.scheme + "://";
-    if (aParsedUrl.auth) {
-      url += aParsedUrl.auth + "@"
-    }
-    if (aParsedUrl.host) {
-      url += aParsedUrl.host;
-    }
-    if (aParsedUrl.port) {
-      url += ":" + aParsedUrl.port
-    }
-    if (aParsedUrl.path) {
-      url += aParsedUrl.path;
-    }
-    return url;
-  }
-  exports.urlGenerate = urlGenerate;
-
-  function join(aRoot, aPath) {
-    var url;
-
-    if (aPath.match(urlRegexp)) {
-      return aPath;
-    }
-
-    if (aPath.charAt(0) === '/' && (url = urlParse(aRoot))) {
-      url.path = aPath;
-      return urlGenerate(url);
-    }
-
-    return aRoot.replace(/\/$/, '') + '/' + aPath;
-  }
-  exports.join = join;
-
-  /**
-   * Because behavior goes wacky when you set `__proto__` on objects, we
-   * have to prefix all the strings in our set with an arbitrary character.
-   *
-   * See https://github.com/mozilla/source-map/pull/31 and
-   * https://github.com/mozilla/source-map/issues/30
-   *
-   * @param String aStr
-   */
-  function toSetString(aStr) {
-    return '$' + aStr;
-  }
-  exports.toSetString = toSetString;
-
-  function fromSetString(aStr) {
-    return aStr.substr(1);
-  }
-  exports.fromSetString = fromSetString;
-
-  function relative(aRoot, aPath) {
-    aRoot = aRoot.replace(/\/$/, '');
-
-    var url = urlParse(aRoot);
-    if (aPath.charAt(0) == "/" && url && url.path == "/") {
-      return aPath.slice(1);
-    }
-
-    return aPath.indexOf(aRoot + '/') === 0
-      ? aPath.substr(aRoot.length + 1)
-      : aPath;
-  }
-  exports.relative = relative;
-
-});
-
-},{"amdefine":42}],41:[function(require,module,exports){
-/* -*- Mode: js; js-indent-level: 2; -*- */
-/*
- * Copyright 2011 Mozilla Foundation and contributors
- * Licensed under the New BSD license. See LICENSE or:
- * http://opensource.org/licenses/BSD-3-Clause
- */
-if (typeof define !== 'function') {
-    var define = require('amdefine')(module, require);
-}
-define(function (require, exports, module) {
-
-  var util = require('./util');
-
-  /**
-   * A data structure which is a combination of an array and a set. Adding a new
-   * member is O(1), testing for membership is O(1), and finding the index of an
-   * element is O(1). Removing elements from the set is not supported. Only
-   * strings are supported for membership.
-   */
-  function ArraySet() {
-    this._array = [];
-    this._set = {};
-  }
-
-  /**
-   * Static method for creating ArraySet instances from an existing array.
-   */
-  ArraySet.fromArray = function ArraySet_fromArray(aArray) {
-    var set = new ArraySet();
-    for (var i = 0, len = aArray.length; i < len; i++) {
-      set.add(aArray[i]);
-    }
-    return set;
-  };
-
-  /**
-   * Add the given string to this set.
-   *
-   * @param String aStr
-   */
-  ArraySet.prototype.add = function ArraySet_add(aStr) {
-    if (this.has(aStr)) {
-      // Already a member; nothing to do.
-      return;
-    }
-    var idx = this._array.length;
-    this._array.push(aStr);
-    this._set[util.toSetString(aStr)] = idx;
-  };
-
-  /**
-   * Is the given string a member of this set?
-   *
-   * @param String aStr
-   */
-  ArraySet.prototype.has = function ArraySet_has(aStr) {
-    return Object.prototype.hasOwnProperty.call(this._set,
-                                                util.toSetString(aStr));
-  };
-
-  /**
-   * What is the index of the given string in the array?
-   *
-   * @param String aStr
-   */
-  ArraySet.prototype.indexOf = function ArraySet_indexOf(aStr) {
-    if (this.has(aStr)) {
-      return this._set[util.toSetString(aStr)];
-    }
-    throw new Error('"' + aStr + '" is not in the set.');
-  };
-
-  /**
-   * What is the element at the given index?
-   *
-   * @param Number aIdx
-   */
-  ArraySet.prototype.at = function ArraySet_at(aIdx) {
-    if (aIdx >= 0 && aIdx < this._array.length) {
-      return this._array[aIdx];
-    }
-    throw new Error('No element indexed by ' + aIdx);
-  };
-
-  /**
-   * Returns the array representation of this set (which has the proper indices
-   * indicated by indexOf). Note that this is a copy of the internal array used
-   * for storing the members so that no one can mess with internal state.
-   */
-  ArraySet.prototype.toArray = function ArraySet_toArray() {
-    return this._array.slice();
-  };
-
-  exports.ArraySet = ArraySet;
-
-});
-
-},{"./util":40,"amdefine":42}],43:[function(require,module,exports){
-/* -*- Mode: js; js-indent-level: 2; -*- */
-/*
- * Copyright 2011 Mozilla Foundation and contributors
- * Licensed under the New BSD license. See LICENSE or:
- * http://opensource.org/licenses/BSD-3-Clause
- */
-if (typeof define !== 'function') {
-    var define = require('amdefine')(module, require);
-}
-define(function (require, exports, module) {
-
-  /**
-   * Recursive implementation of binary search.
-   *
-   * @param aLow Indices here and lower do not contain the needle.
-   * @param aHigh Indices here and higher do not contain the needle.
-   * @param aNeedle The element being searched for.
-   * @param aHaystack The non-empty array being searched.
-   * @param aCompare Function which takes two elements and returns -1, 0, or 1.
-   */
-  function recursiveSearch(aLow, aHigh, aNeedle, aHaystack, aCompare) {
-    // This function terminates when one of the following is true:
-    //
-    //   1. We find the exact element we are looking for.
-    //
-    //   2. We did not find the exact element, but we can return the next
-    //      closest element that is less than that element.
-    //
-    //   3. We did not find the exact element, and there is no next-closest
-    //      element which is less than the one we are searching for, so we
-    //      return null.
-    var mid = Math.floor((aHigh - aLow) / 2) + aLow;
-    var cmp = aCompare(aNeedle, aHaystack[mid]);
-    if (cmp === 0) {
-      // Found the element we are looking for.
-      return aHaystack[mid];
-    }
-    else if (cmp > 0) {
-      // aHaystack[mid] is greater than our needle.
-      if (aHigh - mid > 1) {
-        // The element is in the upper half.
-        return recursiveSearch(mid, aHigh, aNeedle, aHaystack, aCompare);
-      }
-      // We did not find an exact match, return the next closest one
-      // (termination case 2).
-      return aHaystack[mid];
-    }
-    else {
-      // aHaystack[mid] is less than our needle.
-      if (mid - aLow > 1) {
-        // The element is in the lower half.
-        return recursiveSearch(aLow, mid, aNeedle, aHaystack, aCompare);
-      }
-      // The exact needle element was not found in this haystack. Determine if
-      // we are in termination case (2) or (3) and return the appropriate thing.
-      return aLow < 0
-        ? null
-        : aHaystack[aLow];
-    }
-  }
-
-  /**
-   * This is an implementation of binary search which will always try and return
-   * the next lowest value checked if there is no exact hit. This is because
-   * mappings between original and generated line/col pairs are single points,
-   * and there is an implicit region between each of them, so a miss just means
-   * that you aren't on the very start of a region.
-   *
-   * @param aNeedle The element you are looking for.
-   * @param aHaystack The array that is being searched.
-   * @param aCompare A function which takes the needle and an element in the
-   *     array and returns -1, 0, or 1 depending on whether the needle is less
-   *     than, equal to, or greater than the element, respectively.
-   */
-  exports.search = function search(aNeedle, aHaystack, aCompare) {
-    return aHaystack.length > 0
-      ? recursiveSearch(-1, aHaystack.length, aNeedle, aHaystack, aCompare)
-      : null;
-  };
-
-});
-
-},{"amdefine":42}],46:[function(require,module,exports){
+},{"./base64":47,"amdefine":43}],46:[function(require,module,exports){
 var process=require("__browserify_process");function filter (xs, fn) {
     var res = [];
     for (var i = 0; i < xs.length; i++) {
@@ -46546,7 +46561,7 @@ exports.relative = function(from, to) {
 
 exports.sep = '/';
 
-},{"__browserify_process":20}],47:[function(require,module,exports){
+},{"__browserify_process":21}],47:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -46590,5 +46605,5 @@ define(function (require, exports, module) {
 
 });
 
-},{"amdefine":42}]},{},[4])
+},{"amdefine":43}]},{},[4])
 ;

@@ -59,18 +59,19 @@ module.exports.RuntimeProblem = class RuntimeProblem extends UserCodeProblem
     super aether, 'runtime', kind
     @type = 'runtime'
     @userInfo ?= {}
-    @message = RuntimeError.explainErrorMessage error  # TODO: this should be done with configurable rules
-    @ranges = [RuntimeProblem.getAnonymousErrorRange error]  # later this will go away because we'll instrument all the statements
-    if @ranges
+    @message = RuntimeProblem.explainErrorMessage error  # TODO: this should be done with configurable rules
+    @ranges = RuntimeProblem.getAnonymousErrorRanges error  # later this will go away because we'll instrument all the statements
+    if @ranges?.length
+      console.log "Got ranges:", @ranges
       lineNumber = @ranges[0][0][0]
       if @message.search(/^Line \d+/) != -1
         @message = @message.replace /^Line \d+/, (match, n) => "Line #{lineNumber}"
       else
         @message = "Line #{lineNumber}: #{@message}"
 
-  @getAnonymousErrorRange: (error) ->
+  @getAnonymousErrorRanges: (error) ->
     # Cross-browser stack trace libs like TraceKit throw away the eval line number, as it's inline with another line number. And only Chrome gives the anonymous line number. So we don't actually need a cross-browser solution.
-    return [[error.lineNumber, error.column], [error.lineNumber, error.column + 1]] if error.lineNumber  # useful?
+    return [[[error.lineNumber, error.column], [error.lineNumber, error.column + 1]]] if error.lineNumber  # useful?
     stack = error.stack
     return null unless stack
     lines = stack.split('\n')
@@ -84,7 +85,7 @@ module.exports.RuntimeProblem = class RuntimeProblem extends UserCodeProblem
       if chromeVersion >= 28
         lineNumber -= 1  # Apparently the indexing has changed in version 28
       #console.log "Parsed", lineNumber, column, "from stack", stack
-      return [[lineNumber, column], [lineNumber, column + 1]]
+      return [[[lineNumber, column], [lineNumber, column + 1]]]
     #console.log "Couldn't parse stack:", stack
     return null
 
