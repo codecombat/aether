@@ -2,6 +2,7 @@ _ = window?._ ? self?._ ? global?._ ? require 'lodash'  # rely on lodash existin
 traceur = window?.traceur ? self?.traceur ? global?.traceur ? require 'traceur'  # rely on traceur existing, since it busts CodeCombat to browserify it--TODO
 
 esprima = require 'esprima'  # getting our Esprima Harmony
+acorn_loose = require 'acorn/acorn_loose'  # for if Esprima dies. Note it can't do ES6.
 jshint = require('jshint').JSHINT
 normalizer = require 'JS_WALA/normalizer/lib/normalizer'
 escodegen = require 'escodegen'
@@ -149,30 +150,28 @@ module.exports = class Aether
     tree.generatedSource = traceur.outputgeneration.TreeWriter.write(tree, opts)
     tree.generatedSource
 
+  transform: (code, transforms, parser="esprima", withAST=false) ->
+    transformedCode = morph code, (_.bind t, @ for t in transforms), parser
+    return transformedCode unless withAST
+    [parse, options] = switch parser
+      when "esprima" then [esprima.parse, {loc: true, range: true, raw: true, comment: true, tolerant: true}]
+      when "acorn_loose" then [acorn_loose.parse_dammit, {locations: true, ranges: true, tabSize: 4, ecmaVersion: 5}]
+    transformedAST = parse transformedCode, options
+    [transformedCode, transformedAST]
+
   purifyCode: (rawCode) ->
     preprocessedCode = @checkCommonMistakes rawCode
     wrappedCode = @wrap preprocessedCode
     @vars = {}  # TODO: add in flow analysis
     @methodLineNumbers = ([] for i in preprocessedCode.split('\n'))  # TODO: add in flow analysis
 
-    ## Trying out tern's inference: http://ternjs.net/doc/manual.html#infer
-    # Actually, I have no idea how to get useful data out of this
-    #context = new infer.Context([])
-    #infer.withContext context, =>
-    #  ternAST = infer.parse(wrappedCode)
-    #  infer.analyze ternAST, @options.functionName
-
     preNormalizationTransforms = [transforms.checkThisKeywords, transforms.checkIncompleteMembers]
     try
-      transformedCode = morph wrappedCode, (_.bind t, @ for t in preNormalizationTransforms)
-      transformedAST = esprima.parse(transformedCode, loc: true, range: true, raw: true, comment: true, tolerant: true)
+      [transformedCode, transformedAST] = @transform wrappedCode, preNormalizationTransforms, "esprima", true
     catch error
       problem = new problems.TranspileProblem @, 'esprima', error.id, error, {}, wrappedCode, ''
-      if problem.level in ["ignore", "info", "warning"]
-        console.log "Esprima can't survive", problem.serialize(), "at level", problem.level
-        problem.level = "error"
       @addProblem problem
-      return ''
+      [transformedCode, transformedAST] = @transform wrappedCode, preNormalizationTransforms, "acorn_loose", true
 
     # TODO: need to insert 'use strict' after normalization, since otherwise you get tmp2 = 'use strict'
     normalizedAST = normalizer.normalize transformedAST
@@ -181,7 +180,7 @@ module.exports = class Aether
     postNormalizationTransforms.unshift transforms.validateReturns if @options.thisValue?.validateReturn  # TODO: parameter/return validation should be part of Aether, not some half-external function call
     postNormalizationTransforms.unshift transforms.yieldConditionally if @options.yieldConditionally
     postNormalizationTransforms.unshift transforms.yieldAutomatically if @options.yieldAutomatically
-    instrumentedCode = morph normalizedCode, (_.bind t, @ for t in postNormalizationTransforms)
+    instrumentedCode = @transform normalizedCode, postNormalizationTransforms
     traceuredCode = @es6ify "return " + instrumentedCode
     if false
       console.log "---RAW CODE----: #{rawCode.split('\n').length}\n", {code: rawCode}

@@ -27,7 +27,8 @@
     "traceur": "~0.0.4",
     "JS_WALA": "https://github.com/nwinter/JS_WALA/tarball/master",
     "escodegen": "0.0.25",
-    "tern": "~0.4.0"
+    "tern": "~0.4.0",
+    "acorn": "~0.3.1"
   },
   "devDependencies": {
     "grunt-contrib-uglify": "~0.2.2",
