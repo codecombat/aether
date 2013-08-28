@@ -12,7 +12,7 @@ describe "ES6 Test Suite", ->
           yield z * x;
         }
       """
-      compiled = aether.es6ify code
+      compiled = aether.traceurify code
       eval(compiled)
       hoboz = gen(5)
       expect(hoboz.next().value).toEqual 5
@@ -27,7 +27,7 @@ describe "ES6 Test Suite", ->
         return 'name: ' + name + ', codes: ' + codes + ', livesIn: ' + livesIn;
       };
       """
-      compiled = aether.es6ify code
+      compiled = aether.traceurify code
       eval(compiled)
       expect(hobaby("A yeti!")).toEqual 'name: A yeti!, codes: JavaScript, livesIn: USA'
 

@@ -135,7 +135,17 @@ module.exports = class Aether
       aether[prop] = val
     aether
 
-  es6ify: (code) ->
+  walk: (node, fn) ->
+    # TODO: this is redundant with morph walk logic
+    for key, child of node
+      if _.isArray child
+        for grandchild in child
+          @walk grandchild, fn if _.isString grandchild?.type
+      else if _.isString child?.type
+        @walk child, fn
+      fn child
+
+  traceurify: (code) ->
     # TODO: where to put this?
     project = new traceur.semantics.symbols.Project('codecombat')
     reporter = new traceur.util.ErrorReporter()
@@ -155,34 +165,50 @@ module.exports = class Aether
     return transformedCode unless withAST
     [parse, options] = switch parser
       when "esprima" then [esprima.parse, {loc: true, range: true, raw: true, comment: true, tolerant: true}]
-      when "acorn_loose" then [acorn_loose.parse_dammit, {locations: true, ranges: true, tabSize: 4, ecmaVersion: 5}]
+      when "acorn_loose" then [acorn_loose.parse_dammit, {locations: true, tabSize: 4, ecmaVersion: 5}]
     transformedAST = parse transformedCode, options
     [transformedCode, transformedAST]
 
   purifyCode: (rawCode) ->
-    preprocessedCode = @checkCommonMistakes rawCode
+    preprocessedCode = @checkCommonMistakes rawCode  # TODO: if we could somehow not change the source ranges here, that would be awesome....
     wrappedCode = @wrap preprocessedCode
-    @vars = {}  # TODO: add in flow analysis
-    @methodLineNumbers = ([] for i in preprocessedCode.split('\n'))  # TODO: add in flow analysis
+    @vars = {}
 
-    preNormalizationTransforms = [transforms.checkThisKeywords, transforms.checkIncompleteMembers]
+    originalNodeRanges = []
+    preNormalizationTransforms = [
+      transforms.makeGatherNodeRanges originalNodeRanges, @wrappedCodePrefix
+      transforms.makeCheckThisKeywords @options.global
+      transforms.checkIncompleteMembers
+    ]
     try
       [transformedCode, transformedAST] = @transform wrappedCode, preNormalizationTransforms, "esprima", true
     catch error
       problem = new problems.TranspileProblem @, 'esprima', error.id, error, {}, wrappedCode, ''
       @addProblem problem
+      originalNodeRanges.splice()  # Reset any ranges we did find; we'll try again
       [transformedCode, transformedAST] = @transform wrappedCode, preNormalizationTransforms, "acorn_loose", true
 
     # TODO: need to insert 'use strict' after normalization, since otherwise you get tmp2 = 'use strict'
     normalizedAST = normalizer.normalize transformedAST
-    normalizedCode = escodegen.generate normalizedAST
+    normalizedNodeIndex = []
+    @walk normalizedAST, (node) ->
+      return unless pos = node?.attr?.pos
+      node.loc = {start: {line: 1, column: normalizedNodeIndex.length}, end: {line: 1, column: normalizedNodeIndex.length + 1}}
+      normalizedNodeIndex.push node
+
+    normalized = escodegen.generate normalizedAST, {sourceMap: @options.functionName or 'foo', sourceMapWithCode: true}
+    normalizedCode = normalized.code
+    normalizedSourceMap = normalized.map
+
     postNormalizationTransforms = [transforms.instrumentStatements]
     postNormalizationTransforms.unshift transforms.validateReturns if @options.thisValue?.validateReturn  # TODO: parameter/return validation should be part of Aether, not some half-external function call
     postNormalizationTransforms.unshift transforms.yieldConditionally if @options.yieldConditionally
     postNormalizationTransforms.unshift transforms.yieldAutomatically if @options.yieldAutomatically
+    postNormalizationTransforms.unshift transforms.makeFindOriginalNodes originalNodeRanges, @wrappedCodePrefix, wrappedCode, normalizedSourceMap, normalizedNodeIndex
     instrumentedCode = @transform normalizedCode, postNormalizationTransforms
-    traceuredCode = @es6ify "return " + instrumentedCode
+    traceuredCode = @traceurify "return " + instrumentedCode
     if false
+      console.log "---NODE RANGES---:\n" + _.map(originalNodeRanges, (n) -> "#{n.originalRange.start} - #{n.originalRange.end}\t#{n.originalSource.replace(/\n/g, '↵')}").join('\n')
       console.log "---RAW CODE----: #{rawCode.split('\n').length}\n", {code: rawCode}
       console.log "---WRAPPED-----: #{wrappedCode.split('\n').length}\n", {code: wrappedCode}
       console.log "---TRANSFORMED-: #{transformedCode.split('\n').length}\n", {code: transformedCode}
@@ -193,7 +219,7 @@ module.exports = class Aether
 
   getLineNumberForPlannedMethod: (plannedMethod, numMethodsSeen) ->
     n = 0
-    for methods, lineNumber in @methodLineNumbers
+    for methods, lineNumber in [] # @methodLineNumbers
       for method, j in methods
         if n++ < numMethodsSeen then continue
         if method is plannedMethod

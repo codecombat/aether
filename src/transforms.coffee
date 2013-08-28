@@ -1,5 +1,6 @@
 problems = require './problems'
 esprima = require 'esprima'
+SourceMap = require 'source-map'
 S = esprima.Syntax
 
 statements = [S.EmptyStatement, S.ExpressionStatement, S.BreakStatement, S.ContinueStatement, S.DebuggerStatement, S.DoWhileStatement, S.ForStatement, S.FunctionDeclaration, S.ClassDeclaration, S.IfStatement, S.ReturnStatement, S.SwitchStatement, S.ThrowStatement, S.TryStatement, S.VariableStatement, S.WhileStatement, S.WithStatement]
@@ -19,18 +20,31 @@ getLineNumberForNode = (node) ->
 
 ########## Before JS_WALA Normalization ##########
 
-module.exports.checkThisKeywords = checkThisKeywords = (node) ->
-  if node.type is S.VariableDeclarator
-    @vars[node.id] = true
-  else if node.type is S.CallExpression
-    v = node.callee.name
-    if v and not @vars[v] and not @options.global[v]
-      problem = new problems.TranspileProblem @, 'aether', 'MissingThis', {}, '', ''  # TODO: last args
-      problem.message = "Missing `this.` keyword; should be `this.#{v}`."
-      problem.hint = "There is no function `#{v}`, but `this` has a method `#{v}`."
-      @addProblem problem
-      if not @options.requiresThis
-        node.update "this.#{node.source()}"
+# Original node range preservation.
+# 1. Make a many-to-one mapping of normalized nodes to original nodes based on the original ranges, which are unique except for the outer Program wrapper.
+# 2. When we generate the normalizedCode, we can also create a source map.
+# 3. A postNormalizationTransform can then get the original ranges for each node by going through the source map to our normalized mapping to our original node ranges.
+# 4. Instrumentation can then include the original ranges and node source in the saved flow state.
+module.exports.makeGatherNodeRanges = makeGatherNodeRanges = (nodeRanges, codePrefix) -> (node) ->
+  node.originalRange = start: node.range[0] - codePrefix.length, end: node.range[1] - codePrefix.length
+  node.originalSource = node.source()
+  nodeRanges.push node
+
+# Making
+module.exports.makeCheckThisKeywords = makeCheckThisKeywords = (global) ->
+  vars = {}
+  return (node) ->
+    if node.type is S.VariableDeclarator
+      vars[node.id] = true
+    else if node.type is S.CallExpression
+      v = node.callee.name
+      if v and not vars[v] and not global[v]
+        problem = new problems.TranspileProblem @, 'aether', 'MissingThis', {}, '', ''  # TODO: last args
+        problem.message = "Missing `this.` keyword; should be `this.#{v}`."
+        problem.hint = "There is no function `#{v}`, but `this` has a method `#{v}`."
+        @addProblem problem
+        if not @options.requiresThis
+          node.update "this.#{node.source()}"
 
 module.exports.validateReturns = validateReturns = (node) ->
   if node.type is S.ReturnStatement and not node.argument
@@ -38,25 +52,6 @@ module.exports.validateReturns = validateReturns = (node) ->
   else if node.parent?.type is S.ReturnStatement
     node.update "this.validateReturn('#{@options.functionName}', (#{node.source()}))"
 
-# TODO: this one should be replaced by generalized flow-control instrumentation
-module.exports.gatherLineNumbers = gatherLineNumbers = (node) ->
-  if node.type is S.ExpressionStatement
-    lineNumber = getLineNumberForNode node
-    exp = node.expression
-    if exp.type is S.CallExpression
-      # Quick hack to handle tracking line number for plan() method invocations
-      if exp.callee.type is S.MemberExpression
-        name = exp.callee.property.name
-      else if exp.callee.type is S.Identifier
-        name = exp.callee.name  # say() without this... (even though I added this)
-      else if $?
-        console.log "How is this CallExpression being handled?", node, node.source(), exp.callee, exp.callee.source()
-      if @methodLineNumbers.length > lineNumber
-        @methodLineNumbers[lineNumber].push name
-      else
-        console.log "More lines than we can actually handle:", lineNumber, name, "of", @methodLineNumbers.length, "lines"
-
-# TODO: rearrange things so that we can actually get here, because if we punt on lint error, we don't.
 module.exports.checkIncompleteMembers = checkIncompleteMembers = (node) ->
   if node.type is 'ExpressionStatement'
     lineNumber = getLineNumberForNode node
@@ -76,6 +71,23 @@ module.exports.checkIncompleteMembers = checkIncompleteMembers = (node) ->
 
 
 ########## After JS_WALA Normalization ##########
+
+# Restoration of original nodes after normalization
+module.exports.makeFindOriginalNodes = makeFindOriginalNodes = (originalNodes, codePrefix, wrappedCode, normalizedSourceMap, normalizedNodeIndex) ->
+  normalizedPosToOriginalNode = (pos) ->
+    start = pos.start_offset - codePrefix.length
+    end = pos.end_offset - codePrefix.length
+    return node for node in originalNodes when start is node.originalRange.start and end is node.originalRange.end
+    return null
+  smc = new SourceMap.SourceMapConsumer normalizedSourceMap.toString()
+  #console.log "Got smc", smc, "from map", normalizedSourceMap, "string", normalizedSourceMap.toString()
+  return (node) ->
+    return unless mapped = smc.originalPositionFor line: node.loc.start.line, column: node.loc.start.column
+    #console.log "Got normalized position", mapped, "for node", node, node.source()
+    return unless normalizedNode = normalizedNodeIndex[mapped.column]
+    #nconsole.log "  Got normalized node", normalizedNode
+    node.originalNode = normalizedPosToOriginalNode normalizedNode.attr.pos
+    #console.log "  Got original node", node.originalNode, "from pos", normalizedNode.attr?.pos
 
 possiblyGeneratorifyAncestorFunction = (node) ->
   while node.type isnt S.FunctionExpression
@@ -110,3 +122,13 @@ module.exports.yieldAutomatically = yieldAutomatically = (node) ->
     node.update node.source().replace /^function \(/, 'function* ('
 
 module.exports.instrumentStatements = instrumentStatements = (node) ->
+  return unless node.originalNode and node.originalNode.originalRange.start >= 0
+  return unless node.type in statements
+  nFunctionParents = 0  # Only do this in nested functions, not our wrapper
+  p = node.parent
+  while p
+    ++nFunctionParents if p.type is S.FunctionExpression
+    p = p.parent
+  return unless nFunctionParents > 1
+  # TODO: actually save this into aether.flow, and have it happen before the yield happens
+  node.update "#{node.source()} console.log('Running #{node.originalNode.originalSource}, range #{node.originalNode.originalRange.start} - #{node.originalNode.originalRange.end}');"

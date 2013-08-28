@@ -8,12 +8,12 @@ acorn_loose = require 'acorn/acorn_loose'  # for if Esprima dies. Note it can't 
 module.exports = morph = (source, transforms, parser="esprima") ->
   chunks = source.split ''
   if parser is 'esprima'
-    ast = esprima.parse source, {range: true}
+    ast = esprima.parse source, {range: true, loc: true}
     locToRange = null
   else if parser is 'acorn_loose'
     ast = acorn_loose.parse_dammit source, {locations: true}
     # Esprima uses "range", but acorn_loose only has "locations"
-    lines = source.replace(/\n/g, '\n空').split '空'
+    lines = source.replace(/\n/g, '\n空').split '空'  # split while preserving newlines
     posToOffset = (pos) ->
       _.reduce(lines.slice(0, pos.line - 1), ((sum, line) -> sum + line.length), 0) + pos.column
       # lines are 1-indexed, and I think columns are 0-indexed, but should verify
