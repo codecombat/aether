@@ -62,12 +62,13 @@ module.exports.checkIncompleteMembers = checkIncompleteMembers = (node) ->
         m = "this.what? (Check available spells below.)"
       else
         m = "#{exp.source()} has no effect."
-        if exp.property.name in errors.commonMethods
+        if exp.property.name in problems.commonMethods
           m += " It needs parentheses: #{exp.property.name}()"
+      # Should become a UserCodeProblem
       error = new Error m
       error.lineNumber = lineNumber + 2  # Reapply wrapper function offset
       #if $? then console.log node, node.source(), "going to error out!"
-      throw error
+      #throw error
 
 
 ########## After JS_WALA Normalization ##########
@@ -97,11 +98,10 @@ possiblyGeneratorifyAncestorFunction = (node) ->
 # Now that it's normalized to this: https://github.com/nwinter/JS_WALA/blob/master/normalizer/doc/normalization.md
 # ... we can basically just put a yield check in after every CallExpression except the outermost one if we are yielding conditionally.
 module.exports.yieldConditionally = yieldConditionally = (node) ->
-  grandparent = node.parent?.parent
-  if node.type is S.CallExpression and grandparent?.type is S.ExpressionStatement
-    grandparent.update "#{grandparent.source()} if (this._shouldYield) { var __yieldValue = this._shouldYield; this._shouldYield = false; yield __yieldValue; }"
-    grandparent.yields = true
-    possiblyGeneratorifyAncestorFunction grandparent
+  if node.type is S.ExpressionStatement and node.expression.right?.type is S.CallExpression
+    node.update "#{node.source()} if (this._shouldYield) { var _yieldValue = this._shouldYield; this._shouldYield = false; yield _yieldValue; }"
+    node.yields = true
+    possiblyGeneratorifyAncestorFunction node
   else if node.mustBecomeGeneratorFunction
     node.update node.source().replace /^function \(/, 'function* ('
 
@@ -121,14 +121,19 @@ module.exports.yieldAutomatically = yieldAutomatically = (node) ->
   else if node.mustBecomeGeneratorFunction
     node.update node.source().replace /^function \(/, 'function* ('
 
-module.exports.instrumentStatements = instrumentStatements = (node) ->
-  return unless node.originalNode and node.originalNode.originalRange.start >= 0
-  return unless node.type in statements
-  nFunctionParents = 0  # Only do this in nested functions, not our wrapper
-  p = node.parent
-  while p
-    ++nFunctionParents if p.type is S.FunctionExpression
-    p = p.parent
-  return unless nFunctionParents > 1
-  # TODO: actually save this into aether.flow, and have it happen before the yield happens
-  node.update "#{node.source()} console.log('Running #{node.originalNode.originalSource}, range #{node.originalNode.originalRange.start} - #{node.originalNode.originalRange.end}');"
+module.exports.makeInstrumentStatements = makeInstrumentStatements = ->
+  # set up any state tracking here
+  return (node) ->
+    return unless node.originalNode and node.originalNode.originalRange.start >= 0
+    return unless node.type in statements
+    nFunctionParents = 0  # Only do this in nested functions, not our wrapper
+    p = node.parent
+    while p
+      ++nFunctionParents if p.type is S.FunctionExpression
+      p = p.parent
+    return unless nFunctionParents > 1
+    # TODO: actually save this into aether.flow, and have it happen before the yield happens
+    range = [node.originalNode.originalRange.start, node.originalNode.originalRange.end]
+    source = node.originalNode.originalSource
+    node.update "#{node.source()} _aether.logStatement(#{range[0]}, #{range[1]}, \"#{source}\");"  # TODO: escape this better, probably
+    #console.log " ... created logger", node.source()

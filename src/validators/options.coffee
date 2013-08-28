@@ -38,3 +38,12 @@ module.exports = (options) ->
         'enum': ["ES5", "ES6"] #change this later
       problems:
         required: false
+      includeFlow:
+        type: 'boolean'
+        default: true
+      includeMetrics:
+        type: 'boolean'
+        default: true
+      includeStyle:
+        type: 'boolean'
+        default: true

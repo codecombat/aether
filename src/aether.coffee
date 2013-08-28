@@ -105,9 +105,9 @@ module.exports = class Aether
   createFunction: ->
     # Return a ready-to-execute, instrumented function from the purified code
     # Because JS_WALA normalizes it to define a wrapper function on this, we need to run the wrapper to get our real function out.
-    wrapper = new Function [], @pure
+    wrapper = new Function ['_aether'], @pure
     dummyContext = {Math: Math}  # TODO: put real globals in
-    wrapper.call dummyContext
+    wrapper.call dummyContext, @
     dummyContext[@options.functionName or 'foo']
 
   createMethod: ->
@@ -200,10 +200,11 @@ module.exports = class Aether
     normalizedCode = normalized.code
     normalizedSourceMap = normalized.map
 
-    postNormalizationTransforms = [transforms.instrumentStatements]
+    postNormalizationTransforms = []
     postNormalizationTransforms.unshift transforms.validateReturns if @options.thisValue?.validateReturn  # TODO: parameter/return validation should be part of Aether, not some half-external function call
     postNormalizationTransforms.unshift transforms.yieldConditionally if @options.yieldConditionally
     postNormalizationTransforms.unshift transforms.yieldAutomatically if @options.yieldAutomatically
+    postNormalizationTransforms.unshift transforms.makeInstrumentStatements() if @options.includeMetrics or @options.includeFlow
     postNormalizationTransforms.unshift transforms.makeFindOriginalNodes originalNodeRanges, @wrappedCodePrefix, wrappedCode, normalizedSourceMap, normalizedNodeIndex
     instrumentedCode = @transform normalizedCode, postNormalizationTransforms
     traceuredCode = @traceurify "return " + instrumentedCode
@@ -240,6 +241,14 @@ module.exports = class Aether
     lines = source.split /\r?\n/
     indent = if lines.length then lines[0].length - lines[0].replace(/^ +/, '').length else 0
     (line.slice indent for line in lines).join '\n'
+
+  ### Flow -- put somewhere else? ###
+  logStatement: (start, end, source) ->
+    rangeID = start + '-' + end
+    m = @metrics[rangeID] ?= {}
+    m.executions ?= 0
+    ++m.executions
+    console.log "Logged", rangeID, source#, "and now have metrics", @metrics
 
 self.Aether = Aether if self?
 window.Aether = Aether if window?

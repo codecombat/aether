@@ -22518,11 +22518,11 @@ var global=self;(function() {
 
     Aether.prototype.createFunction = function() {
       var dummyContext, wrapper;
-      wrapper = new Function([], this.pure);
+      wrapper = new Function(['_aether'], this.pure);
       dummyContext = {
         Math: Math
       };
-      wrapper.call(dummyContext);
+      wrapper.call(dummyContext, this);
       return dummyContext[this.options.functionName || 'foo'];
     };
 
@@ -22692,7 +22692,7 @@ var global=self;(function() {
       });
       normalizedCode = normalized.code;
       normalizedSourceMap = normalized.map;
-      postNormalizationTransforms = [transforms.instrumentStatements];
+      postNormalizationTransforms = [];
       if ((_ref8 = this.options.thisValue) != null ? _ref8.validateReturn : void 0) {
         postNormalizationTransforms.unshift(transforms.validateReturns);
       }
@@ -22701,6 +22701,9 @@ var global=self;(function() {
       }
       if (this.options.yieldAutomatically) {
         postNormalizationTransforms.unshift(transforms.yieldAutomatically);
+      }
+      if (this.options.includeMetrics || this.options.includeFlow) {
+        postNormalizationTransforms.unshift(transforms.makeInstrumentStatements());
       }
       postNormalizationTransforms.unshift(transforms.makeFindOriginalNodes(originalNodeRanges, this.wrappedCodePrefix, wrappedCode, normalizedSourceMap, normalizedNodeIndex));
       instrumentedCode = this.transform(normalizedCode, postNormalizationTransforms);
@@ -22772,6 +22775,20 @@ var global=self;(function() {
       })()).join('\n');
     };
 
+    /* Flow -- put somewhere else?*/
+
+
+    Aether.prototype.logStatement = function(start, end, source) {
+      var m, rangeID, _base;
+      rangeID = start + '-' + end;
+      m = (_base = this.metrics)[rangeID] != null ? (_base = this.metrics)[rangeID] : _base[rangeID] = {};
+      if (m.executions == null) {
+        m.executions = 0;
+      }
+      ++m.executions;
+      return console.log("Logged", rangeID, source);
+    };
+
     return Aether;
 
   })();
@@ -22810,7 +22827,10 @@ var global=self;(function() {
     yieldAutomatically: false,
     yieldConditionally: false,
     requiresThis: true,
-    executionCosts: execution
+    executionCosts: execution,
+    includeFlow: true,
+    includeMetrics: true,
+    includeStyle: true
   };
 
 }).call(this);
@@ -30180,7 +30200,7 @@ parseYieldExpression: true
   exports.normalize = normalize;
 //});
 
-},{"../../common/lib/ast":15,"../../common/lib/position":20,"./cflow":16,"./decls":17,"./scope":18,"./util":19}],14:[function(require,module,exports){
+},{"../../common/lib/ast":15,"../../common/lib/position":19,"./cflow":16,"./decls":17,"./scope":18,"./util":20}],14:[function(require,module,exports){
 // Acorn is a tiny, fast JavaScript parser written in JavaScript.
 //
 // Acorn was written by Marijn Haverbeke and released under an MIT
@@ -31957,44 +31977,6 @@ parseYieldExpression: true
  *******************************************************************************/
 
 /**
- * Utility methods. 
- */
-//if(typeof define !== 'function') {
-//  var define = require('amdefine')(module);
-//}
-//
-//define(function(require, exports) {
-  var flatmap = function(fn, thisArg) {  
-    var res = [];
-    for(var i=0;i<this.length;++i) {
-      var r = fn.call(thisArg, this[i], i, this);
-      for(var j=0;j<r.length;++j)
-        res[res.length] = r[j];
-    }
-    return res;
-  };
-  if(typeof Object.defineProperty !== 'undefined')
-    Object.defineProperty(Array.prototype, 'flatmap', {
-      value: flatmap,
-      enumerable: false
-    });
-  else
-    Array.prototype.flatmap = flatmap;
-//});
-
-},{}],20:[function(require,module,exports){
-/*******************************************************************************
- * Copyright (c) 2012 IBM Corporation.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *     IBM Corporation - initial API and implementation
- *******************************************************************************/
-
-/**
  * ADT for representing source positions identified by a URL, a start line, a start
  * offset (i.e., character offset from the beginning of the file), an end line, and
  * an end offset.
@@ -32042,6 +32024,44 @@ parseYieldExpression: true
   
   exports.Position = Position;
   exports.DUMMY_POS = DUMMY_POS;
+//});
+
+},{}],20:[function(require,module,exports){
+/*******************************************************************************
+ * Copyright (c) 2012 IBM Corporation.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
+ *******************************************************************************/
+
+/**
+ * Utility methods. 
+ */
+//if(typeof define !== 'function') {
+//  var define = require('amdefine')(module);
+//}
+//
+//define(function(require, exports) {
+  var flatmap = function(fn, thisArg) {  
+    var res = [];
+    for(var i=0;i<this.length;++i) {
+      var r = fn.call(thisArg, this[i], i, this);
+      for(var j=0;j<r.length;++j)
+        res[res.length] = r[j];
+    }
+    return res;
+  };
+  if(typeof Object.defineProperty !== 'undefined')
+    Object.defineProperty(Array.prototype, 'flatmap', {
+      value: flatmap,
+      enumerable: false
+    });
+  else
+    Array.prototype.flatmap = flatmap;
 //});
 
 },{}],6:[function(require,module,exports){
@@ -32142,7 +32162,7 @@ var global=self;(function() {
 
 },{"acorn/acorn_loose":10,"esprima":11,"lodash":1}],7:[function(require,module,exports){
 (function() {
-  var S, SourceMap, checkIncompleteMembers, esprima, getLineNumberForNode, instrumentStatements, makeCheckThisKeywords, makeFindOriginalNodes, makeGatherNodeRanges, possiblyGeneratorifyAncestorFunction, problems, statements, validateReturns, yieldAutomatically, yieldConditionally,
+  var S, SourceMap, checkIncompleteMembers, esprima, getLineNumberForNode, makeCheckThisKeywords, makeFindOriginalNodes, makeGatherNodeRanges, makeInstrumentStatements, possiblyGeneratorifyAncestorFunction, problems, statements, validateReturns, yieldAutomatically, yieldConditionally,
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
   problems = require('./problems');
@@ -32223,13 +32243,12 @@ var global=self;(function() {
           m = "this.what? (Check available spells below.)";
         } else {
           m = "" + (exp.source()) + " has no effect.";
-          if (_ref = exp.property.name, __indexOf.call(errors.commonMethods, _ref) >= 0) {
+          if (_ref = exp.property.name, __indexOf.call(problems.commonMethods, _ref) >= 0) {
             m += " It needs parentheses: " + exp.property.name + "()";
           }
         }
         error = new Error(m);
-        error.lineNumber = lineNumber + 2;
-        throw error;
+        return error.lineNumber = lineNumber + 2;
       }
     }
   };
@@ -32272,12 +32291,11 @@ var global=self;(function() {
   };
 
   module.exports.yieldConditionally = yieldConditionally = function(node) {
-    var grandparent, _ref;
-    grandparent = (_ref = node.parent) != null ? _ref.parent : void 0;
-    if (node.type === S.CallExpression && (grandparent != null ? grandparent.type : void 0) === S.ExpressionStatement) {
-      grandparent.update("" + (grandparent.source()) + " if (this._shouldYield) { var __yieldValue = this._shouldYield; this._shouldYield = false; yield __yieldValue; }");
-      grandparent.yields = true;
-      return possiblyGeneratorifyAncestorFunction(grandparent);
+    var _ref;
+    if (node.type === S.ExpressionStatement && ((_ref = node.expression.right) != null ? _ref.type : void 0) === S.CallExpression) {
+      node.update("" + (node.source()) + " if (this._shouldYield) { var _yieldValue = this._shouldYield; this._shouldYield = false; yield _yieldValue; }");
+      node.yields = true;
+      return possiblyGeneratorifyAncestorFunction(node);
     } else if (node.mustBecomeGeneratorFunction) {
       return node.update(node.source().replace(/^function \(/, 'function* ('));
     }
@@ -32305,26 +32323,30 @@ var global=self;(function() {
     }
   };
 
-  module.exports.instrumentStatements = instrumentStatements = function(node) {
-    var nFunctionParents, p, _ref;
-    if (!(node.originalNode && node.originalNode.originalRange.start >= 0)) {
-      return;
-    }
-    if (_ref = node.type, __indexOf.call(statements, _ref) < 0) {
-      return;
-    }
-    nFunctionParents = 0;
-    p = node.parent;
-    while (p) {
-      if (p.type === S.FunctionExpression) {
-        ++nFunctionParents;
+  module.exports.makeInstrumentStatements = makeInstrumentStatements = function() {
+    return function(node) {
+      var nFunctionParents, p, range, source, _ref;
+      if (!(node.originalNode && node.originalNode.originalRange.start >= 0)) {
+        return;
       }
-      p = p.parent;
-    }
-    if (!(nFunctionParents > 1)) {
-      return;
-    }
-    return node.update("" + (node.source()) + " console.log('Running " + node.originalNode.originalSource + ", range " + node.originalNode.originalRange.start + " - " + node.originalNode.originalRange.end + "');");
+      if (_ref = node.type, __indexOf.call(statements, _ref) < 0) {
+        return;
+      }
+      nFunctionParents = 0;
+      p = node.parent;
+      while (p) {
+        if (p.type === S.FunctionExpression) {
+          ++nFunctionParents;
+        }
+        p = p.parent;
+      }
+      if (!(nFunctionParents > 1)) {
+        return;
+      }
+      range = [node.originalNode.originalRange.start, node.originalNode.originalRange.end];
+      source = node.originalNode.originalSource;
+      return node.update("" + (node.source()) + " _aether.logStatement(" + range[0] + ", " + range[1] + ", \"" + source + "\");");
+    };
   };
 
 }).call(this);
@@ -32397,6 +32419,256 @@ module.exports={
 }
 
 },{}],23:[function(require,module,exports){
+// shim for using process in browser
+
+var process = module.exports = {};
+
+process.nextTick = (function () {
+    var canSetImmediate = typeof window !== 'undefined'
+    && window.setImmediate;
+    var canPost = typeof window !== 'undefined'
+    && window.postMessage && window.addEventListener
+    ;
+
+    if (canSetImmediate) {
+        return function (f) { return window.setImmediate(f) };
+    }
+
+    if (canPost) {
+        var queue = [];
+        window.addEventListener('message', function (ev) {
+            if (ev.source === window && ev.data === 'process-tick') {
+                ev.stopPropagation();
+                if (queue.length > 0) {
+                    var fn = queue.shift();
+                    fn();
+                }
+            }
+        }, true);
+
+        return function nextTick(fn) {
+            queue.push(fn);
+            window.postMessage('process-tick', '*');
+        };
+    }
+
+    return function nextTick(fn) {
+        setTimeout(fn, 0);
+    };
+})();
+
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
+}
+
+// TODO(shtylman)
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
+};
+
+},{}],24:[function(require,module,exports){
+var process=require("__browserify_process");if (!process.EventEmitter) process.EventEmitter = function () {};
+
+var EventEmitter = exports.EventEmitter = process.EventEmitter;
+var isArray = typeof Array.isArray === 'function'
+    ? Array.isArray
+    : function (xs) {
+        return Object.prototype.toString.call(xs) === '[object Array]'
+    }
+;
+function indexOf (xs, x) {
+    if (xs.indexOf) return xs.indexOf(x);
+    for (var i = 0; i < xs.length; i++) {
+        if (x === xs[i]) return i;
+    }
+    return -1;
+}
+
+// By default EventEmitters will print a warning if more than
+// 10 listeners are added to it. This is a useful default which
+// helps finding memory leaks.
+//
+// Obviously not all Emitters should be limited to 10. This function allows
+// that to be increased. Set to zero for unlimited.
+var defaultMaxListeners = 10;
+EventEmitter.prototype.setMaxListeners = function(n) {
+  if (!this._events) this._events = {};
+  this._events.maxListeners = n;
+};
+
+
+EventEmitter.prototype.emit = function(type) {
+  // If there is no 'error' event listener then throw.
+  if (type === 'error') {
+    if (!this._events || !this._events.error ||
+        (isArray(this._events.error) && !this._events.error.length))
+    {
+      if (arguments[1] instanceof Error) {
+        throw arguments[1]; // Unhandled 'error' event
+      } else {
+        throw new Error("Uncaught, unspecified 'error' event.");
+      }
+      return false;
+    }
+  }
+
+  if (!this._events) return false;
+  var handler = this._events[type];
+  if (!handler) return false;
+
+  if (typeof handler == 'function') {
+    switch (arguments.length) {
+      // fast cases
+      case 1:
+        handler.call(this);
+        break;
+      case 2:
+        handler.call(this, arguments[1]);
+        break;
+      case 3:
+        handler.call(this, arguments[1], arguments[2]);
+        break;
+      // slower
+      default:
+        var args = Array.prototype.slice.call(arguments, 1);
+        handler.apply(this, args);
+    }
+    return true;
+
+  } else if (isArray(handler)) {
+    var args = Array.prototype.slice.call(arguments, 1);
+
+    var listeners = handler.slice();
+    for (var i = 0, l = listeners.length; i < l; i++) {
+      listeners[i].apply(this, args);
+    }
+    return true;
+
+  } else {
+    return false;
+  }
+};
+
+// EventEmitter is defined in src/node_events.cc
+// EventEmitter.prototype.emit() is also defined there.
+EventEmitter.prototype.addListener = function(type, listener) {
+  if ('function' !== typeof listener) {
+    throw new Error('addListener only takes instances of Function');
+  }
+
+  if (!this._events) this._events = {};
+
+  // To avoid recursion in the case that type == "newListeners"! Before
+  // adding it to the listeners, first emit "newListeners".
+  this.emit('newListener', type, listener);
+
+  if (!this._events[type]) {
+    // Optimize the case of one listener. Don't need the extra array object.
+    this._events[type] = listener;
+  } else if (isArray(this._events[type])) {
+
+    // Check for listener leak
+    if (!this._events[type].warned) {
+      var m;
+      if (this._events.maxListeners !== undefined) {
+        m = this._events.maxListeners;
+      } else {
+        m = defaultMaxListeners;
+      }
+
+      if (m && m > 0 && this._events[type].length > m) {
+        this._events[type].warned = true;
+        console.error('(node) warning: possible EventEmitter memory ' +
+                      'leak detected. %d listeners added. ' +
+                      'Use emitter.setMaxListeners() to increase limit.',
+                      this._events[type].length);
+        console.trace();
+      }
+    }
+
+    // If we've already got an array, just append.
+    this._events[type].push(listener);
+  } else {
+    // Adding the second element, need to change to array.
+    this._events[type] = [this._events[type], listener];
+  }
+
+  return this;
+};
+
+EventEmitter.prototype.on = EventEmitter.prototype.addListener;
+
+EventEmitter.prototype.once = function(type, listener) {
+  var self = this;
+  self.on(type, function g() {
+    self.removeListener(type, g);
+    listener.apply(this, arguments);
+  });
+
+  return this;
+};
+
+EventEmitter.prototype.removeListener = function(type, listener) {
+  if ('function' !== typeof listener) {
+    throw new Error('removeListener only takes instances of Function');
+  }
+
+  // does not use listeners(), so no side effect of creating _events[type]
+  if (!this._events || !this._events[type]) return this;
+
+  var list = this._events[type];
+
+  if (isArray(list)) {
+    var i = indexOf(list, listener);
+    if (i < 0) return this;
+    list.splice(i, 1);
+    if (list.length == 0)
+      delete this._events[type];
+  } else if (this._events[type] === listener) {
+    delete this._events[type];
+  }
+
+  return this;
+};
+
+EventEmitter.prototype.removeAllListeners = function(type) {
+  if (arguments.length === 0) {
+    this._events = {};
+    return this;
+  }
+
+  // does not use listeners(), so no side effect of creating _events[type]
+  if (type && this._events && this._events[type]) this._events[type] = null;
+  return this;
+};
+
+EventEmitter.prototype.listeners = function(type) {
+  if (!this._events) this._events = {};
+  if (!this._events[type]) this._events[type] = [];
+  if (!isArray(this._events[type])) {
+    this._events[type] = [this._events[type]];
+  }
+  return this._events[type];
+};
+
+EventEmitter.listenerCount = function(emitter, type) {
+  var ret;
+  if (!emitter._events || !emitter._events[type])
+    ret = 0;
+  else if (typeof emitter._events[type] === 'function')
+    ret = 1;
+  else
+    ret = emitter._events[type].length;
+  return ret;
+};
+
+},{"__browserify_process":23}],25:[function(require,module,exports){
 // jshint -W001
 
 "use strict";
@@ -32986,7 +33258,7 @@ exports.yui = {
 };
 
 
-},{}],24:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 /*
  * Regular expressions. Some of these are stupidly long.
  */
@@ -33022,257 +33294,7 @@ exports.javascriptURL = /^(?:javascript|jscript|ecmascript|vbscript|mocha|livesc
 // Catches /* falls through */ comments (ft)
 exports.fallsThrough = /^\s*\/\*\s*falls?\sthrough\s*\*\/\s*$/;
 
-},{}],25:[function(require,module,exports){
-// shim for using process in browser
-
-var process = module.exports = {};
-
-process.nextTick = (function () {
-    var canSetImmediate = typeof window !== 'undefined'
-    && window.setImmediate;
-    var canPost = typeof window !== 'undefined'
-    && window.postMessage && window.addEventListener
-    ;
-
-    if (canSetImmediate) {
-        return function (f) { return window.setImmediate(f) };
-    }
-
-    if (canPost) {
-        var queue = [];
-        window.addEventListener('message', function (ev) {
-            if (ev.source === window && ev.data === 'process-tick') {
-                ev.stopPropagation();
-                if (queue.length > 0) {
-                    var fn = queue.shift();
-                    fn();
-                }
-            }
-        }, true);
-
-        return function nextTick(fn) {
-            queue.push(fn);
-            window.postMessage('process-tick', '*');
-        };
-    }
-
-    return function nextTick(fn) {
-        setTimeout(fn, 0);
-    };
-})();
-
-process.title = 'browser';
-process.browser = true;
-process.env = {};
-process.argv = [];
-
-process.binding = function (name) {
-    throw new Error('process.binding is not supported');
-}
-
-// TODO(shtylman)
-process.cwd = function () { return '/' };
-process.chdir = function (dir) {
-    throw new Error('process.chdir is not supported');
-};
-
-},{}],26:[function(require,module,exports){
-var process=require("__browserify_process");if (!process.EventEmitter) process.EventEmitter = function () {};
-
-var EventEmitter = exports.EventEmitter = process.EventEmitter;
-var isArray = typeof Array.isArray === 'function'
-    ? Array.isArray
-    : function (xs) {
-        return Object.prototype.toString.call(xs) === '[object Array]'
-    }
-;
-function indexOf (xs, x) {
-    if (xs.indexOf) return xs.indexOf(x);
-    for (var i = 0; i < xs.length; i++) {
-        if (x === xs[i]) return i;
-    }
-    return -1;
-}
-
-// By default EventEmitters will print a warning if more than
-// 10 listeners are added to it. This is a useful default which
-// helps finding memory leaks.
-//
-// Obviously not all Emitters should be limited to 10. This function allows
-// that to be increased. Set to zero for unlimited.
-var defaultMaxListeners = 10;
-EventEmitter.prototype.setMaxListeners = function(n) {
-  if (!this._events) this._events = {};
-  this._events.maxListeners = n;
-};
-
-
-EventEmitter.prototype.emit = function(type) {
-  // If there is no 'error' event listener then throw.
-  if (type === 'error') {
-    if (!this._events || !this._events.error ||
-        (isArray(this._events.error) && !this._events.error.length))
-    {
-      if (arguments[1] instanceof Error) {
-        throw arguments[1]; // Unhandled 'error' event
-      } else {
-        throw new Error("Uncaught, unspecified 'error' event.");
-      }
-      return false;
-    }
-  }
-
-  if (!this._events) return false;
-  var handler = this._events[type];
-  if (!handler) return false;
-
-  if (typeof handler == 'function') {
-    switch (arguments.length) {
-      // fast cases
-      case 1:
-        handler.call(this);
-        break;
-      case 2:
-        handler.call(this, arguments[1]);
-        break;
-      case 3:
-        handler.call(this, arguments[1], arguments[2]);
-        break;
-      // slower
-      default:
-        var args = Array.prototype.slice.call(arguments, 1);
-        handler.apply(this, args);
-    }
-    return true;
-
-  } else if (isArray(handler)) {
-    var args = Array.prototype.slice.call(arguments, 1);
-
-    var listeners = handler.slice();
-    for (var i = 0, l = listeners.length; i < l; i++) {
-      listeners[i].apply(this, args);
-    }
-    return true;
-
-  } else {
-    return false;
-  }
-};
-
-// EventEmitter is defined in src/node_events.cc
-// EventEmitter.prototype.emit() is also defined there.
-EventEmitter.prototype.addListener = function(type, listener) {
-  if ('function' !== typeof listener) {
-    throw new Error('addListener only takes instances of Function');
-  }
-
-  if (!this._events) this._events = {};
-
-  // To avoid recursion in the case that type == "newListeners"! Before
-  // adding it to the listeners, first emit "newListeners".
-  this.emit('newListener', type, listener);
-
-  if (!this._events[type]) {
-    // Optimize the case of one listener. Don't need the extra array object.
-    this._events[type] = listener;
-  } else if (isArray(this._events[type])) {
-
-    // Check for listener leak
-    if (!this._events[type].warned) {
-      var m;
-      if (this._events.maxListeners !== undefined) {
-        m = this._events.maxListeners;
-      } else {
-        m = defaultMaxListeners;
-      }
-
-      if (m && m > 0 && this._events[type].length > m) {
-        this._events[type].warned = true;
-        console.error('(node) warning: possible EventEmitter memory ' +
-                      'leak detected. %d listeners added. ' +
-                      'Use emitter.setMaxListeners() to increase limit.',
-                      this._events[type].length);
-        console.trace();
-      }
-    }
-
-    // If we've already got an array, just append.
-    this._events[type].push(listener);
-  } else {
-    // Adding the second element, need to change to array.
-    this._events[type] = [this._events[type], listener];
-  }
-
-  return this;
-};
-
-EventEmitter.prototype.on = EventEmitter.prototype.addListener;
-
-EventEmitter.prototype.once = function(type, listener) {
-  var self = this;
-  self.on(type, function g() {
-    self.removeListener(type, g);
-    listener.apply(this, arguments);
-  });
-
-  return this;
-};
-
-EventEmitter.prototype.removeListener = function(type, listener) {
-  if ('function' !== typeof listener) {
-    throw new Error('removeListener only takes instances of Function');
-  }
-
-  // does not use listeners(), so no side effect of creating _events[type]
-  if (!this._events || !this._events[type]) return this;
-
-  var list = this._events[type];
-
-  if (isArray(list)) {
-    var i = indexOf(list, listener);
-    if (i < 0) return this;
-    list.splice(i, 1);
-    if (list.length == 0)
-      delete this._events[type];
-  } else if (this._events[type] === listener) {
-    delete this._events[type];
-  }
-
-  return this;
-};
-
-EventEmitter.prototype.removeAllListeners = function(type) {
-  if (arguments.length === 0) {
-    this._events = {};
-    return this;
-  }
-
-  // does not use listeners(), so no side effect of creating _events[type]
-  if (type && this._events && this._events[type]) this._events[type] = null;
-  return this;
-};
-
-EventEmitter.prototype.listeners = function(type) {
-  if (!this._events) this._events = {};
-  if (!this._events[type]) this._events[type] = [];
-  if (!isArray(this._events[type])) {
-    this._events[type] = [this._events[type]];
-  }
-  return this._events[type];
-};
-
-EventEmitter.listenerCount = function(emitter, type) {
-  var ret;
-  if (!emitter._events || !emitter._events[type])
-    ret = 0;
-  else if (typeof emitter._events[type] === 'function')
-    ret = 1;
-  else
-    ret = emitter._events[type].length;
-  return ret;
-};
-
-},{"__browserify_process":25}],27:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 "use strict";
 
 var state = {
@@ -33524,6 +33546,18 @@ exports.register = function (linter) {
         },
         problems: {
           required: false
+        },
+        includeFlow: {
+          type: 'boolean',
+          "default": true
+        },
+        includeMetrics: {
+          type: 'boolean',
+          "default": true
+        },
+        includeStyle: {
+          type: 'boolean',
+          "default": true
         }
       }
     });
@@ -34393,7 +34427,7 @@ exports.register = function (linter) {
     defconstructor(p, signatures[p]);
 //});
 
-},{"./position":20}],17:[function(require,module,exports){
+},{"./position":19}],17:[function(require,module,exports){
 /*******************************************************************************
  * Copyright (c) 2012 IBM Corporation.
  * All rights reserved. This program and the accompanying materials
@@ -41500,7 +41534,7 @@ if (typeof exports === "object" && exports) {
 	exports.JSHINT = JSHINT;
 }
 
-},{"./lex.js":32,"./messages.js":31,"./reg.js":24,"./state.js":27,"./style.js":28,"./vars.js":23,"console-browserify":34,"events":26,"underscore":33}],21:[function(require,module,exports){
+},{"./lex.js":32,"./messages.js":31,"./reg.js":26,"./state.js":27,"./style.js":28,"./vars.js":25,"console-browserify":34,"events":24,"underscore":33}],21:[function(require,module,exports){
 /*
  * Copyright 2009-2011 Mozilla Foundation and contributors
  * Licensed under the New BSD license. See LICENSE.txt or:
@@ -45064,7 +45098,7 @@ Lexer.prototype = {
 
 exports.Lexer = Lexer;
 
-},{"./reg.js":24,"./state.js":27,"events":26,"underscore":33}],34:[function(require,module,exports){
+},{"./reg.js":26,"./state.js":27,"events":24,"underscore":33}],34:[function(require,module,exports){
 var global=self;/*global window, global*/
 var util = require("util")
 var assert = require("assert")
@@ -45498,7 +45532,7 @@ exports.format = function(f) {
   return str;
 };
 
-},{"events":26}],39:[function(require,module,exports){
+},{"events":24}],39:[function(require,module,exports){
 // UTILITY
 var util = require('util');
 var Buffer = require("buffer").Buffer;
@@ -47398,7 +47432,7 @@ function amdefine(module, requireFn) {
 
 module.exports = amdefine;
 
-},{"__browserify_process":25,"path":47}],40:[function(require,module,exports){
+},{"__browserify_process":23,"path":47}],40:[function(require,module,exports){
 var assert = require('assert');
 exports.Buffer = Buffer;
 exports.SlowBuffer = Buffer;
@@ -49107,7 +49141,7 @@ exports.relative = function(from, to) {
 
 exports.sep = '/';
 
-},{"__browserify_process":25}],48:[function(require,module,exports){
+},{"__browserify_process":23}],48:[function(require,module,exports){
 (function (exports) {
 	'use strict';
 

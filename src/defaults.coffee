@@ -11,3 +11,6 @@ module.exports = defaults =
   yieldConditionally: false  # Also bad name, but what it would do is make it yield whenever this._shouldYield is true (and clear it)
   requiresThis: true  # Whether leaving off "this" is an error, or just a warning which we work around.
   executionCosts: execution
+  includeFlow: true
+  includeMetrics: true
+  includeStyle: true
