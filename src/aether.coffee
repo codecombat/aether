@@ -205,6 +205,7 @@ module.exports = class Aether
     postNormalizationTransforms.unshift transforms.yieldConditionally if @options.yieldConditionally
     postNormalizationTransforms.unshift transforms.yieldAutomatically if @options.yieldAutomatically
     postNormalizationTransforms.unshift transforms.makeInstrumentStatements() if @options.includeMetrics or @options.includeFlow
+    postNormalizationTransforms.unshift transforms.makeInstrumentCalls() if @options.includeMetrics or @options.includeFlow
     postNormalizationTransforms.unshift transforms.makeFindOriginalNodes originalNodeRanges, @wrappedCodePrefix, wrappedCode, normalizedSourceMap, normalizedNodeIndex
     instrumentedCode = @transform normalizedCode, postNormalizationTransforms
     traceuredCode = @traceurify "return " + instrumentedCode
@@ -242,13 +243,43 @@ module.exports = class Aether
     indent = if lines.length then lines[0].length - lines[0].replace(/^ +/, '').length else 0
     (line.slice indent for line in lines).join '\n'
 
-  ### Flow -- put somewhere else? ###
+  ### Flow/metrics -- put somewhere else? ###
   logStatement: (start, end, source) ->
-    rangeID = start + '-' + end
-    m = @metrics[rangeID] ?= {}
-    m.executions ?= 0
-    ++m.executions
-    console.log "Logged", rangeID, source#, "and now have metrics", @metrics
+    range = [start, end]
+    if @options.includeMetrics
+      m = (@metrics.statements ?= {})[range] ?= {source: source}
+      m.executions ?= 0
+      ++m.executions
+      @metrics.statementsExecuted ?= 0
+      @metrics.statementsExecuted += 1
+    if @options.includeFlow
+      state =
+        range: [start, end]
+        source: source
+        variables: {}  # TODO
+      callState = _.last @flow.states
+      callState.push state
+
+    #console.log "Logged statement", range, "'#{source}'"#, "and now have metrics", @metrics
+
+  # TODO: handle recursion better; we should perhaps have a list of call trees, so that we can handle recursion, instead of just a list of lists of calls
+  logCallStart: ->
+    @callDepth ?= 0
+    ++@callDepth
+    if @options.includeMetrics
+      @metrics.callsExecuted ?= 0
+      ++@metrics.callsExecuted
+      @metrics.maxDepth = Math.max(@metrics.maxDepth or 0, @callDepth)
+    if @options.includeFlow
+      (@flow ?= {}).states ?= []
+      @flow.states.push call = []
+      (@callStack ?= []).push call
+    #console.log "Logged call to", @options.functionName, @metrics, @flow
+
+  logCallEnd: ->
+    if @options.includeFlow
+      @callStack.pop()
+    --@callDepth
 
 self.Aether = Aether if self?
 window.Aether = Aether if window?

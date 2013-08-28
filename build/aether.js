@@ -22705,6 +22705,9 @@ var global=self;(function() {
       if (this.options.includeMetrics || this.options.includeFlow) {
         postNormalizationTransforms.unshift(transforms.makeInstrumentStatements());
       }
+      if (this.options.includeMetrics || this.options.includeFlow) {
+        postNormalizationTransforms.unshift(transforms.makeInstrumentCalls());
+      }
       postNormalizationTransforms.unshift(transforms.makeFindOriginalNodes(originalNodeRanges, this.wrappedCodePrefix, wrappedCode, normalizedSourceMap, normalizedNodeIndex));
       instrumentedCode = this.transform(normalizedCode, postNormalizationTransforms);
       traceuredCode = this.traceurify("return " + instrumentedCode);
@@ -22775,18 +22778,63 @@ var global=self;(function() {
       })()).join('\n');
     };
 
-    /* Flow -- put somewhere else?*/
+    /* Flow/metrics -- put somewhere else?*/
 
 
     Aether.prototype.logStatement = function(start, end, source) {
-      var m, rangeID, _base;
-      rangeID = start + '-' + end;
-      m = (_base = this.metrics)[rangeID] != null ? (_base = this.metrics)[rangeID] : _base[rangeID] = {};
-      if (m.executions == null) {
-        m.executions = 0;
+      var callState, m, range, state, _base, _base1, _base2, _base3;
+      range = [start, end];
+      if (this.options.includeMetrics) {
+        m = (_base = ((_base1 = this.metrics).statements != null ? (_base1 = this.metrics).statements : _base1.statements = {}))[range] != null ? (_base = ((_base2 = this.metrics).statements != null ? (_base2 = this.metrics).statements : _base2.statements = {}))[range] : _base[range] = {
+          source: source
+        };
+        if (m.executions == null) {
+          m.executions = 0;
+        }
+        ++m.executions;
+        if ((_base3 = this.metrics).statementsExecuted == null) {
+          _base3.statementsExecuted = 0;
+        }
+        this.metrics.statementsExecuted += 1;
       }
-      ++m.executions;
-      return console.log("Logged", rangeID, source);
+      if (this.options.includeFlow) {
+        state = {
+          range: [start, end],
+          source: source,
+          variables: {}
+        };
+        callState = _.last(this.flow.states);
+        return callState.push(state);
+      }
+    };
+
+    Aether.prototype.logCallStart = function() {
+      var call, _base, _base1;
+      if (this.callDepth == null) {
+        this.callDepth = 0;
+      }
+      ++this.callDepth;
+      if (this.options.includeMetrics) {
+        if ((_base = this.metrics).callsExecuted == null) {
+          _base.callsExecuted = 0;
+        }
+        ++this.metrics.callsExecuted;
+        this.metrics.maxDepth = Math.max(this.metrics.maxDepth || 0, this.callDepth);
+      }
+      if (this.options.includeFlow) {
+        if ((_base1 = (this.flow != null ? this.flow : this.flow = {})).states == null) {
+          _base1.states = [];
+        }
+        this.flow.states.push(call = []);
+        return (this.callStack != null ? this.callStack : this.callStack = []).push(call);
+      }
+    };
+
+    Aether.prototype.logCallEnd = function() {
+      if (this.options.includeFlow) {
+        this.callStack.pop();
+      }
+      return --this.callDepth;
     };
 
     return Aether;
@@ -30200,7 +30248,7 @@ parseYieldExpression: true
   exports.normalize = normalize;
 //});
 
-},{"../../common/lib/ast":15,"../../common/lib/position":19,"./cflow":16,"./decls":17,"./scope":18,"./util":20}],14:[function(require,module,exports){
+},{"../../common/lib/ast":15,"../../common/lib/position":18,"./cflow":16,"./decls":17,"./scope":19,"./util":20}],14:[function(require,module,exports){
 // Acorn is a tiny, fast JavaScript parser written in JavaScript.
 //
 // Acorn was written by Marijn Haverbeke and released under an MIT
@@ -31921,7 +31969,103 @@ parseYieldExpression: true
 
 });
 
-},{}],16:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
+var global=self;(function() {
+  var acorn_loose, esprima, insertHelpers, morph, _, _ref, _ref1, _ref2;
+
+  _ = (_ref = (_ref1 = (_ref2 = typeof window !== "undefined" && window !== null ? window._ : void 0) != null ? _ref2 : typeof self !== "undefined" && self !== null ? self._ : void 0) != null ? _ref1 : typeof global !== "undefined" && global !== null ? global._ : void 0) != null ? _ref : require('lodash');
+
+  esprima = require('esprima');
+
+  acorn_loose = require('acorn/acorn_loose');
+
+  module.exports = morph = function(source, transforms, parser) {
+    var ast, chunks, lines, locToRange, posToOffset, walk;
+    if (parser == null) {
+      parser = "esprima";
+    }
+    chunks = source.split('');
+    if (parser === 'esprima') {
+      ast = esprima.parse(source, {
+        range: true,
+        loc: true
+      });
+      locToRange = null;
+    } else if (parser === 'acorn_loose') {
+      ast = acorn_loose.parse_dammit(source, {
+        locations: true
+      });
+      lines = source.replace(/\n/g, '\n空').split('空');
+      posToOffset = function(pos) {
+        return _.reduce(lines.slice(0, pos.line - 1), (function(sum, line) {
+          return sum + line.length;
+        }), 0) + pos.column;
+      };
+      locToRange = function(loc) {
+        return [posToOffset(loc.start), posToOffset(loc.end)];
+      };
+    }
+    walk = function(node, parent) {
+      var child, grandchild, key, transform, _i, _j, _len, _len1, _results;
+      insertHelpers(node, parent, chunks, locToRange);
+      for (key in node) {
+        child = node[key];
+        if (key === 'parent') {
+          continue;
+        }
+        if (_.isArray(child)) {
+          for (_i = 0, _len = child.length; _i < _len; _i++) {
+            grandchild = child[_i];
+            if (_.isString(grandchild != null ? grandchild.type : void 0)) {
+              walk(grandchild, node);
+            }
+          }
+        } else if (_.isString(child != null ? child.type : void 0)) {
+          insertHelpers(child, node, chunks, locToRange);
+          walk(child, node);
+        }
+      }
+      _results = [];
+      for (_j = 0, _len1 = transforms.length; _j < _len1; _j++) {
+        transform = transforms[_j];
+        _results.push(transform(node));
+      }
+      return _results;
+    };
+    walk(ast, void 0);
+    return chunks.join('');
+  };
+
+  insertHelpers = function(node, parent, chunks, locToRange) {
+    var update;
+    if (node.loc && locToRange) {
+      node.range = locToRange(node.loc);
+    }
+    if (!node.range) {
+      return;
+    }
+    node.parent = parent;
+    node.source = function() {
+      return chunks.slice(node.range[0], node.range[1]).join('');
+    };
+    update = function(s) {
+      var i, _i, _ref3, _ref4, _results;
+      chunks[node.range[0]] = s;
+      _results = [];
+      for (i = _i = _ref3 = node.range[0] + 1, _ref4 = node.range[1]; _ref3 <= _ref4 ? _i < _ref4 : _i > _ref4; i = _ref3 <= _ref4 ? ++_i : --_i) {
+        _results.push(chunks[i] = '');
+      }
+      return _results;
+    };
+    if (_.isObject(node.update)) {
+      _.extend(update, node.update);
+    }
+    return node.update = update;
+  };
+
+}).call(this);
+
+},{"acorn/acorn_loose":10,"esprima":11,"lodash":1}],16:[function(require,module,exports){
 /*******************************************************************************
  * Copyright (c) 2012 IBM Corporation.
  * All rights reserved. This program and the accompanying materials
@@ -31964,7 +32108,7 @@ parseYieldExpression: true
   };
 //});
 
-},{}],19:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 /*******************************************************************************
  * Copyright (c) 2012 IBM Corporation.
  * All rights reserved. This program and the accompanying materials
@@ -32064,105 +32208,9 @@ parseYieldExpression: true
     Array.prototype.flatmap = flatmap;
 //});
 
-},{}],6:[function(require,module,exports){
-var global=self;(function() {
-  var acorn_loose, esprima, insertHelpers, morph, _, _ref, _ref1, _ref2;
-
-  _ = (_ref = (_ref1 = (_ref2 = typeof window !== "undefined" && window !== null ? window._ : void 0) != null ? _ref2 : typeof self !== "undefined" && self !== null ? self._ : void 0) != null ? _ref1 : typeof global !== "undefined" && global !== null ? global._ : void 0) != null ? _ref : require('lodash');
-
-  esprima = require('esprima');
-
-  acorn_loose = require('acorn/acorn_loose');
-
-  module.exports = morph = function(source, transforms, parser) {
-    var ast, chunks, lines, locToRange, posToOffset, walk;
-    if (parser == null) {
-      parser = "esprima";
-    }
-    chunks = source.split('');
-    if (parser === 'esprima') {
-      ast = esprima.parse(source, {
-        range: true,
-        loc: true
-      });
-      locToRange = null;
-    } else if (parser === 'acorn_loose') {
-      ast = acorn_loose.parse_dammit(source, {
-        locations: true
-      });
-      lines = source.replace(/\n/g, '\n空').split('空');
-      posToOffset = function(pos) {
-        return _.reduce(lines.slice(0, pos.line - 1), (function(sum, line) {
-          return sum + line.length;
-        }), 0) + pos.column;
-      };
-      locToRange = function(loc) {
-        return [posToOffset(loc.start), posToOffset(loc.end)];
-      };
-    }
-    walk = function(node, parent) {
-      var child, grandchild, key, transform, _i, _j, _len, _len1, _results;
-      insertHelpers(node, parent, chunks, locToRange);
-      for (key in node) {
-        child = node[key];
-        if (key === 'parent') {
-          continue;
-        }
-        if (_.isArray(child)) {
-          for (_i = 0, _len = child.length; _i < _len; _i++) {
-            grandchild = child[_i];
-            if (_.isString(grandchild != null ? grandchild.type : void 0)) {
-              walk(grandchild, node);
-            }
-          }
-        } else if (_.isString(child != null ? child.type : void 0)) {
-          insertHelpers(child, node, chunks, locToRange);
-          walk(child, node);
-        }
-      }
-      _results = [];
-      for (_j = 0, _len1 = transforms.length; _j < _len1; _j++) {
-        transform = transforms[_j];
-        _results.push(transform(node));
-      }
-      return _results;
-    };
-    walk(ast, void 0);
-    return chunks.join('');
-  };
-
-  insertHelpers = function(node, parent, chunks, locToRange) {
-    var update;
-    if (node.loc && locToRange) {
-      node.range = locToRange(node.loc);
-    }
-    if (!node.range) {
-      return;
-    }
-    node.parent = parent;
-    node.source = function() {
-      return chunks.slice(node.range[0], node.range[1]).join('');
-    };
-    update = function(s) {
-      var i, _i, _ref3, _ref4, _results;
-      chunks[node.range[0]] = s;
-      _results = [];
-      for (i = _i = _ref3 = node.range[0] + 1, _ref4 = node.range[1]; _ref3 <= _ref4 ? _i < _ref4 : _i > _ref4; i = _ref3 <= _ref4 ? ++_i : --_i) {
-        _results.push(chunks[i] = '');
-      }
-      return _results;
-    };
-    if (_.isObject(node.update)) {
-      _.extend(update, node.update);
-    }
-    return node.update = update;
-  };
-
-}).call(this);
-
-},{"acorn/acorn_loose":10,"esprima":11,"lodash":1}],7:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 (function() {
-  var S, SourceMap, checkIncompleteMembers, esprima, getLineNumberForNode, makeCheckThisKeywords, makeFindOriginalNodes, makeGatherNodeRanges, makeInstrumentStatements, possiblyGeneratorifyAncestorFunction, problems, statements, validateReturns, yieldAutomatically, yieldConditionally,
+  var S, SourceMap, checkIncompleteMembers, esprima, getLineNumberForNode, makeCheckThisKeywords, makeFindOriginalNodes, makeGatherNodeRanges, makeInstrumentCalls, makeInstrumentStatements, possiblyGeneratorifyAncestorFunction, problems, statements, validateReturns, yieldAutomatically, yieldConditionally,
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
   problems = require('./problems');
@@ -32227,7 +32275,7 @@ var global=self;(function() {
   module.exports.validateReturns = validateReturns = function(node) {
     var _ref;
     if (node.type === S.ReturnStatement && !node.argument) {
-      return node.update("return this.validateReturn('" + this.options.functionName + "', null);");
+      return node.update(node.source().replace("return;", "return this.validateReturn('" + this.options.functionName + "', null);"));
     } else if (((_ref = node.parent) != null ? _ref.type : void 0) === S.ReturnStatement) {
       return node.update("this.validateReturn('" + this.options.functionName + "', (" + (node.source()) + "))");
     }
@@ -32325,11 +32373,14 @@ var global=self;(function() {
 
   module.exports.makeInstrumentStatements = makeInstrumentStatements = function() {
     return function(node) {
-      var nFunctionParents, p, range, source, _ref;
+      var nFunctionParents, p, range, safeSource, source, _ref, _ref1;
       if (!(node.originalNode && node.originalNode.originalRange.start >= 0)) {
         return;
       }
       if (_ref = node.type, __indexOf.call(statements, _ref) < 0) {
+        return;
+      }
+      if ((_ref1 = node.originalNode.type) === S.ThisExpression || _ref1 === S.Identifier || _ref1 === S.Literal) {
         return;
       }
       nFunctionParents = 0;
@@ -32345,7 +32396,23 @@ var global=self;(function() {
       }
       range = [node.originalNode.originalRange.start, node.originalNode.originalRange.end];
       source = node.originalNode.originalSource;
-      return node.update("" + (node.source()) + " _aether.logStatement(" + range[0] + ", " + range[1] + ", \"" + source + "\");");
+      safeSource = source.replace(/\"/g, '\\"').replace(/\n/g, '\\n');
+      return node.update("" + (node.source()) + " _aether.logStatement(" + range[0] + ", " + range[1] + ", \"" + safeSource + "\");");
+    };
+  };
+
+  module.exports.makeInstrumentCalls = makeInstrumentCalls = function() {
+    return function(node) {
+      if (node.type === S.ReturnStatement) {
+        node.update("_aether.logCallEnd(); " + (node.source()));
+      }
+      if (!(node.originalNode && node.originalNode.originalRange.start < 0)) {
+        return;
+      }
+      if (!(node.type === S.ExpressionStatement && node.originalNode.value === "use strict")) {
+        return;
+      }
+      return node.update("" + (node.source()) + " _aether.logCallStart();");
     };
   };
 
@@ -34245,366 +34312,7 @@ exports.register = function (linter) {
 }));
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{}],15:[function(require,module,exports){
-/*******************************************************************************
- * Copyright (c) 2012 IBM Corporation.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *     IBM Corporation - initial API and implementation
- *******************************************************************************/
-
-/**
- * Convenience functions for constructing and navigating ASTs.
- */
-//if(typeof define !== 'function') {
-//  var define = require('amdefine')(module);
-//}
-//
-//define(function(require, exports) {
-  var position = require('./position');
-  
-  // constructor signatures; arguments in angle brackets are terminal children, the others subtrees
-  var signatures = {
-      AssignmentExpression: [ '<operator>', 'left', 'right'],
-      ArrayExpression: [ 'elements' ],
-      BlockStatement: [ 'body' ],
-      BinaryExpression: [ '<operator>', 'left', 'right'],
-      BreakStatement: [ 'label' ],
-      CallExpression: [ 'callee', 'arguments' ],
-      CatchClause: [ 'param', 'body' ],
-      ConditionalExpression: [ 'test', 'consequent', 'alternate' ],
-      ContinueStatement: [ 'label' ],
-      DirectiveStatement: [ ],
-      DoWhileStatement: [ 'body', 'test' ],
-      DebuggerStatement: [ ],
-      EmptyStatement: [ ],
-      ExpressionStatement: [ 'expression' ],
-      ForStatement: [ 'init', 'test', 'update', 'body' ],
-      ForInStatement: [ 'left', 'right', 'body' ],
-      FunctionDeclaration: [ 'id', 'params', 'body' ],
-      FunctionExpression: [ 'id', 'params', 'body' ],
-      Identifier: [ '<name>' ],
-      IfStatement: [ 'test', 'consequent', 'alternate' ],
-      Literal: [ '<value>' ],
-      LabeledStatement: [ 'label', 'body' ],
-      LogicalExpression: [ '<operator>', 'left', 'right' ],
-      MemberExpression: [ 'object', 'property', '<computed>' ],
-      NewExpression: [ 'callee', 'arguments' ],
-      ObjectExpression: [ 'properties' ],
-      Program: [ 'body' ],
-      Property: [ 'key', 'value', '<kind>' ],
-      ReturnStatement: [ 'argument' ],
-      SequenceExpression: [ 'expressions' ],
-      SwitchStatement: [ 'discriminant', 'cases' ],
-      SwitchCase: [ 'test', 'consequent' ],
-      ThisExpression: [ ],
-      ThrowStatement: [ 'argument' ],
-      TryStatement: [ 'block', 'guardedHandlers', 'handlers', 'finalizer' ],
-      UnaryExpression: [ '<operator>', 'argument' ],
-      UpdateExpression: [ '<operator>', 'argument', '<prefix>' ],
-      VariableDeclaration: [ 'declarations', '<kind>' ],
-      VariableDeclarator: [ 'id', 'init' ],
-      WhileStatement: [ 'test', 'body' ],
-      WithStatement: [ 'object', 'body' ]
-  };
-
-  // define a constructor from a signature
-  function defconstructor(tpname, signature) {
-    var child_names = [], nonterminal_children = [];
-    for(var i=0;i<signature.length;++i)
-      if(signature[i][0] === '<') {
-        child_names[child_names.length] = signature[i].substring(1, signature[i].length-1);
-      } else {
-        child_names[child_names.length] = signature[i];
-        nonterminal_children[nonterminal_children.length] = signature[i];
-      }
-    
-    exports[tpname] = function() {
-      this.type = tpname;
-      this.attr = {};
-      for(var i=0;i<arguments.length;++i)
-        this[child_names[i]] = arguments[i];
-      for(;i<child_names.length;++i)
-        this[child_names[i]] = null;
-    };
-    exports[tpname].children = nonterminal_children;
-  }
-  
-  // several convenience methods for accessing subtrees
-  var getNumChild = exports.getNumChild = function(nd) {
-    if(Array.isArray(nd))
-      return nd.length;
-    
-    if(nd && nd.type)
-      return exports[nd.type].children.length;
-    
-    return 0;
-  };
-  
-  var getChild = exports.getChild = function(nd, i) {
-    if(Array.isArray(nd))
-      return nd[i];
-    
-    return nd[exports[nd.type].children[i]];
-  };
-
-  var setChild = exports.setChild = function(nd, i, v) {
-    if(Array.isArray(nd))
-      return nd[i] = v;
-
-    return nd[exports[nd.type].children[i]] = v;
-  };
-  
-  var forEachChild = exports.forEachChild = function(nd, cb) {
-    for(var i = 0, n = getNumChild(nd); i < n; ++i)
-      cb(getChild(nd, i), i);
-  };
-  
-  var mapChildren = exports.mapChildren = function(nd, cb) {
-    var res = [];
-    forEachChild(nd, function(ch, i) {
-      res[res.length] = cb(ch, i);
-    });
-    return res;
-  };
-
-  // simple debug printing function
-  var dump = exports.dump = function(nd) {
-    if(Array.isArray(nd))
-      return "[" + nd.map(dump).join() + "]";
-    
-    if(!nd || !nd.type)
-      return nd+"";
-    
-    return nd.type + "(" + mapChildren(nd, dump).join() + ")";
-  };
-  
-  // we give every AST node a property "attr" for storing attributes
-  exports.getAttribute = function(nd, name) {
-    nd.attr = nd.attr || {};
-    return nd.attr[name];
-  };
-  
-  exports.setAttribute = function(nd, name, value) {
-    nd.attr = nd.attr || {};
-    nd.attr[name] = value;
-    return nd;
-  };
-  
-  // positions are attached as attributes
-  exports.hasPosition = function(nd) {
-      return !!exports.getAttribute(nd, 'pos') || !!nd.loc || !!nd.range;
-  };
-  
-  exports.getPosition = function(nd) {
-      if(!exports.getAttribute(nd, 'pos')) {
-      var pos = position.DUMMY_POS.clone();
-      if(nd.loc) {
-	  if(nd.loc.source) {
-	      pos.url = nd.loc.source;
-	  }
-        pos.start_line = nd.loc.start.line;
-        pos.end_line = nd.loc.start.line;
-      }
-      if(nd.range) {
-        pos.start_offset = nd.range[0];
-        pos.end_offset = nd.range[1];
-      }
-      exports.setAttribute(nd, 'pos', pos);
-    }
-    return exports.getAttribute(nd, 'pos');
-  };
-  
-  exports.setPosition = function(nd, pos) {
-    exports.setAttribute(nd, 'pos', pos);
-  };
-  
-  for(var p in signatures)
-    defconstructor(p, signatures[p]);
-//});
-
-},{"./position":19}],17:[function(require,module,exports){
-/*******************************************************************************
- * Copyright (c) 2012 IBM Corporation.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *     IBM Corporation - initial API and implementation
- *******************************************************************************/
-
-/**
- * Utility functions to collect all variable and function declarations in a subtree.
- */
-//if(typeof define !== 'function') {
-//  var define = require('amdefine')(module);
-//}
-//
-//define(function(require, exports) {
-  var ast = require('../../common/lib/ast');
-
-  function getDeclName(decl) {
-    if(decl.type === 'Identifier')
-      return decl.name;
-    return decl.id.name;
-  }
-
-  function collectDecls(nd, accu) {
-    if(!nd)
-      return accu;
-    
-    if(nd.type === 'FunctionDeclaration') {
-      accu[accu.length] = nd;
-    } else if(nd.type === 'VariableDeclarator') {
-      accu[accu.length] = nd;
-    } else if(nd.type !== 'FunctionExpression') {
-      ast.forEachChild(nd, function(ch) {
-        collectDecls(ch, accu);
-      });
-    }
-    return accu;
-  }
-  
-  exports.collectDecls = collectDecls;
-  exports.getDeclName = getDeclName;
-//});
-
-},{"../../common/lib/ast":15}],18:[function(require,module,exports){
-/*******************************************************************************
- * Copyright (c) 2012 IBM Corporation.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *     IBM Corporation - initial API and implementation
- *******************************************************************************/
-
-/**
- * Scope objects keep track of name binding. Each scope object represents
- * either the global scope, a function scope, a catch clause scope, or
- * a 'with' scope.
- */
-
-//if(typeof define !== 'function') {
-//  var define = require('amdefine')(module);
-//}
-//
-//define(function(require, exports) {
-  var decls = require('./decls');
-  
-  // abstract base class of all scopes
-  function Scope(outer, decls) {
-    this.outer = outer;
-    this.decls = decls;
-  }
-  
-  // is x a global variable in this scope?
-  Scope.prototype.isGlobal = function(x) {
-    return !this.isLocal(x) && this.outer.isGlobal(x);
-  };
-  
-  // does x have a declaration at the global level?
-  Scope.prototype.isDeclaredGlobal = function(x) {
-    return this.outer.isDeclaredGlobal();
-  };
-  
-  // look up x among the local declarations in this scope
-  Scope.prototype.localLookup = function(x) {
-    for(var i=0;i<this.decls.length;++i)
-      if(decls.getDeclName(this.decls[i]) === x)
-        return this.decls[i];
-    return null;
-  };
-  
-  // is x a local variable declared in this scope?
-  Scope.prototype.isLocal = function(x) { return !!this.localLookup(x); };
-  
-  // look up x in this or an enclosing scope
-  Scope.prototype.lookup = function(x) {
-    return this.localLookup(x) || this.outer && this.outer.lookup(x);
-  };
-  
-  // object representing the global scope
-  function GlobalScope(root) {
-    Scope.call(this, null, decls.collectDecls(root, []));
-  }
-  GlobalScope.prototype = Object.create(Scope.prototype);
-  
-  GlobalScope.prototype.isGlobal = function(x) { return true; };
-  GlobalScope.prototype.isLocal = function(x) { return false; };
-  GlobalScope.prototype.possibleWithBindings = function(x) { return []; };
-  GlobalScope.prototype.isDeclaredGlobal = function(x) {
-    return !!this.localLookup(x);
-  };
-    
-  // constructor representing a function scope
-  function FunctionScope(outer, fn) {
-    this.fn = fn;
-    Scope.call(this, outer, fn.params.concat(decls.collectDecls(fn.body, [])));
-  }
-  FunctionScope.prototype = Object.create(Scope.prototype);
-  
-  // 'arguments' and (in a named function expression) the function itself are local,
-  // even though they are not declared
-  FunctionScope.prototype.isLocal = function(x) {
-    return x === 'arguments' ||
-           this.fn.type === 'FunctionExpression' && this.fn.id && this.fn.id.name === x ||
-           Scope.prototype.isLocal.call(this, x);
-  };
-  
-  // list of enclosing with statements (represented by the variables they 'with' on) that
-  // may bind x
-  FunctionScope.prototype.possibleWithBindings = function(x) {
-    if(this.isLocal(x))
-      return [];
-    return this.outer.possibleWithBindings(x);
-  };
-  
-  // constructor representing a catch clause scope
-  function CatchScope(outer, cc) {
-    Scope.call(this, outer, [cc.param]);
-  }
-  CatchScope.prototype = Object.create(Scope.prototype);
-  
-  CatchScope.prototype.isLocal = function(x) { return x === this.decls[0].name || this.outer.isLocal(x); };
-  
-  CatchScope.prototype.possibleWithBindings = function(x) {
-    if(x === this.decls[0].name)
-      return [];
-    return this.outer.possibleWithBindings(x);
-  };
-  
-  // constructor representing a with scope
-  function WithScope(outer, with_var) {
-    Scope.call(this, outer, []);
-    this.with_var = with_var;
-  }
-  WithScope.prototype = Object.create(Scope.prototype);
-  
-  WithScope.prototype.isLocal = function(x) { return this.outer.isLocal(x); };
-  
-  WithScope.prototype.possibleWithBindings = function(x) {
-    var bindings = this.outer.possibleWithBindings(x);
-    bindings.unshift(this.with_var);
-    return bindings;
-  };
-  
-  exports.Scope = Scope;
-  exports.GlobalScope = GlobalScope;
-  exports.FunctionScope = FunctionScope;
-  exports.CatchScope = CatchScope;
-  exports.WithScope = WithScope;
-//});
-
-},{"./decls":17}],13:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 var global=self;/*
   Copyright (C) 2012-2013 Yusuke Suzuki <utatane.tea@gmail.com>
   Copyright (C) 2012-2013 Michael Ficarra <escodegen.copyright@michael.ficarra.me>
@@ -36671,7 +36379,366 @@ var global=self;/*
 }());
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{"./package.json":22,"estraverse":30,"source-map":21}],12:[function(require,module,exports){
+},{"./package.json":22,"estraverse":30,"source-map":21}],15:[function(require,module,exports){
+/*******************************************************************************
+ * Copyright (c) 2012 IBM Corporation.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
+ *******************************************************************************/
+
+/**
+ * Convenience functions for constructing and navigating ASTs.
+ */
+//if(typeof define !== 'function') {
+//  var define = require('amdefine')(module);
+//}
+//
+//define(function(require, exports) {
+  var position = require('./position');
+  
+  // constructor signatures; arguments in angle brackets are terminal children, the others subtrees
+  var signatures = {
+      AssignmentExpression: [ '<operator>', 'left', 'right'],
+      ArrayExpression: [ 'elements' ],
+      BlockStatement: [ 'body' ],
+      BinaryExpression: [ '<operator>', 'left', 'right'],
+      BreakStatement: [ 'label' ],
+      CallExpression: [ 'callee', 'arguments' ],
+      CatchClause: [ 'param', 'body' ],
+      ConditionalExpression: [ 'test', 'consequent', 'alternate' ],
+      ContinueStatement: [ 'label' ],
+      DirectiveStatement: [ ],
+      DoWhileStatement: [ 'body', 'test' ],
+      DebuggerStatement: [ ],
+      EmptyStatement: [ ],
+      ExpressionStatement: [ 'expression' ],
+      ForStatement: [ 'init', 'test', 'update', 'body' ],
+      ForInStatement: [ 'left', 'right', 'body' ],
+      FunctionDeclaration: [ 'id', 'params', 'body' ],
+      FunctionExpression: [ 'id', 'params', 'body' ],
+      Identifier: [ '<name>' ],
+      IfStatement: [ 'test', 'consequent', 'alternate' ],
+      Literal: [ '<value>' ],
+      LabeledStatement: [ 'label', 'body' ],
+      LogicalExpression: [ '<operator>', 'left', 'right' ],
+      MemberExpression: [ 'object', 'property', '<computed>' ],
+      NewExpression: [ 'callee', 'arguments' ],
+      ObjectExpression: [ 'properties' ],
+      Program: [ 'body' ],
+      Property: [ 'key', 'value', '<kind>' ],
+      ReturnStatement: [ 'argument' ],
+      SequenceExpression: [ 'expressions' ],
+      SwitchStatement: [ 'discriminant', 'cases' ],
+      SwitchCase: [ 'test', 'consequent' ],
+      ThisExpression: [ ],
+      ThrowStatement: [ 'argument' ],
+      TryStatement: [ 'block', 'guardedHandlers', 'handlers', 'finalizer' ],
+      UnaryExpression: [ '<operator>', 'argument' ],
+      UpdateExpression: [ '<operator>', 'argument', '<prefix>' ],
+      VariableDeclaration: [ 'declarations', '<kind>' ],
+      VariableDeclarator: [ 'id', 'init' ],
+      WhileStatement: [ 'test', 'body' ],
+      WithStatement: [ 'object', 'body' ]
+  };
+
+  // define a constructor from a signature
+  function defconstructor(tpname, signature) {
+    var child_names = [], nonterminal_children = [];
+    for(var i=0;i<signature.length;++i)
+      if(signature[i][0] === '<') {
+        child_names[child_names.length] = signature[i].substring(1, signature[i].length-1);
+      } else {
+        child_names[child_names.length] = signature[i];
+        nonterminal_children[nonterminal_children.length] = signature[i];
+      }
+    
+    exports[tpname] = function() {
+      this.type = tpname;
+      this.attr = {};
+      for(var i=0;i<arguments.length;++i)
+        this[child_names[i]] = arguments[i];
+      for(;i<child_names.length;++i)
+        this[child_names[i]] = null;
+    };
+    exports[tpname].children = nonterminal_children;
+  }
+  
+  // several convenience methods for accessing subtrees
+  var getNumChild = exports.getNumChild = function(nd) {
+    if(Array.isArray(nd))
+      return nd.length;
+    
+    if(nd && nd.type)
+      return exports[nd.type].children.length;
+    
+    return 0;
+  };
+  
+  var getChild = exports.getChild = function(nd, i) {
+    if(Array.isArray(nd))
+      return nd[i];
+    
+    return nd[exports[nd.type].children[i]];
+  };
+
+  var setChild = exports.setChild = function(nd, i, v) {
+    if(Array.isArray(nd))
+      return nd[i] = v;
+
+    return nd[exports[nd.type].children[i]] = v;
+  };
+  
+  var forEachChild = exports.forEachChild = function(nd, cb) {
+    for(var i = 0, n = getNumChild(nd); i < n; ++i)
+      cb(getChild(nd, i), i);
+  };
+  
+  var mapChildren = exports.mapChildren = function(nd, cb) {
+    var res = [];
+    forEachChild(nd, function(ch, i) {
+      res[res.length] = cb(ch, i);
+    });
+    return res;
+  };
+
+  // simple debug printing function
+  var dump = exports.dump = function(nd) {
+    if(Array.isArray(nd))
+      return "[" + nd.map(dump).join() + "]";
+    
+    if(!nd || !nd.type)
+      return nd+"";
+    
+    return nd.type + "(" + mapChildren(nd, dump).join() + ")";
+  };
+  
+  // we give every AST node a property "attr" for storing attributes
+  exports.getAttribute = function(nd, name) {
+    nd.attr = nd.attr || {};
+    return nd.attr[name];
+  };
+  
+  exports.setAttribute = function(nd, name, value) {
+    nd.attr = nd.attr || {};
+    nd.attr[name] = value;
+    return nd;
+  };
+  
+  // positions are attached as attributes
+  exports.hasPosition = function(nd) {
+      return !!exports.getAttribute(nd, 'pos') || !!nd.loc || !!nd.range;
+  };
+  
+  exports.getPosition = function(nd) {
+      if(!exports.getAttribute(nd, 'pos')) {
+      var pos = position.DUMMY_POS.clone();
+      if(nd.loc) {
+	  if(nd.loc.source) {
+	      pos.url = nd.loc.source;
+	  }
+        pos.start_line = nd.loc.start.line;
+        pos.end_line = nd.loc.start.line;
+      }
+      if(nd.range) {
+        pos.start_offset = nd.range[0];
+        pos.end_offset = nd.range[1];
+      }
+      exports.setAttribute(nd, 'pos', pos);
+    }
+    return exports.getAttribute(nd, 'pos');
+  };
+  
+  exports.setPosition = function(nd, pos) {
+    exports.setAttribute(nd, 'pos', pos);
+  };
+  
+  for(var p in signatures)
+    defconstructor(p, signatures[p]);
+//});
+
+},{"./position":18}],17:[function(require,module,exports){
+/*******************************************************************************
+ * Copyright (c) 2012 IBM Corporation.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
+ *******************************************************************************/
+
+/**
+ * Utility functions to collect all variable and function declarations in a subtree.
+ */
+//if(typeof define !== 'function') {
+//  var define = require('amdefine')(module);
+//}
+//
+//define(function(require, exports) {
+  var ast = require('../../common/lib/ast');
+
+  function getDeclName(decl) {
+    if(decl.type === 'Identifier')
+      return decl.name;
+    return decl.id.name;
+  }
+
+  function collectDecls(nd, accu) {
+    if(!nd)
+      return accu;
+    
+    if(nd.type === 'FunctionDeclaration') {
+      accu[accu.length] = nd;
+    } else if(nd.type === 'VariableDeclarator') {
+      accu[accu.length] = nd;
+    } else if(nd.type !== 'FunctionExpression') {
+      ast.forEachChild(nd, function(ch) {
+        collectDecls(ch, accu);
+      });
+    }
+    return accu;
+  }
+  
+  exports.collectDecls = collectDecls;
+  exports.getDeclName = getDeclName;
+//});
+
+},{"../../common/lib/ast":15}],19:[function(require,module,exports){
+/*******************************************************************************
+ * Copyright (c) 2012 IBM Corporation.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
+ *******************************************************************************/
+
+/**
+ * Scope objects keep track of name binding. Each scope object represents
+ * either the global scope, a function scope, a catch clause scope, or
+ * a 'with' scope.
+ */
+
+//if(typeof define !== 'function') {
+//  var define = require('amdefine')(module);
+//}
+//
+//define(function(require, exports) {
+  var decls = require('./decls');
+  
+  // abstract base class of all scopes
+  function Scope(outer, decls) {
+    this.outer = outer;
+    this.decls = decls;
+  }
+  
+  // is x a global variable in this scope?
+  Scope.prototype.isGlobal = function(x) {
+    return !this.isLocal(x) && this.outer.isGlobal(x);
+  };
+  
+  // does x have a declaration at the global level?
+  Scope.prototype.isDeclaredGlobal = function(x) {
+    return this.outer.isDeclaredGlobal();
+  };
+  
+  // look up x among the local declarations in this scope
+  Scope.prototype.localLookup = function(x) {
+    for(var i=0;i<this.decls.length;++i)
+      if(decls.getDeclName(this.decls[i]) === x)
+        return this.decls[i];
+    return null;
+  };
+  
+  // is x a local variable declared in this scope?
+  Scope.prototype.isLocal = function(x) { return !!this.localLookup(x); };
+  
+  // look up x in this or an enclosing scope
+  Scope.prototype.lookup = function(x) {
+    return this.localLookup(x) || this.outer && this.outer.lookup(x);
+  };
+  
+  // object representing the global scope
+  function GlobalScope(root) {
+    Scope.call(this, null, decls.collectDecls(root, []));
+  }
+  GlobalScope.prototype = Object.create(Scope.prototype);
+  
+  GlobalScope.prototype.isGlobal = function(x) { return true; };
+  GlobalScope.prototype.isLocal = function(x) { return false; };
+  GlobalScope.prototype.possibleWithBindings = function(x) { return []; };
+  GlobalScope.prototype.isDeclaredGlobal = function(x) {
+    return !!this.localLookup(x);
+  };
+    
+  // constructor representing a function scope
+  function FunctionScope(outer, fn) {
+    this.fn = fn;
+    Scope.call(this, outer, fn.params.concat(decls.collectDecls(fn.body, [])));
+  }
+  FunctionScope.prototype = Object.create(Scope.prototype);
+  
+  // 'arguments' and (in a named function expression) the function itself are local,
+  // even though they are not declared
+  FunctionScope.prototype.isLocal = function(x) {
+    return x === 'arguments' ||
+           this.fn.type === 'FunctionExpression' && this.fn.id && this.fn.id.name === x ||
+           Scope.prototype.isLocal.call(this, x);
+  };
+  
+  // list of enclosing with statements (represented by the variables they 'with' on) that
+  // may bind x
+  FunctionScope.prototype.possibleWithBindings = function(x) {
+    if(this.isLocal(x))
+      return [];
+    return this.outer.possibleWithBindings(x);
+  };
+  
+  // constructor representing a catch clause scope
+  function CatchScope(outer, cc) {
+    Scope.call(this, outer, [cc.param]);
+  }
+  CatchScope.prototype = Object.create(Scope.prototype);
+  
+  CatchScope.prototype.isLocal = function(x) { return x === this.decls[0].name || this.outer.isLocal(x); };
+  
+  CatchScope.prototype.possibleWithBindings = function(x) {
+    if(x === this.decls[0].name)
+      return [];
+    return this.outer.possibleWithBindings(x);
+  };
+  
+  // constructor representing a with scope
+  function WithScope(outer, with_var) {
+    Scope.call(this, outer, []);
+    this.with_var = with_var;
+  }
+  WithScope.prototype = Object.create(Scope.prototype);
+  
+  WithScope.prototype.isLocal = function(x) { return this.outer.isLocal(x); };
+  
+  WithScope.prototype.possibleWithBindings = function(x) {
+    var bindings = this.outer.possibleWithBindings(x);
+    bindings.unshift(this.with_var);
+    return bindings;
+  };
+  
+  exports.Scope = Scope;
+  exports.GlobalScope = GlobalScope;
+  exports.FunctionScope = FunctionScope;
+  exports.CatchScope = CatchScope;
+  exports.WithScope = WithScope;
+//});
+
+},{"./decls":17}],12:[function(require,module,exports){
 /*!
  * JSHint, by JSHint Community.
  *
@@ -41544,7 +41611,7 @@ exports.SourceMapGenerator = require('./source-map/source-map-generator').Source
 exports.SourceMapConsumer = require('./source-map/source-map-consumer').SourceMapConsumer;
 exports.SourceNode = require('./source-map/source-node').SourceNode;
 
-},{"./source-map/source-map-consumer":36,"./source-map/source-map-generator":35,"./source-map/source-node":37}],29:[function(require,module,exports){
+},{"./source-map/source-map-consumer":35,"./source-map/source-map-generator":37,"./source-map/source-node":36}],29:[function(require,module,exports){
 (function (exports) {
   exports.validate = validate;
   exports.mixin = mixin;
@@ -43183,227 +43250,7 @@ exports.SourceNode = require('./source-map/source-node').SourceNode;
 
 }).call(this);
 
-},{}],31:[function(require,module,exports){
-"use strict";
-
-var _ = require("underscore");
-
-var errors = {
-	// JSHint options
-	E001: "Bad option: '{a}'.",
-	E002: "Bad option value.",
-
-	// JSHint input
-	E003: "Expected a JSON value.",
-	E004: "Input is neither a string nor an array of strings.",
-	E005: "Input is empty.",
-	E006: "Unexpected early end of program.",
-
-	// Strict mode
-	E007: "Missing \"use strict\" statement.",
-	E008: "Strict violation.",
-	E009: "Option 'validthis' can't be used in a global scope.",
-	E010: "'with' is not allowed in strict mode.",
-
-	// Constants
-	E011: "const '{a}' has already been declared.",
-	E012: "const '{a}' is initialized to 'undefined'.",
-	E013: "Attempting to override '{a}' which is a constant.",
-
-	// Regular expressions
-	E014: "A regular expression literal can be confused with '/='.",
-	E015: "Unclosed regular expression.",
-	E016: "Invalid regular expression.",
-
-	// Tokens
-	E017: "Unclosed comment.",
-	E018: "Unbegun comment.",
-	E019: "Unmatched '{a}'.",
-	E020: "Expected '{a}' to match '{b}' from line {c} and instead saw '{d}'.",
-	E021: "Expected '{a}' and instead saw '{b}'.",
-	E022: "Line breaking error '{a}'.",
-	E023: "Missing '{a}'.",
-	E024: "Unexpected '{a}'.",
-	E025: "Missing ':' on a case clause.",
-	E026: "Missing '}' to match '{' from line {a}.",
-	E027: "Missing ']' to match '[' form line {a}.",
-	E028: "Illegal comma.",
-	E029: "Unclosed string.",
-
-	// Everything else
-	E030: "Expected an identifier and instead saw '{a}'.",
-	E031: "Bad assignment.", // FIXME: Rephrase
-	E032: "Expected a small integer or 'false' and instead saw '{a}'.",
-	E033: "Expected an operator and instead saw '{a}'.",
-	E034: "get/set are ES5 features.",
-	E035: "Missing property name.",
-	E036: "Expected to see a statement and instead saw a block.",
-	E037: null, // Vacant
-	E038: null, // Vacant
-	E039: "Function declarations are not invocable. Wrap the whole function invocation in parens.",
-	E040: "Each value should have its own case label.",
-	E041: "Unrecoverable syntax error.",
-	E042: "Stopping.",
-	E043: "Too many errors.",
-	E044: "'{a}' is already defined and can't be redefined.",
-	E045: "Invalid for each loop.",
-	E046: "A yield statement shall be within a generator function (with syntax: `function*`)",
-	E047: "A generator function shall contain a yield statement.",
-	E048: "Let declaration not directly within block.",
-	E049: "A {a} cannot be named '{b}'.",
-	E050: "Mozilla requires the yield expression to be parenthesized here.",
-	E051: "Regular parameters cannot come after default parameters."
-};
-
-var warnings = {
-	W001: "'hasOwnProperty' is a really bad name.",
-	W002: "Value of '{a}' may be overwritten in IE 8 and earlier.",
-	W003: "'{a}' was used before it was defined.",
-	W004: "'{a}' is already defined.",
-	W005: "A dot following a number can be confused with a decimal point.",
-	W006: "Confusing minuses.",
-	W007: "Confusing pluses.",
-	W008: "A leading decimal point can be confused with a dot: '{a}'.",
-	W009: "The array literal notation [] is preferrable.",
-	W010: "The object literal notation {} is preferrable.",
-	W011: "Unexpected space after '{a}'.",
-	W012: "Unexpected space before '{a}'.",
-	W013: "Missing space after '{a}'.",
-	W014: "Bad line breaking before '{a}'.",
-	W015: "Expected '{a}' to have an indentation at {b} instead at {c}.",
-	W016: "Unexpected use of '{a}'.",
-	W017: "Bad operand.",
-	W018: "Confusing use of '{a}'.",
-	W019: "Use the isNaN function to compare with NaN.",
-	W020: "Read only.",
-	W021: "'{a}' is a function.",
-	W022: "Do not assign to the exception parameter.",
-	W023: "Expected an identifier in an assignment and instead saw a function invocation.",
-	W024: "Expected an identifier and instead saw '{a}' (a reserved word).",
-	W025: "Missing name in function declaration.",
-	W026: "Inner functions should be listed at the top of the outer function.",
-	W027: "Unreachable '{a}' after '{b}'.",
-	W028: "Label '{a}' on {b} statement.",
-	W030: "Expected an assignment or function call and instead saw an expression.",
-	W031: "Do not use 'new' for side effects.",
-	W032: "Unnecessary semicolon.",
-	W033: "Missing semicolon.",
-	W034: "Unnecessary directive \"{a}\".",
-	W035: "Empty block.",
-	W036: "Unexpected /*member '{a}'.",
-	W037: "'{a}' is a statement label.",
-	W038: "'{a}' used out of scope.",
-	W039: "'{a}' is not allowed.",
-	W040: "Possible strict violation.",
-	W041: "Use '{a}' to compare with '{b}'.",
-	W042: "Avoid EOL escaping.",
-	W043: "Bad escaping of EOL. Use option multistr if needed.",
-	W044: "Bad or unnecessary escaping.",
-	W045: "Bad number '{a}'.",
-	W046: "Don't use extra leading zeros '{a}'.",
-	W047: "A trailing decimal point can be confused with a dot: '{a}'.",
-	W048: "Unexpected control character in regular expression.",
-	W049: "Unexpected escaped character '{a}' in regular expression.",
-	W050: "JavaScript URL.",
-	W051: "Variables should not be deleted.",
-	W052: "Unexpected '{a}'.",
-	W053: "Do not use {a} as a constructor.",
-	W054: "The Function constructor is a form of eval.",
-	W055: "A constructor name should start with an uppercase letter.",
-	W056: "Bad constructor.",
-	W057: "Weird construction. Is 'new' unnecessary?",
-	W058: "Missing '()' invoking a constructor.",
-	W059: "Avoid arguments.{a}.",
-	W060: "document.write can be a form of eval.",
-	W061: "eval can be harmful.",
-	W062: "Wrap an immediate function invocation in parens " +
-		"to assist the reader in understanding that the expression " +
-		"is the result of a function, and not the function itself.",
-	W063: "Math is not a function.",
-	W064: "Missing 'new' prefix when invoking a constructor.",
-	W065: "Missing radix parameter.",
-	W066: "Implied eval. Consider passing a function instead of a string.",
-	W067: "Bad invocation.",
-	W068: "Wrapping non-IIFE function literals in parens is unnecessary.",
-	W069: "['{a}'] is better written in dot notation.",
-	W070: "Extra comma. (it breaks older versions of IE)",
-	W071: "This function has too many statements. ({a})",
-	W072: "This function has too many parameters. ({a})",
-	W073: "Blocks are nested too deeply. ({a})",
-	W074: "This function's cyclomatic complexity is too high. ({a})",
-	W075: "Duplicate key '{a}'.",
-	W076: "Unexpected parameter '{a}' in get {b} function.",
-	W077: "Expected a single parameter in set {a} function.",
-	W078: "Setter is defined without getter.",
-	W079: "Redefinition of '{a}'.",
-	W080: "It's not necessary to initialize '{a}' to 'undefined'.",
-	W081: "Too many var statements.",
-	W082: "Function declarations should not be placed in blocks. " +
-		"Use a function expression or move the statement to the top of " +
-		"the outer function.",
-	W083: "Don't make functions within a loop.",
-	W084: "Expected a conditional expression and instead saw an assignment.",
-	W085: "Don't use 'with'.",
-	W086: "Expected a 'break' statement before '{a}'.",
-	W087: "Forgotten 'debugger' statement?",
-	W088: "Creating global 'for' variable. Should be 'for (var {a} ...'.",
-	W089: "The body of a for in should be wrapped in an if statement to filter " +
-		"unwanted properties from the prototype.",
-	W090: "'{a}' is not a statement label.",
-	W091: "'{a}' is out of scope.",
-	W092: "Wrap the /regexp/ literal in parens to disambiguate the slash operator.",
-	W093: "Did you mean to return a conditional instead of an assignment?",
-	W094: "Unexpected comma.",
-	W095: "Expected a string and instead saw {a}.",
-	W096: "The '{a}' key may produce unexpected results.",
-	W097: "Use the function form of \"use strict\".",
-	W098: "'{a}' is defined but never used.",
-	W099: "Mixed spaces and tabs.",
-	W100: "This character may get silently deleted by one or more browsers.",
-	W101: "Line is too long.",
-	W102: "Trailing whitespace.",
-	W103: "The '{a}' property is deprecated.",
-	W104: "'{a}' is only available in JavaScript 1.7.",
-	W105: "Unexpected {a} in '{b}'.",
-	W106: "Identifier '{a}' is not in camel case.",
-	W107: "Script URL.",
-	W108: "Strings must use doublequote.",
-	W109: "Strings must use singlequote.",
-	W110: "Mixed double and single quotes.",
-	W112: "Unclosed string.",
-	W113: "Control character in string: {a}.",
-	W114: "Avoid {a}.",
-	W115: "Octal literals are not allowed in strict mode.",
-	W116: "Expected '{a}' and instead saw '{b}'.",
-	W117: "'{a}' is not defined.",
-	W118: "'{a}' is only available in Mozilla JavaScript extensions (use moz option).",
-	W119: "'{a}' is only available in ES6 (use esnext option).",
-	W120: "You might be leaking a variable ({a}) here."
-};
-
-var info = {
-	I001: "Comma warnings can be turned off with 'laxcomma'.",
-	I002: "Reserved words as properties can be used under the 'es5' option.",
-	I003: "ES5 option is now set per default"
-};
-
-exports.errors = {};
-exports.warnings = {};
-exports.info = {};
-
-_.each(errors, function (desc, code) {
-	exports.errors[code] = { code: code, desc: desc };
-});
-
-_.each(warnings, function (desc, code) {
-	exports.warnings[code] = { code: code, desc: desc };
-});
-
-_.each(info, function (desc, code) {
-	exports.info[code] = { code: code, desc: desc };
-});
-
-},{"underscore":33}],32:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 /*
  * Lexical analysis and token construction.
  */
@@ -45098,7 +44945,227 @@ Lexer.prototype = {
 
 exports.Lexer = Lexer;
 
-},{"./reg.js":26,"./state.js":27,"events":24,"underscore":33}],34:[function(require,module,exports){
+},{"./reg.js":26,"./state.js":27,"events":24,"underscore":33}],31:[function(require,module,exports){
+"use strict";
+
+var _ = require("underscore");
+
+var errors = {
+	// JSHint options
+	E001: "Bad option: '{a}'.",
+	E002: "Bad option value.",
+
+	// JSHint input
+	E003: "Expected a JSON value.",
+	E004: "Input is neither a string nor an array of strings.",
+	E005: "Input is empty.",
+	E006: "Unexpected early end of program.",
+
+	// Strict mode
+	E007: "Missing \"use strict\" statement.",
+	E008: "Strict violation.",
+	E009: "Option 'validthis' can't be used in a global scope.",
+	E010: "'with' is not allowed in strict mode.",
+
+	// Constants
+	E011: "const '{a}' has already been declared.",
+	E012: "const '{a}' is initialized to 'undefined'.",
+	E013: "Attempting to override '{a}' which is a constant.",
+
+	// Regular expressions
+	E014: "A regular expression literal can be confused with '/='.",
+	E015: "Unclosed regular expression.",
+	E016: "Invalid regular expression.",
+
+	// Tokens
+	E017: "Unclosed comment.",
+	E018: "Unbegun comment.",
+	E019: "Unmatched '{a}'.",
+	E020: "Expected '{a}' to match '{b}' from line {c} and instead saw '{d}'.",
+	E021: "Expected '{a}' and instead saw '{b}'.",
+	E022: "Line breaking error '{a}'.",
+	E023: "Missing '{a}'.",
+	E024: "Unexpected '{a}'.",
+	E025: "Missing ':' on a case clause.",
+	E026: "Missing '}' to match '{' from line {a}.",
+	E027: "Missing ']' to match '[' form line {a}.",
+	E028: "Illegal comma.",
+	E029: "Unclosed string.",
+
+	// Everything else
+	E030: "Expected an identifier and instead saw '{a}'.",
+	E031: "Bad assignment.", // FIXME: Rephrase
+	E032: "Expected a small integer or 'false' and instead saw '{a}'.",
+	E033: "Expected an operator and instead saw '{a}'.",
+	E034: "get/set are ES5 features.",
+	E035: "Missing property name.",
+	E036: "Expected to see a statement and instead saw a block.",
+	E037: null, // Vacant
+	E038: null, // Vacant
+	E039: "Function declarations are not invocable. Wrap the whole function invocation in parens.",
+	E040: "Each value should have its own case label.",
+	E041: "Unrecoverable syntax error.",
+	E042: "Stopping.",
+	E043: "Too many errors.",
+	E044: "'{a}' is already defined and can't be redefined.",
+	E045: "Invalid for each loop.",
+	E046: "A yield statement shall be within a generator function (with syntax: `function*`)",
+	E047: "A generator function shall contain a yield statement.",
+	E048: "Let declaration not directly within block.",
+	E049: "A {a} cannot be named '{b}'.",
+	E050: "Mozilla requires the yield expression to be parenthesized here.",
+	E051: "Regular parameters cannot come after default parameters."
+};
+
+var warnings = {
+	W001: "'hasOwnProperty' is a really bad name.",
+	W002: "Value of '{a}' may be overwritten in IE 8 and earlier.",
+	W003: "'{a}' was used before it was defined.",
+	W004: "'{a}' is already defined.",
+	W005: "A dot following a number can be confused with a decimal point.",
+	W006: "Confusing minuses.",
+	W007: "Confusing pluses.",
+	W008: "A leading decimal point can be confused with a dot: '{a}'.",
+	W009: "The array literal notation [] is preferrable.",
+	W010: "The object literal notation {} is preferrable.",
+	W011: "Unexpected space after '{a}'.",
+	W012: "Unexpected space before '{a}'.",
+	W013: "Missing space after '{a}'.",
+	W014: "Bad line breaking before '{a}'.",
+	W015: "Expected '{a}' to have an indentation at {b} instead at {c}.",
+	W016: "Unexpected use of '{a}'.",
+	W017: "Bad operand.",
+	W018: "Confusing use of '{a}'.",
+	W019: "Use the isNaN function to compare with NaN.",
+	W020: "Read only.",
+	W021: "'{a}' is a function.",
+	W022: "Do not assign to the exception parameter.",
+	W023: "Expected an identifier in an assignment and instead saw a function invocation.",
+	W024: "Expected an identifier and instead saw '{a}' (a reserved word).",
+	W025: "Missing name in function declaration.",
+	W026: "Inner functions should be listed at the top of the outer function.",
+	W027: "Unreachable '{a}' after '{b}'.",
+	W028: "Label '{a}' on {b} statement.",
+	W030: "Expected an assignment or function call and instead saw an expression.",
+	W031: "Do not use 'new' for side effects.",
+	W032: "Unnecessary semicolon.",
+	W033: "Missing semicolon.",
+	W034: "Unnecessary directive \"{a}\".",
+	W035: "Empty block.",
+	W036: "Unexpected /*member '{a}'.",
+	W037: "'{a}' is a statement label.",
+	W038: "'{a}' used out of scope.",
+	W039: "'{a}' is not allowed.",
+	W040: "Possible strict violation.",
+	W041: "Use '{a}' to compare with '{b}'.",
+	W042: "Avoid EOL escaping.",
+	W043: "Bad escaping of EOL. Use option multistr if needed.",
+	W044: "Bad or unnecessary escaping.",
+	W045: "Bad number '{a}'.",
+	W046: "Don't use extra leading zeros '{a}'.",
+	W047: "A trailing decimal point can be confused with a dot: '{a}'.",
+	W048: "Unexpected control character in regular expression.",
+	W049: "Unexpected escaped character '{a}' in regular expression.",
+	W050: "JavaScript URL.",
+	W051: "Variables should not be deleted.",
+	W052: "Unexpected '{a}'.",
+	W053: "Do not use {a} as a constructor.",
+	W054: "The Function constructor is a form of eval.",
+	W055: "A constructor name should start with an uppercase letter.",
+	W056: "Bad constructor.",
+	W057: "Weird construction. Is 'new' unnecessary?",
+	W058: "Missing '()' invoking a constructor.",
+	W059: "Avoid arguments.{a}.",
+	W060: "document.write can be a form of eval.",
+	W061: "eval can be harmful.",
+	W062: "Wrap an immediate function invocation in parens " +
+		"to assist the reader in understanding that the expression " +
+		"is the result of a function, and not the function itself.",
+	W063: "Math is not a function.",
+	W064: "Missing 'new' prefix when invoking a constructor.",
+	W065: "Missing radix parameter.",
+	W066: "Implied eval. Consider passing a function instead of a string.",
+	W067: "Bad invocation.",
+	W068: "Wrapping non-IIFE function literals in parens is unnecessary.",
+	W069: "['{a}'] is better written in dot notation.",
+	W070: "Extra comma. (it breaks older versions of IE)",
+	W071: "This function has too many statements. ({a})",
+	W072: "This function has too many parameters. ({a})",
+	W073: "Blocks are nested too deeply. ({a})",
+	W074: "This function's cyclomatic complexity is too high. ({a})",
+	W075: "Duplicate key '{a}'.",
+	W076: "Unexpected parameter '{a}' in get {b} function.",
+	W077: "Expected a single parameter in set {a} function.",
+	W078: "Setter is defined without getter.",
+	W079: "Redefinition of '{a}'.",
+	W080: "It's not necessary to initialize '{a}' to 'undefined'.",
+	W081: "Too many var statements.",
+	W082: "Function declarations should not be placed in blocks. " +
+		"Use a function expression or move the statement to the top of " +
+		"the outer function.",
+	W083: "Don't make functions within a loop.",
+	W084: "Expected a conditional expression and instead saw an assignment.",
+	W085: "Don't use 'with'.",
+	W086: "Expected a 'break' statement before '{a}'.",
+	W087: "Forgotten 'debugger' statement?",
+	W088: "Creating global 'for' variable. Should be 'for (var {a} ...'.",
+	W089: "The body of a for in should be wrapped in an if statement to filter " +
+		"unwanted properties from the prototype.",
+	W090: "'{a}' is not a statement label.",
+	W091: "'{a}' is out of scope.",
+	W092: "Wrap the /regexp/ literal in parens to disambiguate the slash operator.",
+	W093: "Did you mean to return a conditional instead of an assignment?",
+	W094: "Unexpected comma.",
+	W095: "Expected a string and instead saw {a}.",
+	W096: "The '{a}' key may produce unexpected results.",
+	W097: "Use the function form of \"use strict\".",
+	W098: "'{a}' is defined but never used.",
+	W099: "Mixed spaces and tabs.",
+	W100: "This character may get silently deleted by one or more browsers.",
+	W101: "Line is too long.",
+	W102: "Trailing whitespace.",
+	W103: "The '{a}' property is deprecated.",
+	W104: "'{a}' is only available in JavaScript 1.7.",
+	W105: "Unexpected {a} in '{b}'.",
+	W106: "Identifier '{a}' is not in camel case.",
+	W107: "Script URL.",
+	W108: "Strings must use doublequote.",
+	W109: "Strings must use singlequote.",
+	W110: "Mixed double and single quotes.",
+	W112: "Unclosed string.",
+	W113: "Control character in string: {a}.",
+	W114: "Avoid {a}.",
+	W115: "Octal literals are not allowed in strict mode.",
+	W116: "Expected '{a}' and instead saw '{b}'.",
+	W117: "'{a}' is not defined.",
+	W118: "'{a}' is only available in Mozilla JavaScript extensions (use moz option).",
+	W119: "'{a}' is only available in ES6 (use esnext option).",
+	W120: "You might be leaking a variable ({a}) here."
+};
+
+var info = {
+	I001: "Comma warnings can be turned off with 'laxcomma'.",
+	I002: "Reserved words as properties can be used under the 'es5' option.",
+	I003: "ES5 option is now set per default"
+};
+
+exports.errors = {};
+exports.warnings = {};
+exports.info = {};
+
+_.each(errors, function (desc, code) {
+	exports.errors[code] = { code: code, desc: desc };
+});
+
+_.each(warnings, function (desc, code) {
+	exports.warnings[code] = { code: code, desc: desc };
+});
+
+_.each(info, function (desc, code) {
+	exports.info[code] = { code: code, desc: desc };
+});
+
+},{"underscore":33}],34:[function(require,module,exports){
 var global=self;/*global window, global*/
 var util = require("util")
 var assert = require("assert")
@@ -45185,7 +45252,321 @@ function assert(expression) {
     }
 }
 
-},{"assert":39,"util":38}],38:[function(require,module,exports){
+},{"assert":39,"util":38}],39:[function(require,module,exports){
+// UTILITY
+var util = require('util');
+var Buffer = require("buffer").Buffer;
+var pSlice = Array.prototype.slice;
+
+function objectKeys(object) {
+  if (Object.keys) return Object.keys(object);
+  var result = [];
+  for (var name in object) {
+    if (Object.prototype.hasOwnProperty.call(object, name)) {
+      result.push(name);
+    }
+  }
+  return result;
+}
+
+// 1. The assert module provides functions that throw
+// AssertionError's when particular conditions are not met. The
+// assert module must conform to the following interface.
+
+var assert = module.exports = ok;
+
+// 2. The AssertionError is defined in assert.
+// new assert.AssertionError({ message: message,
+//                             actual: actual,
+//                             expected: expected })
+
+assert.AssertionError = function AssertionError(options) {
+  this.name = 'AssertionError';
+  this.message = options.message;
+  this.actual = options.actual;
+  this.expected = options.expected;
+  this.operator = options.operator;
+  var stackStartFunction = options.stackStartFunction || fail;
+
+  if (Error.captureStackTrace) {
+    Error.captureStackTrace(this, stackStartFunction);
+  }
+};
+
+// assert.AssertionError instanceof Error
+util.inherits(assert.AssertionError, Error);
+
+function replacer(key, value) {
+  if (value === undefined) {
+    return '' + value;
+  }
+  if (typeof value === 'number' && (isNaN(value) || !isFinite(value))) {
+    return value.toString();
+  }
+  if (typeof value === 'function' || value instanceof RegExp) {
+    return value.toString();
+  }
+  return value;
+}
+
+function truncate(s, n) {
+  if (typeof s == 'string') {
+    return s.length < n ? s : s.slice(0, n);
+  } else {
+    return s;
+  }
+}
+
+assert.AssertionError.prototype.toString = function() {
+  if (this.message) {
+    return [this.name + ':', this.message].join(' ');
+  } else {
+    return [
+      this.name + ':',
+      truncate(JSON.stringify(this.actual, replacer), 128),
+      this.operator,
+      truncate(JSON.stringify(this.expected, replacer), 128)
+    ].join(' ');
+  }
+};
+
+// At present only the three keys mentioned above are used and
+// understood by the spec. Implementations or sub modules can pass
+// other keys to the AssertionError's constructor - they will be
+// ignored.
+
+// 3. All of the following functions must throw an AssertionError
+// when a corresponding condition is not met, with a message that
+// may be undefined if not provided.  All assertion methods provide
+// both the actual and expected values to the assertion error for
+// display purposes.
+
+function fail(actual, expected, message, operator, stackStartFunction) {
+  throw new assert.AssertionError({
+    message: message,
+    actual: actual,
+    expected: expected,
+    operator: operator,
+    stackStartFunction: stackStartFunction
+  });
+}
+
+// EXTENSION! allows for well behaved errors defined elsewhere.
+assert.fail = fail;
+
+// 4. Pure assertion tests whether a value is truthy, as determined
+// by !!guard.
+// assert.ok(guard, message_opt);
+// This statement is equivalent to assert.equal(true, guard,
+// message_opt);. To test strictly for the value true, use
+// assert.strictEqual(true, guard, message_opt);.
+
+function ok(value, message) {
+  if (!!!value) fail(value, true, message, '==', assert.ok);
+}
+assert.ok = ok;
+
+// 5. The equality assertion tests shallow, coercive equality with
+// ==.
+// assert.equal(actual, expected, message_opt);
+
+assert.equal = function equal(actual, expected, message) {
+  if (actual != expected) fail(actual, expected, message, '==', assert.equal);
+};
+
+// 6. The non-equality assertion tests for whether two objects are not equal
+// with != assert.notEqual(actual, expected, message_opt);
+
+assert.notEqual = function notEqual(actual, expected, message) {
+  if (actual == expected) {
+    fail(actual, expected, message, '!=', assert.notEqual);
+  }
+};
+
+// 7. The equivalence assertion tests a deep equality relation.
+// assert.deepEqual(actual, expected, message_opt);
+
+assert.deepEqual = function deepEqual(actual, expected, message) {
+  if (!_deepEqual(actual, expected)) {
+    fail(actual, expected, message, 'deepEqual', assert.deepEqual);
+  }
+};
+
+function _deepEqual(actual, expected) {
+  // 7.1. All identical values are equivalent, as determined by ===.
+  if (actual === expected) {
+    return true;
+
+  } else if (Buffer.isBuffer(actual) && Buffer.isBuffer(expected)) {
+    if (actual.length != expected.length) return false;
+
+    for (var i = 0; i < actual.length; i++) {
+      if (actual[i] !== expected[i]) return false;
+    }
+
+    return true;
+
+  // 7.2. If the expected value is a Date object, the actual value is
+  // equivalent if it is also a Date object that refers to the same time.
+  } else if (actual instanceof Date && expected instanceof Date) {
+    return actual.getTime() === expected.getTime();
+
+  // 7.3. Other pairs that do not both pass typeof value == 'object',
+  // equivalence is determined by ==.
+  } else if (typeof actual != 'object' && typeof expected != 'object') {
+    return actual == expected;
+
+  // 7.4. For all other Object pairs, including Array objects, equivalence is
+  // determined by having the same number of owned properties (as verified
+  // with Object.prototype.hasOwnProperty.call), the same set of keys
+  // (although not necessarily the same order), equivalent values for every
+  // corresponding key, and an identical 'prototype' property. Note: this
+  // accounts for both named and indexed properties on Arrays.
+  } else {
+    return objEquiv(actual, expected);
+  }
+}
+
+function isUndefinedOrNull(value) {
+  return value === null || value === undefined;
+}
+
+function isArguments(object) {
+  return Object.prototype.toString.call(object) == '[object Arguments]';
+}
+
+function objEquiv(a, b) {
+  if (isUndefinedOrNull(a) || isUndefinedOrNull(b))
+    return false;
+  // an identical 'prototype' property.
+  if (a.prototype !== b.prototype) return false;
+  //~~~I've managed to break Object.keys through screwy arguments passing.
+  //   Converting to array solves the problem.
+  if (isArguments(a)) {
+    if (!isArguments(b)) {
+      return false;
+    }
+    a = pSlice.call(a);
+    b = pSlice.call(b);
+    return _deepEqual(a, b);
+  }
+  try {
+    var ka = objectKeys(a),
+        kb = objectKeys(b),
+        key, i;
+  } catch (e) {//happens when one is a string literal and the other isn't
+    return false;
+  }
+  // having the same number of owned properties (keys incorporates
+  // hasOwnProperty)
+  if (ka.length != kb.length)
+    return false;
+  //the same set of keys (although not necessarily the same order),
+  ka.sort();
+  kb.sort();
+  //~~~cheap key test
+  for (i = ka.length - 1; i >= 0; i--) {
+    if (ka[i] != kb[i])
+      return false;
+  }
+  //equivalent values for every corresponding key, and
+  //~~~possibly expensive deep test
+  for (i = ka.length - 1; i >= 0; i--) {
+    key = ka[i];
+    if (!_deepEqual(a[key], b[key])) return false;
+  }
+  return true;
+}
+
+// 8. The non-equivalence assertion tests for any deep inequality.
+// assert.notDeepEqual(actual, expected, message_opt);
+
+assert.notDeepEqual = function notDeepEqual(actual, expected, message) {
+  if (_deepEqual(actual, expected)) {
+    fail(actual, expected, message, 'notDeepEqual', assert.notDeepEqual);
+  }
+};
+
+// 9. The strict equality assertion tests strict equality, as determined by ===.
+// assert.strictEqual(actual, expected, message_opt);
+
+assert.strictEqual = function strictEqual(actual, expected, message) {
+  if (actual !== expected) {
+    fail(actual, expected, message, '===', assert.strictEqual);
+  }
+};
+
+// 10. The strict non-equality assertion tests for strict inequality, as
+// determined by !==.  assert.notStrictEqual(actual, expected, message_opt);
+
+assert.notStrictEqual = function notStrictEqual(actual, expected, message) {
+  if (actual === expected) {
+    fail(actual, expected, message, '!==', assert.notStrictEqual);
+  }
+};
+
+function expectedException(actual, expected) {
+  if (!actual || !expected) {
+    return false;
+  }
+
+  if (expected instanceof RegExp) {
+    return expected.test(actual);
+  } else if (actual instanceof expected) {
+    return true;
+  } else if (expected.call({}, actual) === true) {
+    return true;
+  }
+
+  return false;
+}
+
+function _throws(shouldThrow, block, expected, message) {
+  var actual;
+
+  if (typeof expected === 'string') {
+    message = expected;
+    expected = null;
+  }
+
+  try {
+    block();
+  } catch (e) {
+    actual = e;
+  }
+
+  message = (expected && expected.name ? ' (' + expected.name + ').' : '.') +
+            (message ? ' ' + message : '.');
+
+  if (shouldThrow && !actual) {
+    fail('Missing expected exception' + message);
+  }
+
+  if (!shouldThrow && expectedException(actual, expected)) {
+    fail('Got unwanted exception' + message);
+  }
+
+  if ((shouldThrow && actual && expected &&
+      !expectedException(actual, expected)) || (!shouldThrow && actual)) {
+    throw actual;
+  }
+}
+
+// 11. Expected to throw an error:
+// assert.throws(block, Error_opt, message_opt);
+
+assert.throws = function(block, /*optional*/error, /*optional*/message) {
+  _throws.apply(this, [true].concat(pSlice.call(arguments)));
+};
+
+// EXTENSION! This is annoying to write outside this module.
+assert.doesNotThrow = function(block, /*optional*/error, /*optional*/message) {
+  _throws.apply(this, [false].concat(pSlice.call(arguments)));
+};
+
+assert.ifError = function(err) { if (err) {throw err;}};
+
+},{"buffer":40,"util":38}],38:[function(require,module,exports){
 var events = require('events');
 
 exports.isArray = isArray;
@@ -45532,704 +45913,7 @@ exports.format = function(f) {
   return str;
 };
 
-},{"events":24}],39:[function(require,module,exports){
-// UTILITY
-var util = require('util');
-var Buffer = require("buffer").Buffer;
-var pSlice = Array.prototype.slice;
-
-function objectKeys(object) {
-  if (Object.keys) return Object.keys(object);
-  var result = [];
-  for (var name in object) {
-    if (Object.prototype.hasOwnProperty.call(object, name)) {
-      result.push(name);
-    }
-  }
-  return result;
-}
-
-// 1. The assert module provides functions that throw
-// AssertionError's when particular conditions are not met. The
-// assert module must conform to the following interface.
-
-var assert = module.exports = ok;
-
-// 2. The AssertionError is defined in assert.
-// new assert.AssertionError({ message: message,
-//                             actual: actual,
-//                             expected: expected })
-
-assert.AssertionError = function AssertionError(options) {
-  this.name = 'AssertionError';
-  this.message = options.message;
-  this.actual = options.actual;
-  this.expected = options.expected;
-  this.operator = options.operator;
-  var stackStartFunction = options.stackStartFunction || fail;
-
-  if (Error.captureStackTrace) {
-    Error.captureStackTrace(this, stackStartFunction);
-  }
-};
-
-// assert.AssertionError instanceof Error
-util.inherits(assert.AssertionError, Error);
-
-function replacer(key, value) {
-  if (value === undefined) {
-    return '' + value;
-  }
-  if (typeof value === 'number' && (isNaN(value) || !isFinite(value))) {
-    return value.toString();
-  }
-  if (typeof value === 'function' || value instanceof RegExp) {
-    return value.toString();
-  }
-  return value;
-}
-
-function truncate(s, n) {
-  if (typeof s == 'string') {
-    return s.length < n ? s : s.slice(0, n);
-  } else {
-    return s;
-  }
-}
-
-assert.AssertionError.prototype.toString = function() {
-  if (this.message) {
-    return [this.name + ':', this.message].join(' ');
-  } else {
-    return [
-      this.name + ':',
-      truncate(JSON.stringify(this.actual, replacer), 128),
-      this.operator,
-      truncate(JSON.stringify(this.expected, replacer), 128)
-    ].join(' ');
-  }
-};
-
-// At present only the three keys mentioned above are used and
-// understood by the spec. Implementations or sub modules can pass
-// other keys to the AssertionError's constructor - they will be
-// ignored.
-
-// 3. All of the following functions must throw an AssertionError
-// when a corresponding condition is not met, with a message that
-// may be undefined if not provided.  All assertion methods provide
-// both the actual and expected values to the assertion error for
-// display purposes.
-
-function fail(actual, expected, message, operator, stackStartFunction) {
-  throw new assert.AssertionError({
-    message: message,
-    actual: actual,
-    expected: expected,
-    operator: operator,
-    stackStartFunction: stackStartFunction
-  });
-}
-
-// EXTENSION! allows for well behaved errors defined elsewhere.
-assert.fail = fail;
-
-// 4. Pure assertion tests whether a value is truthy, as determined
-// by !!guard.
-// assert.ok(guard, message_opt);
-// This statement is equivalent to assert.equal(true, guard,
-// message_opt);. To test strictly for the value true, use
-// assert.strictEqual(true, guard, message_opt);.
-
-function ok(value, message) {
-  if (!!!value) fail(value, true, message, '==', assert.ok);
-}
-assert.ok = ok;
-
-// 5. The equality assertion tests shallow, coercive equality with
-// ==.
-// assert.equal(actual, expected, message_opt);
-
-assert.equal = function equal(actual, expected, message) {
-  if (actual != expected) fail(actual, expected, message, '==', assert.equal);
-};
-
-// 6. The non-equality assertion tests for whether two objects are not equal
-// with != assert.notEqual(actual, expected, message_opt);
-
-assert.notEqual = function notEqual(actual, expected, message) {
-  if (actual == expected) {
-    fail(actual, expected, message, '!=', assert.notEqual);
-  }
-};
-
-// 7. The equivalence assertion tests a deep equality relation.
-// assert.deepEqual(actual, expected, message_opt);
-
-assert.deepEqual = function deepEqual(actual, expected, message) {
-  if (!_deepEqual(actual, expected)) {
-    fail(actual, expected, message, 'deepEqual', assert.deepEqual);
-  }
-};
-
-function _deepEqual(actual, expected) {
-  // 7.1. All identical values are equivalent, as determined by ===.
-  if (actual === expected) {
-    return true;
-
-  } else if (Buffer.isBuffer(actual) && Buffer.isBuffer(expected)) {
-    if (actual.length != expected.length) return false;
-
-    for (var i = 0; i < actual.length; i++) {
-      if (actual[i] !== expected[i]) return false;
-    }
-
-    return true;
-
-  // 7.2. If the expected value is a Date object, the actual value is
-  // equivalent if it is also a Date object that refers to the same time.
-  } else if (actual instanceof Date && expected instanceof Date) {
-    return actual.getTime() === expected.getTime();
-
-  // 7.3. Other pairs that do not both pass typeof value == 'object',
-  // equivalence is determined by ==.
-  } else if (typeof actual != 'object' && typeof expected != 'object') {
-    return actual == expected;
-
-  // 7.4. For all other Object pairs, including Array objects, equivalence is
-  // determined by having the same number of owned properties (as verified
-  // with Object.prototype.hasOwnProperty.call), the same set of keys
-  // (although not necessarily the same order), equivalent values for every
-  // corresponding key, and an identical 'prototype' property. Note: this
-  // accounts for both named and indexed properties on Arrays.
-  } else {
-    return objEquiv(actual, expected);
-  }
-}
-
-function isUndefinedOrNull(value) {
-  return value === null || value === undefined;
-}
-
-function isArguments(object) {
-  return Object.prototype.toString.call(object) == '[object Arguments]';
-}
-
-function objEquiv(a, b) {
-  if (isUndefinedOrNull(a) || isUndefinedOrNull(b))
-    return false;
-  // an identical 'prototype' property.
-  if (a.prototype !== b.prototype) return false;
-  //~~~I've managed to break Object.keys through screwy arguments passing.
-  //   Converting to array solves the problem.
-  if (isArguments(a)) {
-    if (!isArguments(b)) {
-      return false;
-    }
-    a = pSlice.call(a);
-    b = pSlice.call(b);
-    return _deepEqual(a, b);
-  }
-  try {
-    var ka = objectKeys(a),
-        kb = objectKeys(b),
-        key, i;
-  } catch (e) {//happens when one is a string literal and the other isn't
-    return false;
-  }
-  // having the same number of owned properties (keys incorporates
-  // hasOwnProperty)
-  if (ka.length != kb.length)
-    return false;
-  //the same set of keys (although not necessarily the same order),
-  ka.sort();
-  kb.sort();
-  //~~~cheap key test
-  for (i = ka.length - 1; i >= 0; i--) {
-    if (ka[i] != kb[i])
-      return false;
-  }
-  //equivalent values for every corresponding key, and
-  //~~~possibly expensive deep test
-  for (i = ka.length - 1; i >= 0; i--) {
-    key = ka[i];
-    if (!_deepEqual(a[key], b[key])) return false;
-  }
-  return true;
-}
-
-// 8. The non-equivalence assertion tests for any deep inequality.
-// assert.notDeepEqual(actual, expected, message_opt);
-
-assert.notDeepEqual = function notDeepEqual(actual, expected, message) {
-  if (_deepEqual(actual, expected)) {
-    fail(actual, expected, message, 'notDeepEqual', assert.notDeepEqual);
-  }
-};
-
-// 9. The strict equality assertion tests strict equality, as determined by ===.
-// assert.strictEqual(actual, expected, message_opt);
-
-assert.strictEqual = function strictEqual(actual, expected, message) {
-  if (actual !== expected) {
-    fail(actual, expected, message, '===', assert.strictEqual);
-  }
-};
-
-// 10. The strict non-equality assertion tests for strict inequality, as
-// determined by !==.  assert.notStrictEqual(actual, expected, message_opt);
-
-assert.notStrictEqual = function notStrictEqual(actual, expected, message) {
-  if (actual === expected) {
-    fail(actual, expected, message, '!==', assert.notStrictEqual);
-  }
-};
-
-function expectedException(actual, expected) {
-  if (!actual || !expected) {
-    return false;
-  }
-
-  if (expected instanceof RegExp) {
-    return expected.test(actual);
-  } else if (actual instanceof expected) {
-    return true;
-  } else if (expected.call({}, actual) === true) {
-    return true;
-  }
-
-  return false;
-}
-
-function _throws(shouldThrow, block, expected, message) {
-  var actual;
-
-  if (typeof expected === 'string') {
-    message = expected;
-    expected = null;
-  }
-
-  try {
-    block();
-  } catch (e) {
-    actual = e;
-  }
-
-  message = (expected && expected.name ? ' (' + expected.name + ').' : '.') +
-            (message ? ' ' + message : '.');
-
-  if (shouldThrow && !actual) {
-    fail('Missing expected exception' + message);
-  }
-
-  if (!shouldThrow && expectedException(actual, expected)) {
-    fail('Got unwanted exception' + message);
-  }
-
-  if ((shouldThrow && actual && expected &&
-      !expectedException(actual, expected)) || (!shouldThrow && actual)) {
-    throw actual;
-  }
-}
-
-// 11. Expected to throw an error:
-// assert.throws(block, Error_opt, message_opt);
-
-assert.throws = function(block, /*optional*/error, /*optional*/message) {
-  _throws.apply(this, [true].concat(pSlice.call(arguments)));
-};
-
-// EXTENSION! This is annoying to write outside this module.
-assert.doesNotThrow = function(block, /*optional*/error, /*optional*/message) {
-  _throws.apply(this, [false].concat(pSlice.call(arguments)));
-};
-
-assert.ifError = function(err) { if (err) {throw err;}};
-
-},{"buffer":40,"util":38}],35:[function(require,module,exports){
-/* -*- Mode: js; js-indent-level: 2; -*- */
-/*
- * Copyright 2011 Mozilla Foundation and contributors
- * Licensed under the New BSD license. See LICENSE or:
- * http://opensource.org/licenses/BSD-3-Clause
- */
-if (typeof define !== 'function') {
-    var define = require('amdefine')(module, require);
-}
-define(function (require, exports, module) {
-
-  var base64VLQ = require('./base64-vlq');
-  var util = require('./util');
-  var ArraySet = require('./array-set').ArraySet;
-
-  /**
-   * An instance of the SourceMapGenerator represents a source map which is
-   * being built incrementally. To create a new one, you must pass an object
-   * with the following properties:
-   *
-   *   - file: The filename of the generated source.
-   *   - sourceRoot: An optional root for all URLs in this source map.
-   */
-  function SourceMapGenerator(aArgs) {
-    this._file = util.getArg(aArgs, 'file');
-    this._sourceRoot = util.getArg(aArgs, 'sourceRoot', null);
-    this._sources = new ArraySet();
-    this._names = new ArraySet();
-    this._mappings = [];
-    this._sourcesContents = null;
-  }
-
-  SourceMapGenerator.prototype._version = 3;
-
-  /**
-   * Creates a new SourceMapGenerator based on a SourceMapConsumer
-   *
-   * @param aSourceMapConsumer The SourceMap.
-   */
-  SourceMapGenerator.fromSourceMap =
-    function SourceMapGenerator_fromSourceMap(aSourceMapConsumer) {
-      var sourceRoot = aSourceMapConsumer.sourceRoot;
-      var generator = new SourceMapGenerator({
-        file: aSourceMapConsumer.file,
-        sourceRoot: sourceRoot
-      });
-      aSourceMapConsumer.eachMapping(function (mapping) {
-        var newMapping = {
-          generated: {
-            line: mapping.generatedLine,
-            column: mapping.generatedColumn
-          }
-        };
-
-        if (mapping.source) {
-          newMapping.source = mapping.source;
-          if (sourceRoot) {
-            newMapping.source = util.relative(sourceRoot, newMapping.source);
-          }
-
-          newMapping.original = {
-            line: mapping.originalLine,
-            column: mapping.originalColumn
-          };
-
-          if (mapping.name) {
-            newMapping.name = mapping.name;
-          }
-        }
-
-        generator.addMapping(newMapping);
-      });
-      aSourceMapConsumer.sources.forEach(function (sourceFile) {
-        var content = aSourceMapConsumer.sourceContentFor(sourceFile);
-        if (content) {
-          generator.setSourceContent(sourceFile, content);
-        }
-      });
-      return generator;
-    };
-
-  /**
-   * Add a single mapping from original source line and column to the generated
-   * source's line and column for this source map being created. The mapping
-   * object should have the following properties:
-   *
-   *   - generated: An object with the generated line and column positions.
-   *   - original: An object with the original line and column positions.
-   *   - source: The original source file (relative to the sourceRoot).
-   *   - name: An optional original token name for this mapping.
-   */
-  SourceMapGenerator.prototype.addMapping =
-    function SourceMapGenerator_addMapping(aArgs) {
-      var generated = util.getArg(aArgs, 'generated');
-      var original = util.getArg(aArgs, 'original', null);
-      var source = util.getArg(aArgs, 'source', null);
-      var name = util.getArg(aArgs, 'name', null);
-
-      this._validateMapping(generated, original, source, name);
-
-      if (source && !this._sources.has(source)) {
-        this._sources.add(source);
-      }
-
-      if (name && !this._names.has(name)) {
-        this._names.add(name);
-      }
-
-      this._mappings.push({
-        generated: generated,
-        original: original,
-        source: source,
-        name: name
-      });
-    };
-
-  /**
-   * Set the source content for a source file.
-   */
-  SourceMapGenerator.prototype.setSourceContent =
-    function SourceMapGenerator_setSourceContent(aSourceFile, aSourceContent) {
-      var source = aSourceFile;
-      if (this._sourceRoot) {
-        source = util.relative(this._sourceRoot, source);
-      }
-
-      if (aSourceContent !== null) {
-        // Add the source content to the _sourcesContents map.
-        // Create a new _sourcesContents map if the property is null.
-        if (!this._sourcesContents) {
-          this._sourcesContents = {};
-        }
-        this._sourcesContents[util.toSetString(source)] = aSourceContent;
-      } else {
-        // Remove the source file from the _sourcesContents map.
-        // If the _sourcesContents map is empty, set the property to null.
-        delete this._sourcesContents[util.toSetString(source)];
-        if (Object.keys(this._sourcesContents).length === 0) {
-          this._sourcesContents = null;
-        }
-      }
-    };
-
-  /**
-   * Applies the mappings of a sub-source-map for a specific source file to the
-   * source map being generated. Each mapping to the supplied source file is
-   * rewritten using the supplied source map. Note: The resolution for the
-   * resulting mappings is the minimium of this map and the supplied map.
-   *
-   * @param aSourceMapConsumer The source map to be applied.
-   * @param aSourceFile Optional. The filename of the source file.
-   *        If omitted, SourceMapConsumer's file property will be used.
-   */
-  SourceMapGenerator.prototype.applySourceMap =
-    function SourceMapGenerator_applySourceMap(aSourceMapConsumer, aSourceFile) {
-      // If aSourceFile is omitted, we will use the file property of the SourceMap
-      if (!aSourceFile) {
-        aSourceFile = aSourceMapConsumer.file;
-      }
-      var sourceRoot = this._sourceRoot;
-      // Make "aSourceFile" relative if an absolute Url is passed.
-      if (sourceRoot) {
-        aSourceFile = util.relative(sourceRoot, aSourceFile);
-      }
-      // Applying the SourceMap can add and remove items from the sources and
-      // the names array.
-      var newSources = new ArraySet();
-      var newNames = new ArraySet();
-
-      // Find mappings for the "aSourceFile"
-      this._mappings.forEach(function (mapping) {
-        if (mapping.source === aSourceFile && mapping.original) {
-          // Check if it can be mapped by the source map, then update the mapping.
-          var original = aSourceMapConsumer.originalPositionFor({
-            line: mapping.original.line,
-            column: mapping.original.column
-          });
-          if (original.source !== null) {
-            // Copy mapping
-            if (sourceRoot) {
-              mapping.source = util.relative(sourceRoot, original.source);
-            } else {
-              mapping.source = original.source;
-            }
-            mapping.original.line = original.line;
-            mapping.original.column = original.column;
-            if (original.name !== null && mapping.name !== null) {
-              // Only use the identifier name if it's an identifier
-              // in both SourceMaps
-              mapping.name = original.name;
-            }
-          }
-        }
-
-        var source = mapping.source;
-        if (source && !newSources.has(source)) {
-          newSources.add(source);
-        }
-
-        var name = mapping.name;
-        if (name && !newNames.has(name)) {
-          newNames.add(name);
-        }
-
-      }, this);
-      this._sources = newSources;
-      this._names = newNames;
-
-      // Copy sourcesContents of applied map.
-      aSourceMapConsumer.sources.forEach(function (sourceFile) {
-        var content = aSourceMapConsumer.sourceContentFor(sourceFile);
-        if (content) {
-          if (sourceRoot) {
-            sourceFile = util.relative(sourceRoot, sourceFile);
-          }
-          this.setSourceContent(sourceFile, content);
-        }
-      }, this);
-    };
-
-  /**
-   * A mapping can have one of the three levels of data:
-   *
-   *   1. Just the generated position.
-   *   2. The Generated position, original position, and original source.
-   *   3. Generated and original position, original source, as well as a name
-   *      token.
-   *
-   * To maintain consistency, we validate that any new mapping being added falls
-   * in to one of these categories.
-   */
-  SourceMapGenerator.prototype._validateMapping =
-    function SourceMapGenerator_validateMapping(aGenerated, aOriginal, aSource,
-                                                aName) {
-      if (aGenerated && 'line' in aGenerated && 'column' in aGenerated
-          && aGenerated.line > 0 && aGenerated.column >= 0
-          && !aOriginal && !aSource && !aName) {
-        // Case 1.
-        return;
-      }
-      else if (aGenerated && 'line' in aGenerated && 'column' in aGenerated
-               && aOriginal && 'line' in aOriginal && 'column' in aOriginal
-               && aGenerated.line > 0 && aGenerated.column >= 0
-               && aOriginal.line > 0 && aOriginal.column >= 0
-               && aSource) {
-        // Cases 2 and 3.
-        return;
-      }
-      else {
-        throw new Error('Invalid mapping.');
-      }
-    };
-
-  function cmpLocation(loc1, loc2) {
-    var cmp = (loc1 && loc1.line) - (loc2 && loc2.line);
-    return cmp ? cmp : (loc1 && loc1.column) - (loc2 && loc2.column);
-  }
-
-  function strcmp(str1, str2) {
-    str1 = str1 || '';
-    str2 = str2 || '';
-    return (str1 > str2) - (str1 < str2);
-  }
-
-  function cmpMapping(mappingA, mappingB) {
-    return cmpLocation(mappingA.generated, mappingB.generated) ||
-      cmpLocation(mappingA.original, mappingB.original) ||
-      strcmp(mappingA.source, mappingB.source) ||
-      strcmp(mappingA.name, mappingB.name);
-  }
-
-  /**
-   * Serialize the accumulated mappings in to the stream of base 64 VLQs
-   * specified by the source map format.
-   */
-  SourceMapGenerator.prototype._serializeMappings =
-    function SourceMapGenerator_serializeMappings() {
-      var previousGeneratedColumn = 0;
-      var previousGeneratedLine = 1;
-      var previousOriginalColumn = 0;
-      var previousOriginalLine = 0;
-      var previousName = 0;
-      var previousSource = 0;
-      var result = '';
-      var mapping;
-
-      // The mappings must be guaranteed to be in sorted order before we start
-      // serializing them or else the generated line numbers (which are defined
-      // via the ';' separators) will be all messed up. Note: it might be more
-      // performant to maintain the sorting as we insert them, rather than as we
-      // serialize them, but the big O is the same either way.
-      this._mappings.sort(cmpMapping);
-
-      for (var i = 0, len = this._mappings.length; i < len; i++) {
-        mapping = this._mappings[i];
-
-        if (mapping.generated.line !== previousGeneratedLine) {
-          previousGeneratedColumn = 0;
-          while (mapping.generated.line !== previousGeneratedLine) {
-            result += ';';
-            previousGeneratedLine++;
-          }
-        }
-        else {
-          if (i > 0) {
-            if (!cmpMapping(mapping, this._mappings[i - 1])) {
-              continue;
-            }
-            result += ',';
-          }
-        }
-
-        result += base64VLQ.encode(mapping.generated.column
-                                   - previousGeneratedColumn);
-        previousGeneratedColumn = mapping.generated.column;
-
-        if (mapping.source && mapping.original) {
-          result += base64VLQ.encode(this._sources.indexOf(mapping.source)
-                                     - previousSource);
-          previousSource = this._sources.indexOf(mapping.source);
-
-          // lines are stored 0-based in SourceMap spec version 3
-          result += base64VLQ.encode(mapping.original.line - 1
-                                     - previousOriginalLine);
-          previousOriginalLine = mapping.original.line - 1;
-
-          result += base64VLQ.encode(mapping.original.column
-                                     - previousOriginalColumn);
-          previousOriginalColumn = mapping.original.column;
-
-          if (mapping.name) {
-            result += base64VLQ.encode(this._names.indexOf(mapping.name)
-                                       - previousName);
-            previousName = this._names.indexOf(mapping.name);
-          }
-        }
-      }
-
-      return result;
-    };
-
-  /**
-   * Externalize the source map.
-   */
-  SourceMapGenerator.prototype.toJSON =
-    function SourceMapGenerator_toJSON() {
-      var map = {
-        version: this._version,
-        file: this._file,
-        sources: this._sources.toArray(),
-        names: this._names.toArray(),
-        mappings: this._serializeMappings()
-      };
-      if (this._sourceRoot) {
-        map.sourceRoot = this._sourceRoot;
-      }
-      if (this._sourcesContents) {
-        map.sourcesContent = map.sources.map(function (source) {
-          if (map.sourceRoot) {
-            source = util.relative(map.sourceRoot, source);
-          }
-          return Object.prototype.hasOwnProperty.call(
-            this._sourcesContents, util.toSetString(source))
-            ? this._sourcesContents[util.toSetString(source)]
-            : null;
-        }, this);
-      }
-      return map;
-    };
-
-  /**
-   * Render the source map being generated to a string.
-   */
-  SourceMapGenerator.prototype.toString =
-    function SourceMapGenerator_toString() {
-      return JSON.stringify(this);
-    };
-
-  exports.SourceMapGenerator = SourceMapGenerator;
-
-});
-
-},{"./array-set":43,"./base64-vlq":41,"./util":42,"amdefine":44}],36:[function(require,module,exports){
+},{"events":24}],35:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -46676,7 +46360,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./array-set":43,"./base64-vlq":41,"./binary-search":45,"./util":42,"amdefine":44}],37:[function(require,module,exports){
+},{"./array-set":43,"./base64-vlq":44,"./binary-search":42,"./util":41,"amdefine":45}],36:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -47045,7 +46729,390 @@ define(function (require, exports, module) {
 
 });
 
-},{"./source-map-generator":35,"./util":42,"amdefine":44}],46:[function(require,module,exports){
+},{"./source-map-generator":37,"./util":41,"amdefine":45}],37:[function(require,module,exports){
+/* -*- Mode: js; js-indent-level: 2; -*- */
+/*
+ * Copyright 2011 Mozilla Foundation and contributors
+ * Licensed under the New BSD license. See LICENSE or:
+ * http://opensource.org/licenses/BSD-3-Clause
+ */
+if (typeof define !== 'function') {
+    var define = require('amdefine')(module, require);
+}
+define(function (require, exports, module) {
+
+  var base64VLQ = require('./base64-vlq');
+  var util = require('./util');
+  var ArraySet = require('./array-set').ArraySet;
+
+  /**
+   * An instance of the SourceMapGenerator represents a source map which is
+   * being built incrementally. To create a new one, you must pass an object
+   * with the following properties:
+   *
+   *   - file: The filename of the generated source.
+   *   - sourceRoot: An optional root for all URLs in this source map.
+   */
+  function SourceMapGenerator(aArgs) {
+    this._file = util.getArg(aArgs, 'file');
+    this._sourceRoot = util.getArg(aArgs, 'sourceRoot', null);
+    this._sources = new ArraySet();
+    this._names = new ArraySet();
+    this._mappings = [];
+    this._sourcesContents = null;
+  }
+
+  SourceMapGenerator.prototype._version = 3;
+
+  /**
+   * Creates a new SourceMapGenerator based on a SourceMapConsumer
+   *
+   * @param aSourceMapConsumer The SourceMap.
+   */
+  SourceMapGenerator.fromSourceMap =
+    function SourceMapGenerator_fromSourceMap(aSourceMapConsumer) {
+      var sourceRoot = aSourceMapConsumer.sourceRoot;
+      var generator = new SourceMapGenerator({
+        file: aSourceMapConsumer.file,
+        sourceRoot: sourceRoot
+      });
+      aSourceMapConsumer.eachMapping(function (mapping) {
+        var newMapping = {
+          generated: {
+            line: mapping.generatedLine,
+            column: mapping.generatedColumn
+          }
+        };
+
+        if (mapping.source) {
+          newMapping.source = mapping.source;
+          if (sourceRoot) {
+            newMapping.source = util.relative(sourceRoot, newMapping.source);
+          }
+
+          newMapping.original = {
+            line: mapping.originalLine,
+            column: mapping.originalColumn
+          };
+
+          if (mapping.name) {
+            newMapping.name = mapping.name;
+          }
+        }
+
+        generator.addMapping(newMapping);
+      });
+      aSourceMapConsumer.sources.forEach(function (sourceFile) {
+        var content = aSourceMapConsumer.sourceContentFor(sourceFile);
+        if (content) {
+          generator.setSourceContent(sourceFile, content);
+        }
+      });
+      return generator;
+    };
+
+  /**
+   * Add a single mapping from original source line and column to the generated
+   * source's line and column for this source map being created. The mapping
+   * object should have the following properties:
+   *
+   *   - generated: An object with the generated line and column positions.
+   *   - original: An object with the original line and column positions.
+   *   - source: The original source file (relative to the sourceRoot).
+   *   - name: An optional original token name for this mapping.
+   */
+  SourceMapGenerator.prototype.addMapping =
+    function SourceMapGenerator_addMapping(aArgs) {
+      var generated = util.getArg(aArgs, 'generated');
+      var original = util.getArg(aArgs, 'original', null);
+      var source = util.getArg(aArgs, 'source', null);
+      var name = util.getArg(aArgs, 'name', null);
+
+      this._validateMapping(generated, original, source, name);
+
+      if (source && !this._sources.has(source)) {
+        this._sources.add(source);
+      }
+
+      if (name && !this._names.has(name)) {
+        this._names.add(name);
+      }
+
+      this._mappings.push({
+        generated: generated,
+        original: original,
+        source: source,
+        name: name
+      });
+    };
+
+  /**
+   * Set the source content for a source file.
+   */
+  SourceMapGenerator.prototype.setSourceContent =
+    function SourceMapGenerator_setSourceContent(aSourceFile, aSourceContent) {
+      var source = aSourceFile;
+      if (this._sourceRoot) {
+        source = util.relative(this._sourceRoot, source);
+      }
+
+      if (aSourceContent !== null) {
+        // Add the source content to the _sourcesContents map.
+        // Create a new _sourcesContents map if the property is null.
+        if (!this._sourcesContents) {
+          this._sourcesContents = {};
+        }
+        this._sourcesContents[util.toSetString(source)] = aSourceContent;
+      } else {
+        // Remove the source file from the _sourcesContents map.
+        // If the _sourcesContents map is empty, set the property to null.
+        delete this._sourcesContents[util.toSetString(source)];
+        if (Object.keys(this._sourcesContents).length === 0) {
+          this._sourcesContents = null;
+        }
+      }
+    };
+
+  /**
+   * Applies the mappings of a sub-source-map for a specific source file to the
+   * source map being generated. Each mapping to the supplied source file is
+   * rewritten using the supplied source map. Note: The resolution for the
+   * resulting mappings is the minimium of this map and the supplied map.
+   *
+   * @param aSourceMapConsumer The source map to be applied.
+   * @param aSourceFile Optional. The filename of the source file.
+   *        If omitted, SourceMapConsumer's file property will be used.
+   */
+  SourceMapGenerator.prototype.applySourceMap =
+    function SourceMapGenerator_applySourceMap(aSourceMapConsumer, aSourceFile) {
+      // If aSourceFile is omitted, we will use the file property of the SourceMap
+      if (!aSourceFile) {
+        aSourceFile = aSourceMapConsumer.file;
+      }
+      var sourceRoot = this._sourceRoot;
+      // Make "aSourceFile" relative if an absolute Url is passed.
+      if (sourceRoot) {
+        aSourceFile = util.relative(sourceRoot, aSourceFile);
+      }
+      // Applying the SourceMap can add and remove items from the sources and
+      // the names array.
+      var newSources = new ArraySet();
+      var newNames = new ArraySet();
+
+      // Find mappings for the "aSourceFile"
+      this._mappings.forEach(function (mapping) {
+        if (mapping.source === aSourceFile && mapping.original) {
+          // Check if it can be mapped by the source map, then update the mapping.
+          var original = aSourceMapConsumer.originalPositionFor({
+            line: mapping.original.line,
+            column: mapping.original.column
+          });
+          if (original.source !== null) {
+            // Copy mapping
+            if (sourceRoot) {
+              mapping.source = util.relative(sourceRoot, original.source);
+            } else {
+              mapping.source = original.source;
+            }
+            mapping.original.line = original.line;
+            mapping.original.column = original.column;
+            if (original.name !== null && mapping.name !== null) {
+              // Only use the identifier name if it's an identifier
+              // in both SourceMaps
+              mapping.name = original.name;
+            }
+          }
+        }
+
+        var source = mapping.source;
+        if (source && !newSources.has(source)) {
+          newSources.add(source);
+        }
+
+        var name = mapping.name;
+        if (name && !newNames.has(name)) {
+          newNames.add(name);
+        }
+
+      }, this);
+      this._sources = newSources;
+      this._names = newNames;
+
+      // Copy sourcesContents of applied map.
+      aSourceMapConsumer.sources.forEach(function (sourceFile) {
+        var content = aSourceMapConsumer.sourceContentFor(sourceFile);
+        if (content) {
+          if (sourceRoot) {
+            sourceFile = util.relative(sourceRoot, sourceFile);
+          }
+          this.setSourceContent(sourceFile, content);
+        }
+      }, this);
+    };
+
+  /**
+   * A mapping can have one of the three levels of data:
+   *
+   *   1. Just the generated position.
+   *   2. The Generated position, original position, and original source.
+   *   3. Generated and original position, original source, as well as a name
+   *      token.
+   *
+   * To maintain consistency, we validate that any new mapping being added falls
+   * in to one of these categories.
+   */
+  SourceMapGenerator.prototype._validateMapping =
+    function SourceMapGenerator_validateMapping(aGenerated, aOriginal, aSource,
+                                                aName) {
+      if (aGenerated && 'line' in aGenerated && 'column' in aGenerated
+          && aGenerated.line > 0 && aGenerated.column >= 0
+          && !aOriginal && !aSource && !aName) {
+        // Case 1.
+        return;
+      }
+      else if (aGenerated && 'line' in aGenerated && 'column' in aGenerated
+               && aOriginal && 'line' in aOriginal && 'column' in aOriginal
+               && aGenerated.line > 0 && aGenerated.column >= 0
+               && aOriginal.line > 0 && aOriginal.column >= 0
+               && aSource) {
+        // Cases 2 and 3.
+        return;
+      }
+      else {
+        throw new Error('Invalid mapping.');
+      }
+    };
+
+  function cmpLocation(loc1, loc2) {
+    var cmp = (loc1 && loc1.line) - (loc2 && loc2.line);
+    return cmp ? cmp : (loc1 && loc1.column) - (loc2 && loc2.column);
+  }
+
+  function strcmp(str1, str2) {
+    str1 = str1 || '';
+    str2 = str2 || '';
+    return (str1 > str2) - (str1 < str2);
+  }
+
+  function cmpMapping(mappingA, mappingB) {
+    return cmpLocation(mappingA.generated, mappingB.generated) ||
+      cmpLocation(mappingA.original, mappingB.original) ||
+      strcmp(mappingA.source, mappingB.source) ||
+      strcmp(mappingA.name, mappingB.name);
+  }
+
+  /**
+   * Serialize the accumulated mappings in to the stream of base 64 VLQs
+   * specified by the source map format.
+   */
+  SourceMapGenerator.prototype._serializeMappings =
+    function SourceMapGenerator_serializeMappings() {
+      var previousGeneratedColumn = 0;
+      var previousGeneratedLine = 1;
+      var previousOriginalColumn = 0;
+      var previousOriginalLine = 0;
+      var previousName = 0;
+      var previousSource = 0;
+      var result = '';
+      var mapping;
+
+      // The mappings must be guaranteed to be in sorted order before we start
+      // serializing them or else the generated line numbers (which are defined
+      // via the ';' separators) will be all messed up. Note: it might be more
+      // performant to maintain the sorting as we insert them, rather than as we
+      // serialize them, but the big O is the same either way.
+      this._mappings.sort(cmpMapping);
+
+      for (var i = 0, len = this._mappings.length; i < len; i++) {
+        mapping = this._mappings[i];
+
+        if (mapping.generated.line !== previousGeneratedLine) {
+          previousGeneratedColumn = 0;
+          while (mapping.generated.line !== previousGeneratedLine) {
+            result += ';';
+            previousGeneratedLine++;
+          }
+        }
+        else {
+          if (i > 0) {
+            if (!cmpMapping(mapping, this._mappings[i - 1])) {
+              continue;
+            }
+            result += ',';
+          }
+        }
+
+        result += base64VLQ.encode(mapping.generated.column
+                                   - previousGeneratedColumn);
+        previousGeneratedColumn = mapping.generated.column;
+
+        if (mapping.source && mapping.original) {
+          result += base64VLQ.encode(this._sources.indexOf(mapping.source)
+                                     - previousSource);
+          previousSource = this._sources.indexOf(mapping.source);
+
+          // lines are stored 0-based in SourceMap spec version 3
+          result += base64VLQ.encode(mapping.original.line - 1
+                                     - previousOriginalLine);
+          previousOriginalLine = mapping.original.line - 1;
+
+          result += base64VLQ.encode(mapping.original.column
+                                     - previousOriginalColumn);
+          previousOriginalColumn = mapping.original.column;
+
+          if (mapping.name) {
+            result += base64VLQ.encode(this._names.indexOf(mapping.name)
+                                       - previousName);
+            previousName = this._names.indexOf(mapping.name);
+          }
+        }
+      }
+
+      return result;
+    };
+
+  /**
+   * Externalize the source map.
+   */
+  SourceMapGenerator.prototype.toJSON =
+    function SourceMapGenerator_toJSON() {
+      var map = {
+        version: this._version,
+        file: this._file,
+        sources: this._sources.toArray(),
+        names: this._names.toArray(),
+        mappings: this._serializeMappings()
+      };
+      if (this._sourceRoot) {
+        map.sourceRoot = this._sourceRoot;
+      }
+      if (this._sourcesContents) {
+        map.sourcesContent = map.sources.map(function (source) {
+          if (map.sourceRoot) {
+            source = util.relative(map.sourceRoot, source);
+          }
+          return Object.prototype.hasOwnProperty.call(
+            this._sourcesContents, util.toSetString(source))
+            ? this._sourcesContents[util.toSetString(source)]
+            : null;
+        }, this);
+      }
+      return map;
+    };
+
+  /**
+   * Render the source map being generated to a string.
+   */
+  SourceMapGenerator.prototype.toString =
+    function SourceMapGenerator_toString() {
+      return JSON.stringify(this);
+    };
+
+  exports.SourceMapGenerator = SourceMapGenerator;
+
+});
+
+},{"./array-set":43,"./base64-vlq":44,"./util":41,"amdefine":45}],46:[function(require,module,exports){
 exports.readIEEE754 = function(buffer, offset, isBE, mLen, nBytes) {
   var e, m,
       eLen = nBytes * 8 - mLen - 1,
@@ -47131,7 +47198,7 @@ exports.writeIEEE754 = function(buffer, value, offset, isBE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128;
 };
 
-},{}],44:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 var process=require("__browserify_process"),__filename="/../node_modules/source-map/node_modules/amdefine/amdefine.js";/** vim: et:ts=4:sw=4:sts=4
  * @license amdefine 0.0.8 Copyright (c) 2011, The Dojo Foundation All Rights Reserved.
  * Available via the MIT or new BSD license.
@@ -48521,6 +48588,307 @@ Buffer.prototype.writeDoubleBE = function(value, offset, noAssert) {
  * Copyright 2011 Mozilla Foundation and contributors
  * Licensed under the New BSD license. See LICENSE or:
  * http://opensource.org/licenses/BSD-3-Clause
+ */
+if (typeof define !== 'function') {
+    var define = require('amdefine')(module, require);
+}
+define(function (require, exports, module) {
+
+  /**
+   * This is a helper function for getting values from parameter/options
+   * objects.
+   *
+   * @param args The object we are extracting values from
+   * @param name The name of the property we are getting.
+   * @param defaultValue An optional value to return if the property is missing
+   * from the object. If this is not specified and the property is missing, an
+   * error will be thrown.
+   */
+  function getArg(aArgs, aName, aDefaultValue) {
+    if (aName in aArgs) {
+      return aArgs[aName];
+    } else if (arguments.length === 3) {
+      return aDefaultValue;
+    } else {
+      throw new Error('"' + aName + '" is a required argument.');
+    }
+  }
+  exports.getArg = getArg;
+
+  var urlRegexp = /([\w+\-.]+):\/\/((\w+:\w+)@)?([\w.]+)?(:(\d+))?(\S+)?/;
+
+  function urlParse(aUrl) {
+    var match = aUrl.match(urlRegexp);
+    if (!match) {
+      return null;
+    }
+    return {
+      scheme: match[1],
+      auth: match[3],
+      host: match[4],
+      port: match[6],
+      path: match[7]
+    };
+  }
+  exports.urlParse = urlParse;
+
+  function urlGenerate(aParsedUrl) {
+    var url = aParsedUrl.scheme + "://";
+    if (aParsedUrl.auth) {
+      url += aParsedUrl.auth + "@"
+    }
+    if (aParsedUrl.host) {
+      url += aParsedUrl.host;
+    }
+    if (aParsedUrl.port) {
+      url += ":" + aParsedUrl.port
+    }
+    if (aParsedUrl.path) {
+      url += aParsedUrl.path;
+    }
+    return url;
+  }
+  exports.urlGenerate = urlGenerate;
+
+  function join(aRoot, aPath) {
+    var url;
+
+    if (aPath.match(urlRegexp)) {
+      return aPath;
+    }
+
+    if (aPath.charAt(0) === '/' && (url = urlParse(aRoot))) {
+      url.path = aPath;
+      return urlGenerate(url);
+    }
+
+    return aRoot.replace(/\/$/, '') + '/' + aPath;
+  }
+  exports.join = join;
+
+  /**
+   * Because behavior goes wacky when you set `__proto__` on objects, we
+   * have to prefix all the strings in our set with an arbitrary character.
+   *
+   * See https://github.com/mozilla/source-map/pull/31 and
+   * https://github.com/mozilla/source-map/issues/30
+   *
+   * @param String aStr
+   */
+  function toSetString(aStr) {
+    return '$' + aStr;
+  }
+  exports.toSetString = toSetString;
+
+  function fromSetString(aStr) {
+    return aStr.substr(1);
+  }
+  exports.fromSetString = fromSetString;
+
+  function relative(aRoot, aPath) {
+    aRoot = aRoot.replace(/\/$/, '');
+
+    var url = urlParse(aRoot);
+    if (aPath.charAt(0) == "/" && url && url.path == "/") {
+      return aPath.slice(1);
+    }
+
+    return aPath.indexOf(aRoot + '/') === 0
+      ? aPath.substr(aRoot.length + 1)
+      : aPath;
+  }
+  exports.relative = relative;
+
+});
+
+},{"amdefine":45}],43:[function(require,module,exports){
+/* -*- Mode: js; js-indent-level: 2; -*- */
+/*
+ * Copyright 2011 Mozilla Foundation and contributors
+ * Licensed under the New BSD license. See LICENSE or:
+ * http://opensource.org/licenses/BSD-3-Clause
+ */
+if (typeof define !== 'function') {
+    var define = require('amdefine')(module, require);
+}
+define(function (require, exports, module) {
+
+  var util = require('./util');
+
+  /**
+   * A data structure which is a combination of an array and a set. Adding a new
+   * member is O(1), testing for membership is O(1), and finding the index of an
+   * element is O(1). Removing elements from the set is not supported. Only
+   * strings are supported for membership.
+   */
+  function ArraySet() {
+    this._array = [];
+    this._set = {};
+  }
+
+  /**
+   * Static method for creating ArraySet instances from an existing array.
+   */
+  ArraySet.fromArray = function ArraySet_fromArray(aArray, aAllowDuplicates) {
+    var set = new ArraySet();
+    for (var i = 0, len = aArray.length; i < len; i++) {
+      set.add(aArray[i], aAllowDuplicates);
+    }
+    return set;
+  };
+
+  /**
+   * Add the given string to this set.
+   *
+   * @param String aStr
+   */
+  ArraySet.prototype.add = function ArraySet_add(aStr, aAllowDuplicates) {
+    var isDuplicate = this.has(aStr);
+    var idx = this._array.length;
+    if (!isDuplicate || aAllowDuplicates) {
+      this._array.push(aStr);
+    }
+    if (!isDuplicate) {
+      this._set[util.toSetString(aStr)] = idx;
+    }
+  };
+
+  /**
+   * Is the given string a member of this set?
+   *
+   * @param String aStr
+   */
+  ArraySet.prototype.has = function ArraySet_has(aStr) {
+    return Object.prototype.hasOwnProperty.call(this._set,
+                                                util.toSetString(aStr));
+  };
+
+  /**
+   * What is the index of the given string in the array?
+   *
+   * @param String aStr
+   */
+  ArraySet.prototype.indexOf = function ArraySet_indexOf(aStr) {
+    if (this.has(aStr)) {
+      return this._set[util.toSetString(aStr)];
+    }
+    throw new Error('"' + aStr + '" is not in the set.');
+  };
+
+  /**
+   * What is the element at the given index?
+   *
+   * @param Number aIdx
+   */
+  ArraySet.prototype.at = function ArraySet_at(aIdx) {
+    if (aIdx >= 0 && aIdx < this._array.length) {
+      return this._array[aIdx];
+    }
+    throw new Error('No element indexed by ' + aIdx);
+  };
+
+  /**
+   * Returns the array representation of this set (which has the proper indices
+   * indicated by indexOf). Note that this is a copy of the internal array used
+   * for storing the members so that no one can mess with internal state.
+   */
+  ArraySet.prototype.toArray = function ArraySet_toArray() {
+    return this._array.slice();
+  };
+
+  exports.ArraySet = ArraySet;
+
+});
+
+},{"./util":41,"amdefine":45}],42:[function(require,module,exports){
+/* -*- Mode: js; js-indent-level: 2; -*- */
+/*
+ * Copyright 2011 Mozilla Foundation and contributors
+ * Licensed under the New BSD license. See LICENSE or:
+ * http://opensource.org/licenses/BSD-3-Clause
+ */
+if (typeof define !== 'function') {
+    var define = require('amdefine')(module, require);
+}
+define(function (require, exports, module) {
+
+  /**
+   * Recursive implementation of binary search.
+   *
+   * @param aLow Indices here and lower do not contain the needle.
+   * @param aHigh Indices here and higher do not contain the needle.
+   * @param aNeedle The element being searched for.
+   * @param aHaystack The non-empty array being searched.
+   * @param aCompare Function which takes two elements and returns -1, 0, or 1.
+   */
+  function recursiveSearch(aLow, aHigh, aNeedle, aHaystack, aCompare) {
+    // This function terminates when one of the following is true:
+    //
+    //   1. We find the exact element we are looking for.
+    //
+    //   2. We did not find the exact element, but we can return the next
+    //      closest element that is less than that element.
+    //
+    //   3. We did not find the exact element, and there is no next-closest
+    //      element which is less than the one we are searching for, so we
+    //      return null.
+    var mid = Math.floor((aHigh - aLow) / 2) + aLow;
+    var cmp = aCompare(aNeedle, aHaystack[mid]);
+    if (cmp === 0) {
+      // Found the element we are looking for.
+      return aHaystack[mid];
+    }
+    else if (cmp > 0) {
+      // aHaystack[mid] is greater than our needle.
+      if (aHigh - mid > 1) {
+        // The element is in the upper half.
+        return recursiveSearch(mid, aHigh, aNeedle, aHaystack, aCompare);
+      }
+      // We did not find an exact match, return the next closest one
+      // (termination case 2).
+      return aHaystack[mid];
+    }
+    else {
+      // aHaystack[mid] is less than our needle.
+      if (mid - aLow > 1) {
+        // The element is in the lower half.
+        return recursiveSearch(aLow, mid, aNeedle, aHaystack, aCompare);
+      }
+      // The exact needle element was not found in this haystack. Determine if
+      // we are in termination case (2) or (3) and return the appropriate thing.
+      return aLow < 0
+        ? null
+        : aHaystack[aLow];
+    }
+  }
+
+  /**
+   * This is an implementation of binary search which will always try and return
+   * the next lowest value checked if there is no exact hit. This is because
+   * mappings between original and generated line/col pairs are single points,
+   * and there is an implicit region between each of them, so a miss just means
+   * that you aren't on the very start of a region.
+   *
+   * @param aNeedle The element you are looking for.
+   * @param aHaystack The array that is being searched.
+   * @param aCompare A function which takes the needle and an element in the
+   *     array and returns -1, 0, or 1 depending on whether the needle is less
+   *     than, equal to, or greater than the element, respectively.
+   */
+  exports.search = function search(aNeedle, aHaystack, aCompare) {
+    return aHaystack.length > 0
+      ? recursiveSearch(-1, aHaystack.length, aNeedle, aHaystack, aCompare)
+      : null;
+  };
+
+});
+
+},{"amdefine":45}],44:[function(require,module,exports){
+/* -*- Mode: js; js-indent-level: 2; -*- */
+/*
+ * Copyright 2011 Mozilla Foundation and contributors
+ * Licensed under the New BSD license. See LICENSE or:
+ * http://opensource.org/licenses/BSD-3-Clause
  *
  * Based on the Base 64 VLQ implementation in Closure Compiler:
  * https://code.google.com/p/closure-compiler/source/browse/trunk/src/com/google/debugging/sourcemap/Base64VLQ.java
@@ -48661,308 +49029,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./base64":49,"amdefine":44}],42:[function(require,module,exports){
-/* -*- Mode: js; js-indent-level: 2; -*- */
-/*
- * Copyright 2011 Mozilla Foundation and contributors
- * Licensed under the New BSD license. See LICENSE or:
- * http://opensource.org/licenses/BSD-3-Clause
- */
-if (typeof define !== 'function') {
-    var define = require('amdefine')(module, require);
-}
-define(function (require, exports, module) {
-
-  /**
-   * This is a helper function for getting values from parameter/options
-   * objects.
-   *
-   * @param args The object we are extracting values from
-   * @param name The name of the property we are getting.
-   * @param defaultValue An optional value to return if the property is missing
-   * from the object. If this is not specified and the property is missing, an
-   * error will be thrown.
-   */
-  function getArg(aArgs, aName, aDefaultValue) {
-    if (aName in aArgs) {
-      return aArgs[aName];
-    } else if (arguments.length === 3) {
-      return aDefaultValue;
-    } else {
-      throw new Error('"' + aName + '" is a required argument.');
-    }
-  }
-  exports.getArg = getArg;
-
-  var urlRegexp = /([\w+\-.]+):\/\/((\w+:\w+)@)?([\w.]+)?(:(\d+))?(\S+)?/;
-
-  function urlParse(aUrl) {
-    var match = aUrl.match(urlRegexp);
-    if (!match) {
-      return null;
-    }
-    return {
-      scheme: match[1],
-      auth: match[3],
-      host: match[4],
-      port: match[6],
-      path: match[7]
-    };
-  }
-  exports.urlParse = urlParse;
-
-  function urlGenerate(aParsedUrl) {
-    var url = aParsedUrl.scheme + "://";
-    if (aParsedUrl.auth) {
-      url += aParsedUrl.auth + "@"
-    }
-    if (aParsedUrl.host) {
-      url += aParsedUrl.host;
-    }
-    if (aParsedUrl.port) {
-      url += ":" + aParsedUrl.port
-    }
-    if (aParsedUrl.path) {
-      url += aParsedUrl.path;
-    }
-    return url;
-  }
-  exports.urlGenerate = urlGenerate;
-
-  function join(aRoot, aPath) {
-    var url;
-
-    if (aPath.match(urlRegexp)) {
-      return aPath;
-    }
-
-    if (aPath.charAt(0) === '/' && (url = urlParse(aRoot))) {
-      url.path = aPath;
-      return urlGenerate(url);
-    }
-
-    return aRoot.replace(/\/$/, '') + '/' + aPath;
-  }
-  exports.join = join;
-
-  /**
-   * Because behavior goes wacky when you set `__proto__` on objects, we
-   * have to prefix all the strings in our set with an arbitrary character.
-   *
-   * See https://github.com/mozilla/source-map/pull/31 and
-   * https://github.com/mozilla/source-map/issues/30
-   *
-   * @param String aStr
-   */
-  function toSetString(aStr) {
-    return '$' + aStr;
-  }
-  exports.toSetString = toSetString;
-
-  function fromSetString(aStr) {
-    return aStr.substr(1);
-  }
-  exports.fromSetString = fromSetString;
-
-  function relative(aRoot, aPath) {
-    aRoot = aRoot.replace(/\/$/, '');
-
-    var url = urlParse(aRoot);
-    if (aPath.charAt(0) == "/" && url && url.path == "/") {
-      return aPath.slice(1);
-    }
-
-    return aPath.indexOf(aRoot + '/') === 0
-      ? aPath.substr(aRoot.length + 1)
-      : aPath;
-  }
-  exports.relative = relative;
-
-});
-
-},{"amdefine":44}],43:[function(require,module,exports){
-/* -*- Mode: js; js-indent-level: 2; -*- */
-/*
- * Copyright 2011 Mozilla Foundation and contributors
- * Licensed under the New BSD license. See LICENSE or:
- * http://opensource.org/licenses/BSD-3-Clause
- */
-if (typeof define !== 'function') {
-    var define = require('amdefine')(module, require);
-}
-define(function (require, exports, module) {
-
-  var util = require('./util');
-
-  /**
-   * A data structure which is a combination of an array and a set. Adding a new
-   * member is O(1), testing for membership is O(1), and finding the index of an
-   * element is O(1). Removing elements from the set is not supported. Only
-   * strings are supported for membership.
-   */
-  function ArraySet() {
-    this._array = [];
-    this._set = {};
-  }
-
-  /**
-   * Static method for creating ArraySet instances from an existing array.
-   */
-  ArraySet.fromArray = function ArraySet_fromArray(aArray, aAllowDuplicates) {
-    var set = new ArraySet();
-    for (var i = 0, len = aArray.length; i < len; i++) {
-      set.add(aArray[i], aAllowDuplicates);
-    }
-    return set;
-  };
-
-  /**
-   * Add the given string to this set.
-   *
-   * @param String aStr
-   */
-  ArraySet.prototype.add = function ArraySet_add(aStr, aAllowDuplicates) {
-    var isDuplicate = this.has(aStr);
-    var idx = this._array.length;
-    if (!isDuplicate || aAllowDuplicates) {
-      this._array.push(aStr);
-    }
-    if (!isDuplicate) {
-      this._set[util.toSetString(aStr)] = idx;
-    }
-  };
-
-  /**
-   * Is the given string a member of this set?
-   *
-   * @param String aStr
-   */
-  ArraySet.prototype.has = function ArraySet_has(aStr) {
-    return Object.prototype.hasOwnProperty.call(this._set,
-                                                util.toSetString(aStr));
-  };
-
-  /**
-   * What is the index of the given string in the array?
-   *
-   * @param String aStr
-   */
-  ArraySet.prototype.indexOf = function ArraySet_indexOf(aStr) {
-    if (this.has(aStr)) {
-      return this._set[util.toSetString(aStr)];
-    }
-    throw new Error('"' + aStr + '" is not in the set.');
-  };
-
-  /**
-   * What is the element at the given index?
-   *
-   * @param Number aIdx
-   */
-  ArraySet.prototype.at = function ArraySet_at(aIdx) {
-    if (aIdx >= 0 && aIdx < this._array.length) {
-      return this._array[aIdx];
-    }
-    throw new Error('No element indexed by ' + aIdx);
-  };
-
-  /**
-   * Returns the array representation of this set (which has the proper indices
-   * indicated by indexOf). Note that this is a copy of the internal array used
-   * for storing the members so that no one can mess with internal state.
-   */
-  ArraySet.prototype.toArray = function ArraySet_toArray() {
-    return this._array.slice();
-  };
-
-  exports.ArraySet = ArraySet;
-
-});
-
-},{"./util":42,"amdefine":44}],45:[function(require,module,exports){
-/* -*- Mode: js; js-indent-level: 2; -*- */
-/*
- * Copyright 2011 Mozilla Foundation and contributors
- * Licensed under the New BSD license. See LICENSE or:
- * http://opensource.org/licenses/BSD-3-Clause
- */
-if (typeof define !== 'function') {
-    var define = require('amdefine')(module, require);
-}
-define(function (require, exports, module) {
-
-  /**
-   * Recursive implementation of binary search.
-   *
-   * @param aLow Indices here and lower do not contain the needle.
-   * @param aHigh Indices here and higher do not contain the needle.
-   * @param aNeedle The element being searched for.
-   * @param aHaystack The non-empty array being searched.
-   * @param aCompare Function which takes two elements and returns -1, 0, or 1.
-   */
-  function recursiveSearch(aLow, aHigh, aNeedle, aHaystack, aCompare) {
-    // This function terminates when one of the following is true:
-    //
-    //   1. We find the exact element we are looking for.
-    //
-    //   2. We did not find the exact element, but we can return the next
-    //      closest element that is less than that element.
-    //
-    //   3. We did not find the exact element, and there is no next-closest
-    //      element which is less than the one we are searching for, so we
-    //      return null.
-    var mid = Math.floor((aHigh - aLow) / 2) + aLow;
-    var cmp = aCompare(aNeedle, aHaystack[mid]);
-    if (cmp === 0) {
-      // Found the element we are looking for.
-      return aHaystack[mid];
-    }
-    else if (cmp > 0) {
-      // aHaystack[mid] is greater than our needle.
-      if (aHigh - mid > 1) {
-        // The element is in the upper half.
-        return recursiveSearch(mid, aHigh, aNeedle, aHaystack, aCompare);
-      }
-      // We did not find an exact match, return the next closest one
-      // (termination case 2).
-      return aHaystack[mid];
-    }
-    else {
-      // aHaystack[mid] is less than our needle.
-      if (mid - aLow > 1) {
-        // The element is in the lower half.
-        return recursiveSearch(aLow, mid, aNeedle, aHaystack, aCompare);
-      }
-      // The exact needle element was not found in this haystack. Determine if
-      // we are in termination case (2) or (3) and return the appropriate thing.
-      return aLow < 0
-        ? null
-        : aHaystack[aLow];
-    }
-  }
-
-  /**
-   * This is an implementation of binary search which will always try and return
-   * the next lowest value checked if there is no exact hit. This is because
-   * mappings between original and generated line/col pairs are single points,
-   * and there is an implicit region between each of them, so a miss just means
-   * that you aren't on the very start of a region.
-   *
-   * @param aNeedle The element you are looking for.
-   * @param aHaystack The array that is being searched.
-   * @param aCompare A function which takes the needle and an element in the
-   *     array and returns -1, 0, or 1 depending on whether the needle is less
-   *     than, equal to, or greater than the element, respectively.
-   */
-  exports.search = function search(aNeedle, aHaystack, aCompare) {
-    return aHaystack.length > 0
-      ? recursiveSearch(-1, aHaystack.length, aNeedle, aHaystack, aCompare)
-      : null;
-  };
-
-});
-
-},{"amdefine":44}],47:[function(require,module,exports){
+},{"./base64":49,"amdefine":45}],47:[function(require,module,exports){
 var process=require("__browserify_process");function filter (xs, fn) {
     var res = [];
     for (var i = 0; i < xs.length; i++) {
@@ -49271,5 +49338,5 @@ define(function (require, exports, module) {
 
 });
 
-},{"amdefine":44}]},{},[4])
+},{"amdefine":45}]},{},[4])
 ;

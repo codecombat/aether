@@ -47,8 +47,9 @@ module.exports.makeCheckThisKeywords = makeCheckThisKeywords = (global) ->
           node.update "this.#{node.source()}"
 
 module.exports.validateReturns = validateReturns = (node) ->
+  # TODO: what if this is in an inner function they defined?
   if node.type is S.ReturnStatement and not node.argument
-    node.update "return this.validateReturn('#{@options.functionName}', null);"
+    node.update node.source().replace "return;", "return this.validateReturn('#{@options.functionName}', null);"
   else if node.parent?.type is S.ReturnStatement
     node.update "this.validateReturn('#{@options.functionName}', (#{node.source()}))"
 
@@ -126,6 +127,7 @@ module.exports.makeInstrumentStatements = makeInstrumentStatements = ->
   return (node) ->
     return unless node.originalNode and node.originalNode.originalRange.start >= 0
     return unless node.type in statements
+    return if node.originalNode.type in [S.ThisExpression, S.Identifier, S.Literal]  # probably need to add to this to get statements which corresponded to interesting expressions before normalization
     nFunctionParents = 0  # Only do this in nested functions, not our wrapper
     p = node.parent
     while p
@@ -135,5 +137,16 @@ module.exports.makeInstrumentStatements = makeInstrumentStatements = ->
     # TODO: actually save this into aether.flow, and have it happen before the yield happens
     range = [node.originalNode.originalRange.start, node.originalNode.originalRange.end]
     source = node.originalNode.originalSource
-    node.update "#{node.source()} _aether.logStatement(#{range[0]}, #{range[1]}, \"#{source}\");"  # TODO: escape this better, probably
-    #console.log " ... created logger", node.source()
+    safeSource = source.replace(/\"/g, '\\"').replace(/\n/g, '\\n')
+    node.update "#{node.source()} _aether.logStatement(#{range[0]}, #{range[1]}, \"#{safeSource}\");"
+    #console.log " ... created logger", node.source(), node.originalNode
+
+module.exports.makeInstrumentCalls = makeInstrumentCalls = ->
+  # set up any state tracking here
+  return (node) ->
+    if node.type is S.ReturnStatement
+      # TODO: what if this is in an inner function they defined?
+      node.update "_aether.logCallEnd(); #{node.source()}"
+    return unless node.originalNode and node.originalNode.originalRange.start < 0
+    return unless node.type is S.ExpressionStatement and node.originalNode.value is "use strict"
+    node.update "#{node.source()} _aether.logCallStart();"  # TODO: pull in arguments?
