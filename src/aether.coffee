@@ -257,29 +257,28 @@ module.exports = class Aether
         range: [start, end]
         source: source
         variables: {}  # TODO
-      callState = _.last @flow.states
+      callState = _.last @callStack
       callState.push state
 
     #console.log "Logged statement", range, "'#{source}'"#, "and now have metrics", @metrics
 
-  # TODO: handle recursion better; we should perhaps have a list of call trees, so that we can handle recursion, instead of just a list of lists of calls
   logCallStart: ->
-    @callDepth ?= 0
-    ++@callDepth
+    call = []
+    (@callStack ?= []).push call
     if @options.includeMetrics
       @metrics.callsExecuted ?= 0
       ++@metrics.callsExecuted
-      @metrics.maxDepth = Math.max(@metrics.maxDepth or 0, @callDepth)
+      @metrics.maxDepth = Math.max(@metrics.maxDepth or 0, @callStack.length)
     if @options.includeFlow
-      (@flow ?= {}).states ?= []
-      @flow.states.push call = []
-      (@callStack ?= []).push call
+      if @callStack.length is 1
+        ((@flow ?= {}).states ?= []).push call
+      else
+        3
+        # TODO: Nest the current call into the parent call? Otherwise it's just thrown away.
     #console.log "Logged call to", @options.functionName, @metrics, @flow
 
   logCallEnd: ->
-    if @options.includeFlow
-      @callStack.pop()
-    --@callDepth
+    @callStack.pop()
 
 self.Aether = Aether if self?
 window.Aether = Aether if window?
