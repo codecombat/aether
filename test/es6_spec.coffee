@@ -36,7 +36,7 @@ describe "ES6 Test Suite", ->
     it "should yield when necessary", ->
       dude =
         charge: -> "attack!"
-        hesitate: -> @_shouldYield = true
+        hesitate: -> @_aetherShouldYield = true
       code = """
         this.charge();
         this.hesitate();
@@ -77,7 +77,7 @@ describe "ES6 Test Suite", ->
     it "should not yield", ->
       dude =
         charge: -> "attack!"
-        hesitate: -> @_shouldYield = true
+        hesitate: -> @_aetherShouldYield = true
       code = """
         this.charge();
         this.hesitate();
@@ -97,7 +97,7 @@ describe "ES6 Test Suite", ->
     it "should handle breaking out of a while loop with yields inside", ->
       dude =
         slay: -> @enemy = "slain!"
-        hesitate: -> @_shouldYield = true
+        hesitate: -> @_aetherShouldYield = true
       code = """
         while(true) {
           this.hesitate();

@@ -244,7 +244,7 @@ module.exports = class Aether
     (line.slice indent for line in lines).join '\n'
 
   ### Flow/metrics -- put somewhere else? ###
-  logStatement: (start, end, source) ->
+  logStatement: (start, end, source, userInfo) ->
     range = [start, end]
     if @options.includeMetrics
       m = (@metrics.statements ?= {})[range] ?= {source: source}
@@ -257,10 +257,11 @@ module.exports = class Aether
         range: [start, end]
         source: source
         variables: {}  # TODO
+        userInfo: _.cloneDeep userInfo
       callState = _.last @callStack
       callState.push state
 
-    #console.log "Logged statement", range, "'#{source}'"#, "and now have metrics", @metrics
+    #console.log "Logged statement", range, "'#{source}'", "with userInfo", userInfo#, "and now have metrics", @metrics
 
   logCallStart: ->
     call = []
@@ -282,3 +283,25 @@ module.exports = class Aether
 
 self.Aether = Aether if self?
 window.Aether = Aether if window?
+
+
+# In order to be able to highlight the currently executing statement, then every time we yield, we can just grab the last-executed AST start/end and store it in our Thang as a trackedProperty. ... per method...
+# Then eventually we can convert those start/ends to handle changed whitespace in identical ASTs, but we'll wait until we've refactored the editor for that.
+# But what about stepping through non-yielding flow?
+# The easiest thing from the editor's point of view would be to have, for each frame, for each method, a flat list of calls (list of statements) in the flow.
+# Aether isn't going to organize things by frame, though; that's a CoCo concept.
+# Aether can organize them by calls.
+# We can reorganize them by frame, or make a getter that appears to, after we're done.
+# We just need to have the frame numbers inserted in each ... statement, to support yielding, or call, if not, but let's do statements to make it general.
+# So logStatement needs to include userInfo.
+# It is already supposed to capture variable values.
+# Let's see how JSDares did that part.
+# Ah, every operation is wrapped in a function which outputs step messages.
+# So we could do something like that: every time there's an assignment expression where the LHS has an original node, we add a mapping from that to the value of the RHS to our flow state.
+# By the way, CoCo will eventually give its nodes IDs and then convert between ranges and IDs, but we might do this in Aether instead, since other users of Aether might also want to change the code and still preserve the range info when the ASTs haven't changed.
+# So if that's how we track variable states, then we actually won't get anything that happens as a side effect.
+# Like if I call this.setTarget(nearestEnemy), then this.target won't be updated, because I didn't explicitly assign to it.
+# Hmm; maybe I should worry about that a bit later and get the stepping working properly.
+# All that requires is to include the frameIndex as part of the userInfo for each logStatement.
+# I could just set _aetherUserInfo to whatever value I want, just like I set _shouldYield (which should be _aetherShouldYield).
+# Okay, let's try that.

@@ -21124,6 +21124,77 @@ var traceur = (function() {
 
 },{}],2:[function(require,module,exports){
 (function() {
+  var execution;
+
+  module.exports = execution = {
+    ArrayExpression: 1,
+    ArrayPattern: 1,
+    ArrowFunctionExpression: 1,
+    AssignmentExpression: 1,
+    BinaryExpression: 1,
+    BlockStatement: 1,
+    BreakStatement: 1,
+    CallExpression: 1,
+    CatchClause: 1,
+    ClassBody: 1,
+    ClassDeclaration: 1,
+    ClassExpression: 1,
+    ClassHeritage: 1,
+    ComprehensionBlock: 1,
+    ComprehensionExpression: 1,
+    ConditionalExpression: 1,
+    ContinueStatement: 1,
+    DebuggerStatement: 1,
+    DoWhileStatement: 1,
+    EmptyStatement: 1,
+    ExportDeclaration: 1,
+    ExportBatchSpecifier: 1,
+    ExportSpecifier: 1,
+    ExpressionStatement: 1,
+    ForInStatement: 1,
+    ForOfStatement: 1,
+    ForStatement: 1,
+    FunctionDeclaration: 1,
+    FunctionExpression: 1,
+    Identifier: 1,
+    IfStatement: 1,
+    ImportDeclaration: 1,
+    ImportSpecifier: 1,
+    LabeledStatement: 1,
+    Literal: 1,
+    LogicalExpression: 1,
+    MemberExpression: 1,
+    MethodDefinition: 1,
+    ModuleDeclaration: 1,
+    NewExpression: 1,
+    ObjectExpression: 1,
+    ObjectPattern: 1,
+    Program: 1,
+    Property: 1,
+    ReturnStatement: 1,
+    SequenceExpression: 1,
+    SpreadElement: 1,
+    SwitchCase: 1,
+    SwitchStatement: 1,
+    TaggedTemplateExpression: 1,
+    TemplateElement: 1,
+    TemplateLiteral: 1,
+    ThisExpression: 1,
+    ThrowStatement: 1,
+    TryStatement: 1,
+    UnaryExpression: 1,
+    UpdateExpression: 1,
+    VariableDeclaration: 1,
+    VariableDeclarator: 1,
+    WhileStatement: 1,
+    WithStatement: 1,
+    YieldExpression: 1
+  };
+
+}).call(this);
+
+},{}],3:[function(require,module,exports){
+(function() {
   var RuntimeProblem, TranspileProblem, UserCodeProblem, commonMethods, problems,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -22266,77 +22337,6 @@ var traceur = (function() {
 
 }).call(this);
 
-},{}],3:[function(require,module,exports){
-(function() {
-  var execution;
-
-  module.exports = execution = {
-    ArrayExpression: 1,
-    ArrayPattern: 1,
-    ArrowFunctionExpression: 1,
-    AssignmentExpression: 1,
-    BinaryExpression: 1,
-    BlockStatement: 1,
-    BreakStatement: 1,
-    CallExpression: 1,
-    CatchClause: 1,
-    ClassBody: 1,
-    ClassDeclaration: 1,
-    ClassExpression: 1,
-    ClassHeritage: 1,
-    ComprehensionBlock: 1,
-    ComprehensionExpression: 1,
-    ConditionalExpression: 1,
-    ContinueStatement: 1,
-    DebuggerStatement: 1,
-    DoWhileStatement: 1,
-    EmptyStatement: 1,
-    ExportDeclaration: 1,
-    ExportBatchSpecifier: 1,
-    ExportSpecifier: 1,
-    ExpressionStatement: 1,
-    ForInStatement: 1,
-    ForOfStatement: 1,
-    ForStatement: 1,
-    FunctionDeclaration: 1,
-    FunctionExpression: 1,
-    Identifier: 1,
-    IfStatement: 1,
-    ImportDeclaration: 1,
-    ImportSpecifier: 1,
-    LabeledStatement: 1,
-    Literal: 1,
-    LogicalExpression: 1,
-    MemberExpression: 1,
-    MethodDefinition: 1,
-    ModuleDeclaration: 1,
-    NewExpression: 1,
-    ObjectExpression: 1,
-    ObjectPattern: 1,
-    Program: 1,
-    Property: 1,
-    ReturnStatement: 1,
-    SequenceExpression: 1,
-    SpreadElement: 1,
-    SwitchCase: 1,
-    SwitchStatement: 1,
-    TaggedTemplateExpression: 1,
-    TemplateElement: 1,
-    TemplateLiteral: 1,
-    ThisExpression: 1,
-    ThrowStatement: 1,
-    TryStatement: 1,
-    UnaryExpression: 1,
-    UpdateExpression: 1,
-    VariableDeclaration: 1,
-    VariableDeclarator: 1,
-    WhileStatement: 1,
-    WithStatement: 1,
-    YieldExpression: 1
-  };
-
-}).call(this);
-
 },{}],4:[function(require,module,exports){
 var global=self;(function() {
   var Aether, acorn_loose, defaults, escodegen, esprima, execution, jshint, morph, normalizer, optionsValidator, problems, traceur, transforms, _, _ref, _ref1, _ref2, _ref3, _ref4, _ref5;
@@ -22781,7 +22781,7 @@ var global=self;(function() {
     /* Flow/metrics -- put somewhere else?*/
 
 
-    Aether.prototype.logStatement = function(start, end, source) {
+    Aether.prototype.logStatement = function(start, end, source, userInfo) {
       var callState, m, range, state, _base, _base1, _base2, _base3;
       range = [start, end];
       if (this.options.includeMetrics) {
@@ -22801,7 +22801,8 @@ var global=self;(function() {
         state = {
           range: [start, end],
           source: source,
-          variables: {}
+          variables: {},
+          userInfo: _.cloneDeep(userInfo)
         };
         callState = _.last(this.callStack);
         return callState.push(state);
@@ -22846,7 +22847,7 @@ var global=self;(function() {
 
 }).call(this);
 
-},{"./defaults":5,"./execution":3,"./morph":6,"./problems":2,"./transforms":7,"./validators/options":8,"JS_WALA/normalizer/lib/normalizer":9,"acorn/acorn_loose":10,"escodegen":13,"esprima":11,"jshint":12,"lodash":1,"traceur":1}],5:[function(require,module,exports){
+},{"./defaults":5,"./execution":2,"./morph":6,"./problems":3,"./transforms":8,"./validators/options":7,"JS_WALA/normalizer/lib/normalizer":9,"acorn/acorn_loose":10,"escodegen":13,"esprima":11,"jshint":12,"lodash":1,"traceur":1}],5:[function(require,module,exports){
 (function() {
   var defaults, execution;
 
@@ -22878,7 +22879,7 @@ var global=self;(function() {
 
 }).call(this);
 
-},{"./execution":3}],11:[function(require,module,exports){
+},{"./execution":2}],11:[function(require,module,exports){
 /*
   Copyright (C) 2013 Ariya Hidayat <ariya.hidayat@gmail.com>
   Copyright (C) 2013 Thaddee Tyl <thaddee.tyl@gmail.com>
@@ -30243,7 +30244,7 @@ parseYieldExpression: true
   exports.normalize = normalize;
 //});
 
-},{"../../common/lib/ast":15,"../../common/lib/position":19,"./cflow":16,"./decls":17,"./scope":18,"./util":20}],14:[function(require,module,exports){
+},{"../../common/lib/ast":15,"../../common/lib/position":19,"./cflow":17,"./decls":16,"./scope":18,"./util":20}],14:[function(require,module,exports){
 // Acorn is a tiny, fast JavaScript parser written in JavaScript.
 //
 // Acorn was written by Marijn Haverbeke and released under an MIT
@@ -31964,103 +31965,7 @@ parseYieldExpression: true
 
 });
 
-},{}],6:[function(require,module,exports){
-var global=self;(function() {
-  var acorn_loose, esprima, insertHelpers, morph, _, _ref, _ref1, _ref2;
-
-  _ = (_ref = (_ref1 = (_ref2 = typeof window !== "undefined" && window !== null ? window._ : void 0) != null ? _ref2 : typeof self !== "undefined" && self !== null ? self._ : void 0) != null ? _ref1 : typeof global !== "undefined" && global !== null ? global._ : void 0) != null ? _ref : require('lodash');
-
-  esprima = require('esprima');
-
-  acorn_loose = require('acorn/acorn_loose');
-
-  module.exports = morph = function(source, transforms, parser) {
-    var ast, chunks, lines, locToRange, posToOffset, walk;
-    if (parser == null) {
-      parser = "esprima";
-    }
-    chunks = source.split('');
-    if (parser === 'esprima') {
-      ast = esprima.parse(source, {
-        range: true,
-        loc: true
-      });
-      locToRange = null;
-    } else if (parser === 'acorn_loose') {
-      ast = acorn_loose.parse_dammit(source, {
-        locations: true
-      });
-      lines = source.replace(/\n/g, '\n空').split('空');
-      posToOffset = function(pos) {
-        return _.reduce(lines.slice(0, pos.line - 1), (function(sum, line) {
-          return sum + line.length;
-        }), 0) + pos.column;
-      };
-      locToRange = function(loc) {
-        return [posToOffset(loc.start), posToOffset(loc.end)];
-      };
-    }
-    walk = function(node, parent) {
-      var child, grandchild, key, transform, _i, _j, _len, _len1, _results;
-      insertHelpers(node, parent, chunks, locToRange);
-      for (key in node) {
-        child = node[key];
-        if (key === 'parent') {
-          continue;
-        }
-        if (_.isArray(child)) {
-          for (_i = 0, _len = child.length; _i < _len; _i++) {
-            grandchild = child[_i];
-            if (_.isString(grandchild != null ? grandchild.type : void 0)) {
-              walk(grandchild, node);
-            }
-          }
-        } else if (_.isString(child != null ? child.type : void 0)) {
-          insertHelpers(child, node, chunks, locToRange);
-          walk(child, node);
-        }
-      }
-      _results = [];
-      for (_j = 0, _len1 = transforms.length; _j < _len1; _j++) {
-        transform = transforms[_j];
-        _results.push(transform(node));
-      }
-      return _results;
-    };
-    walk(ast, void 0);
-    return chunks.join('');
-  };
-
-  insertHelpers = function(node, parent, chunks, locToRange) {
-    var update;
-    if (node.loc && locToRange) {
-      node.range = locToRange(node.loc);
-    }
-    if (!node.range) {
-      return;
-    }
-    node.parent = parent;
-    node.source = function() {
-      return chunks.slice(node.range[0], node.range[1]).join('');
-    };
-    update = function(s) {
-      var i, _i, _ref3, _ref4, _results;
-      chunks[node.range[0]] = s;
-      _results = [];
-      for (i = _i = _ref3 = node.range[0] + 1, _ref4 = node.range[1]; _ref3 <= _ref4 ? _i < _ref4 : _i > _ref4; i = _ref3 <= _ref4 ? ++_i : --_i) {
-        _results.push(chunks[i] = '');
-      }
-      return _results;
-    };
-    if (_.isObject(node.update)) {
-      _.extend(update, node.update);
-    }
-    return node.update = update;
-  };
-
-}).call(this);
-
-},{"acorn/acorn_loose":10,"esprima":11,"lodash":1}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 /*******************************************************************************
  * Copyright (c) 2012 IBM Corporation.
  * All rights reserved. This program and the accompanying materials
@@ -32203,7 +32108,103 @@ var global=self;(function() {
     Array.prototype.flatmap = flatmap;
 //});
 
-},{}],7:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
+var global=self;(function() {
+  var acorn_loose, esprima, insertHelpers, morph, _, _ref, _ref1, _ref2;
+
+  _ = (_ref = (_ref1 = (_ref2 = typeof window !== "undefined" && window !== null ? window._ : void 0) != null ? _ref2 : typeof self !== "undefined" && self !== null ? self._ : void 0) != null ? _ref1 : typeof global !== "undefined" && global !== null ? global._ : void 0) != null ? _ref : require('lodash');
+
+  esprima = require('esprima');
+
+  acorn_loose = require('acorn/acorn_loose');
+
+  module.exports = morph = function(source, transforms, parser) {
+    var ast, chunks, lines, locToRange, posToOffset, walk;
+    if (parser == null) {
+      parser = "esprima";
+    }
+    chunks = source.split('');
+    if (parser === 'esprima') {
+      ast = esprima.parse(source, {
+        range: true,
+        loc: true
+      });
+      locToRange = null;
+    } else if (parser === 'acorn_loose') {
+      ast = acorn_loose.parse_dammit(source, {
+        locations: true
+      });
+      lines = source.replace(/\n/g, '\n空').split('空');
+      posToOffset = function(pos) {
+        return _.reduce(lines.slice(0, pos.line - 1), (function(sum, line) {
+          return sum + line.length;
+        }), 0) + pos.column;
+      };
+      locToRange = function(loc) {
+        return [posToOffset(loc.start), posToOffset(loc.end)];
+      };
+    }
+    walk = function(node, parent) {
+      var child, grandchild, key, transform, _i, _j, _len, _len1, _results;
+      insertHelpers(node, parent, chunks, locToRange);
+      for (key in node) {
+        child = node[key];
+        if (key === 'parent') {
+          continue;
+        }
+        if (_.isArray(child)) {
+          for (_i = 0, _len = child.length; _i < _len; _i++) {
+            grandchild = child[_i];
+            if (_.isString(grandchild != null ? grandchild.type : void 0)) {
+              walk(grandchild, node);
+            }
+          }
+        } else if (_.isString(child != null ? child.type : void 0)) {
+          insertHelpers(child, node, chunks, locToRange);
+          walk(child, node);
+        }
+      }
+      _results = [];
+      for (_j = 0, _len1 = transforms.length; _j < _len1; _j++) {
+        transform = transforms[_j];
+        _results.push(transform(node));
+      }
+      return _results;
+    };
+    walk(ast, void 0);
+    return chunks.join('');
+  };
+
+  insertHelpers = function(node, parent, chunks, locToRange) {
+    var update;
+    if (node.loc && locToRange) {
+      node.range = locToRange(node.loc);
+    }
+    if (!node.range) {
+      return;
+    }
+    node.parent = parent;
+    node.source = function() {
+      return chunks.slice(node.range[0], node.range[1]).join('');
+    };
+    update = function(s) {
+      var i, _i, _ref3, _ref4, _results;
+      chunks[node.range[0]] = s;
+      _results = [];
+      for (i = _i = _ref3 = node.range[0] + 1, _ref4 = node.range[1]; _ref3 <= _ref4 ? _i < _ref4 : _i > _ref4; i = _ref3 <= _ref4 ? ++_i : --_i) {
+        _results.push(chunks[i] = '');
+      }
+      return _results;
+    };
+    if (_.isObject(node.update)) {
+      _.extend(update, node.update);
+    }
+    return node.update = update;
+  };
+
+}).call(this);
+
+},{"acorn/acorn_loose":10,"esprima":11,"lodash":1}],8:[function(require,module,exports){
 (function() {
   var S, SourceMap, checkIncompleteMembers, esprima, getLineNumberForNode, makeCheckThisKeywords, makeFindOriginalNodes, makeGatherNodeRanges, makeInstrumentCalls, makeInstrumentStatements, possiblyGeneratorifyAncestorFunction, problems, statements, validateReturns, yieldAutomatically, yieldConditionally,
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
@@ -32336,7 +32337,7 @@ var global=self;(function() {
   module.exports.yieldConditionally = yieldConditionally = function(node) {
     var _ref;
     if (node.type === S.ExpressionStatement && ((_ref = node.expression.right) != null ? _ref.type : void 0) === S.CallExpression) {
-      node.update("" + (node.source()) + " if (this._shouldYield) { var _yieldValue = this._shouldYield; this._shouldYield = false; yield _yieldValue; }");
+      node.update("" + (node.source()) + " if (this._aetherShouldYield) { var _yieldValue = this._aetherShouldYield; this._aetherShouldYield = false; yield _yieldValue; }");
       node.yields = true;
       return possiblyGeneratorifyAncestorFunction(node);
     } else if (node.mustBecomeGeneratorFunction) {
@@ -32392,7 +32393,7 @@ var global=self;(function() {
       range = [node.originalNode.originalRange.start, node.originalNode.originalRange.end];
       source = node.originalNode.originalSource;
       safeSource = source.replace(/\"/g, '\\"').replace(/\n/g, '\\n');
-      return node.update("" + (node.source()) + " _aether.logStatement(" + range[0] + ", " + range[1] + ", \"" + safeSource + "\");");
+      return node.update("" + (node.source()) + " _aether.logStatement(" + range[0] + ", " + range[1] + ", \"" + safeSource + "\", this._aetherUserInfo);");
     };
   };
 
@@ -32413,7 +32414,7 @@ var global=self;(function() {
 
 }).call(this);
 
-},{"./problems":2,"esprima":11,"source-map":21}],22:[function(require,module,exports){
+},{"./problems":3,"esprima":11,"source-map":21}],22:[function(require,module,exports){
 module.exports={
   "name": "escodegen",
   "description": "ECMAScript code generator",
@@ -33554,7 +33555,7 @@ exports.register = function (linter) {
 		}
 	});
 };
-},{}],8:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 (function() {
   var revalidator;
 
@@ -34307,7 +34308,366 @@ exports.register = function (linter) {
 }));
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{}],13:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
+/*******************************************************************************
+ * Copyright (c) 2012 IBM Corporation.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
+ *******************************************************************************/
+
+/**
+ * Convenience functions for constructing and navigating ASTs.
+ */
+//if(typeof define !== 'function') {
+//  var define = require('amdefine')(module);
+//}
+//
+//define(function(require, exports) {
+  var position = require('./position');
+  
+  // constructor signatures; arguments in angle brackets are terminal children, the others subtrees
+  var signatures = {
+      AssignmentExpression: [ '<operator>', 'left', 'right'],
+      ArrayExpression: [ 'elements' ],
+      BlockStatement: [ 'body' ],
+      BinaryExpression: [ '<operator>', 'left', 'right'],
+      BreakStatement: [ 'label' ],
+      CallExpression: [ 'callee', 'arguments' ],
+      CatchClause: [ 'param', 'body' ],
+      ConditionalExpression: [ 'test', 'consequent', 'alternate' ],
+      ContinueStatement: [ 'label' ],
+      DirectiveStatement: [ ],
+      DoWhileStatement: [ 'body', 'test' ],
+      DebuggerStatement: [ ],
+      EmptyStatement: [ ],
+      ExpressionStatement: [ 'expression' ],
+      ForStatement: [ 'init', 'test', 'update', 'body' ],
+      ForInStatement: [ 'left', 'right', 'body' ],
+      FunctionDeclaration: [ 'id', 'params', 'body' ],
+      FunctionExpression: [ 'id', 'params', 'body' ],
+      Identifier: [ '<name>' ],
+      IfStatement: [ 'test', 'consequent', 'alternate' ],
+      Literal: [ '<value>' ],
+      LabeledStatement: [ 'label', 'body' ],
+      LogicalExpression: [ '<operator>', 'left', 'right' ],
+      MemberExpression: [ 'object', 'property', '<computed>' ],
+      NewExpression: [ 'callee', 'arguments' ],
+      ObjectExpression: [ 'properties' ],
+      Program: [ 'body' ],
+      Property: [ 'key', 'value', '<kind>' ],
+      ReturnStatement: [ 'argument' ],
+      SequenceExpression: [ 'expressions' ],
+      SwitchStatement: [ 'discriminant', 'cases' ],
+      SwitchCase: [ 'test', 'consequent' ],
+      ThisExpression: [ ],
+      ThrowStatement: [ 'argument' ],
+      TryStatement: [ 'block', 'guardedHandlers', 'handlers', 'finalizer' ],
+      UnaryExpression: [ '<operator>', 'argument' ],
+      UpdateExpression: [ '<operator>', 'argument', '<prefix>' ],
+      VariableDeclaration: [ 'declarations', '<kind>' ],
+      VariableDeclarator: [ 'id', 'init' ],
+      WhileStatement: [ 'test', 'body' ],
+      WithStatement: [ 'object', 'body' ]
+  };
+
+  // define a constructor from a signature
+  function defconstructor(tpname, signature) {
+    var child_names = [], nonterminal_children = [];
+    for(var i=0;i<signature.length;++i)
+      if(signature[i][0] === '<') {
+        child_names[child_names.length] = signature[i].substring(1, signature[i].length-1);
+      } else {
+        child_names[child_names.length] = signature[i];
+        nonterminal_children[nonterminal_children.length] = signature[i];
+      }
+    
+    exports[tpname] = function() {
+      this.type = tpname;
+      this.attr = {};
+      for(var i=0;i<arguments.length;++i)
+        this[child_names[i]] = arguments[i];
+      for(;i<child_names.length;++i)
+        this[child_names[i]] = null;
+    };
+    exports[tpname].children = nonterminal_children;
+  }
+  
+  // several convenience methods for accessing subtrees
+  var getNumChild = exports.getNumChild = function(nd) {
+    if(Array.isArray(nd))
+      return nd.length;
+    
+    if(nd && nd.type)
+      return exports[nd.type].children.length;
+    
+    return 0;
+  };
+  
+  var getChild = exports.getChild = function(nd, i) {
+    if(Array.isArray(nd))
+      return nd[i];
+    
+    return nd[exports[nd.type].children[i]];
+  };
+
+  var setChild = exports.setChild = function(nd, i, v) {
+    if(Array.isArray(nd))
+      return nd[i] = v;
+
+    return nd[exports[nd.type].children[i]] = v;
+  };
+  
+  var forEachChild = exports.forEachChild = function(nd, cb) {
+    for(var i = 0, n = getNumChild(nd); i < n; ++i)
+      cb(getChild(nd, i), i);
+  };
+  
+  var mapChildren = exports.mapChildren = function(nd, cb) {
+    var res = [];
+    forEachChild(nd, function(ch, i) {
+      res[res.length] = cb(ch, i);
+    });
+    return res;
+  };
+
+  // simple debug printing function
+  var dump = exports.dump = function(nd) {
+    if(Array.isArray(nd))
+      return "[" + nd.map(dump).join() + "]";
+    
+    if(!nd || !nd.type)
+      return nd+"";
+    
+    return nd.type + "(" + mapChildren(nd, dump).join() + ")";
+  };
+  
+  // we give every AST node a property "attr" for storing attributes
+  exports.getAttribute = function(nd, name) {
+    nd.attr = nd.attr || {};
+    return nd.attr[name];
+  };
+  
+  exports.setAttribute = function(nd, name, value) {
+    nd.attr = nd.attr || {};
+    nd.attr[name] = value;
+    return nd;
+  };
+  
+  // positions are attached as attributes
+  exports.hasPosition = function(nd) {
+      return !!exports.getAttribute(nd, 'pos') || !!nd.loc || !!nd.range;
+  };
+  
+  exports.getPosition = function(nd) {
+      if(!exports.getAttribute(nd, 'pos')) {
+      var pos = position.DUMMY_POS.clone();
+      if(nd.loc) {
+	  if(nd.loc.source) {
+	      pos.url = nd.loc.source;
+	  }
+        pos.start_line = nd.loc.start.line;
+        pos.end_line = nd.loc.start.line;
+      }
+      if(nd.range) {
+        pos.start_offset = nd.range[0];
+        pos.end_offset = nd.range[1];
+      }
+      exports.setAttribute(nd, 'pos', pos);
+    }
+    return exports.getAttribute(nd, 'pos');
+  };
+  
+  exports.setPosition = function(nd, pos) {
+    exports.setAttribute(nd, 'pos', pos);
+  };
+  
+  for(var p in signatures)
+    defconstructor(p, signatures[p]);
+//});
+
+},{"./position":19}],16:[function(require,module,exports){
+/*******************************************************************************
+ * Copyright (c) 2012 IBM Corporation.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
+ *******************************************************************************/
+
+/**
+ * Utility functions to collect all variable and function declarations in a subtree.
+ */
+//if(typeof define !== 'function') {
+//  var define = require('amdefine')(module);
+//}
+//
+//define(function(require, exports) {
+  var ast = require('../../common/lib/ast');
+
+  function getDeclName(decl) {
+    if(decl.type === 'Identifier')
+      return decl.name;
+    return decl.id.name;
+  }
+
+  function collectDecls(nd, accu) {
+    if(!nd)
+      return accu;
+    
+    if(nd.type === 'FunctionDeclaration') {
+      accu[accu.length] = nd;
+    } else if(nd.type === 'VariableDeclarator') {
+      accu[accu.length] = nd;
+    } else if(nd.type !== 'FunctionExpression') {
+      ast.forEachChild(nd, function(ch) {
+        collectDecls(ch, accu);
+      });
+    }
+    return accu;
+  }
+  
+  exports.collectDecls = collectDecls;
+  exports.getDeclName = getDeclName;
+//});
+
+},{"../../common/lib/ast":15}],18:[function(require,module,exports){
+/*******************************************************************************
+ * Copyright (c) 2012 IBM Corporation.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
+ *******************************************************************************/
+
+/**
+ * Scope objects keep track of name binding. Each scope object represents
+ * either the global scope, a function scope, a catch clause scope, or
+ * a 'with' scope.
+ */
+
+//if(typeof define !== 'function') {
+//  var define = require('amdefine')(module);
+//}
+//
+//define(function(require, exports) {
+  var decls = require('./decls');
+  
+  // abstract base class of all scopes
+  function Scope(outer, decls) {
+    this.outer = outer;
+    this.decls = decls;
+  }
+  
+  // is x a global variable in this scope?
+  Scope.prototype.isGlobal = function(x) {
+    return !this.isLocal(x) && this.outer.isGlobal(x);
+  };
+  
+  // does x have a declaration at the global level?
+  Scope.prototype.isDeclaredGlobal = function(x) {
+    return this.outer.isDeclaredGlobal();
+  };
+  
+  // look up x among the local declarations in this scope
+  Scope.prototype.localLookup = function(x) {
+    for(var i=0;i<this.decls.length;++i)
+      if(decls.getDeclName(this.decls[i]) === x)
+        return this.decls[i];
+    return null;
+  };
+  
+  // is x a local variable declared in this scope?
+  Scope.prototype.isLocal = function(x) { return !!this.localLookup(x); };
+  
+  // look up x in this or an enclosing scope
+  Scope.prototype.lookup = function(x) {
+    return this.localLookup(x) || this.outer && this.outer.lookup(x);
+  };
+  
+  // object representing the global scope
+  function GlobalScope(root) {
+    Scope.call(this, null, decls.collectDecls(root, []));
+  }
+  GlobalScope.prototype = Object.create(Scope.prototype);
+  
+  GlobalScope.prototype.isGlobal = function(x) { return true; };
+  GlobalScope.prototype.isLocal = function(x) { return false; };
+  GlobalScope.prototype.possibleWithBindings = function(x) { return []; };
+  GlobalScope.prototype.isDeclaredGlobal = function(x) {
+    return !!this.localLookup(x);
+  };
+    
+  // constructor representing a function scope
+  function FunctionScope(outer, fn) {
+    this.fn = fn;
+    Scope.call(this, outer, fn.params.concat(decls.collectDecls(fn.body, [])));
+  }
+  FunctionScope.prototype = Object.create(Scope.prototype);
+  
+  // 'arguments' and (in a named function expression) the function itself are local,
+  // even though they are not declared
+  FunctionScope.prototype.isLocal = function(x) {
+    return x === 'arguments' ||
+           this.fn.type === 'FunctionExpression' && this.fn.id && this.fn.id.name === x ||
+           Scope.prototype.isLocal.call(this, x);
+  };
+  
+  // list of enclosing with statements (represented by the variables they 'with' on) that
+  // may bind x
+  FunctionScope.prototype.possibleWithBindings = function(x) {
+    if(this.isLocal(x))
+      return [];
+    return this.outer.possibleWithBindings(x);
+  };
+  
+  // constructor representing a catch clause scope
+  function CatchScope(outer, cc) {
+    Scope.call(this, outer, [cc.param]);
+  }
+  CatchScope.prototype = Object.create(Scope.prototype);
+  
+  CatchScope.prototype.isLocal = function(x) { return x === this.decls[0].name || this.outer.isLocal(x); };
+  
+  CatchScope.prototype.possibleWithBindings = function(x) {
+    if(x === this.decls[0].name)
+      return [];
+    return this.outer.possibleWithBindings(x);
+  };
+  
+  // constructor representing a with scope
+  function WithScope(outer, with_var) {
+    Scope.call(this, outer, []);
+    this.with_var = with_var;
+  }
+  WithScope.prototype = Object.create(Scope.prototype);
+  
+  WithScope.prototype.isLocal = function(x) { return this.outer.isLocal(x); };
+  
+  WithScope.prototype.possibleWithBindings = function(x) {
+    var bindings = this.outer.possibleWithBindings(x);
+    bindings.unshift(this.with_var);
+    return bindings;
+  };
+  
+  exports.Scope = Scope;
+  exports.GlobalScope = GlobalScope;
+  exports.FunctionScope = FunctionScope;
+  exports.CatchScope = CatchScope;
+  exports.WithScope = WithScope;
+//});
+
+},{"./decls":16}],13:[function(require,module,exports){
 var global=self;/*
   Copyright (C) 2012-2013 Yusuke Suzuki <utatane.tea@gmail.com>
   Copyright (C) 2012-2013 Michael Ficarra <escodegen.copyright@michael.ficarra.me>
@@ -36374,366 +36734,7 @@ var global=self;/*
 }());
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{"./package.json":22,"estraverse":30,"source-map":21}],18:[function(require,module,exports){
-/*******************************************************************************
- * Copyright (c) 2012 IBM Corporation.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *     IBM Corporation - initial API and implementation
- *******************************************************************************/
-
-/**
- * Scope objects keep track of name binding. Each scope object represents
- * either the global scope, a function scope, a catch clause scope, or
- * a 'with' scope.
- */
-
-//if(typeof define !== 'function') {
-//  var define = require('amdefine')(module);
-//}
-//
-//define(function(require, exports) {
-  var decls = require('./decls');
-  
-  // abstract base class of all scopes
-  function Scope(outer, decls) {
-    this.outer = outer;
-    this.decls = decls;
-  }
-  
-  // is x a global variable in this scope?
-  Scope.prototype.isGlobal = function(x) {
-    return !this.isLocal(x) && this.outer.isGlobal(x);
-  };
-  
-  // does x have a declaration at the global level?
-  Scope.prototype.isDeclaredGlobal = function(x) {
-    return this.outer.isDeclaredGlobal();
-  };
-  
-  // look up x among the local declarations in this scope
-  Scope.prototype.localLookup = function(x) {
-    for(var i=0;i<this.decls.length;++i)
-      if(decls.getDeclName(this.decls[i]) === x)
-        return this.decls[i];
-    return null;
-  };
-  
-  // is x a local variable declared in this scope?
-  Scope.prototype.isLocal = function(x) { return !!this.localLookup(x); };
-  
-  // look up x in this or an enclosing scope
-  Scope.prototype.lookup = function(x) {
-    return this.localLookup(x) || this.outer && this.outer.lookup(x);
-  };
-  
-  // object representing the global scope
-  function GlobalScope(root) {
-    Scope.call(this, null, decls.collectDecls(root, []));
-  }
-  GlobalScope.prototype = Object.create(Scope.prototype);
-  
-  GlobalScope.prototype.isGlobal = function(x) { return true; };
-  GlobalScope.prototype.isLocal = function(x) { return false; };
-  GlobalScope.prototype.possibleWithBindings = function(x) { return []; };
-  GlobalScope.prototype.isDeclaredGlobal = function(x) {
-    return !!this.localLookup(x);
-  };
-    
-  // constructor representing a function scope
-  function FunctionScope(outer, fn) {
-    this.fn = fn;
-    Scope.call(this, outer, fn.params.concat(decls.collectDecls(fn.body, [])));
-  }
-  FunctionScope.prototype = Object.create(Scope.prototype);
-  
-  // 'arguments' and (in a named function expression) the function itself are local,
-  // even though they are not declared
-  FunctionScope.prototype.isLocal = function(x) {
-    return x === 'arguments' ||
-           this.fn.type === 'FunctionExpression' && this.fn.id && this.fn.id.name === x ||
-           Scope.prototype.isLocal.call(this, x);
-  };
-  
-  // list of enclosing with statements (represented by the variables they 'with' on) that
-  // may bind x
-  FunctionScope.prototype.possibleWithBindings = function(x) {
-    if(this.isLocal(x))
-      return [];
-    return this.outer.possibleWithBindings(x);
-  };
-  
-  // constructor representing a catch clause scope
-  function CatchScope(outer, cc) {
-    Scope.call(this, outer, [cc.param]);
-  }
-  CatchScope.prototype = Object.create(Scope.prototype);
-  
-  CatchScope.prototype.isLocal = function(x) { return x === this.decls[0].name || this.outer.isLocal(x); };
-  
-  CatchScope.prototype.possibleWithBindings = function(x) {
-    if(x === this.decls[0].name)
-      return [];
-    return this.outer.possibleWithBindings(x);
-  };
-  
-  // constructor representing a with scope
-  function WithScope(outer, with_var) {
-    Scope.call(this, outer, []);
-    this.with_var = with_var;
-  }
-  WithScope.prototype = Object.create(Scope.prototype);
-  
-  WithScope.prototype.isLocal = function(x) { return this.outer.isLocal(x); };
-  
-  WithScope.prototype.possibleWithBindings = function(x) {
-    var bindings = this.outer.possibleWithBindings(x);
-    bindings.unshift(this.with_var);
-    return bindings;
-  };
-  
-  exports.Scope = Scope;
-  exports.GlobalScope = GlobalScope;
-  exports.FunctionScope = FunctionScope;
-  exports.CatchScope = CatchScope;
-  exports.WithScope = WithScope;
-//});
-
-},{"./decls":17}],15:[function(require,module,exports){
-/*******************************************************************************
- * Copyright (c) 2012 IBM Corporation.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *     IBM Corporation - initial API and implementation
- *******************************************************************************/
-
-/**
- * Convenience functions for constructing and navigating ASTs.
- */
-//if(typeof define !== 'function') {
-//  var define = require('amdefine')(module);
-//}
-//
-//define(function(require, exports) {
-  var position = require('./position');
-  
-  // constructor signatures; arguments in angle brackets are terminal children, the others subtrees
-  var signatures = {
-      AssignmentExpression: [ '<operator>', 'left', 'right'],
-      ArrayExpression: [ 'elements' ],
-      BlockStatement: [ 'body' ],
-      BinaryExpression: [ '<operator>', 'left', 'right'],
-      BreakStatement: [ 'label' ],
-      CallExpression: [ 'callee', 'arguments' ],
-      CatchClause: [ 'param', 'body' ],
-      ConditionalExpression: [ 'test', 'consequent', 'alternate' ],
-      ContinueStatement: [ 'label' ],
-      DirectiveStatement: [ ],
-      DoWhileStatement: [ 'body', 'test' ],
-      DebuggerStatement: [ ],
-      EmptyStatement: [ ],
-      ExpressionStatement: [ 'expression' ],
-      ForStatement: [ 'init', 'test', 'update', 'body' ],
-      ForInStatement: [ 'left', 'right', 'body' ],
-      FunctionDeclaration: [ 'id', 'params', 'body' ],
-      FunctionExpression: [ 'id', 'params', 'body' ],
-      Identifier: [ '<name>' ],
-      IfStatement: [ 'test', 'consequent', 'alternate' ],
-      Literal: [ '<value>' ],
-      LabeledStatement: [ 'label', 'body' ],
-      LogicalExpression: [ '<operator>', 'left', 'right' ],
-      MemberExpression: [ 'object', 'property', '<computed>' ],
-      NewExpression: [ 'callee', 'arguments' ],
-      ObjectExpression: [ 'properties' ],
-      Program: [ 'body' ],
-      Property: [ 'key', 'value', '<kind>' ],
-      ReturnStatement: [ 'argument' ],
-      SequenceExpression: [ 'expressions' ],
-      SwitchStatement: [ 'discriminant', 'cases' ],
-      SwitchCase: [ 'test', 'consequent' ],
-      ThisExpression: [ ],
-      ThrowStatement: [ 'argument' ],
-      TryStatement: [ 'block', 'guardedHandlers', 'handlers', 'finalizer' ],
-      UnaryExpression: [ '<operator>', 'argument' ],
-      UpdateExpression: [ '<operator>', 'argument', '<prefix>' ],
-      VariableDeclaration: [ 'declarations', '<kind>' ],
-      VariableDeclarator: [ 'id', 'init' ],
-      WhileStatement: [ 'test', 'body' ],
-      WithStatement: [ 'object', 'body' ]
-  };
-
-  // define a constructor from a signature
-  function defconstructor(tpname, signature) {
-    var child_names = [], nonterminal_children = [];
-    for(var i=0;i<signature.length;++i)
-      if(signature[i][0] === '<') {
-        child_names[child_names.length] = signature[i].substring(1, signature[i].length-1);
-      } else {
-        child_names[child_names.length] = signature[i];
-        nonterminal_children[nonterminal_children.length] = signature[i];
-      }
-    
-    exports[tpname] = function() {
-      this.type = tpname;
-      this.attr = {};
-      for(var i=0;i<arguments.length;++i)
-        this[child_names[i]] = arguments[i];
-      for(;i<child_names.length;++i)
-        this[child_names[i]] = null;
-    };
-    exports[tpname].children = nonterminal_children;
-  }
-  
-  // several convenience methods for accessing subtrees
-  var getNumChild = exports.getNumChild = function(nd) {
-    if(Array.isArray(nd))
-      return nd.length;
-    
-    if(nd && nd.type)
-      return exports[nd.type].children.length;
-    
-    return 0;
-  };
-  
-  var getChild = exports.getChild = function(nd, i) {
-    if(Array.isArray(nd))
-      return nd[i];
-    
-    return nd[exports[nd.type].children[i]];
-  };
-
-  var setChild = exports.setChild = function(nd, i, v) {
-    if(Array.isArray(nd))
-      return nd[i] = v;
-
-    return nd[exports[nd.type].children[i]] = v;
-  };
-  
-  var forEachChild = exports.forEachChild = function(nd, cb) {
-    for(var i = 0, n = getNumChild(nd); i < n; ++i)
-      cb(getChild(nd, i), i);
-  };
-  
-  var mapChildren = exports.mapChildren = function(nd, cb) {
-    var res = [];
-    forEachChild(nd, function(ch, i) {
-      res[res.length] = cb(ch, i);
-    });
-    return res;
-  };
-
-  // simple debug printing function
-  var dump = exports.dump = function(nd) {
-    if(Array.isArray(nd))
-      return "[" + nd.map(dump).join() + "]";
-    
-    if(!nd || !nd.type)
-      return nd+"";
-    
-    return nd.type + "(" + mapChildren(nd, dump).join() + ")";
-  };
-  
-  // we give every AST node a property "attr" for storing attributes
-  exports.getAttribute = function(nd, name) {
-    nd.attr = nd.attr || {};
-    return nd.attr[name];
-  };
-  
-  exports.setAttribute = function(nd, name, value) {
-    nd.attr = nd.attr || {};
-    nd.attr[name] = value;
-    return nd;
-  };
-  
-  // positions are attached as attributes
-  exports.hasPosition = function(nd) {
-      return !!exports.getAttribute(nd, 'pos') || !!nd.loc || !!nd.range;
-  };
-  
-  exports.getPosition = function(nd) {
-      if(!exports.getAttribute(nd, 'pos')) {
-      var pos = position.DUMMY_POS.clone();
-      if(nd.loc) {
-	  if(nd.loc.source) {
-	      pos.url = nd.loc.source;
-	  }
-        pos.start_line = nd.loc.start.line;
-        pos.end_line = nd.loc.start.line;
-      }
-      if(nd.range) {
-        pos.start_offset = nd.range[0];
-        pos.end_offset = nd.range[1];
-      }
-      exports.setAttribute(nd, 'pos', pos);
-    }
-    return exports.getAttribute(nd, 'pos');
-  };
-  
-  exports.setPosition = function(nd, pos) {
-    exports.setAttribute(nd, 'pos', pos);
-  };
-  
-  for(var p in signatures)
-    defconstructor(p, signatures[p]);
-//});
-
-},{"./position":19}],17:[function(require,module,exports){
-/*******************************************************************************
- * Copyright (c) 2012 IBM Corporation.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *     IBM Corporation - initial API and implementation
- *******************************************************************************/
-
-/**
- * Utility functions to collect all variable and function declarations in a subtree.
- */
-//if(typeof define !== 'function') {
-//  var define = require('amdefine')(module);
-//}
-//
-//define(function(require, exports) {
-  var ast = require('../../common/lib/ast');
-
-  function getDeclName(decl) {
-    if(decl.type === 'Identifier')
-      return decl.name;
-    return decl.id.name;
-  }
-
-  function collectDecls(nd, accu) {
-    if(!nd)
-      return accu;
-    
-    if(nd.type === 'FunctionDeclaration') {
-      accu[accu.length] = nd;
-    } else if(nd.type === 'VariableDeclarator') {
-      accu[accu.length] = nd;
-    } else if(nd.type !== 'FunctionExpression') {
-      ast.forEachChild(nd, function(ch) {
-        collectDecls(ch, accu);
-      });
-    }
-    return accu;
-  }
-  
-  exports.collectDecls = collectDecls;
-  exports.getDeclName = getDeclName;
-//});
-
-},{"../../common/lib/ast":15}],12:[function(require,module,exports){
+},{"./package.json":22,"estraverse":30,"source-map":21}],12:[function(require,module,exports){
 /*!
  * JSHint, by JSHint Community.
  *
@@ -41606,7 +41607,7 @@ exports.SourceMapGenerator = require('./source-map/source-map-generator').Source
 exports.SourceMapConsumer = require('./source-map/source-map-consumer').SourceMapConsumer;
 exports.SourceNode = require('./source-map/source-node').SourceNode;
 
-},{"./source-map/source-map-consumer":37,"./source-map/source-map-generator":35,"./source-map/source-node":36}],29:[function(require,module,exports){
+},{"./source-map/source-map-consumer":36,"./source-map/source-map-generator":35,"./source-map/source-node":37}],29:[function(require,module,exports){
 (function (exports) {
   exports.validate = validate;
   exports.mixin = mixin;
@@ -45247,7 +45248,7 @@ function assert(expression) {
     }
 }
 
-},{"assert":39,"util":38}],38:[function(require,module,exports){
+},{"assert":38,"util":39}],39:[function(require,module,exports){
 var events = require('events');
 
 exports.isArray = isArray;
@@ -45594,7 +45595,7 @@ exports.format = function(f) {
   return str;
 };
 
-},{"events":24}],39:[function(require,module,exports){
+},{"events":24}],38:[function(require,module,exports){
 // UTILITY
 var util = require('util');
 var Buffer = require("buffer").Buffer;
@@ -45908,7 +45909,7 @@ assert.doesNotThrow = function(block, /*optional*/error, /*optional*/message) {
 
 assert.ifError = function(err) { if (err) {throw err;}};
 
-},{"buffer":40,"util":38}],35:[function(require,module,exports){
+},{"buffer":40,"util":39}],35:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -46292,375 +46293,6 @@ define(function (require, exports, module) {
 });
 
 },{"./array-set":43,"./base64-vlq":41,"./util":42,"amdefine":44}],36:[function(require,module,exports){
-/* -*- Mode: js; js-indent-level: 2; -*- */
-/*
- * Copyright 2011 Mozilla Foundation and contributors
- * Licensed under the New BSD license. See LICENSE or:
- * http://opensource.org/licenses/BSD-3-Clause
- */
-if (typeof define !== 'function') {
-    var define = require('amdefine')(module, require);
-}
-define(function (require, exports, module) {
-
-  var SourceMapGenerator = require('./source-map-generator').SourceMapGenerator;
-  var util = require('./util');
-
-  /**
-   * SourceNodes provide a way to abstract over interpolating/concatenating
-   * snippets of generated JavaScript source code while maintaining the line and
-   * column information associated with the original source code.
-   *
-   * @param aLine The original line number.
-   * @param aColumn The original column number.
-   * @param aSource The original source's filename.
-   * @param aChunks Optional. An array of strings which are snippets of
-   *        generated JS, or other SourceNodes.
-   * @param aName The original identifier.
-   */
-  function SourceNode(aLine, aColumn, aSource, aChunks, aName) {
-    this.children = [];
-    this.sourceContents = {};
-    this.line = aLine === undefined ? null : aLine;
-    this.column = aColumn === undefined ? null : aColumn;
-    this.source = aSource === undefined ? null : aSource;
-    this.name = aName === undefined ? null : aName;
-    if (aChunks != null) this.add(aChunks);
-  }
-
-  /**
-   * Creates a SourceNode from generated code and a SourceMapConsumer.
-   *
-   * @param aGeneratedCode The generated code
-   * @param aSourceMapConsumer The SourceMap for the generated code
-   */
-  SourceNode.fromStringWithSourceMap =
-    function SourceNode_fromStringWithSourceMap(aGeneratedCode, aSourceMapConsumer) {
-      // The SourceNode we want to fill with the generated code
-      // and the SourceMap
-      var node = new SourceNode();
-
-      // The generated code
-      // Processed fragments are removed from this array.
-      var remainingLines = aGeneratedCode.split('\n');
-
-      // We need to remember the position of "remainingLines"
-      var lastGeneratedLine = 1, lastGeneratedColumn = 0;
-
-      // The generate SourceNodes we need a code range.
-      // To extract it current and last mapping is used.
-      // Here we store the last mapping.
-      var lastMapping = null;
-
-      aSourceMapConsumer.eachMapping(function (mapping) {
-        if (lastMapping === null) {
-          // We add the generated code until the first mapping
-          // to the SourceNode without any mapping.
-          // Each line is added as separate string.
-          while (lastGeneratedLine < mapping.generatedLine) {
-            node.add(remainingLines.shift() + "\n");
-            lastGeneratedLine++;
-          }
-          if (lastGeneratedColumn < mapping.generatedColumn) {
-            var nextLine = remainingLines[0];
-            node.add(nextLine.substr(0, mapping.generatedColumn));
-            remainingLines[0] = nextLine.substr(mapping.generatedColumn);
-            lastGeneratedColumn = mapping.generatedColumn;
-          }
-        } else {
-          // We add the code from "lastMapping" to "mapping":
-          // First check if there is a new line in between.
-          if (lastGeneratedLine < mapping.generatedLine) {
-            var code = "";
-            // Associate full lines with "lastMapping"
-            do {
-              code += remainingLines.shift() + "\n";
-              lastGeneratedLine++;
-              lastGeneratedColumn = 0;
-            } while (lastGeneratedLine < mapping.generatedLine);
-            // When we reached the correct line, we add code until we
-            // reach the correct column too.
-            if (lastGeneratedColumn < mapping.generatedColumn) {
-              var nextLine = remainingLines[0];
-              code += nextLine.substr(0, mapping.generatedColumn);
-              remainingLines[0] = nextLine.substr(mapping.generatedColumn);
-              lastGeneratedColumn = mapping.generatedColumn;
-            }
-            // Create the SourceNode.
-            addMappingWithCode(lastMapping, code);
-          } else {
-            // There is no new line in between.
-            // Associate the code between "lastGeneratedColumn" and
-            // "mapping.generatedColumn" with "lastMapping"
-            var nextLine = remainingLines[0];
-            var code = nextLine.substr(0, mapping.generatedColumn -
-                                          lastGeneratedColumn);
-            remainingLines[0] = nextLine.substr(mapping.generatedColumn -
-                                                lastGeneratedColumn);
-            lastGeneratedColumn = mapping.generatedColumn;
-            addMappingWithCode(lastMapping, code);
-          }
-        }
-        lastMapping = mapping;
-      }, this);
-      // We have processed all mappings.
-      // Associate the remaining code in the current line with "lastMapping"
-      // and add the remaining lines without any mapping
-      addMappingWithCode(lastMapping, remainingLines.join("\n"));
-
-      // Copy sourcesContent into SourceNode
-      aSourceMapConsumer.sources.forEach(function (sourceFile) {
-        var content = aSourceMapConsumer.sourceContentFor(sourceFile);
-        if (content) {
-          node.setSourceContent(sourceFile, content);
-        }
-      });
-
-      return node;
-
-      function addMappingWithCode(mapping, code) {
-        if (mapping === null || mapping.source === undefined) {
-          node.add(code);
-        } else {
-          node.add(new SourceNode(mapping.originalLine,
-                                  mapping.originalColumn,
-                                  mapping.source,
-                                  code,
-                                  mapping.name));
-        }
-      }
-    };
-
-  /**
-   * Add a chunk of generated JS to this source node.
-   *
-   * @param aChunk A string snippet of generated JS code, another instance of
-   *        SourceNode, or an array where each member is one of those things.
-   */
-  SourceNode.prototype.add = function SourceNode_add(aChunk) {
-    if (Array.isArray(aChunk)) {
-      aChunk.forEach(function (chunk) {
-        this.add(chunk);
-      }, this);
-    }
-    else if (aChunk instanceof SourceNode || typeof aChunk === "string") {
-      if (aChunk) {
-        this.children.push(aChunk);
-      }
-    }
-    else {
-      throw new TypeError(
-        "Expected a SourceNode, string, or an array of SourceNodes and strings. Got " + aChunk
-      );
-    }
-    return this;
-  };
-
-  /**
-   * Add a chunk of generated JS to the beginning of this source node.
-   *
-   * @param aChunk A string snippet of generated JS code, another instance of
-   *        SourceNode, or an array where each member is one of those things.
-   */
-  SourceNode.prototype.prepend = function SourceNode_prepend(aChunk) {
-    if (Array.isArray(aChunk)) {
-      for (var i = aChunk.length-1; i >= 0; i--) {
-        this.prepend(aChunk[i]);
-      }
-    }
-    else if (aChunk instanceof SourceNode || typeof aChunk === "string") {
-      this.children.unshift(aChunk);
-    }
-    else {
-      throw new TypeError(
-        "Expected a SourceNode, string, or an array of SourceNodes and strings. Got " + aChunk
-      );
-    }
-    return this;
-  };
-
-  /**
-   * Walk over the tree of JS snippets in this node and its children. The
-   * walking function is called once for each snippet of JS and is passed that
-   * snippet and the its original associated source's line/column location.
-   *
-   * @param aFn The traversal function.
-   */
-  SourceNode.prototype.walk = function SourceNode_walk(aFn) {
-    this.children.forEach(function (chunk) {
-      if (chunk instanceof SourceNode) {
-        chunk.walk(aFn);
-      }
-      else {
-        if (chunk !== '') {
-          aFn(chunk, { source: this.source,
-                       line: this.line,
-                       column: this.column,
-                       name: this.name });
-        }
-      }
-    }, this);
-  };
-
-  /**
-   * Like `String.prototype.join` except for SourceNodes. Inserts `aStr` between
-   * each of `this.children`.
-   *
-   * @param aSep The separator.
-   */
-  SourceNode.prototype.join = function SourceNode_join(aSep) {
-    var newChildren;
-    var i;
-    var len = this.children.length;
-    if (len > 0) {
-      newChildren = [];
-      for (i = 0; i < len-1; i++) {
-        newChildren.push(this.children[i]);
-        newChildren.push(aSep);
-      }
-      newChildren.push(this.children[i]);
-      this.children = newChildren;
-    }
-    return this;
-  };
-
-  /**
-   * Call String.prototype.replace on the very right-most source snippet. Useful
-   * for trimming whitespace from the end of a source node, etc.
-   *
-   * @param aPattern The pattern to replace.
-   * @param aReplacement The thing to replace the pattern with.
-   */
-  SourceNode.prototype.replaceRight = function SourceNode_replaceRight(aPattern, aReplacement) {
-    var lastChild = this.children[this.children.length - 1];
-    if (lastChild instanceof SourceNode) {
-      lastChild.replaceRight(aPattern, aReplacement);
-    }
-    else if (typeof lastChild === 'string') {
-      this.children[this.children.length - 1] = lastChild.replace(aPattern, aReplacement);
-    }
-    else {
-      this.children.push(''.replace(aPattern, aReplacement));
-    }
-    return this;
-  };
-
-  /**
-   * Set the source content for a source file. This will be added to the SourceMapGenerator
-   * in the sourcesContent field.
-   *
-   * @param aSourceFile The filename of the source file
-   * @param aSourceContent The content of the source file
-   */
-  SourceNode.prototype.setSourceContent =
-    function SourceNode_setSourceContent(aSourceFile, aSourceContent) {
-      this.sourceContents[util.toSetString(aSourceFile)] = aSourceContent;
-    };
-
-  /**
-   * Walk over the tree of SourceNodes. The walking function is called for each
-   * source file content and is passed the filename and source content.
-   *
-   * @param aFn The traversal function.
-   */
-  SourceNode.prototype.walkSourceContents =
-    function SourceNode_walkSourceContents(aFn) {
-      this.children.forEach(function (chunk) {
-        if (chunk instanceof SourceNode) {
-          chunk.walkSourceContents(aFn);
-        }
-      }, this);
-      Object.keys(this.sourceContents).forEach(function (sourceFileKey) {
-        aFn(util.fromSetString(sourceFileKey), this.sourceContents[sourceFileKey]);
-      }, this);
-    };
-
-  /**
-   * Return the string representation of this source node. Walks over the tree
-   * and concatenates all the various snippets together to one string.
-   */
-  SourceNode.prototype.toString = function SourceNode_toString() {
-    var str = "";
-    this.walk(function (chunk) {
-      str += chunk;
-    });
-    return str;
-  };
-
-  /**
-   * Returns the string representation of this source node along with a source
-   * map.
-   */
-  SourceNode.prototype.toStringWithSourceMap = function SourceNode_toStringWithSourceMap(aArgs) {
-    var generated = {
-      code: "",
-      line: 1,
-      column: 0
-    };
-    var map = new SourceMapGenerator(aArgs);
-    var sourceMappingActive = false;
-    var lastOriginalSource = null;
-    var lastOriginalLine = null;
-    var lastOriginalColumn = null;
-    var lastOriginalName = null;
-    this.walk(function (chunk, original) {
-      generated.code += chunk;
-      if (original.source !== null
-          && original.line !== null
-          && original.column !== null) {
-        if(lastOriginalSource !== original.source
-           || lastOriginalLine !== original.line
-           || lastOriginalColumn !== original.column
-           || lastOriginalName !== original.name) {
-          map.addMapping({
-            source: original.source,
-            original: {
-              line: original.line,
-              column: original.column
-            },
-            generated: {
-              line: generated.line,
-              column: generated.column
-            },
-            name: original.name
-          });
-        }
-        lastOriginalSource = original.source;
-        lastOriginalLine = original.line;
-        lastOriginalColumn = original.column;
-        lastOriginalName = original.name;
-        sourceMappingActive = true;
-      } else if (sourceMappingActive) {
-        map.addMapping({
-          generated: {
-            line: generated.line,
-            column: generated.column
-          }
-        });
-        lastOriginalSource = null;
-        sourceMappingActive = false;
-      }
-      chunk.split('').forEach(function (ch) {
-        if (ch === '\n') {
-          generated.line++;
-          generated.column = 0;
-        } else {
-          generated.column++;
-        }
-      });
-    });
-    this.walkSourceContents(function (sourceFile, sourceContent) {
-      map.setSourceContent(sourceFile, sourceContent);
-    });
-
-    return { code: generated.code, map: map };
-  };
-
-  exports.SourceNode = SourceNode;
-
-});
-
-},{"./source-map-generator":35,"./util":42,"amdefine":44}],37:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -47107,7 +46739,376 @@ define(function (require, exports, module) {
 
 });
 
-},{"./array-set":43,"./base64-vlq":41,"./binary-search":45,"./util":42,"amdefine":44}],46:[function(require,module,exports){
+},{"./array-set":43,"./base64-vlq":41,"./binary-search":45,"./util":42,"amdefine":44}],37:[function(require,module,exports){
+/* -*- Mode: js; js-indent-level: 2; -*- */
+/*
+ * Copyright 2011 Mozilla Foundation and contributors
+ * Licensed under the New BSD license. See LICENSE or:
+ * http://opensource.org/licenses/BSD-3-Clause
+ */
+if (typeof define !== 'function') {
+    var define = require('amdefine')(module, require);
+}
+define(function (require, exports, module) {
+
+  var SourceMapGenerator = require('./source-map-generator').SourceMapGenerator;
+  var util = require('./util');
+
+  /**
+   * SourceNodes provide a way to abstract over interpolating/concatenating
+   * snippets of generated JavaScript source code while maintaining the line and
+   * column information associated with the original source code.
+   *
+   * @param aLine The original line number.
+   * @param aColumn The original column number.
+   * @param aSource The original source's filename.
+   * @param aChunks Optional. An array of strings which are snippets of
+   *        generated JS, or other SourceNodes.
+   * @param aName The original identifier.
+   */
+  function SourceNode(aLine, aColumn, aSource, aChunks, aName) {
+    this.children = [];
+    this.sourceContents = {};
+    this.line = aLine === undefined ? null : aLine;
+    this.column = aColumn === undefined ? null : aColumn;
+    this.source = aSource === undefined ? null : aSource;
+    this.name = aName === undefined ? null : aName;
+    if (aChunks != null) this.add(aChunks);
+  }
+
+  /**
+   * Creates a SourceNode from generated code and a SourceMapConsumer.
+   *
+   * @param aGeneratedCode The generated code
+   * @param aSourceMapConsumer The SourceMap for the generated code
+   */
+  SourceNode.fromStringWithSourceMap =
+    function SourceNode_fromStringWithSourceMap(aGeneratedCode, aSourceMapConsumer) {
+      // The SourceNode we want to fill with the generated code
+      // and the SourceMap
+      var node = new SourceNode();
+
+      // The generated code
+      // Processed fragments are removed from this array.
+      var remainingLines = aGeneratedCode.split('\n');
+
+      // We need to remember the position of "remainingLines"
+      var lastGeneratedLine = 1, lastGeneratedColumn = 0;
+
+      // The generate SourceNodes we need a code range.
+      // To extract it current and last mapping is used.
+      // Here we store the last mapping.
+      var lastMapping = null;
+
+      aSourceMapConsumer.eachMapping(function (mapping) {
+        if (lastMapping === null) {
+          // We add the generated code until the first mapping
+          // to the SourceNode without any mapping.
+          // Each line is added as separate string.
+          while (lastGeneratedLine < mapping.generatedLine) {
+            node.add(remainingLines.shift() + "\n");
+            lastGeneratedLine++;
+          }
+          if (lastGeneratedColumn < mapping.generatedColumn) {
+            var nextLine = remainingLines[0];
+            node.add(nextLine.substr(0, mapping.generatedColumn));
+            remainingLines[0] = nextLine.substr(mapping.generatedColumn);
+            lastGeneratedColumn = mapping.generatedColumn;
+          }
+        } else {
+          // We add the code from "lastMapping" to "mapping":
+          // First check if there is a new line in between.
+          if (lastGeneratedLine < mapping.generatedLine) {
+            var code = "";
+            // Associate full lines with "lastMapping"
+            do {
+              code += remainingLines.shift() + "\n";
+              lastGeneratedLine++;
+              lastGeneratedColumn = 0;
+            } while (lastGeneratedLine < mapping.generatedLine);
+            // When we reached the correct line, we add code until we
+            // reach the correct column too.
+            if (lastGeneratedColumn < mapping.generatedColumn) {
+              var nextLine = remainingLines[0];
+              code += nextLine.substr(0, mapping.generatedColumn);
+              remainingLines[0] = nextLine.substr(mapping.generatedColumn);
+              lastGeneratedColumn = mapping.generatedColumn;
+            }
+            // Create the SourceNode.
+            addMappingWithCode(lastMapping, code);
+          } else {
+            // There is no new line in between.
+            // Associate the code between "lastGeneratedColumn" and
+            // "mapping.generatedColumn" with "lastMapping"
+            var nextLine = remainingLines[0];
+            var code = nextLine.substr(0, mapping.generatedColumn -
+                                          lastGeneratedColumn);
+            remainingLines[0] = nextLine.substr(mapping.generatedColumn -
+                                                lastGeneratedColumn);
+            lastGeneratedColumn = mapping.generatedColumn;
+            addMappingWithCode(lastMapping, code);
+          }
+        }
+        lastMapping = mapping;
+      }, this);
+      // We have processed all mappings.
+      // Associate the remaining code in the current line with "lastMapping"
+      // and add the remaining lines without any mapping
+      addMappingWithCode(lastMapping, remainingLines.join("\n"));
+
+      // Copy sourcesContent into SourceNode
+      aSourceMapConsumer.sources.forEach(function (sourceFile) {
+        var content = aSourceMapConsumer.sourceContentFor(sourceFile);
+        if (content) {
+          node.setSourceContent(sourceFile, content);
+        }
+      });
+
+      return node;
+
+      function addMappingWithCode(mapping, code) {
+        if (mapping === null || mapping.source === undefined) {
+          node.add(code);
+        } else {
+          node.add(new SourceNode(mapping.originalLine,
+                                  mapping.originalColumn,
+                                  mapping.source,
+                                  code,
+                                  mapping.name));
+        }
+      }
+    };
+
+  /**
+   * Add a chunk of generated JS to this source node.
+   *
+   * @param aChunk A string snippet of generated JS code, another instance of
+   *        SourceNode, or an array where each member is one of those things.
+   */
+  SourceNode.prototype.add = function SourceNode_add(aChunk) {
+    if (Array.isArray(aChunk)) {
+      aChunk.forEach(function (chunk) {
+        this.add(chunk);
+      }, this);
+    }
+    else if (aChunk instanceof SourceNode || typeof aChunk === "string") {
+      if (aChunk) {
+        this.children.push(aChunk);
+      }
+    }
+    else {
+      throw new TypeError(
+        "Expected a SourceNode, string, or an array of SourceNodes and strings. Got " + aChunk
+      );
+    }
+    return this;
+  };
+
+  /**
+   * Add a chunk of generated JS to the beginning of this source node.
+   *
+   * @param aChunk A string snippet of generated JS code, another instance of
+   *        SourceNode, or an array where each member is one of those things.
+   */
+  SourceNode.prototype.prepend = function SourceNode_prepend(aChunk) {
+    if (Array.isArray(aChunk)) {
+      for (var i = aChunk.length-1; i >= 0; i--) {
+        this.prepend(aChunk[i]);
+      }
+    }
+    else if (aChunk instanceof SourceNode || typeof aChunk === "string") {
+      this.children.unshift(aChunk);
+    }
+    else {
+      throw new TypeError(
+        "Expected a SourceNode, string, or an array of SourceNodes and strings. Got " + aChunk
+      );
+    }
+    return this;
+  };
+
+  /**
+   * Walk over the tree of JS snippets in this node and its children. The
+   * walking function is called once for each snippet of JS and is passed that
+   * snippet and the its original associated source's line/column location.
+   *
+   * @param aFn The traversal function.
+   */
+  SourceNode.prototype.walk = function SourceNode_walk(aFn) {
+    this.children.forEach(function (chunk) {
+      if (chunk instanceof SourceNode) {
+        chunk.walk(aFn);
+      }
+      else {
+        if (chunk !== '') {
+          aFn(chunk, { source: this.source,
+                       line: this.line,
+                       column: this.column,
+                       name: this.name });
+        }
+      }
+    }, this);
+  };
+
+  /**
+   * Like `String.prototype.join` except for SourceNodes. Inserts `aStr` between
+   * each of `this.children`.
+   *
+   * @param aSep The separator.
+   */
+  SourceNode.prototype.join = function SourceNode_join(aSep) {
+    var newChildren;
+    var i;
+    var len = this.children.length;
+    if (len > 0) {
+      newChildren = [];
+      for (i = 0; i < len-1; i++) {
+        newChildren.push(this.children[i]);
+        newChildren.push(aSep);
+      }
+      newChildren.push(this.children[i]);
+      this.children = newChildren;
+    }
+    return this;
+  };
+
+  /**
+   * Call String.prototype.replace on the very right-most source snippet. Useful
+   * for trimming whitespace from the end of a source node, etc.
+   *
+   * @param aPattern The pattern to replace.
+   * @param aReplacement The thing to replace the pattern with.
+   */
+  SourceNode.prototype.replaceRight = function SourceNode_replaceRight(aPattern, aReplacement) {
+    var lastChild = this.children[this.children.length - 1];
+    if (lastChild instanceof SourceNode) {
+      lastChild.replaceRight(aPattern, aReplacement);
+    }
+    else if (typeof lastChild === 'string') {
+      this.children[this.children.length - 1] = lastChild.replace(aPattern, aReplacement);
+    }
+    else {
+      this.children.push(''.replace(aPattern, aReplacement));
+    }
+    return this;
+  };
+
+  /**
+   * Set the source content for a source file. This will be added to the SourceMapGenerator
+   * in the sourcesContent field.
+   *
+   * @param aSourceFile The filename of the source file
+   * @param aSourceContent The content of the source file
+   */
+  SourceNode.prototype.setSourceContent =
+    function SourceNode_setSourceContent(aSourceFile, aSourceContent) {
+      this.sourceContents[util.toSetString(aSourceFile)] = aSourceContent;
+    };
+
+  /**
+   * Walk over the tree of SourceNodes. The walking function is called for each
+   * source file content and is passed the filename and source content.
+   *
+   * @param aFn The traversal function.
+   */
+  SourceNode.prototype.walkSourceContents =
+    function SourceNode_walkSourceContents(aFn) {
+      this.children.forEach(function (chunk) {
+        if (chunk instanceof SourceNode) {
+          chunk.walkSourceContents(aFn);
+        }
+      }, this);
+      Object.keys(this.sourceContents).forEach(function (sourceFileKey) {
+        aFn(util.fromSetString(sourceFileKey), this.sourceContents[sourceFileKey]);
+      }, this);
+    };
+
+  /**
+   * Return the string representation of this source node. Walks over the tree
+   * and concatenates all the various snippets together to one string.
+   */
+  SourceNode.prototype.toString = function SourceNode_toString() {
+    var str = "";
+    this.walk(function (chunk) {
+      str += chunk;
+    });
+    return str;
+  };
+
+  /**
+   * Returns the string representation of this source node along with a source
+   * map.
+   */
+  SourceNode.prototype.toStringWithSourceMap = function SourceNode_toStringWithSourceMap(aArgs) {
+    var generated = {
+      code: "",
+      line: 1,
+      column: 0
+    };
+    var map = new SourceMapGenerator(aArgs);
+    var sourceMappingActive = false;
+    var lastOriginalSource = null;
+    var lastOriginalLine = null;
+    var lastOriginalColumn = null;
+    var lastOriginalName = null;
+    this.walk(function (chunk, original) {
+      generated.code += chunk;
+      if (original.source !== null
+          && original.line !== null
+          && original.column !== null) {
+        if(lastOriginalSource !== original.source
+           || lastOriginalLine !== original.line
+           || lastOriginalColumn !== original.column
+           || lastOriginalName !== original.name) {
+          map.addMapping({
+            source: original.source,
+            original: {
+              line: original.line,
+              column: original.column
+            },
+            generated: {
+              line: generated.line,
+              column: generated.column
+            },
+            name: original.name
+          });
+        }
+        lastOriginalSource = original.source;
+        lastOriginalLine = original.line;
+        lastOriginalColumn = original.column;
+        lastOriginalName = original.name;
+        sourceMappingActive = true;
+      } else if (sourceMappingActive) {
+        map.addMapping({
+          generated: {
+            line: generated.line,
+            column: generated.column
+          }
+        });
+        lastOriginalSource = null;
+        sourceMappingActive = false;
+      }
+      chunk.split('').forEach(function (ch) {
+        if (ch === '\n') {
+          generated.line++;
+          generated.column = 0;
+        } else {
+          generated.column++;
+        }
+      });
+    });
+    this.walkSourceContents(function (sourceFile, sourceContent) {
+      map.setSourceContent(sourceFile, sourceContent);
+    });
+
+    return { code: generated.code, map: map };
+  };
+
+  exports.SourceNode = SourceNode;
+
+});
+
+},{"./source-map-generator":35,"./util":42,"amdefine":44}],46:[function(require,module,exports){
 exports.readIEEE754 = function(buffer, offset, isBE, mLen, nBytes) {
   var e, m,
       eLen = nBytes * 8 - mLen - 1,
@@ -48577,7 +48578,225 @@ Buffer.prototype.writeDoubleBE = function(value, offset, noAssert) {
   writeDouble(this, value, offset, true, noAssert);
 };
 
-},{"./buffer_ieee754":46,"assert":39,"base64-js":48}],41:[function(require,module,exports){
+},{"./buffer_ieee754":46,"assert":38,"base64-js":48}],43:[function(require,module,exports){
+/* -*- Mode: js; js-indent-level: 2; -*- */
+/*
+ * Copyright 2011 Mozilla Foundation and contributors
+ * Licensed under the New BSD license. See LICENSE or:
+ * http://opensource.org/licenses/BSD-3-Clause
+ */
+if (typeof define !== 'function') {
+    var define = require('amdefine')(module, require);
+}
+define(function (require, exports, module) {
+
+  var util = require('./util');
+
+  /**
+   * A data structure which is a combination of an array and a set. Adding a new
+   * member is O(1), testing for membership is O(1), and finding the index of an
+   * element is O(1). Removing elements from the set is not supported. Only
+   * strings are supported for membership.
+   */
+  function ArraySet() {
+    this._array = [];
+    this._set = {};
+  }
+
+  /**
+   * Static method for creating ArraySet instances from an existing array.
+   */
+  ArraySet.fromArray = function ArraySet_fromArray(aArray, aAllowDuplicates) {
+    var set = new ArraySet();
+    for (var i = 0, len = aArray.length; i < len; i++) {
+      set.add(aArray[i], aAllowDuplicates);
+    }
+    return set;
+  };
+
+  /**
+   * Add the given string to this set.
+   *
+   * @param String aStr
+   */
+  ArraySet.prototype.add = function ArraySet_add(aStr, aAllowDuplicates) {
+    var isDuplicate = this.has(aStr);
+    var idx = this._array.length;
+    if (!isDuplicate || aAllowDuplicates) {
+      this._array.push(aStr);
+    }
+    if (!isDuplicate) {
+      this._set[util.toSetString(aStr)] = idx;
+    }
+  };
+
+  /**
+   * Is the given string a member of this set?
+   *
+   * @param String aStr
+   */
+  ArraySet.prototype.has = function ArraySet_has(aStr) {
+    return Object.prototype.hasOwnProperty.call(this._set,
+                                                util.toSetString(aStr));
+  };
+
+  /**
+   * What is the index of the given string in the array?
+   *
+   * @param String aStr
+   */
+  ArraySet.prototype.indexOf = function ArraySet_indexOf(aStr) {
+    if (this.has(aStr)) {
+      return this._set[util.toSetString(aStr)];
+    }
+    throw new Error('"' + aStr + '" is not in the set.');
+  };
+
+  /**
+   * What is the element at the given index?
+   *
+   * @param Number aIdx
+   */
+  ArraySet.prototype.at = function ArraySet_at(aIdx) {
+    if (aIdx >= 0 && aIdx < this._array.length) {
+      return this._array[aIdx];
+    }
+    throw new Error('No element indexed by ' + aIdx);
+  };
+
+  /**
+   * Returns the array representation of this set (which has the proper indices
+   * indicated by indexOf). Note that this is a copy of the internal array used
+   * for storing the members so that no one can mess with internal state.
+   */
+  ArraySet.prototype.toArray = function ArraySet_toArray() {
+    return this._array.slice();
+  };
+
+  exports.ArraySet = ArraySet;
+
+});
+
+},{"./util":42,"amdefine":44}],42:[function(require,module,exports){
+/* -*- Mode: js; js-indent-level: 2; -*- */
+/*
+ * Copyright 2011 Mozilla Foundation and contributors
+ * Licensed under the New BSD license. See LICENSE or:
+ * http://opensource.org/licenses/BSD-3-Clause
+ */
+if (typeof define !== 'function') {
+    var define = require('amdefine')(module, require);
+}
+define(function (require, exports, module) {
+
+  /**
+   * This is a helper function for getting values from parameter/options
+   * objects.
+   *
+   * @param args The object we are extracting values from
+   * @param name The name of the property we are getting.
+   * @param defaultValue An optional value to return if the property is missing
+   * from the object. If this is not specified and the property is missing, an
+   * error will be thrown.
+   */
+  function getArg(aArgs, aName, aDefaultValue) {
+    if (aName in aArgs) {
+      return aArgs[aName];
+    } else if (arguments.length === 3) {
+      return aDefaultValue;
+    } else {
+      throw new Error('"' + aName + '" is a required argument.');
+    }
+  }
+  exports.getArg = getArg;
+
+  var urlRegexp = /([\w+\-.]+):\/\/((\w+:\w+)@)?([\w.]+)?(:(\d+))?(\S+)?/;
+
+  function urlParse(aUrl) {
+    var match = aUrl.match(urlRegexp);
+    if (!match) {
+      return null;
+    }
+    return {
+      scheme: match[1],
+      auth: match[3],
+      host: match[4],
+      port: match[6],
+      path: match[7]
+    };
+  }
+  exports.urlParse = urlParse;
+
+  function urlGenerate(aParsedUrl) {
+    var url = aParsedUrl.scheme + "://";
+    if (aParsedUrl.auth) {
+      url += aParsedUrl.auth + "@"
+    }
+    if (aParsedUrl.host) {
+      url += aParsedUrl.host;
+    }
+    if (aParsedUrl.port) {
+      url += ":" + aParsedUrl.port
+    }
+    if (aParsedUrl.path) {
+      url += aParsedUrl.path;
+    }
+    return url;
+  }
+  exports.urlGenerate = urlGenerate;
+
+  function join(aRoot, aPath) {
+    var url;
+
+    if (aPath.match(urlRegexp)) {
+      return aPath;
+    }
+
+    if (aPath.charAt(0) === '/' && (url = urlParse(aRoot))) {
+      url.path = aPath;
+      return urlGenerate(url);
+    }
+
+    return aRoot.replace(/\/$/, '') + '/' + aPath;
+  }
+  exports.join = join;
+
+  /**
+   * Because behavior goes wacky when you set `__proto__` on objects, we
+   * have to prefix all the strings in our set with an arbitrary character.
+   *
+   * See https://github.com/mozilla/source-map/pull/31 and
+   * https://github.com/mozilla/source-map/issues/30
+   *
+   * @param String aStr
+   */
+  function toSetString(aStr) {
+    return '$' + aStr;
+  }
+  exports.toSetString = toSetString;
+
+  function fromSetString(aStr) {
+    return aStr.substr(1);
+  }
+  exports.fromSetString = fromSetString;
+
+  function relative(aRoot, aPath) {
+    aRoot = aRoot.replace(/\/$/, '');
+
+    var url = urlParse(aRoot);
+    if (aPath.charAt(0) == "/" && url && url.path == "/") {
+      return aPath.slice(1);
+    }
+
+    return aPath.indexOf(aRoot + '/') === 0
+      ? aPath.substr(aRoot.length + 1)
+      : aPath;
+  }
+  exports.relative = relative;
+
+});
+
+},{"amdefine":44}],41:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -48723,225 +48942,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./base64":49,"amdefine":44}],42:[function(require,module,exports){
-/* -*- Mode: js; js-indent-level: 2; -*- */
-/*
- * Copyright 2011 Mozilla Foundation and contributors
- * Licensed under the New BSD license. See LICENSE or:
- * http://opensource.org/licenses/BSD-3-Clause
- */
-if (typeof define !== 'function') {
-    var define = require('amdefine')(module, require);
-}
-define(function (require, exports, module) {
-
-  /**
-   * This is a helper function for getting values from parameter/options
-   * objects.
-   *
-   * @param args The object we are extracting values from
-   * @param name The name of the property we are getting.
-   * @param defaultValue An optional value to return if the property is missing
-   * from the object. If this is not specified and the property is missing, an
-   * error will be thrown.
-   */
-  function getArg(aArgs, aName, aDefaultValue) {
-    if (aName in aArgs) {
-      return aArgs[aName];
-    } else if (arguments.length === 3) {
-      return aDefaultValue;
-    } else {
-      throw new Error('"' + aName + '" is a required argument.');
-    }
-  }
-  exports.getArg = getArg;
-
-  var urlRegexp = /([\w+\-.]+):\/\/((\w+:\w+)@)?([\w.]+)?(:(\d+))?(\S+)?/;
-
-  function urlParse(aUrl) {
-    var match = aUrl.match(urlRegexp);
-    if (!match) {
-      return null;
-    }
-    return {
-      scheme: match[1],
-      auth: match[3],
-      host: match[4],
-      port: match[6],
-      path: match[7]
-    };
-  }
-  exports.urlParse = urlParse;
-
-  function urlGenerate(aParsedUrl) {
-    var url = aParsedUrl.scheme + "://";
-    if (aParsedUrl.auth) {
-      url += aParsedUrl.auth + "@"
-    }
-    if (aParsedUrl.host) {
-      url += aParsedUrl.host;
-    }
-    if (aParsedUrl.port) {
-      url += ":" + aParsedUrl.port
-    }
-    if (aParsedUrl.path) {
-      url += aParsedUrl.path;
-    }
-    return url;
-  }
-  exports.urlGenerate = urlGenerate;
-
-  function join(aRoot, aPath) {
-    var url;
-
-    if (aPath.match(urlRegexp)) {
-      return aPath;
-    }
-
-    if (aPath.charAt(0) === '/' && (url = urlParse(aRoot))) {
-      url.path = aPath;
-      return urlGenerate(url);
-    }
-
-    return aRoot.replace(/\/$/, '') + '/' + aPath;
-  }
-  exports.join = join;
-
-  /**
-   * Because behavior goes wacky when you set `__proto__` on objects, we
-   * have to prefix all the strings in our set with an arbitrary character.
-   *
-   * See https://github.com/mozilla/source-map/pull/31 and
-   * https://github.com/mozilla/source-map/issues/30
-   *
-   * @param String aStr
-   */
-  function toSetString(aStr) {
-    return '$' + aStr;
-  }
-  exports.toSetString = toSetString;
-
-  function fromSetString(aStr) {
-    return aStr.substr(1);
-  }
-  exports.fromSetString = fromSetString;
-
-  function relative(aRoot, aPath) {
-    aRoot = aRoot.replace(/\/$/, '');
-
-    var url = urlParse(aRoot);
-    if (aPath.charAt(0) == "/" && url && url.path == "/") {
-      return aPath.slice(1);
-    }
-
-    return aPath.indexOf(aRoot + '/') === 0
-      ? aPath.substr(aRoot.length + 1)
-      : aPath;
-  }
-  exports.relative = relative;
-
-});
-
-},{"amdefine":44}],43:[function(require,module,exports){
-/* -*- Mode: js; js-indent-level: 2; -*- */
-/*
- * Copyright 2011 Mozilla Foundation and contributors
- * Licensed under the New BSD license. See LICENSE or:
- * http://opensource.org/licenses/BSD-3-Clause
- */
-if (typeof define !== 'function') {
-    var define = require('amdefine')(module, require);
-}
-define(function (require, exports, module) {
-
-  var util = require('./util');
-
-  /**
-   * A data structure which is a combination of an array and a set. Adding a new
-   * member is O(1), testing for membership is O(1), and finding the index of an
-   * element is O(1). Removing elements from the set is not supported. Only
-   * strings are supported for membership.
-   */
-  function ArraySet() {
-    this._array = [];
-    this._set = {};
-  }
-
-  /**
-   * Static method for creating ArraySet instances from an existing array.
-   */
-  ArraySet.fromArray = function ArraySet_fromArray(aArray, aAllowDuplicates) {
-    var set = new ArraySet();
-    for (var i = 0, len = aArray.length; i < len; i++) {
-      set.add(aArray[i], aAllowDuplicates);
-    }
-    return set;
-  };
-
-  /**
-   * Add the given string to this set.
-   *
-   * @param String aStr
-   */
-  ArraySet.prototype.add = function ArraySet_add(aStr, aAllowDuplicates) {
-    var isDuplicate = this.has(aStr);
-    var idx = this._array.length;
-    if (!isDuplicate || aAllowDuplicates) {
-      this._array.push(aStr);
-    }
-    if (!isDuplicate) {
-      this._set[util.toSetString(aStr)] = idx;
-    }
-  };
-
-  /**
-   * Is the given string a member of this set?
-   *
-   * @param String aStr
-   */
-  ArraySet.prototype.has = function ArraySet_has(aStr) {
-    return Object.prototype.hasOwnProperty.call(this._set,
-                                                util.toSetString(aStr));
-  };
-
-  /**
-   * What is the index of the given string in the array?
-   *
-   * @param String aStr
-   */
-  ArraySet.prototype.indexOf = function ArraySet_indexOf(aStr) {
-    if (this.has(aStr)) {
-      return this._set[util.toSetString(aStr)];
-    }
-    throw new Error('"' + aStr + '" is not in the set.');
-  };
-
-  /**
-   * What is the element at the given index?
-   *
-   * @param Number aIdx
-   */
-  ArraySet.prototype.at = function ArraySet_at(aIdx) {
-    if (aIdx >= 0 && aIdx < this._array.length) {
-      return this._array[aIdx];
-    }
-    throw new Error('No element indexed by ' + aIdx);
-  };
-
-  /**
-   * Returns the array representation of this set (which has the proper indices
-   * indicated by indexOf). Note that this is a copy of the internal array used
-   * for storing the members so that no one can mess with internal state.
-   */
-  ArraySet.prototype.toArray = function ArraySet_toArray() {
-    return this._array.slice();
-  };
-
-  exports.ArraySet = ArraySet;
-
-});
-
-},{"./util":42,"amdefine":44}],45:[function(require,module,exports){
+},{"./base64":49,"amdefine":44}],45:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors

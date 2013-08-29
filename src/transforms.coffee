@@ -100,7 +100,7 @@ possiblyGeneratorifyAncestorFunction = (node) ->
 # ... we can basically just put a yield check in after every CallExpression except the outermost one if we are yielding conditionally.
 module.exports.yieldConditionally = yieldConditionally = (node) ->
   if node.type is S.ExpressionStatement and node.expression.right?.type is S.CallExpression
-    node.update "#{node.source()} if (this._shouldYield) { var _yieldValue = this._shouldYield; this._shouldYield = false; yield _yieldValue; }"
+    node.update "#{node.source()} if (this._aetherShouldYield) { var _yieldValue = this._aetherShouldYield; this._aetherShouldYield = false; yield _yieldValue; }"
     node.yields = true
     possiblyGeneratorifyAncestorFunction node
   else if node.mustBecomeGeneratorFunction
@@ -138,7 +138,7 @@ module.exports.makeInstrumentStatements = makeInstrumentStatements = ->
     range = [node.originalNode.originalRange.start, node.originalNode.originalRange.end]
     source = node.originalNode.originalSource
     safeSource = source.replace(/\"/g, '\\"').replace(/\n/g, '\\n')
-    node.update "#{node.source()} _aether.logStatement(#{range[0]}, #{range[1]}, \"#{safeSource}\");"
+    node.update "#{node.source()} _aether.logStatement(#{range[0]}, #{range[1]}, \"#{safeSource}\", this._aetherUserInfo);"
     #console.log " ... created logger", node.source(), node.originalNode
 
 module.exports.makeInstrumentCalls = makeInstrumentCalls = ->
