@@ -22847,7 +22847,7 @@ var global=self;(function() {
 
 }).call(this);
 
-},{"./defaults":5,"./execution":2,"./morph":6,"./problems":3,"./transforms":8,"./validators/options":7,"JS_WALA/normalizer/lib/normalizer":9,"acorn/acorn_loose":10,"escodegen":13,"esprima":11,"jshint":12,"lodash":1,"traceur":1}],5:[function(require,module,exports){
+},{"./defaults":5,"./execution":2,"./morph":6,"./problems":3,"./transforms":7,"./validators/options":8,"JS_WALA/normalizer/lib/normalizer":9,"acorn/acorn_loose":10,"escodegen":12,"esprima":13,"jshint":11,"lodash":1,"traceur":1}],5:[function(require,module,exports){
 (function() {
   var defaults, execution;
 
@@ -22879,7 +22879,7 @@ var global=self;(function() {
 
 }).call(this);
 
-},{"./execution":2}],11:[function(require,module,exports){
+},{"./execution":2}],13:[function(require,module,exports){
 /*
   Copyright (C) 2013 Ariya Hidayat <ariya.hidayat@gmail.com>
   Copyright (C) 2013 Thaddee Tyl <thaddee.tyl@gmail.com>
@@ -30244,7 +30244,7 @@ parseYieldExpression: true
   exports.normalize = normalize;
 //});
 
-},{"../../common/lib/ast":15,"../../common/lib/position":19,"./cflow":17,"./decls":16,"./scope":18,"./util":20}],14:[function(require,module,exports){
+},{"../../common/lib/ast":15,"../../common/lib/position":19,"./cflow":16,"./decls":17,"./scope":18,"./util":20}],14:[function(require,module,exports){
 // Acorn is a tiny, fast JavaScript parser written in JavaScript.
 //
 // Acorn was written by Marijn Haverbeke and released under an MIT
@@ -31965,149 +31965,6 @@ parseYieldExpression: true
 
 });
 
-},{}],17:[function(require,module,exports){
-/*******************************************************************************
- * Copyright (c) 2012 IBM Corporation.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *     IBM Corporation - initial API and implementation
- *******************************************************************************/
-
-/**
- * Helper function for determining whether a piece of code may terminate normally, or whether
- * it always returns/breaks/throws an exception.
- */
-//if(typeof define !== 'function') {
-//  var define = require('amdefine')(module);
-//}
-//
-//define(function(require, exports) {
-  var mayCompleteNormally = exports.mayCompleteNormally = function(nd) {
-    switch(nd.type) {
-    case 'ReturnStatement':
-    case 'BreakStatement':
-    case 'ContinueStatement':
-    case 'ThrowStatement':
-      return false;
-    case 'IfStatement':
-      return mayCompleteNormally(nd.consequent) || nd.alternate && mayCompleteNormally(nd.alternate);
-    case 'WithStatement':
-      return mayCompleteNormally(nd.body);
-    case 'BlockStatement':
-      for(var i=0;i<nd.body.length;++i)
-        if(!mayCompleteNormally(nd.body[i]))
-          return false;
-      return true;
-    default:
-      return true;
-    }
-  };
-//});
-
-},{}],19:[function(require,module,exports){
-/*******************************************************************************
- * Copyright (c) 2012 IBM Corporation.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *     IBM Corporation - initial API and implementation
- *******************************************************************************/
-
-/**
- * ADT for representing source positions identified by a URL, a start line, a start
- * offset (i.e., character offset from the beginning of the file), an end line, and
- * an end offset.
- * 
- * The start line corresponds to Esprima's loc.start.line, the start offset to
- * range[0], and similar for the end line and end offset.
- * 
- * For compatibility with Esprima, line numbering should normally be 1-based.
- */
-
-//if(typeof define !== 'function') {
-//  var define = require('amdefine')(module);
-//}
-//
-//define(function(require, exports) {
-  function Position(url, start_line, start_offset, end_line, end_offset) {
-    this.url = url || "<unknown>";
-    this.start_line = start_line;
-    this.start_offset = start_offset;
-    this.end_line = end_line;
-    this.end_offset = end_offset;
-  }
-  
-  Position.prototype.toString = function(short) {
-    if(short)
-      return this.start_line + ":" + this.start_offset;
-    return this.url + "/" + this.start_line + ":" + this.start_offset + "-" + this.end_line + ":" + this.end_offset;
-  };
-  
-  Position.prototype.clone = function() {
-    return new Position(this.url, this.start_line, this.start_offset, this.end_line, this.end_offset);
-  };
-  
-  Position.prototype.equals = function(o) {
-    if(!(o instanceof Position))
-      return false;
-    return o.url === this.url &&
-           o.start_line === this.start_line &&
-           o.start_offset === this.start_offset &&
-           o.end_line === this.end_line &&
-           o.end_offset === this.end_offset;
-  };
-  
-  var DUMMY_POS = new Position(null, -1, -1, -1, -1);
-  
-  exports.Position = Position;
-  exports.DUMMY_POS = DUMMY_POS;
-//});
-
-},{}],20:[function(require,module,exports){
-/*******************************************************************************
- * Copyright (c) 2012 IBM Corporation.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *     IBM Corporation - initial API and implementation
- *******************************************************************************/
-
-/**
- * Utility methods. 
- */
-//if(typeof define !== 'function') {
-//  var define = require('amdefine')(module);
-//}
-//
-//define(function(require, exports) {
-  var flatmap = function(fn, thisArg) {  
-    var res = [];
-    for(var i=0;i<this.length;++i) {
-      var r = fn.call(thisArg, this[i], i, this);
-      for(var j=0;j<r.length;++j)
-        res[res.length] = r[j];
-    }
-    return res;
-  };
-  if(typeof Object.defineProperty !== 'undefined')
-    Object.defineProperty(Array.prototype, 'flatmap', {
-      value: flatmap,
-      enumerable: false
-    });
-  else
-    Array.prototype.flatmap = flatmap;
-//});
-
 },{}],6:[function(require,module,exports){
 var global=self;(function() {
   var acorn_loose, esprima, insertHelpers, morph, _, _ref, _ref1, _ref2;
@@ -32204,7 +32061,7 @@ var global=self;(function() {
 
 }).call(this);
 
-},{"acorn/acorn_loose":10,"esprima":11,"lodash":1}],8:[function(require,module,exports){
+},{"acorn/acorn_loose":10,"esprima":13,"lodash":1}],7:[function(require,module,exports){
 (function() {
   var S, SourceMap, checkIncompleteMembers, esprima, getLineNumberForNode, makeCheckThisKeywords, makeFindOriginalNodes, makeGatherNodeRanges, makeInstrumentCalls, makeInstrumentStatements, possiblyGeneratorifyAncestorFunction, problems, statements, validateReturns, yieldAutomatically, yieldConditionally,
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
@@ -32414,7 +32271,150 @@ var global=self;(function() {
 
 }).call(this);
 
-},{"./problems":3,"esprima":11,"source-map":21}],22:[function(require,module,exports){
+},{"./problems":3,"esprima":13,"source-map":21}],16:[function(require,module,exports){
+/*******************************************************************************
+ * Copyright (c) 2012 IBM Corporation.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
+ *******************************************************************************/
+
+/**
+ * Helper function for determining whether a piece of code may terminate normally, or whether
+ * it always returns/breaks/throws an exception.
+ */
+//if(typeof define !== 'function') {
+//  var define = require('amdefine')(module);
+//}
+//
+//define(function(require, exports) {
+  var mayCompleteNormally = exports.mayCompleteNormally = function(nd) {
+    switch(nd.type) {
+    case 'ReturnStatement':
+    case 'BreakStatement':
+    case 'ContinueStatement':
+    case 'ThrowStatement':
+      return false;
+    case 'IfStatement':
+      return mayCompleteNormally(nd.consequent) || nd.alternate && mayCompleteNormally(nd.alternate);
+    case 'WithStatement':
+      return mayCompleteNormally(nd.body);
+    case 'BlockStatement':
+      for(var i=0;i<nd.body.length;++i)
+        if(!mayCompleteNormally(nd.body[i]))
+          return false;
+      return true;
+    default:
+      return true;
+    }
+  };
+//});
+
+},{}],19:[function(require,module,exports){
+/*******************************************************************************
+ * Copyright (c) 2012 IBM Corporation.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
+ *******************************************************************************/
+
+/**
+ * ADT for representing source positions identified by a URL, a start line, a start
+ * offset (i.e., character offset from the beginning of the file), an end line, and
+ * an end offset.
+ * 
+ * The start line corresponds to Esprima's loc.start.line, the start offset to
+ * range[0], and similar for the end line and end offset.
+ * 
+ * For compatibility with Esprima, line numbering should normally be 1-based.
+ */
+
+//if(typeof define !== 'function') {
+//  var define = require('amdefine')(module);
+//}
+//
+//define(function(require, exports) {
+  function Position(url, start_line, start_offset, end_line, end_offset) {
+    this.url = url || "<unknown>";
+    this.start_line = start_line;
+    this.start_offset = start_offset;
+    this.end_line = end_line;
+    this.end_offset = end_offset;
+  }
+  
+  Position.prototype.toString = function(short) {
+    if(short)
+      return this.start_line + ":" + this.start_offset;
+    return this.url + "/" + this.start_line + ":" + this.start_offset + "-" + this.end_line + ":" + this.end_offset;
+  };
+  
+  Position.prototype.clone = function() {
+    return new Position(this.url, this.start_line, this.start_offset, this.end_line, this.end_offset);
+  };
+  
+  Position.prototype.equals = function(o) {
+    if(!(o instanceof Position))
+      return false;
+    return o.url === this.url &&
+           o.start_line === this.start_line &&
+           o.start_offset === this.start_offset &&
+           o.end_line === this.end_line &&
+           o.end_offset === this.end_offset;
+  };
+  
+  var DUMMY_POS = new Position(null, -1, -1, -1, -1);
+  
+  exports.Position = Position;
+  exports.DUMMY_POS = DUMMY_POS;
+//});
+
+},{}],20:[function(require,module,exports){
+/*******************************************************************************
+ * Copyright (c) 2012 IBM Corporation.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
+ *******************************************************************************/
+
+/**
+ * Utility methods. 
+ */
+//if(typeof define !== 'function') {
+//  var define = require('amdefine')(module);
+//}
+//
+//define(function(require, exports) {
+  var flatmap = function(fn, thisArg) {  
+    var res = [];
+    for(var i=0;i<this.length;++i) {
+      var r = fn.call(thisArg, this[i], i, this);
+      for(var j=0;j<r.length;++j)
+        res[res.length] = r[j];
+    }
+    return res;
+  };
+  if(typeof Object.defineProperty !== 'undefined')
+    Object.defineProperty(Array.prototype, 'flatmap', {
+      value: flatmap,
+      enumerable: false
+    });
+  else
+    Array.prototype.flatmap = flatmap;
+//});
+
+},{}],22:[function(require,module,exports){
 module.exports={
   "name": "escodegen",
   "description": "ECMAScript code generator",
@@ -33555,7 +33555,7 @@ exports.register = function (linter) {
 		}
 	});
 };
-},{}],7:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 (function() {
   var revalidator;
 
@@ -34308,366 +34308,7 @@ exports.register = function (linter) {
 }));
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{}],15:[function(require,module,exports){
-/*******************************************************************************
- * Copyright (c) 2012 IBM Corporation.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *     IBM Corporation - initial API and implementation
- *******************************************************************************/
-
-/**
- * Convenience functions for constructing and navigating ASTs.
- */
-//if(typeof define !== 'function') {
-//  var define = require('amdefine')(module);
-//}
-//
-//define(function(require, exports) {
-  var position = require('./position');
-  
-  // constructor signatures; arguments in angle brackets are terminal children, the others subtrees
-  var signatures = {
-      AssignmentExpression: [ '<operator>', 'left', 'right'],
-      ArrayExpression: [ 'elements' ],
-      BlockStatement: [ 'body' ],
-      BinaryExpression: [ '<operator>', 'left', 'right'],
-      BreakStatement: [ 'label' ],
-      CallExpression: [ 'callee', 'arguments' ],
-      CatchClause: [ 'param', 'body' ],
-      ConditionalExpression: [ 'test', 'consequent', 'alternate' ],
-      ContinueStatement: [ 'label' ],
-      DirectiveStatement: [ ],
-      DoWhileStatement: [ 'body', 'test' ],
-      DebuggerStatement: [ ],
-      EmptyStatement: [ ],
-      ExpressionStatement: [ 'expression' ],
-      ForStatement: [ 'init', 'test', 'update', 'body' ],
-      ForInStatement: [ 'left', 'right', 'body' ],
-      FunctionDeclaration: [ 'id', 'params', 'body' ],
-      FunctionExpression: [ 'id', 'params', 'body' ],
-      Identifier: [ '<name>' ],
-      IfStatement: [ 'test', 'consequent', 'alternate' ],
-      Literal: [ '<value>' ],
-      LabeledStatement: [ 'label', 'body' ],
-      LogicalExpression: [ '<operator>', 'left', 'right' ],
-      MemberExpression: [ 'object', 'property', '<computed>' ],
-      NewExpression: [ 'callee', 'arguments' ],
-      ObjectExpression: [ 'properties' ],
-      Program: [ 'body' ],
-      Property: [ 'key', 'value', '<kind>' ],
-      ReturnStatement: [ 'argument' ],
-      SequenceExpression: [ 'expressions' ],
-      SwitchStatement: [ 'discriminant', 'cases' ],
-      SwitchCase: [ 'test', 'consequent' ],
-      ThisExpression: [ ],
-      ThrowStatement: [ 'argument' ],
-      TryStatement: [ 'block', 'guardedHandlers', 'handlers', 'finalizer' ],
-      UnaryExpression: [ '<operator>', 'argument' ],
-      UpdateExpression: [ '<operator>', 'argument', '<prefix>' ],
-      VariableDeclaration: [ 'declarations', '<kind>' ],
-      VariableDeclarator: [ 'id', 'init' ],
-      WhileStatement: [ 'test', 'body' ],
-      WithStatement: [ 'object', 'body' ]
-  };
-
-  // define a constructor from a signature
-  function defconstructor(tpname, signature) {
-    var child_names = [], nonterminal_children = [];
-    for(var i=0;i<signature.length;++i)
-      if(signature[i][0] === '<') {
-        child_names[child_names.length] = signature[i].substring(1, signature[i].length-1);
-      } else {
-        child_names[child_names.length] = signature[i];
-        nonterminal_children[nonterminal_children.length] = signature[i];
-      }
-    
-    exports[tpname] = function() {
-      this.type = tpname;
-      this.attr = {};
-      for(var i=0;i<arguments.length;++i)
-        this[child_names[i]] = arguments[i];
-      for(;i<child_names.length;++i)
-        this[child_names[i]] = null;
-    };
-    exports[tpname].children = nonterminal_children;
-  }
-  
-  // several convenience methods for accessing subtrees
-  var getNumChild = exports.getNumChild = function(nd) {
-    if(Array.isArray(nd))
-      return nd.length;
-    
-    if(nd && nd.type)
-      return exports[nd.type].children.length;
-    
-    return 0;
-  };
-  
-  var getChild = exports.getChild = function(nd, i) {
-    if(Array.isArray(nd))
-      return nd[i];
-    
-    return nd[exports[nd.type].children[i]];
-  };
-
-  var setChild = exports.setChild = function(nd, i, v) {
-    if(Array.isArray(nd))
-      return nd[i] = v;
-
-    return nd[exports[nd.type].children[i]] = v;
-  };
-  
-  var forEachChild = exports.forEachChild = function(nd, cb) {
-    for(var i = 0, n = getNumChild(nd); i < n; ++i)
-      cb(getChild(nd, i), i);
-  };
-  
-  var mapChildren = exports.mapChildren = function(nd, cb) {
-    var res = [];
-    forEachChild(nd, function(ch, i) {
-      res[res.length] = cb(ch, i);
-    });
-    return res;
-  };
-
-  // simple debug printing function
-  var dump = exports.dump = function(nd) {
-    if(Array.isArray(nd))
-      return "[" + nd.map(dump).join() + "]";
-    
-    if(!nd || !nd.type)
-      return nd+"";
-    
-    return nd.type + "(" + mapChildren(nd, dump).join() + ")";
-  };
-  
-  // we give every AST node a property "attr" for storing attributes
-  exports.getAttribute = function(nd, name) {
-    nd.attr = nd.attr || {};
-    return nd.attr[name];
-  };
-  
-  exports.setAttribute = function(nd, name, value) {
-    nd.attr = nd.attr || {};
-    nd.attr[name] = value;
-    return nd;
-  };
-  
-  // positions are attached as attributes
-  exports.hasPosition = function(nd) {
-      return !!exports.getAttribute(nd, 'pos') || !!nd.loc || !!nd.range;
-  };
-  
-  exports.getPosition = function(nd) {
-      if(!exports.getAttribute(nd, 'pos')) {
-      var pos = position.DUMMY_POS.clone();
-      if(nd.loc) {
-	  if(nd.loc.source) {
-	      pos.url = nd.loc.source;
-	  }
-        pos.start_line = nd.loc.start.line;
-        pos.end_line = nd.loc.start.line;
-      }
-      if(nd.range) {
-        pos.start_offset = nd.range[0];
-        pos.end_offset = nd.range[1];
-      }
-      exports.setAttribute(nd, 'pos', pos);
-    }
-    return exports.getAttribute(nd, 'pos');
-  };
-  
-  exports.setPosition = function(nd, pos) {
-    exports.setAttribute(nd, 'pos', pos);
-  };
-  
-  for(var p in signatures)
-    defconstructor(p, signatures[p]);
-//});
-
-},{"./position":19}],16:[function(require,module,exports){
-/*******************************************************************************
- * Copyright (c) 2012 IBM Corporation.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *     IBM Corporation - initial API and implementation
- *******************************************************************************/
-
-/**
- * Utility functions to collect all variable and function declarations in a subtree.
- */
-//if(typeof define !== 'function') {
-//  var define = require('amdefine')(module);
-//}
-//
-//define(function(require, exports) {
-  var ast = require('../../common/lib/ast');
-
-  function getDeclName(decl) {
-    if(decl.type === 'Identifier')
-      return decl.name;
-    return decl.id.name;
-  }
-
-  function collectDecls(nd, accu) {
-    if(!nd)
-      return accu;
-    
-    if(nd.type === 'FunctionDeclaration') {
-      accu[accu.length] = nd;
-    } else if(nd.type === 'VariableDeclarator') {
-      accu[accu.length] = nd;
-    } else if(nd.type !== 'FunctionExpression') {
-      ast.forEachChild(nd, function(ch) {
-        collectDecls(ch, accu);
-      });
-    }
-    return accu;
-  }
-  
-  exports.collectDecls = collectDecls;
-  exports.getDeclName = getDeclName;
-//});
-
-},{"../../common/lib/ast":15}],18:[function(require,module,exports){
-/*******************************************************************************
- * Copyright (c) 2012 IBM Corporation.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *     IBM Corporation - initial API and implementation
- *******************************************************************************/
-
-/**
- * Scope objects keep track of name binding. Each scope object represents
- * either the global scope, a function scope, a catch clause scope, or
- * a 'with' scope.
- */
-
-//if(typeof define !== 'function') {
-//  var define = require('amdefine')(module);
-//}
-//
-//define(function(require, exports) {
-  var decls = require('./decls');
-  
-  // abstract base class of all scopes
-  function Scope(outer, decls) {
-    this.outer = outer;
-    this.decls = decls;
-  }
-  
-  // is x a global variable in this scope?
-  Scope.prototype.isGlobal = function(x) {
-    return !this.isLocal(x) && this.outer.isGlobal(x);
-  };
-  
-  // does x have a declaration at the global level?
-  Scope.prototype.isDeclaredGlobal = function(x) {
-    return this.outer.isDeclaredGlobal();
-  };
-  
-  // look up x among the local declarations in this scope
-  Scope.prototype.localLookup = function(x) {
-    for(var i=0;i<this.decls.length;++i)
-      if(decls.getDeclName(this.decls[i]) === x)
-        return this.decls[i];
-    return null;
-  };
-  
-  // is x a local variable declared in this scope?
-  Scope.prototype.isLocal = function(x) { return !!this.localLookup(x); };
-  
-  // look up x in this or an enclosing scope
-  Scope.prototype.lookup = function(x) {
-    return this.localLookup(x) || this.outer && this.outer.lookup(x);
-  };
-  
-  // object representing the global scope
-  function GlobalScope(root) {
-    Scope.call(this, null, decls.collectDecls(root, []));
-  }
-  GlobalScope.prototype = Object.create(Scope.prototype);
-  
-  GlobalScope.prototype.isGlobal = function(x) { return true; };
-  GlobalScope.prototype.isLocal = function(x) { return false; };
-  GlobalScope.prototype.possibleWithBindings = function(x) { return []; };
-  GlobalScope.prototype.isDeclaredGlobal = function(x) {
-    return !!this.localLookup(x);
-  };
-    
-  // constructor representing a function scope
-  function FunctionScope(outer, fn) {
-    this.fn = fn;
-    Scope.call(this, outer, fn.params.concat(decls.collectDecls(fn.body, [])));
-  }
-  FunctionScope.prototype = Object.create(Scope.prototype);
-  
-  // 'arguments' and (in a named function expression) the function itself are local,
-  // even though they are not declared
-  FunctionScope.prototype.isLocal = function(x) {
-    return x === 'arguments' ||
-           this.fn.type === 'FunctionExpression' && this.fn.id && this.fn.id.name === x ||
-           Scope.prototype.isLocal.call(this, x);
-  };
-  
-  // list of enclosing with statements (represented by the variables they 'with' on) that
-  // may bind x
-  FunctionScope.prototype.possibleWithBindings = function(x) {
-    if(this.isLocal(x))
-      return [];
-    return this.outer.possibleWithBindings(x);
-  };
-  
-  // constructor representing a catch clause scope
-  function CatchScope(outer, cc) {
-    Scope.call(this, outer, [cc.param]);
-  }
-  CatchScope.prototype = Object.create(Scope.prototype);
-  
-  CatchScope.prototype.isLocal = function(x) { return x === this.decls[0].name || this.outer.isLocal(x); };
-  
-  CatchScope.prototype.possibleWithBindings = function(x) {
-    if(x === this.decls[0].name)
-      return [];
-    return this.outer.possibleWithBindings(x);
-  };
-  
-  // constructor representing a with scope
-  function WithScope(outer, with_var) {
-    Scope.call(this, outer, []);
-    this.with_var = with_var;
-  }
-  WithScope.prototype = Object.create(Scope.prototype);
-  
-  WithScope.prototype.isLocal = function(x) { return this.outer.isLocal(x); };
-  
-  WithScope.prototype.possibleWithBindings = function(x) {
-    var bindings = this.outer.possibleWithBindings(x);
-    bindings.unshift(this.with_var);
-    return bindings;
-  };
-  
-  exports.Scope = Scope;
-  exports.GlobalScope = GlobalScope;
-  exports.FunctionScope = FunctionScope;
-  exports.CatchScope = CatchScope;
-  exports.WithScope = WithScope;
-//});
-
-},{"./decls":16}],13:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 var global=self;/*
   Copyright (C) 2012-2013 Yusuke Suzuki <utatane.tea@gmail.com>
   Copyright (C) 2012-2013 Michael Ficarra <escodegen.copyright@michael.ficarra.me>
@@ -36734,7 +36375,366 @@ var global=self;/*
 }());
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{"./package.json":22,"estraverse":30,"source-map":21}],12:[function(require,module,exports){
+},{"./package.json":22,"estraverse":30,"source-map":21}],15:[function(require,module,exports){
+/*******************************************************************************
+ * Copyright (c) 2012 IBM Corporation.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
+ *******************************************************************************/
+
+/**
+ * Convenience functions for constructing and navigating ASTs.
+ */
+//if(typeof define !== 'function') {
+//  var define = require('amdefine')(module);
+//}
+//
+//define(function(require, exports) {
+  var position = require('./position');
+  
+  // constructor signatures; arguments in angle brackets are terminal children, the others subtrees
+  var signatures = {
+      AssignmentExpression: [ '<operator>', 'left', 'right'],
+      ArrayExpression: [ 'elements' ],
+      BlockStatement: [ 'body' ],
+      BinaryExpression: [ '<operator>', 'left', 'right'],
+      BreakStatement: [ 'label' ],
+      CallExpression: [ 'callee', 'arguments' ],
+      CatchClause: [ 'param', 'body' ],
+      ConditionalExpression: [ 'test', 'consequent', 'alternate' ],
+      ContinueStatement: [ 'label' ],
+      DirectiveStatement: [ ],
+      DoWhileStatement: [ 'body', 'test' ],
+      DebuggerStatement: [ ],
+      EmptyStatement: [ ],
+      ExpressionStatement: [ 'expression' ],
+      ForStatement: [ 'init', 'test', 'update', 'body' ],
+      ForInStatement: [ 'left', 'right', 'body' ],
+      FunctionDeclaration: [ 'id', 'params', 'body' ],
+      FunctionExpression: [ 'id', 'params', 'body' ],
+      Identifier: [ '<name>' ],
+      IfStatement: [ 'test', 'consequent', 'alternate' ],
+      Literal: [ '<value>' ],
+      LabeledStatement: [ 'label', 'body' ],
+      LogicalExpression: [ '<operator>', 'left', 'right' ],
+      MemberExpression: [ 'object', 'property', '<computed>' ],
+      NewExpression: [ 'callee', 'arguments' ],
+      ObjectExpression: [ 'properties' ],
+      Program: [ 'body' ],
+      Property: [ 'key', 'value', '<kind>' ],
+      ReturnStatement: [ 'argument' ],
+      SequenceExpression: [ 'expressions' ],
+      SwitchStatement: [ 'discriminant', 'cases' ],
+      SwitchCase: [ 'test', 'consequent' ],
+      ThisExpression: [ ],
+      ThrowStatement: [ 'argument' ],
+      TryStatement: [ 'block', 'guardedHandlers', 'handlers', 'finalizer' ],
+      UnaryExpression: [ '<operator>', 'argument' ],
+      UpdateExpression: [ '<operator>', 'argument', '<prefix>' ],
+      VariableDeclaration: [ 'declarations', '<kind>' ],
+      VariableDeclarator: [ 'id', 'init' ],
+      WhileStatement: [ 'test', 'body' ],
+      WithStatement: [ 'object', 'body' ]
+  };
+
+  // define a constructor from a signature
+  function defconstructor(tpname, signature) {
+    var child_names = [], nonterminal_children = [];
+    for(var i=0;i<signature.length;++i)
+      if(signature[i][0] === '<') {
+        child_names[child_names.length] = signature[i].substring(1, signature[i].length-1);
+      } else {
+        child_names[child_names.length] = signature[i];
+        nonterminal_children[nonterminal_children.length] = signature[i];
+      }
+    
+    exports[tpname] = function() {
+      this.type = tpname;
+      this.attr = {};
+      for(var i=0;i<arguments.length;++i)
+        this[child_names[i]] = arguments[i];
+      for(;i<child_names.length;++i)
+        this[child_names[i]] = null;
+    };
+    exports[tpname].children = nonterminal_children;
+  }
+  
+  // several convenience methods for accessing subtrees
+  var getNumChild = exports.getNumChild = function(nd) {
+    if(Array.isArray(nd))
+      return nd.length;
+    
+    if(nd && nd.type)
+      return exports[nd.type].children.length;
+    
+    return 0;
+  };
+  
+  var getChild = exports.getChild = function(nd, i) {
+    if(Array.isArray(nd))
+      return nd[i];
+    
+    return nd[exports[nd.type].children[i]];
+  };
+
+  var setChild = exports.setChild = function(nd, i, v) {
+    if(Array.isArray(nd))
+      return nd[i] = v;
+
+    return nd[exports[nd.type].children[i]] = v;
+  };
+  
+  var forEachChild = exports.forEachChild = function(nd, cb) {
+    for(var i = 0, n = getNumChild(nd); i < n; ++i)
+      cb(getChild(nd, i), i);
+  };
+  
+  var mapChildren = exports.mapChildren = function(nd, cb) {
+    var res = [];
+    forEachChild(nd, function(ch, i) {
+      res[res.length] = cb(ch, i);
+    });
+    return res;
+  };
+
+  // simple debug printing function
+  var dump = exports.dump = function(nd) {
+    if(Array.isArray(nd))
+      return "[" + nd.map(dump).join() + "]";
+    
+    if(!nd || !nd.type)
+      return nd+"";
+    
+    return nd.type + "(" + mapChildren(nd, dump).join() + ")";
+  };
+  
+  // we give every AST node a property "attr" for storing attributes
+  exports.getAttribute = function(nd, name) {
+    nd.attr = nd.attr || {};
+    return nd.attr[name];
+  };
+  
+  exports.setAttribute = function(nd, name, value) {
+    nd.attr = nd.attr || {};
+    nd.attr[name] = value;
+    return nd;
+  };
+  
+  // positions are attached as attributes
+  exports.hasPosition = function(nd) {
+      return !!exports.getAttribute(nd, 'pos') || !!nd.loc || !!nd.range;
+  };
+  
+  exports.getPosition = function(nd) {
+      if(!exports.getAttribute(nd, 'pos')) {
+      var pos = position.DUMMY_POS.clone();
+      if(nd.loc) {
+	  if(nd.loc.source) {
+	      pos.url = nd.loc.source;
+	  }
+        pos.start_line = nd.loc.start.line;
+        pos.end_line = nd.loc.start.line;
+      }
+      if(nd.range) {
+        pos.start_offset = nd.range[0];
+        pos.end_offset = nd.range[1];
+      }
+      exports.setAttribute(nd, 'pos', pos);
+    }
+    return exports.getAttribute(nd, 'pos');
+  };
+  
+  exports.setPosition = function(nd, pos) {
+    exports.setAttribute(nd, 'pos', pos);
+  };
+  
+  for(var p in signatures)
+    defconstructor(p, signatures[p]);
+//});
+
+},{"./position":19}],17:[function(require,module,exports){
+/*******************************************************************************
+ * Copyright (c) 2012 IBM Corporation.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
+ *******************************************************************************/
+
+/**
+ * Utility functions to collect all variable and function declarations in a subtree.
+ */
+//if(typeof define !== 'function') {
+//  var define = require('amdefine')(module);
+//}
+//
+//define(function(require, exports) {
+  var ast = require('../../common/lib/ast');
+
+  function getDeclName(decl) {
+    if(decl.type === 'Identifier')
+      return decl.name;
+    return decl.id.name;
+  }
+
+  function collectDecls(nd, accu) {
+    if(!nd)
+      return accu;
+    
+    if(nd.type === 'FunctionDeclaration') {
+      accu[accu.length] = nd;
+    } else if(nd.type === 'VariableDeclarator') {
+      accu[accu.length] = nd;
+    } else if(nd.type !== 'FunctionExpression') {
+      ast.forEachChild(nd, function(ch) {
+        collectDecls(ch, accu);
+      });
+    }
+    return accu;
+  }
+  
+  exports.collectDecls = collectDecls;
+  exports.getDeclName = getDeclName;
+//});
+
+},{"../../common/lib/ast":15}],18:[function(require,module,exports){
+/*******************************************************************************
+ * Copyright (c) 2012 IBM Corporation.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
+ *******************************************************************************/
+
+/**
+ * Scope objects keep track of name binding. Each scope object represents
+ * either the global scope, a function scope, a catch clause scope, or
+ * a 'with' scope.
+ */
+
+//if(typeof define !== 'function') {
+//  var define = require('amdefine')(module);
+//}
+//
+//define(function(require, exports) {
+  var decls = require('./decls');
+  
+  // abstract base class of all scopes
+  function Scope(outer, decls) {
+    this.outer = outer;
+    this.decls = decls;
+  }
+  
+  // is x a global variable in this scope?
+  Scope.prototype.isGlobal = function(x) {
+    return !this.isLocal(x) && this.outer.isGlobal(x);
+  };
+  
+  // does x have a declaration at the global level?
+  Scope.prototype.isDeclaredGlobal = function(x) {
+    return this.outer.isDeclaredGlobal();
+  };
+  
+  // look up x among the local declarations in this scope
+  Scope.prototype.localLookup = function(x) {
+    for(var i=0;i<this.decls.length;++i)
+      if(decls.getDeclName(this.decls[i]) === x)
+        return this.decls[i];
+    return null;
+  };
+  
+  // is x a local variable declared in this scope?
+  Scope.prototype.isLocal = function(x) { return !!this.localLookup(x); };
+  
+  // look up x in this or an enclosing scope
+  Scope.prototype.lookup = function(x) {
+    return this.localLookup(x) || this.outer && this.outer.lookup(x);
+  };
+  
+  // object representing the global scope
+  function GlobalScope(root) {
+    Scope.call(this, null, decls.collectDecls(root, []));
+  }
+  GlobalScope.prototype = Object.create(Scope.prototype);
+  
+  GlobalScope.prototype.isGlobal = function(x) { return true; };
+  GlobalScope.prototype.isLocal = function(x) { return false; };
+  GlobalScope.prototype.possibleWithBindings = function(x) { return []; };
+  GlobalScope.prototype.isDeclaredGlobal = function(x) {
+    return !!this.localLookup(x);
+  };
+    
+  // constructor representing a function scope
+  function FunctionScope(outer, fn) {
+    this.fn = fn;
+    Scope.call(this, outer, fn.params.concat(decls.collectDecls(fn.body, [])));
+  }
+  FunctionScope.prototype = Object.create(Scope.prototype);
+  
+  // 'arguments' and (in a named function expression) the function itself are local,
+  // even though they are not declared
+  FunctionScope.prototype.isLocal = function(x) {
+    return x === 'arguments' ||
+           this.fn.type === 'FunctionExpression' && this.fn.id && this.fn.id.name === x ||
+           Scope.prototype.isLocal.call(this, x);
+  };
+  
+  // list of enclosing with statements (represented by the variables they 'with' on) that
+  // may bind x
+  FunctionScope.prototype.possibleWithBindings = function(x) {
+    if(this.isLocal(x))
+      return [];
+    return this.outer.possibleWithBindings(x);
+  };
+  
+  // constructor representing a catch clause scope
+  function CatchScope(outer, cc) {
+    Scope.call(this, outer, [cc.param]);
+  }
+  CatchScope.prototype = Object.create(Scope.prototype);
+  
+  CatchScope.prototype.isLocal = function(x) { return x === this.decls[0].name || this.outer.isLocal(x); };
+  
+  CatchScope.prototype.possibleWithBindings = function(x) {
+    if(x === this.decls[0].name)
+      return [];
+    return this.outer.possibleWithBindings(x);
+  };
+  
+  // constructor representing a with scope
+  function WithScope(outer, with_var) {
+    Scope.call(this, outer, []);
+    this.with_var = with_var;
+  }
+  WithScope.prototype = Object.create(Scope.prototype);
+  
+  WithScope.prototype.isLocal = function(x) { return this.outer.isLocal(x); };
+  
+  WithScope.prototype.possibleWithBindings = function(x) {
+    var bindings = this.outer.possibleWithBindings(x);
+    bindings.unshift(this.with_var);
+    return bindings;
+  };
+  
+  exports.Scope = Scope;
+  exports.GlobalScope = GlobalScope;
+  exports.FunctionScope = FunctionScope;
+  exports.CatchScope = CatchScope;
+  exports.WithScope = WithScope;
+//});
+
+},{"./decls":17}],11:[function(require,module,exports){
 /*!
  * JSHint, by JSHint Community.
  *
@@ -41597,17 +41597,7 @@ if (typeof exports === "object" && exports) {
 	exports.JSHINT = JSHINT;
 }
 
-},{"./lex.js":32,"./messages.js":31,"./reg.js":26,"./state.js":27,"./style.js":28,"./vars.js":25,"console-browserify":34,"events":24,"underscore":33}],21:[function(require,module,exports){
-/*
- * Copyright 2009-2011 Mozilla Foundation and contributors
- * Licensed under the New BSD license. See LICENSE.txt or:
- * http://opensource.org/licenses/BSD-3-Clause
- */
-exports.SourceMapGenerator = require('./source-map/source-map-generator').SourceMapGenerator;
-exports.SourceMapConsumer = require('./source-map/source-map-consumer').SourceMapConsumer;
-exports.SourceNode = require('./source-map/source-node').SourceNode;
-
-},{"./source-map/source-map-consumer":36,"./source-map/source-map-generator":35,"./source-map/source-node":37}],29:[function(require,module,exports){
+},{"./lex.js":32,"./messages.js":31,"./reg.js":26,"./state.js":27,"./style.js":28,"./vars.js":25,"console-browserify":34,"events":24,"underscore":33}],29:[function(require,module,exports){
 (function (exports) {
   exports.validate = validate;
   exports.mixin = mixin;
@@ -42018,7 +42008,17 @@ exports.SourceNode = require('./source-map/source-node').SourceNode;
 
 })(typeof module !== 'undefined' ? module.exports : (window.json = window.json || {}));
 
-},{}],33:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
+/*
+ * Copyright 2009-2011 Mozilla Foundation and contributors
+ * Licensed under the New BSD license. See LICENSE.txt or:
+ * http://opensource.org/licenses/BSD-3-Clause
+ */
+exports.SourceMapGenerator = require('./source-map/source-map-generator').SourceMapGenerator;
+exports.SourceMapConsumer = require('./source-map/source-map-consumer').SourceMapConsumer;
+exports.SourceNode = require('./source-map/source-node').SourceNode;
+
+},{"./source-map/source-map-consumer":36,"./source-map/source-map-generator":35,"./source-map/source-node":37}],33:[function(require,module,exports){
 //     Underscore.js 1.4.4
 //     http://underscorejs.org
 //     (c) 2009-2013 Jeremy Ashkenas, DocumentCloud Inc.
@@ -45248,7 +45248,7 @@ function assert(expression) {
     }
 }
 
-},{"assert":38,"util":39}],39:[function(require,module,exports){
+},{"assert":39,"util":38}],38:[function(require,module,exports){
 var events = require('events');
 
 exports.isArray = isArray;
@@ -45595,7 +45595,7 @@ exports.format = function(f) {
   return str;
 };
 
-},{"events":24}],38:[function(require,module,exports){
+},{"events":24}],39:[function(require,module,exports){
 // UTILITY
 var util = require('util');
 var Buffer = require("buffer").Buffer;
@@ -45909,7 +45909,7 @@ assert.doesNotThrow = function(block, /*optional*/error, /*optional*/message) {
 
 assert.ifError = function(err) { if (err) {throw err;}};
 
-},{"buffer":40,"util":39}],35:[function(require,module,exports){
+},{"buffer":40,"util":38}],35:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -48578,225 +48578,7 @@ Buffer.prototype.writeDoubleBE = function(value, offset, noAssert) {
   writeDouble(this, value, offset, true, noAssert);
 };
 
-},{"./buffer_ieee754":46,"assert":38,"base64-js":48}],43:[function(require,module,exports){
-/* -*- Mode: js; js-indent-level: 2; -*- */
-/*
- * Copyright 2011 Mozilla Foundation and contributors
- * Licensed under the New BSD license. See LICENSE or:
- * http://opensource.org/licenses/BSD-3-Clause
- */
-if (typeof define !== 'function') {
-    var define = require('amdefine')(module, require);
-}
-define(function (require, exports, module) {
-
-  var util = require('./util');
-
-  /**
-   * A data structure which is a combination of an array and a set. Adding a new
-   * member is O(1), testing for membership is O(1), and finding the index of an
-   * element is O(1). Removing elements from the set is not supported. Only
-   * strings are supported for membership.
-   */
-  function ArraySet() {
-    this._array = [];
-    this._set = {};
-  }
-
-  /**
-   * Static method for creating ArraySet instances from an existing array.
-   */
-  ArraySet.fromArray = function ArraySet_fromArray(aArray, aAllowDuplicates) {
-    var set = new ArraySet();
-    for (var i = 0, len = aArray.length; i < len; i++) {
-      set.add(aArray[i], aAllowDuplicates);
-    }
-    return set;
-  };
-
-  /**
-   * Add the given string to this set.
-   *
-   * @param String aStr
-   */
-  ArraySet.prototype.add = function ArraySet_add(aStr, aAllowDuplicates) {
-    var isDuplicate = this.has(aStr);
-    var idx = this._array.length;
-    if (!isDuplicate || aAllowDuplicates) {
-      this._array.push(aStr);
-    }
-    if (!isDuplicate) {
-      this._set[util.toSetString(aStr)] = idx;
-    }
-  };
-
-  /**
-   * Is the given string a member of this set?
-   *
-   * @param String aStr
-   */
-  ArraySet.prototype.has = function ArraySet_has(aStr) {
-    return Object.prototype.hasOwnProperty.call(this._set,
-                                                util.toSetString(aStr));
-  };
-
-  /**
-   * What is the index of the given string in the array?
-   *
-   * @param String aStr
-   */
-  ArraySet.prototype.indexOf = function ArraySet_indexOf(aStr) {
-    if (this.has(aStr)) {
-      return this._set[util.toSetString(aStr)];
-    }
-    throw new Error('"' + aStr + '" is not in the set.');
-  };
-
-  /**
-   * What is the element at the given index?
-   *
-   * @param Number aIdx
-   */
-  ArraySet.prototype.at = function ArraySet_at(aIdx) {
-    if (aIdx >= 0 && aIdx < this._array.length) {
-      return this._array[aIdx];
-    }
-    throw new Error('No element indexed by ' + aIdx);
-  };
-
-  /**
-   * Returns the array representation of this set (which has the proper indices
-   * indicated by indexOf). Note that this is a copy of the internal array used
-   * for storing the members so that no one can mess with internal state.
-   */
-  ArraySet.prototype.toArray = function ArraySet_toArray() {
-    return this._array.slice();
-  };
-
-  exports.ArraySet = ArraySet;
-
-});
-
-},{"./util":42,"amdefine":44}],42:[function(require,module,exports){
-/* -*- Mode: js; js-indent-level: 2; -*- */
-/*
- * Copyright 2011 Mozilla Foundation and contributors
- * Licensed under the New BSD license. See LICENSE or:
- * http://opensource.org/licenses/BSD-3-Clause
- */
-if (typeof define !== 'function') {
-    var define = require('amdefine')(module, require);
-}
-define(function (require, exports, module) {
-
-  /**
-   * This is a helper function for getting values from parameter/options
-   * objects.
-   *
-   * @param args The object we are extracting values from
-   * @param name The name of the property we are getting.
-   * @param defaultValue An optional value to return if the property is missing
-   * from the object. If this is not specified and the property is missing, an
-   * error will be thrown.
-   */
-  function getArg(aArgs, aName, aDefaultValue) {
-    if (aName in aArgs) {
-      return aArgs[aName];
-    } else if (arguments.length === 3) {
-      return aDefaultValue;
-    } else {
-      throw new Error('"' + aName + '" is a required argument.');
-    }
-  }
-  exports.getArg = getArg;
-
-  var urlRegexp = /([\w+\-.]+):\/\/((\w+:\w+)@)?([\w.]+)?(:(\d+))?(\S+)?/;
-
-  function urlParse(aUrl) {
-    var match = aUrl.match(urlRegexp);
-    if (!match) {
-      return null;
-    }
-    return {
-      scheme: match[1],
-      auth: match[3],
-      host: match[4],
-      port: match[6],
-      path: match[7]
-    };
-  }
-  exports.urlParse = urlParse;
-
-  function urlGenerate(aParsedUrl) {
-    var url = aParsedUrl.scheme + "://";
-    if (aParsedUrl.auth) {
-      url += aParsedUrl.auth + "@"
-    }
-    if (aParsedUrl.host) {
-      url += aParsedUrl.host;
-    }
-    if (aParsedUrl.port) {
-      url += ":" + aParsedUrl.port
-    }
-    if (aParsedUrl.path) {
-      url += aParsedUrl.path;
-    }
-    return url;
-  }
-  exports.urlGenerate = urlGenerate;
-
-  function join(aRoot, aPath) {
-    var url;
-
-    if (aPath.match(urlRegexp)) {
-      return aPath;
-    }
-
-    if (aPath.charAt(0) === '/' && (url = urlParse(aRoot))) {
-      url.path = aPath;
-      return urlGenerate(url);
-    }
-
-    return aRoot.replace(/\/$/, '') + '/' + aPath;
-  }
-  exports.join = join;
-
-  /**
-   * Because behavior goes wacky when you set `__proto__` on objects, we
-   * have to prefix all the strings in our set with an arbitrary character.
-   *
-   * See https://github.com/mozilla/source-map/pull/31 and
-   * https://github.com/mozilla/source-map/issues/30
-   *
-   * @param String aStr
-   */
-  function toSetString(aStr) {
-    return '$' + aStr;
-  }
-  exports.toSetString = toSetString;
-
-  function fromSetString(aStr) {
-    return aStr.substr(1);
-  }
-  exports.fromSetString = fromSetString;
-
-  function relative(aRoot, aPath) {
-    aRoot = aRoot.replace(/\/$/, '');
-
-    var url = urlParse(aRoot);
-    if (aPath.charAt(0) == "/" && url && url.path == "/") {
-      return aPath.slice(1);
-    }
-
-    return aPath.indexOf(aRoot + '/') === 0
-      ? aPath.substr(aRoot.length + 1)
-      : aPath;
-  }
-  exports.relative = relative;
-
-});
-
-},{"amdefine":44}],41:[function(require,module,exports){
+},{"./buffer_ieee754":46,"assert":39,"base64-js":48}],41:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -48942,7 +48724,225 @@ define(function (require, exports, module) {
 
 });
 
-},{"./base64":49,"amdefine":44}],45:[function(require,module,exports){
+},{"./base64":49,"amdefine":44}],42:[function(require,module,exports){
+/* -*- Mode: js; js-indent-level: 2; -*- */
+/*
+ * Copyright 2011 Mozilla Foundation and contributors
+ * Licensed under the New BSD license. See LICENSE or:
+ * http://opensource.org/licenses/BSD-3-Clause
+ */
+if (typeof define !== 'function') {
+    var define = require('amdefine')(module, require);
+}
+define(function (require, exports, module) {
+
+  /**
+   * This is a helper function for getting values from parameter/options
+   * objects.
+   *
+   * @param args The object we are extracting values from
+   * @param name The name of the property we are getting.
+   * @param defaultValue An optional value to return if the property is missing
+   * from the object. If this is not specified and the property is missing, an
+   * error will be thrown.
+   */
+  function getArg(aArgs, aName, aDefaultValue) {
+    if (aName in aArgs) {
+      return aArgs[aName];
+    } else if (arguments.length === 3) {
+      return aDefaultValue;
+    } else {
+      throw new Error('"' + aName + '" is a required argument.');
+    }
+  }
+  exports.getArg = getArg;
+
+  var urlRegexp = /([\w+\-.]+):\/\/((\w+:\w+)@)?([\w.]+)?(:(\d+))?(\S+)?/;
+
+  function urlParse(aUrl) {
+    var match = aUrl.match(urlRegexp);
+    if (!match) {
+      return null;
+    }
+    return {
+      scheme: match[1],
+      auth: match[3],
+      host: match[4],
+      port: match[6],
+      path: match[7]
+    };
+  }
+  exports.urlParse = urlParse;
+
+  function urlGenerate(aParsedUrl) {
+    var url = aParsedUrl.scheme + "://";
+    if (aParsedUrl.auth) {
+      url += aParsedUrl.auth + "@"
+    }
+    if (aParsedUrl.host) {
+      url += aParsedUrl.host;
+    }
+    if (aParsedUrl.port) {
+      url += ":" + aParsedUrl.port
+    }
+    if (aParsedUrl.path) {
+      url += aParsedUrl.path;
+    }
+    return url;
+  }
+  exports.urlGenerate = urlGenerate;
+
+  function join(aRoot, aPath) {
+    var url;
+
+    if (aPath.match(urlRegexp)) {
+      return aPath;
+    }
+
+    if (aPath.charAt(0) === '/' && (url = urlParse(aRoot))) {
+      url.path = aPath;
+      return urlGenerate(url);
+    }
+
+    return aRoot.replace(/\/$/, '') + '/' + aPath;
+  }
+  exports.join = join;
+
+  /**
+   * Because behavior goes wacky when you set `__proto__` on objects, we
+   * have to prefix all the strings in our set with an arbitrary character.
+   *
+   * See https://github.com/mozilla/source-map/pull/31 and
+   * https://github.com/mozilla/source-map/issues/30
+   *
+   * @param String aStr
+   */
+  function toSetString(aStr) {
+    return '$' + aStr;
+  }
+  exports.toSetString = toSetString;
+
+  function fromSetString(aStr) {
+    return aStr.substr(1);
+  }
+  exports.fromSetString = fromSetString;
+
+  function relative(aRoot, aPath) {
+    aRoot = aRoot.replace(/\/$/, '');
+
+    var url = urlParse(aRoot);
+    if (aPath.charAt(0) == "/" && url && url.path == "/") {
+      return aPath.slice(1);
+    }
+
+    return aPath.indexOf(aRoot + '/') === 0
+      ? aPath.substr(aRoot.length + 1)
+      : aPath;
+  }
+  exports.relative = relative;
+
+});
+
+},{"amdefine":44}],43:[function(require,module,exports){
+/* -*- Mode: js; js-indent-level: 2; -*- */
+/*
+ * Copyright 2011 Mozilla Foundation and contributors
+ * Licensed under the New BSD license. See LICENSE or:
+ * http://opensource.org/licenses/BSD-3-Clause
+ */
+if (typeof define !== 'function') {
+    var define = require('amdefine')(module, require);
+}
+define(function (require, exports, module) {
+
+  var util = require('./util');
+
+  /**
+   * A data structure which is a combination of an array and a set. Adding a new
+   * member is O(1), testing for membership is O(1), and finding the index of an
+   * element is O(1). Removing elements from the set is not supported. Only
+   * strings are supported for membership.
+   */
+  function ArraySet() {
+    this._array = [];
+    this._set = {};
+  }
+
+  /**
+   * Static method for creating ArraySet instances from an existing array.
+   */
+  ArraySet.fromArray = function ArraySet_fromArray(aArray, aAllowDuplicates) {
+    var set = new ArraySet();
+    for (var i = 0, len = aArray.length; i < len; i++) {
+      set.add(aArray[i], aAllowDuplicates);
+    }
+    return set;
+  };
+
+  /**
+   * Add the given string to this set.
+   *
+   * @param String aStr
+   */
+  ArraySet.prototype.add = function ArraySet_add(aStr, aAllowDuplicates) {
+    var isDuplicate = this.has(aStr);
+    var idx = this._array.length;
+    if (!isDuplicate || aAllowDuplicates) {
+      this._array.push(aStr);
+    }
+    if (!isDuplicate) {
+      this._set[util.toSetString(aStr)] = idx;
+    }
+  };
+
+  /**
+   * Is the given string a member of this set?
+   *
+   * @param String aStr
+   */
+  ArraySet.prototype.has = function ArraySet_has(aStr) {
+    return Object.prototype.hasOwnProperty.call(this._set,
+                                                util.toSetString(aStr));
+  };
+
+  /**
+   * What is the index of the given string in the array?
+   *
+   * @param String aStr
+   */
+  ArraySet.prototype.indexOf = function ArraySet_indexOf(aStr) {
+    if (this.has(aStr)) {
+      return this._set[util.toSetString(aStr)];
+    }
+    throw new Error('"' + aStr + '" is not in the set.');
+  };
+
+  /**
+   * What is the element at the given index?
+   *
+   * @param Number aIdx
+   */
+  ArraySet.prototype.at = function ArraySet_at(aIdx) {
+    if (aIdx >= 0 && aIdx < this._array.length) {
+      return this._array[aIdx];
+    }
+    throw new Error('No element indexed by ' + aIdx);
+  };
+
+  /**
+   * Returns the array representation of this set (which has the proper indices
+   * indicated by indexOf). Note that this is a copy of the internal array used
+   * for storing the members so that no one can mess with internal state.
+   */
+  ArraySet.prototype.toArray = function ArraySet_toArray() {
+    return this._array.slice();
+  };
+
+  exports.ArraySet = ArraySet;
+
+});
+
+},{"./util":42,"amdefine":44}],45:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors

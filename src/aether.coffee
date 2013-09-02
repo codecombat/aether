@@ -305,3 +305,6 @@ window.Aether = Aether if window?
 # All that requires is to include the frameIndex as part of the userInfo for each logStatement.
 # I could just set _aetherUserInfo to whatever value I want, just like I set _shouldYield (which should be _aetherShouldYield).
 # Okay, let's try that.
+# Okay, that works. (Shudder to think of performance.)
+# Checked JSDares, and it looks like there's no means of inspecting the value of an arbitrary variable.
+# It just allows you step forward and backward with an annotation of what happened in that operation.
