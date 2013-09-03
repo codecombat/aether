@@ -64,11 +64,10 @@ pre { font-size: 12px; }
   position: absolute;
   left: 20px;
   right: 20px;
-  bottom: 20px;
   top: 180px;
 }
 
-#demo .ace_editor_wrapper, #demo #aether_problems {
+#demo .ace_editor_wrapper {
   position: absolute;
   top: 35px;
   right: 20px;
@@ -77,6 +76,24 @@ pre { font-size: 12px; }
   height: 380px;
 }
 
-#demo #aether_problems {
+#aether_problems, #aether_console, #aether_metrics, #aether_flow {
   overflow: scroll;
+  max-height: 380px;
+}
+
+#demo #aether_metrics {
+  height: 200px;
+}
+
+#demo #aether_console {
+  height: 100px;
+}
+
+.ace_editor .executed {
+  background-color: rgba(216, 88, 44, 0.25);
+  position: absolute;
+}
+
+.demo-row {
+  height: 430px;
 }
