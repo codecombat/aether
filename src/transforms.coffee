@@ -1,9 +1,22 @@
+_ = window?._ ? self?._ ? global?._ ? require 'lodash'  # rely on lodash existing, since it busts CodeCombat to browserify it--TODO
 problems = require './problems'
 esprima = require 'esprima'
 SourceMap = require 'source-map'
 S = esprima.Syntax
 
 statements = [S.EmptyStatement, S.ExpressionStatement, S.BreakStatement, S.ContinueStatement, S.DebuggerStatement, S.DoWhileStatement, S.ForStatement, S.FunctionDeclaration, S.ClassDeclaration, S.IfStatement, S.ReturnStatement, S.SwitchStatement, S.ThrowStatement, S.TryStatement, S.VariableStatement, S.WhileStatement, S.WithStatement]
+
+getParents = (node) ->
+  parents = []
+  while node.parent
+    parents.push node = node.parent
+  parents
+
+getParentsOfType = (node, type) ->
+  _.filter getParents(node), {type: type}
+
+getFunctionNestingLevel = (node) ->
+  getParentsOfType(node, S.FunctionExpression).length
 
 getLineNumberForNode = (node) ->
   # We ignore the first two wrapper lines -- TODO: how do we know there are two lines?
@@ -36,9 +49,15 @@ module.exports.makeCheckThisKeywords = makeCheckThisKeywords = (global) ->
   return (node) ->
     if node.type is S.VariableDeclarator
       vars[node.id] = true
+    else if node.type is S.FunctionDeclaration
+      vars[node.id.name] = true
     else if node.type is S.CallExpression
       v = node.callee.name
       if v and not vars[v] and not global[v]
+        # Probably MissingThis, but let's check if we're recursively calling an inner function from itself first.
+        for p in getParentsOfType node, S.FunctionDeclaration
+          vars[p.id.name] = true
+          return if p.id.name is v
         problem = new problems.TranspileProblem @, 'aether', 'MissingThis', {}, '', ''  # TODO: last args
         problem.message = "Missing `this.` keyword; should be `this.#{v}`."
         problem.hint = "There is no function `#{v}`, but `this` has a method `#{v}`."
@@ -65,7 +84,7 @@ module.exports.checkIncompleteMembers = checkIncompleteMembers = (node) ->
         m = "#{exp.source()} has no effect."
         if exp.property.name in problems.commonMethods
           m += " It needs parentheses: #{exp.property.name}()"
-      # Should become a UserCodeProblem
+      # Should become a UserCodeProblem like in makeCheckThisKeywords
       error = new Error m
       error.lineNumber = lineNumber + 2  # Reapply wrapper function offset
       #if $? then console.log node, node.source(), "going to error out!"
@@ -110,12 +129,8 @@ module.exports.yieldAutomatically = yieldAutomatically = (node) ->
   # TODO: don't yield after things like 'use strict';
   # TODO: think about only doing this after some of the statements which have a different original range?
   if node.type in statements
-    nFunctionParents = 0  # Because we have a wrapper function which shouldn't yield, we only yield inside nested functions.
-    p = node.parent
-    while p
-      ++nFunctionParents if p.type is S.FunctionExpression
-      p = p.parent
-    return unless nFunctionParents > 1
+    # Because we have a wrapper function which shouldn't yield, we only yield inside nested functions.
+    return unless getFunctionNestingLevel(node) > 1
     node.update "#{node.source()} yield 'waiting...';"
     node.yields = true
     possiblyGeneratorifyAncestorFunction node
@@ -128,12 +143,8 @@ module.exports.makeInstrumentStatements = makeInstrumentStatements = ->
     return unless node.originalNode and node.originalNode.originalRange.start >= 0
     return unless node.type in statements
     return if node.originalNode.type in [S.ThisExpression, S.Identifier, S.Literal]  # probably need to add to this to get statements which corresponded to interesting expressions before normalization
-    nFunctionParents = 0  # Only do this in nested functions, not our wrapper
-    p = node.parent
-    while p
-      ++nFunctionParents if p.type is S.FunctionExpression
-      p = p.parent
-    return unless nFunctionParents > 1
+    # Only do this in nested functions, not our wrapper
+    return unless getFunctionNestingLevel(node) > 1
     # TODO: actually save this into aether.flow, and have it happen before the yield happens
     range = [node.originalNode.originalRange.start, node.originalNode.originalRange.end]
     source = node.originalNode.originalSource
@@ -144,9 +155,10 @@ module.exports.makeInstrumentStatements = makeInstrumentStatements = ->
 module.exports.makeInstrumentCalls = makeInstrumentCalls = ->
   # set up any state tracking here
   return (node) ->
+    # Don't do this if it's an inner function they defined
+    return unless getFunctionNestingLevel(node) is 2
     if node.type is S.ReturnStatement
-      # TODO: what if this is in an inner function they defined?
       node.update "_aether.logCallEnd(); #{node.source()}"
-    return unless node.originalNode and node.originalNode.originalRange.start < 0
-    return unless node.type is S.ExpressionStatement and node.originalNode.value is "use strict"
-    node.update "#{node.source()} _aether.logCallStart();"  # TODO: pull in arguments?
+    # Look at the top variable declaration inside our appropriately nested function to see where the call starts
+    return unless node.type is S.VariableDeclaration
+    node.update "_aether.logCallStart(); #{node.source()}"  # TODO: pull in arguments?

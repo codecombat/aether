@@ -116,6 +116,14 @@ module.exports = class Aether
     func = _.bind func, @options.thisValue if @options.thisValue
     func
 
+  run: (fn, args...) ->
+    # Convenience wrapper for running the compiled function with default error handling
+    try
+      fn ?= @createMethod()
+      fn(args...)
+    catch error
+      @addProblem new Aether.problems.RuntimeProblem @, error, {}
+
   getAllProblems: ->
     _.flatten _.values @problems
 
@@ -238,7 +246,7 @@ module.exports = class Aether
   @getFunctionBody: (func) ->
     # Remove function() { ... } wrapper and any extra indentation
     source = if _.isString func then func else func.toString()
-    source = source.substring(source.indexOf('{') + 1, source.lastIndexOf('}')).trim()
+    source = source.substring(source.indexOf('{') + 2, source.lastIndexOf('}'))  #.trim()
     lines = source.split /\r?\n/
     indent = if lines.length then lines[0].length - lines[0].replace(/^ +/, '').length else 0
     (line.slice indent for line in lines).join '\n'

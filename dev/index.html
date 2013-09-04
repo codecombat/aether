@@ -73,48 +73,18 @@
 
     <div class="tab-pane fade in active" id="demo">
 
+      <p class="lead text-center">
+	Load example: <select id="example-select"></select>
+      </p>
+
       <div class="row demo-row">
 	<div class="col-md-4">
-	  <p class="lead">Enter some JavaScript source here.</p>
-	  <div class="ace_editor_wrapper" id="javascript_input">// Try your own code here
-var x = this.charge();
-this.hesitate();
-this.hesitate();
-if(retries)
-    return this.planStrategy(retries - 1);
-else
-    return this.charge();
-	  </div>
+	  <p class="lead">Write some JavaScript here.</p>
+	  <div class="ace_editor_wrapper" id="javascript_input"></div>
 	</div>
 	<div class="col-md-4">
 	  <p class="lead">Use Aether on it.</p>
-	  <div class="ace_editor_wrapper" id="aether_input">var aetherOptions = {
-  thisValue: {
-    charge: function() { return "attack!"; },
-    hesitate: function() { this._aetherShouldYield = true; }
-  },
-  problems: {
-    jshint_W040: {level: "ignore"},
-    aether_MissingThis: {level: 'warning'}
-  },
-  functionName: 'planStrategy',
-  functionParameters: ["retries"],
-  yieldConditionally: true,
-  requiresThis: false
-};
-var aether = new Aether(aetherOptions);
-var code = grabThatCode();
-aether.transpile(code);
-method = aether.createMethod();
-generator = method();
-var executeSomeMore = function executeSomeMore() {
-    var result = generator.next();
-    showOutput(aether);
-    if(!result.done)
-        setTimeout(executeSomeMore, 2000);
-};
-executeSomeMore();
-	  </div>
+	  <div class="ace_editor_wrapper" id="aether_input"></div>
 	</div>
 	<div class="col-md-4">
 	  <p class="lead">Problems detected show up here.</p>

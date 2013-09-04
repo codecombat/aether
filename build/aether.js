@@ -21124,77 +21124,6 @@ var traceur = (function() {
 
 },{}],2:[function(require,module,exports){
 (function() {
-  var execution;
-
-  module.exports = execution = {
-    ArrayExpression: 1,
-    ArrayPattern: 1,
-    ArrowFunctionExpression: 1,
-    AssignmentExpression: 1,
-    BinaryExpression: 1,
-    BlockStatement: 1,
-    BreakStatement: 1,
-    CallExpression: 1,
-    CatchClause: 1,
-    ClassBody: 1,
-    ClassDeclaration: 1,
-    ClassExpression: 1,
-    ClassHeritage: 1,
-    ComprehensionBlock: 1,
-    ComprehensionExpression: 1,
-    ConditionalExpression: 1,
-    ContinueStatement: 1,
-    DebuggerStatement: 1,
-    DoWhileStatement: 1,
-    EmptyStatement: 1,
-    ExportDeclaration: 1,
-    ExportBatchSpecifier: 1,
-    ExportSpecifier: 1,
-    ExpressionStatement: 1,
-    ForInStatement: 1,
-    ForOfStatement: 1,
-    ForStatement: 1,
-    FunctionDeclaration: 1,
-    FunctionExpression: 1,
-    Identifier: 1,
-    IfStatement: 1,
-    ImportDeclaration: 1,
-    ImportSpecifier: 1,
-    LabeledStatement: 1,
-    Literal: 1,
-    LogicalExpression: 1,
-    MemberExpression: 1,
-    MethodDefinition: 1,
-    ModuleDeclaration: 1,
-    NewExpression: 1,
-    ObjectExpression: 1,
-    ObjectPattern: 1,
-    Program: 1,
-    Property: 1,
-    ReturnStatement: 1,
-    SequenceExpression: 1,
-    SpreadElement: 1,
-    SwitchCase: 1,
-    SwitchStatement: 1,
-    TaggedTemplateExpression: 1,
-    TemplateElement: 1,
-    TemplateLiteral: 1,
-    ThisExpression: 1,
-    ThrowStatement: 1,
-    TryStatement: 1,
-    UnaryExpression: 1,
-    UpdateExpression: 1,
-    VariableDeclaration: 1,
-    VariableDeclarator: 1,
-    WhileStatement: 1,
-    WithStatement: 1,
-    YieldExpression: 1
-  };
-
-}).call(this);
-
-},{}],3:[function(require,module,exports){
-(function() {
   var RuntimeProblem, TranspileProblem, UserCodeProblem, commonMethods, problems,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -21304,7 +21233,7 @@ var traceur = (function() {
       this.message = RuntimeProblem.explainErrorMessage(error);
       this.ranges = RuntimeProblem.getAnonymousErrorRanges(error);
       if ((_ref = this.ranges) != null ? _ref.length : void 0) {
-        console.log("Got ranges:", this.ranges);
+        console.log("Runtime problem got ranges:", this.ranges);
         lineNumber = this.ranges[0][0][0];
         if (this.message.search(/^Line \d+/) !== -1) {
           this.message = this.message.replace(/^Line \d+/, function(match, n) {
@@ -22337,9 +22266,81 @@ var traceur = (function() {
 
 }).call(this);
 
+},{}],3:[function(require,module,exports){
+(function() {
+  var execution;
+
+  module.exports = execution = {
+    ArrayExpression: 1,
+    ArrayPattern: 1,
+    ArrowFunctionExpression: 1,
+    AssignmentExpression: 1,
+    BinaryExpression: 1,
+    BlockStatement: 1,
+    BreakStatement: 1,
+    CallExpression: 1,
+    CatchClause: 1,
+    ClassBody: 1,
+    ClassDeclaration: 1,
+    ClassExpression: 1,
+    ClassHeritage: 1,
+    ComprehensionBlock: 1,
+    ComprehensionExpression: 1,
+    ConditionalExpression: 1,
+    ContinueStatement: 1,
+    DebuggerStatement: 1,
+    DoWhileStatement: 1,
+    EmptyStatement: 1,
+    ExportDeclaration: 1,
+    ExportBatchSpecifier: 1,
+    ExportSpecifier: 1,
+    ExpressionStatement: 1,
+    ForInStatement: 1,
+    ForOfStatement: 1,
+    ForStatement: 1,
+    FunctionDeclaration: 1,
+    FunctionExpression: 1,
+    Identifier: 1,
+    IfStatement: 1,
+    ImportDeclaration: 1,
+    ImportSpecifier: 1,
+    LabeledStatement: 1,
+    Literal: 1,
+    LogicalExpression: 1,
+    MemberExpression: 1,
+    MethodDefinition: 1,
+    ModuleDeclaration: 1,
+    NewExpression: 1,
+    ObjectExpression: 1,
+    ObjectPattern: 1,
+    Program: 1,
+    Property: 1,
+    ReturnStatement: 1,
+    SequenceExpression: 1,
+    SpreadElement: 1,
+    SwitchCase: 1,
+    SwitchStatement: 1,
+    TaggedTemplateExpression: 1,
+    TemplateElement: 1,
+    TemplateLiteral: 1,
+    ThisExpression: 1,
+    ThrowStatement: 1,
+    TryStatement: 1,
+    UnaryExpression: 1,
+    UpdateExpression: 1,
+    VariableDeclaration: 1,
+    VariableDeclarator: 1,
+    WhileStatement: 1,
+    WithStatement: 1,
+    YieldExpression: 1
+  };
+
+}).call(this);
+
 },{}],4:[function(require,module,exports){
 var global=self;(function() {
-  var Aether, acorn_loose, defaults, escodegen, esprima, execution, jshint, morph, normalizer, optionsValidator, problems, traceur, transforms, _, _ref, _ref1, _ref2, _ref3, _ref4, _ref5;
+  var Aether, acorn_loose, defaults, escodegen, esprima, execution, jshint, morph, normalizer, optionsValidator, problems, traceur, transforms, _, _ref, _ref1, _ref2, _ref3, _ref4, _ref5,
+    __slice = [].slice;
 
   _ = (_ref = (_ref1 = (_ref2 = typeof window !== "undefined" && window !== null ? window._ : void 0) != null ? _ref2 : typeof self !== "undefined" && self !== null ? self._ : void 0) != null ? _ref1 : typeof global !== "undefined" && global !== null ? global._ : void 0) != null ? _ref : require('lodash');
 
@@ -22533,6 +22534,20 @@ var global=self;(function() {
         func = _.bind(func, this.options.thisValue);
       }
       return func;
+    };
+
+    Aether.prototype.run = function() {
+      var args, error, fn;
+      fn = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+      try {
+        if (fn == null) {
+          fn = this.createMethod();
+        }
+        return fn.apply(null, args);
+      } catch (_error) {
+        error = _error;
+        return this.addProblem(new Aether.problems.RuntimeProblem(this, error, {}));
+      }
     };
 
     Aether.prototype.getAllProblems = function() {
@@ -22764,7 +22779,7 @@ var global=self;(function() {
     Aether.getFunctionBody = function(func) {
       var indent, line, lines, source;
       source = _.isString(func) ? func : func.toString();
-      source = source.substring(source.indexOf('{') + 1, source.lastIndexOf('}')).trim();
+      source = source.substring(source.indexOf('{') + 2, source.lastIndexOf('}'));
       lines = source.split(/\r?\n/);
       indent = lines.length ? lines[0].length - lines[0].replace(/^ +/, '').length : 0;
       return ((function() {
@@ -22847,7 +22862,7 @@ var global=self;(function() {
 
 }).call(this);
 
-},{"./defaults":5,"./execution":2,"./morph":6,"./problems":3,"./transforms":7,"./validators/options":8,"JS_WALA/normalizer/lib/normalizer":9,"acorn/acorn_loose":10,"escodegen":12,"esprima":13,"jshint":11,"lodash":1,"traceur":1}],5:[function(require,module,exports){
+},{"./defaults":5,"./execution":3,"./morph":6,"./problems":2,"./transforms":7,"./validators/options":8,"JS_WALA/normalizer/lib/normalizer":9,"acorn/acorn_loose":10,"escodegen":12,"esprima":13,"jshint":11,"lodash":1,"traceur":1}],5:[function(require,module,exports){
 (function() {
   var defaults, execution;
 
@@ -22879,7 +22894,7 @@ var global=self;(function() {
 
 }).call(this);
 
-},{"./execution":2}],13:[function(require,module,exports){
+},{"./execution":3}],13:[function(require,module,exports){
 /*
   Copyright (C) 2013 Ariya Hidayat <ariya.hidayat@gmail.com>
   Copyright (C) 2013 Thaddee Tyl <thaddee.tyl@gmail.com>
@@ -31965,313 +31980,7 @@ parseYieldExpression: true
 
 });
 
-},{}],6:[function(require,module,exports){
-var global=self;(function() {
-  var acorn_loose, esprima, insertHelpers, morph, _, _ref, _ref1, _ref2;
-
-  _ = (_ref = (_ref1 = (_ref2 = typeof window !== "undefined" && window !== null ? window._ : void 0) != null ? _ref2 : typeof self !== "undefined" && self !== null ? self._ : void 0) != null ? _ref1 : typeof global !== "undefined" && global !== null ? global._ : void 0) != null ? _ref : require('lodash');
-
-  esprima = require('esprima');
-
-  acorn_loose = require('acorn/acorn_loose');
-
-  module.exports = morph = function(source, transforms, parser) {
-    var ast, chunks, lines, locToRange, posToOffset, walk;
-    if (parser == null) {
-      parser = "esprima";
-    }
-    chunks = source.split('');
-    if (parser === 'esprima') {
-      ast = esprima.parse(source, {
-        range: true,
-        loc: true
-      });
-      locToRange = null;
-    } else if (parser === 'acorn_loose') {
-      ast = acorn_loose.parse_dammit(source, {
-        locations: true
-      });
-      lines = source.replace(/\n/g, '\n空').split('空');
-      posToOffset = function(pos) {
-        return _.reduce(lines.slice(0, pos.line - 1), (function(sum, line) {
-          return sum + line.length;
-        }), 0) + pos.column;
-      };
-      locToRange = function(loc) {
-        return [posToOffset(loc.start), posToOffset(loc.end)];
-      };
-    }
-    walk = function(node, parent) {
-      var child, grandchild, key, transform, _i, _j, _len, _len1, _results;
-      insertHelpers(node, parent, chunks, locToRange);
-      for (key in node) {
-        child = node[key];
-        if (key === 'parent') {
-          continue;
-        }
-        if (_.isArray(child)) {
-          for (_i = 0, _len = child.length; _i < _len; _i++) {
-            grandchild = child[_i];
-            if (_.isString(grandchild != null ? grandchild.type : void 0)) {
-              walk(grandchild, node);
-            }
-          }
-        } else if (_.isString(child != null ? child.type : void 0)) {
-          insertHelpers(child, node, chunks, locToRange);
-          walk(child, node);
-        }
-      }
-      _results = [];
-      for (_j = 0, _len1 = transforms.length; _j < _len1; _j++) {
-        transform = transforms[_j];
-        _results.push(transform(node));
-      }
-      return _results;
-    };
-    walk(ast, void 0);
-    return chunks.join('');
-  };
-
-  insertHelpers = function(node, parent, chunks, locToRange) {
-    var update;
-    if (node.loc && locToRange) {
-      node.range = locToRange(node.loc);
-    }
-    if (!node.range) {
-      return;
-    }
-    node.parent = parent;
-    node.source = function() {
-      return chunks.slice(node.range[0], node.range[1]).join('');
-    };
-    update = function(s) {
-      var i, _i, _ref3, _ref4, _results;
-      chunks[node.range[0]] = s;
-      _results = [];
-      for (i = _i = _ref3 = node.range[0] + 1, _ref4 = node.range[1]; _ref3 <= _ref4 ? _i < _ref4 : _i > _ref4; i = _ref3 <= _ref4 ? ++_i : --_i) {
-        _results.push(chunks[i] = '');
-      }
-      return _results;
-    };
-    if (_.isObject(node.update)) {
-      _.extend(update, node.update);
-    }
-    return node.update = update;
-  };
-
-}).call(this);
-
-},{"acorn/acorn_loose":10,"esprima":13,"lodash":1}],7:[function(require,module,exports){
-(function() {
-  var S, SourceMap, checkIncompleteMembers, esprima, getLineNumberForNode, makeCheckThisKeywords, makeFindOriginalNodes, makeGatherNodeRanges, makeInstrumentCalls, makeInstrumentStatements, possiblyGeneratorifyAncestorFunction, problems, statements, validateReturns, yieldAutomatically, yieldConditionally,
-    __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
-
-  problems = require('./problems');
-
-  esprima = require('esprima');
-
-  SourceMap = require('source-map');
-
-  S = esprima.Syntax;
-
-  statements = [S.EmptyStatement, S.ExpressionStatement, S.BreakStatement, S.ContinueStatement, S.DebuggerStatement, S.DoWhileStatement, S.ForStatement, S.FunctionDeclaration, S.ClassDeclaration, S.IfStatement, S.ReturnStatement, S.SwitchStatement, S.ThrowStatement, S.TryStatement, S.VariableStatement, S.WhileStatement, S.WithStatement];
-
-  getLineNumberForNode = function(node) {
-    var fullSource, i, line, parent, _i, _ref;
-    parent = node;
-    while (parent.type !== S.Program) {
-      parent = parent.parent;
-    }
-    fullSource = parent.source();
-    line = -2;
-    for (i = _i = 0, _ref = node.range[0]; 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i) {
-      if (fullSource[i] === '\n') {
-        ++line;
-      }
-    }
-    return line;
-  };
-
-  module.exports.makeGatherNodeRanges = makeGatherNodeRanges = function(nodeRanges, codePrefix) {
-    return function(node) {
-      node.originalRange = {
-        start: node.range[0] - codePrefix.length,
-        end: node.range[1] - codePrefix.length
-      };
-      node.originalSource = node.source();
-      return nodeRanges.push(node);
-    };
-  };
-
-  module.exports.makeCheckThisKeywords = makeCheckThisKeywords = function(global) {
-    var vars;
-    vars = {};
-    return function(node) {
-      var problem, v;
-      if (node.type === S.VariableDeclarator) {
-        return vars[node.id] = true;
-      } else if (node.type === S.CallExpression) {
-        v = node.callee.name;
-        if (v && !vars[v] && !global[v]) {
-          problem = new problems.TranspileProblem(this, 'aether', 'MissingThis', {}, '', '');
-          problem.message = "Missing `this.` keyword; should be `this." + v + "`.";
-          problem.hint = "There is no function `" + v + "`, but `this` has a method `" + v + "`.";
-          this.addProblem(problem);
-          if (!this.options.requiresThis) {
-            return node.update("this." + (node.source()));
-          }
-        }
-      }
-    };
-  };
-
-  module.exports.validateReturns = validateReturns = function(node) {
-    var _ref;
-    if (node.type === S.ReturnStatement && !node.argument) {
-      return node.update(node.source().replace("return;", "return this.validateReturn('" + this.options.functionName + "', null);"));
-    } else if (((_ref = node.parent) != null ? _ref.type : void 0) === S.ReturnStatement) {
-      return node.update("this.validateReturn('" + this.options.functionName + "', (" + (node.source()) + "))");
-    }
-  };
-
-  module.exports.checkIncompleteMembers = checkIncompleteMembers = function(node) {
-    var error, exp, lineNumber, m, _ref;
-    if (node.type === 'ExpressionStatement') {
-      lineNumber = getLineNumberForNode(node);
-      exp = node.expression;
-      if (exp.type === 'MemberExpression') {
-        if (exp.property.name === "IncompleteThisReference") {
-          m = "this.what? (Check available spells below.)";
-        } else {
-          m = "" + (exp.source()) + " has no effect.";
-          if (_ref = exp.property.name, __indexOf.call(problems.commonMethods, _ref) >= 0) {
-            m += " It needs parentheses: " + exp.property.name + "()";
-          }
-        }
-        error = new Error(m);
-        return error.lineNumber = lineNumber + 2;
-      }
-    }
-  };
-
-  module.exports.makeFindOriginalNodes = makeFindOriginalNodes = function(originalNodes, codePrefix, wrappedCode, normalizedSourceMap, normalizedNodeIndex) {
-    var normalizedPosToOriginalNode, smc;
-    normalizedPosToOriginalNode = function(pos) {
-      var end, node, start, _i, _len;
-      start = pos.start_offset - codePrefix.length;
-      end = pos.end_offset - codePrefix.length;
-      for (_i = 0, _len = originalNodes.length; _i < _len; _i++) {
-        node = originalNodes[_i];
-        if (start === node.originalRange.start && end === node.originalRange.end) {
-          return node;
-        }
-      }
-      return null;
-    };
-    smc = new SourceMap.SourceMapConsumer(normalizedSourceMap.toString());
-    return function(node) {
-      var mapped, normalizedNode;
-      if (!(mapped = smc.originalPositionFor({
-        line: node.loc.start.line,
-        column: node.loc.start.column
-      }))) {
-        return;
-      }
-      if (!(normalizedNode = normalizedNodeIndex[mapped.column])) {
-        return;
-      }
-      return node.originalNode = normalizedPosToOriginalNode(normalizedNode.attr.pos);
-    };
-  };
-
-  possiblyGeneratorifyAncestorFunction = function(node) {
-    while (node.type !== S.FunctionExpression) {
-      node = node.parent;
-    }
-    return node.mustBecomeGeneratorFunction = true;
-  };
-
-  module.exports.yieldConditionally = yieldConditionally = function(node) {
-    var _ref;
-    if (node.type === S.ExpressionStatement && ((_ref = node.expression.right) != null ? _ref.type : void 0) === S.CallExpression) {
-      node.update("" + (node.source()) + " if (this._aetherShouldYield) { var _yieldValue = this._aetherShouldYield; this._aetherShouldYield = false; yield _yieldValue; }");
-      node.yields = true;
-      return possiblyGeneratorifyAncestorFunction(node);
-    } else if (node.mustBecomeGeneratorFunction) {
-      return node.update(node.source().replace(/^function \(/, 'function* ('));
-    }
-  };
-
-  module.exports.yieldAutomatically = yieldAutomatically = function(node) {
-    var nFunctionParents, p, _ref;
-    if (_ref = node.type, __indexOf.call(statements, _ref) >= 0) {
-      nFunctionParents = 0;
-      p = node.parent;
-      while (p) {
-        if (p.type === S.FunctionExpression) {
-          ++nFunctionParents;
-        }
-        p = p.parent;
-      }
-      if (!(nFunctionParents > 1)) {
-        return;
-      }
-      node.update("" + (node.source()) + " yield 'waiting...';");
-      node.yields = true;
-      return possiblyGeneratorifyAncestorFunction(node);
-    } else if (node.mustBecomeGeneratorFunction) {
-      return node.update(node.source().replace(/^function \(/, 'function* ('));
-    }
-  };
-
-  module.exports.makeInstrumentStatements = makeInstrumentStatements = function() {
-    return function(node) {
-      var nFunctionParents, p, range, safeSource, source, _ref, _ref1;
-      if (!(node.originalNode && node.originalNode.originalRange.start >= 0)) {
-        return;
-      }
-      if (_ref = node.type, __indexOf.call(statements, _ref) < 0) {
-        return;
-      }
-      if ((_ref1 = node.originalNode.type) === S.ThisExpression || _ref1 === S.Identifier || _ref1 === S.Literal) {
-        return;
-      }
-      nFunctionParents = 0;
-      p = node.parent;
-      while (p) {
-        if (p.type === S.FunctionExpression) {
-          ++nFunctionParents;
-        }
-        p = p.parent;
-      }
-      if (!(nFunctionParents > 1)) {
-        return;
-      }
-      range = [node.originalNode.originalRange.start, node.originalNode.originalRange.end];
-      source = node.originalNode.originalSource;
-      safeSource = source.replace(/\"/g, '\\"').replace(/\n/g, '\\n');
-      return node.update("" + (node.source()) + " _aether.logStatement(" + range[0] + ", " + range[1] + ", \"" + safeSource + "\", this._aetherUserInfo);");
-    };
-  };
-
-  module.exports.makeInstrumentCalls = makeInstrumentCalls = function() {
-    return function(node) {
-      if (node.type === S.ReturnStatement) {
-        node.update("_aether.logCallEnd(); " + (node.source()));
-      }
-      if (!(node.originalNode && node.originalNode.originalRange.start < 0)) {
-        return;
-      }
-      if (!(node.type === S.ExpressionStatement && node.originalNode.value === "use strict")) {
-        return;
-      }
-      return node.update("" + (node.source()) + " _aether.logCallStart();");
-    };
-  };
-
-}).call(this);
-
-},{"./problems":3,"esprima":13,"source-map":21}],16:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 /*******************************************************************************
  * Copyright (c) 2012 IBM Corporation.
  * All rights reserved. This program and the accompanying materials
@@ -32414,7 +32123,328 @@ var global=self;(function() {
     Array.prototype.flatmap = flatmap;
 //});
 
-},{}],22:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
+var global=self;(function() {
+  var acorn_loose, esprima, insertHelpers, morph, _, _ref, _ref1, _ref2;
+
+  _ = (_ref = (_ref1 = (_ref2 = typeof window !== "undefined" && window !== null ? window._ : void 0) != null ? _ref2 : typeof self !== "undefined" && self !== null ? self._ : void 0) != null ? _ref1 : typeof global !== "undefined" && global !== null ? global._ : void 0) != null ? _ref : require('lodash');
+
+  esprima = require('esprima');
+
+  acorn_loose = require('acorn/acorn_loose');
+
+  module.exports = morph = function(source, transforms, parser) {
+    var ast, chunks, lines, locToRange, posToOffset, walk;
+    if (parser == null) {
+      parser = "esprima";
+    }
+    chunks = source.split('');
+    if (parser === 'esprima') {
+      ast = esprima.parse(source, {
+        range: true,
+        loc: true
+      });
+      locToRange = null;
+    } else if (parser === 'acorn_loose') {
+      ast = acorn_loose.parse_dammit(source, {
+        locations: true
+      });
+      lines = source.replace(/\n/g, '\n空').split('空');
+      posToOffset = function(pos) {
+        return _.reduce(lines.slice(0, pos.line - 1), (function(sum, line) {
+          return sum + line.length;
+        }), 0) + pos.column;
+      };
+      locToRange = function(loc) {
+        return [posToOffset(loc.start), posToOffset(loc.end)];
+      };
+    }
+    walk = function(node, parent) {
+      var child, grandchild, key, transform, _i, _j, _len, _len1, _results;
+      insertHelpers(node, parent, chunks, locToRange);
+      for (key in node) {
+        child = node[key];
+        if (key === 'parent') {
+          continue;
+        }
+        if (_.isArray(child)) {
+          for (_i = 0, _len = child.length; _i < _len; _i++) {
+            grandchild = child[_i];
+            if (_.isString(grandchild != null ? grandchild.type : void 0)) {
+              walk(grandchild, node);
+            }
+          }
+        } else if (_.isString(child != null ? child.type : void 0)) {
+          insertHelpers(child, node, chunks, locToRange);
+          walk(child, node);
+        }
+      }
+      _results = [];
+      for (_j = 0, _len1 = transforms.length; _j < _len1; _j++) {
+        transform = transforms[_j];
+        _results.push(transform(node));
+      }
+      return _results;
+    };
+    walk(ast, void 0);
+    return chunks.join('');
+  };
+
+  insertHelpers = function(node, parent, chunks, locToRange) {
+    var update;
+    if (node.loc && locToRange) {
+      node.range = locToRange(node.loc);
+    }
+    if (!node.range) {
+      return;
+    }
+    node.parent = parent;
+    node.source = function() {
+      return chunks.slice(node.range[0], node.range[1]).join('');
+    };
+    update = function(s) {
+      var i, _i, _ref3, _ref4, _results;
+      chunks[node.range[0]] = s;
+      _results = [];
+      for (i = _i = _ref3 = node.range[0] + 1, _ref4 = node.range[1]; _ref3 <= _ref4 ? _i < _ref4 : _i > _ref4; i = _ref3 <= _ref4 ? ++_i : --_i) {
+        _results.push(chunks[i] = '');
+      }
+      return _results;
+    };
+    if (_.isObject(node.update)) {
+      _.extend(update, node.update);
+    }
+    return node.update = update;
+  };
+
+}).call(this);
+
+},{"acorn/acorn_loose":10,"esprima":13,"lodash":1}],7:[function(require,module,exports){
+var global=self;(function() {
+  var S, SourceMap, checkIncompleteMembers, esprima, getFunctionNestingLevel, getLineNumberForNode, getParents, getParentsOfType, makeCheckThisKeywords, makeFindOriginalNodes, makeGatherNodeRanges, makeInstrumentCalls, makeInstrumentStatements, possiblyGeneratorifyAncestorFunction, problems, statements, validateReturns, yieldAutomatically, yieldConditionally, _, _ref, _ref1, _ref2,
+    __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+
+  _ = (_ref = (_ref1 = (_ref2 = typeof window !== "undefined" && window !== null ? window._ : void 0) != null ? _ref2 : typeof self !== "undefined" && self !== null ? self._ : void 0) != null ? _ref1 : typeof global !== "undefined" && global !== null ? global._ : void 0) != null ? _ref : require('lodash');
+
+  problems = require('./problems');
+
+  esprima = require('esprima');
+
+  SourceMap = require('source-map');
+
+  S = esprima.Syntax;
+
+  statements = [S.EmptyStatement, S.ExpressionStatement, S.BreakStatement, S.ContinueStatement, S.DebuggerStatement, S.DoWhileStatement, S.ForStatement, S.FunctionDeclaration, S.ClassDeclaration, S.IfStatement, S.ReturnStatement, S.SwitchStatement, S.ThrowStatement, S.TryStatement, S.VariableStatement, S.WhileStatement, S.WithStatement];
+
+  getParents = function(node) {
+    var parents;
+    parents = [];
+    while (node.parent) {
+      parents.push(node = node.parent);
+    }
+    return parents;
+  };
+
+  getParentsOfType = function(node, type) {
+    return _.filter(getParents(node), {
+      type: type
+    });
+  };
+
+  getFunctionNestingLevel = function(node) {
+    return getParentsOfType(node, S.FunctionExpression).length;
+  };
+
+  getLineNumberForNode = function(node) {
+    var fullSource, i, line, parent, _i, _ref3;
+    parent = node;
+    while (parent.type !== S.Program) {
+      parent = parent.parent;
+    }
+    fullSource = parent.source();
+    line = -2;
+    for (i = _i = 0, _ref3 = node.range[0]; 0 <= _ref3 ? _i < _ref3 : _i > _ref3; i = 0 <= _ref3 ? ++_i : --_i) {
+      if (fullSource[i] === '\n') {
+        ++line;
+      }
+    }
+    return line;
+  };
+
+  module.exports.makeGatherNodeRanges = makeGatherNodeRanges = function(nodeRanges, codePrefix) {
+    return function(node) {
+      node.originalRange = {
+        start: node.range[0] - codePrefix.length,
+        end: node.range[1] - codePrefix.length
+      };
+      node.originalSource = node.source();
+      return nodeRanges.push(node);
+    };
+  };
+
+  module.exports.makeCheckThisKeywords = makeCheckThisKeywords = function(global) {
+    var vars;
+    vars = {};
+    return function(node) {
+      var p, problem, v, _i, _len, _ref3;
+      if (node.type === S.VariableDeclarator) {
+        return vars[node.id] = true;
+      } else if (node.type === S.FunctionDeclaration) {
+        return vars[node.id.name] = true;
+      } else if (node.type === S.CallExpression) {
+        v = node.callee.name;
+        if (v && !vars[v] && !global[v]) {
+          _ref3 = getParentsOfType(node, S.FunctionDeclaration);
+          for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
+            p = _ref3[_i];
+            vars[p.id.name] = true;
+            if (p.id.name === v) {
+              return;
+            }
+          }
+          problem = new problems.TranspileProblem(this, 'aether', 'MissingThis', {}, '', '');
+          problem.message = "Missing `this.` keyword; should be `this." + v + "`.";
+          problem.hint = "There is no function `" + v + "`, but `this` has a method `" + v + "`.";
+          this.addProblem(problem);
+          if (!this.options.requiresThis) {
+            return node.update("this." + (node.source()));
+          }
+        }
+      }
+    };
+  };
+
+  module.exports.validateReturns = validateReturns = function(node) {
+    var _ref3;
+    if (node.type === S.ReturnStatement && !node.argument) {
+      return node.update(node.source().replace("return;", "return this.validateReturn('" + this.options.functionName + "', null);"));
+    } else if (((_ref3 = node.parent) != null ? _ref3.type : void 0) === S.ReturnStatement) {
+      return node.update("this.validateReturn('" + this.options.functionName + "', (" + (node.source()) + "))");
+    }
+  };
+
+  module.exports.checkIncompleteMembers = checkIncompleteMembers = function(node) {
+    var error, exp, lineNumber, m, _ref3;
+    if (node.type === 'ExpressionStatement') {
+      lineNumber = getLineNumberForNode(node);
+      exp = node.expression;
+      if (exp.type === 'MemberExpression') {
+        if (exp.property.name === "IncompleteThisReference") {
+          m = "this.what? (Check available spells below.)";
+        } else {
+          m = "" + (exp.source()) + " has no effect.";
+          if (_ref3 = exp.property.name, __indexOf.call(problems.commonMethods, _ref3) >= 0) {
+            m += " It needs parentheses: " + exp.property.name + "()";
+          }
+        }
+        error = new Error(m);
+        return error.lineNumber = lineNumber + 2;
+      }
+    }
+  };
+
+  module.exports.makeFindOriginalNodes = makeFindOriginalNodes = function(originalNodes, codePrefix, wrappedCode, normalizedSourceMap, normalizedNodeIndex) {
+    var normalizedPosToOriginalNode, smc;
+    normalizedPosToOriginalNode = function(pos) {
+      var end, node, start, _i, _len;
+      start = pos.start_offset - codePrefix.length;
+      end = pos.end_offset - codePrefix.length;
+      for (_i = 0, _len = originalNodes.length; _i < _len; _i++) {
+        node = originalNodes[_i];
+        if (start === node.originalRange.start && end === node.originalRange.end) {
+          return node;
+        }
+      }
+      return null;
+    };
+    smc = new SourceMap.SourceMapConsumer(normalizedSourceMap.toString());
+    return function(node) {
+      var mapped, normalizedNode;
+      if (!(mapped = smc.originalPositionFor({
+        line: node.loc.start.line,
+        column: node.loc.start.column
+      }))) {
+        return;
+      }
+      if (!(normalizedNode = normalizedNodeIndex[mapped.column])) {
+        return;
+      }
+      return node.originalNode = normalizedPosToOriginalNode(normalizedNode.attr.pos);
+    };
+  };
+
+  possiblyGeneratorifyAncestorFunction = function(node) {
+    while (node.type !== S.FunctionExpression) {
+      node = node.parent;
+    }
+    return node.mustBecomeGeneratorFunction = true;
+  };
+
+  module.exports.yieldConditionally = yieldConditionally = function(node) {
+    var _ref3;
+    if (node.type === S.ExpressionStatement && ((_ref3 = node.expression.right) != null ? _ref3.type : void 0) === S.CallExpression) {
+      node.update("" + (node.source()) + " if (this._aetherShouldYield) { var _yieldValue = this._aetherShouldYield; this._aetherShouldYield = false; yield _yieldValue; }");
+      node.yields = true;
+      return possiblyGeneratorifyAncestorFunction(node);
+    } else if (node.mustBecomeGeneratorFunction) {
+      return node.update(node.source().replace(/^function \(/, 'function* ('));
+    }
+  };
+
+  module.exports.yieldAutomatically = yieldAutomatically = function(node) {
+    var _ref3;
+    if (_ref3 = node.type, __indexOf.call(statements, _ref3) >= 0) {
+      if (!(getFunctionNestingLevel(node) > 1)) {
+        return;
+      }
+      node.update("" + (node.source()) + " yield 'waiting...';");
+      node.yields = true;
+      return possiblyGeneratorifyAncestorFunction(node);
+    } else if (node.mustBecomeGeneratorFunction) {
+      return node.update(node.source().replace(/^function \(/, 'function* ('));
+    }
+  };
+
+  module.exports.makeInstrumentStatements = makeInstrumentStatements = function() {
+    return function(node) {
+      var range, safeSource, source, _ref3, _ref4;
+      if (!(node.originalNode && node.originalNode.originalRange.start >= 0)) {
+        return;
+      }
+      if (_ref3 = node.type, __indexOf.call(statements, _ref3) < 0) {
+        return;
+      }
+      if ((_ref4 = node.originalNode.type) === S.ThisExpression || _ref4 === S.Identifier || _ref4 === S.Literal) {
+        return;
+      }
+      if (!(getFunctionNestingLevel(node) > 1)) {
+        return;
+      }
+      range = [node.originalNode.originalRange.start, node.originalNode.originalRange.end];
+      source = node.originalNode.originalSource;
+      safeSource = source.replace(/\"/g, '\\"').replace(/\n/g, '\\n');
+      return node.update("" + (node.source()) + " _aether.logStatement(" + range[0] + ", " + range[1] + ", \"" + safeSource + "\", this._aetherUserInfo);");
+    };
+  };
+
+  module.exports.makeInstrumentCalls = makeInstrumentCalls = function() {
+    return function(node) {
+      if (getFunctionNestingLevel(node) !== 2) {
+        return;
+      }
+      if (node.type === S.ReturnStatement) {
+        node.update("_aether.logCallEnd(); " + (node.source()));
+      }
+      if (node.type !== S.VariableDeclaration) {
+        return;
+      }
+      return node.update("_aether.logCallStart(); " + (node.source()));
+    };
+  };
+
+}).call(this);
+
+},{"./problems":2,"esprima":13,"lodash":1,"source-map":21}],22:[function(require,module,exports){
 module.exports={
   "name": "escodegen",
   "description": "ECMAScript code generator",
@@ -34308,7 +34338,366 @@ exports.register = function (linter) {
 }));
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{}],12:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
+/*******************************************************************************
+ * Copyright (c) 2012 IBM Corporation.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
+ *******************************************************************************/
+
+/**
+ * Convenience functions for constructing and navigating ASTs.
+ */
+//if(typeof define !== 'function') {
+//  var define = require('amdefine')(module);
+//}
+//
+//define(function(require, exports) {
+  var position = require('./position');
+  
+  // constructor signatures; arguments in angle brackets are terminal children, the others subtrees
+  var signatures = {
+      AssignmentExpression: [ '<operator>', 'left', 'right'],
+      ArrayExpression: [ 'elements' ],
+      BlockStatement: [ 'body' ],
+      BinaryExpression: [ '<operator>', 'left', 'right'],
+      BreakStatement: [ 'label' ],
+      CallExpression: [ 'callee', 'arguments' ],
+      CatchClause: [ 'param', 'body' ],
+      ConditionalExpression: [ 'test', 'consequent', 'alternate' ],
+      ContinueStatement: [ 'label' ],
+      DirectiveStatement: [ ],
+      DoWhileStatement: [ 'body', 'test' ],
+      DebuggerStatement: [ ],
+      EmptyStatement: [ ],
+      ExpressionStatement: [ 'expression' ],
+      ForStatement: [ 'init', 'test', 'update', 'body' ],
+      ForInStatement: [ 'left', 'right', 'body' ],
+      FunctionDeclaration: [ 'id', 'params', 'body' ],
+      FunctionExpression: [ 'id', 'params', 'body' ],
+      Identifier: [ '<name>' ],
+      IfStatement: [ 'test', 'consequent', 'alternate' ],
+      Literal: [ '<value>' ],
+      LabeledStatement: [ 'label', 'body' ],
+      LogicalExpression: [ '<operator>', 'left', 'right' ],
+      MemberExpression: [ 'object', 'property', '<computed>' ],
+      NewExpression: [ 'callee', 'arguments' ],
+      ObjectExpression: [ 'properties' ],
+      Program: [ 'body' ],
+      Property: [ 'key', 'value', '<kind>' ],
+      ReturnStatement: [ 'argument' ],
+      SequenceExpression: [ 'expressions' ],
+      SwitchStatement: [ 'discriminant', 'cases' ],
+      SwitchCase: [ 'test', 'consequent' ],
+      ThisExpression: [ ],
+      ThrowStatement: [ 'argument' ],
+      TryStatement: [ 'block', 'guardedHandlers', 'handlers', 'finalizer' ],
+      UnaryExpression: [ '<operator>', 'argument' ],
+      UpdateExpression: [ '<operator>', 'argument', '<prefix>' ],
+      VariableDeclaration: [ 'declarations', '<kind>' ],
+      VariableDeclarator: [ 'id', 'init' ],
+      WhileStatement: [ 'test', 'body' ],
+      WithStatement: [ 'object', 'body' ]
+  };
+
+  // define a constructor from a signature
+  function defconstructor(tpname, signature) {
+    var child_names = [], nonterminal_children = [];
+    for(var i=0;i<signature.length;++i)
+      if(signature[i][0] === '<') {
+        child_names[child_names.length] = signature[i].substring(1, signature[i].length-1);
+      } else {
+        child_names[child_names.length] = signature[i];
+        nonterminal_children[nonterminal_children.length] = signature[i];
+      }
+    
+    exports[tpname] = function() {
+      this.type = tpname;
+      this.attr = {};
+      for(var i=0;i<arguments.length;++i)
+        this[child_names[i]] = arguments[i];
+      for(;i<child_names.length;++i)
+        this[child_names[i]] = null;
+    };
+    exports[tpname].children = nonterminal_children;
+  }
+  
+  // several convenience methods for accessing subtrees
+  var getNumChild = exports.getNumChild = function(nd) {
+    if(Array.isArray(nd))
+      return nd.length;
+    
+    if(nd && nd.type)
+      return exports[nd.type].children.length;
+    
+    return 0;
+  };
+  
+  var getChild = exports.getChild = function(nd, i) {
+    if(Array.isArray(nd))
+      return nd[i];
+    
+    return nd[exports[nd.type].children[i]];
+  };
+
+  var setChild = exports.setChild = function(nd, i, v) {
+    if(Array.isArray(nd))
+      return nd[i] = v;
+
+    return nd[exports[nd.type].children[i]] = v;
+  };
+  
+  var forEachChild = exports.forEachChild = function(nd, cb) {
+    for(var i = 0, n = getNumChild(nd); i < n; ++i)
+      cb(getChild(nd, i), i);
+  };
+  
+  var mapChildren = exports.mapChildren = function(nd, cb) {
+    var res = [];
+    forEachChild(nd, function(ch, i) {
+      res[res.length] = cb(ch, i);
+    });
+    return res;
+  };
+
+  // simple debug printing function
+  var dump = exports.dump = function(nd) {
+    if(Array.isArray(nd))
+      return "[" + nd.map(dump).join() + "]";
+    
+    if(!nd || !nd.type)
+      return nd+"";
+    
+    return nd.type + "(" + mapChildren(nd, dump).join() + ")";
+  };
+  
+  // we give every AST node a property "attr" for storing attributes
+  exports.getAttribute = function(nd, name) {
+    nd.attr = nd.attr || {};
+    return nd.attr[name];
+  };
+  
+  exports.setAttribute = function(nd, name, value) {
+    nd.attr = nd.attr || {};
+    nd.attr[name] = value;
+    return nd;
+  };
+  
+  // positions are attached as attributes
+  exports.hasPosition = function(nd) {
+      return !!exports.getAttribute(nd, 'pos') || !!nd.loc || !!nd.range;
+  };
+  
+  exports.getPosition = function(nd) {
+      if(!exports.getAttribute(nd, 'pos')) {
+      var pos = position.DUMMY_POS.clone();
+      if(nd.loc) {
+	  if(nd.loc.source) {
+	      pos.url = nd.loc.source;
+	  }
+        pos.start_line = nd.loc.start.line;
+        pos.end_line = nd.loc.start.line;
+      }
+      if(nd.range) {
+        pos.start_offset = nd.range[0];
+        pos.end_offset = nd.range[1];
+      }
+      exports.setAttribute(nd, 'pos', pos);
+    }
+    return exports.getAttribute(nd, 'pos');
+  };
+  
+  exports.setPosition = function(nd, pos) {
+    exports.setAttribute(nd, 'pos', pos);
+  };
+  
+  for(var p in signatures)
+    defconstructor(p, signatures[p]);
+//});
+
+},{"./position":19}],17:[function(require,module,exports){
+/*******************************************************************************
+ * Copyright (c) 2012 IBM Corporation.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
+ *******************************************************************************/
+
+/**
+ * Utility functions to collect all variable and function declarations in a subtree.
+ */
+//if(typeof define !== 'function') {
+//  var define = require('amdefine')(module);
+//}
+//
+//define(function(require, exports) {
+  var ast = require('../../common/lib/ast');
+
+  function getDeclName(decl) {
+    if(decl.type === 'Identifier')
+      return decl.name;
+    return decl.id.name;
+  }
+
+  function collectDecls(nd, accu) {
+    if(!nd)
+      return accu;
+    
+    if(nd.type === 'FunctionDeclaration') {
+      accu[accu.length] = nd;
+    } else if(nd.type === 'VariableDeclarator') {
+      accu[accu.length] = nd;
+    } else if(nd.type !== 'FunctionExpression') {
+      ast.forEachChild(nd, function(ch) {
+        collectDecls(ch, accu);
+      });
+    }
+    return accu;
+  }
+  
+  exports.collectDecls = collectDecls;
+  exports.getDeclName = getDeclName;
+//});
+
+},{"../../common/lib/ast":15}],18:[function(require,module,exports){
+/*******************************************************************************
+ * Copyright (c) 2012 IBM Corporation.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
+ *******************************************************************************/
+
+/**
+ * Scope objects keep track of name binding. Each scope object represents
+ * either the global scope, a function scope, a catch clause scope, or
+ * a 'with' scope.
+ */
+
+//if(typeof define !== 'function') {
+//  var define = require('amdefine')(module);
+//}
+//
+//define(function(require, exports) {
+  var decls = require('./decls');
+  
+  // abstract base class of all scopes
+  function Scope(outer, decls) {
+    this.outer = outer;
+    this.decls = decls;
+  }
+  
+  // is x a global variable in this scope?
+  Scope.prototype.isGlobal = function(x) {
+    return !this.isLocal(x) && this.outer.isGlobal(x);
+  };
+  
+  // does x have a declaration at the global level?
+  Scope.prototype.isDeclaredGlobal = function(x) {
+    return this.outer.isDeclaredGlobal();
+  };
+  
+  // look up x among the local declarations in this scope
+  Scope.prototype.localLookup = function(x) {
+    for(var i=0;i<this.decls.length;++i)
+      if(decls.getDeclName(this.decls[i]) === x)
+        return this.decls[i];
+    return null;
+  };
+  
+  // is x a local variable declared in this scope?
+  Scope.prototype.isLocal = function(x) { return !!this.localLookup(x); };
+  
+  // look up x in this or an enclosing scope
+  Scope.prototype.lookup = function(x) {
+    return this.localLookup(x) || this.outer && this.outer.lookup(x);
+  };
+  
+  // object representing the global scope
+  function GlobalScope(root) {
+    Scope.call(this, null, decls.collectDecls(root, []));
+  }
+  GlobalScope.prototype = Object.create(Scope.prototype);
+  
+  GlobalScope.prototype.isGlobal = function(x) { return true; };
+  GlobalScope.prototype.isLocal = function(x) { return false; };
+  GlobalScope.prototype.possibleWithBindings = function(x) { return []; };
+  GlobalScope.prototype.isDeclaredGlobal = function(x) {
+    return !!this.localLookup(x);
+  };
+    
+  // constructor representing a function scope
+  function FunctionScope(outer, fn) {
+    this.fn = fn;
+    Scope.call(this, outer, fn.params.concat(decls.collectDecls(fn.body, [])));
+  }
+  FunctionScope.prototype = Object.create(Scope.prototype);
+  
+  // 'arguments' and (in a named function expression) the function itself are local,
+  // even though they are not declared
+  FunctionScope.prototype.isLocal = function(x) {
+    return x === 'arguments' ||
+           this.fn.type === 'FunctionExpression' && this.fn.id && this.fn.id.name === x ||
+           Scope.prototype.isLocal.call(this, x);
+  };
+  
+  // list of enclosing with statements (represented by the variables they 'with' on) that
+  // may bind x
+  FunctionScope.prototype.possibleWithBindings = function(x) {
+    if(this.isLocal(x))
+      return [];
+    return this.outer.possibleWithBindings(x);
+  };
+  
+  // constructor representing a catch clause scope
+  function CatchScope(outer, cc) {
+    Scope.call(this, outer, [cc.param]);
+  }
+  CatchScope.prototype = Object.create(Scope.prototype);
+  
+  CatchScope.prototype.isLocal = function(x) { return x === this.decls[0].name || this.outer.isLocal(x); };
+  
+  CatchScope.prototype.possibleWithBindings = function(x) {
+    if(x === this.decls[0].name)
+      return [];
+    return this.outer.possibleWithBindings(x);
+  };
+  
+  // constructor representing a with scope
+  function WithScope(outer, with_var) {
+    Scope.call(this, outer, []);
+    this.with_var = with_var;
+  }
+  WithScope.prototype = Object.create(Scope.prototype);
+  
+  WithScope.prototype.isLocal = function(x) { return this.outer.isLocal(x); };
+  
+  WithScope.prototype.possibleWithBindings = function(x) {
+    var bindings = this.outer.possibleWithBindings(x);
+    bindings.unshift(this.with_var);
+    return bindings;
+  };
+  
+  exports.Scope = Scope;
+  exports.GlobalScope = GlobalScope;
+  exports.FunctionScope = FunctionScope;
+  exports.CatchScope = CatchScope;
+  exports.WithScope = WithScope;
+//});
+
+},{"./decls":17}],12:[function(require,module,exports){
 var global=self;/*
   Copyright (C) 2012-2013 Yusuke Suzuki <utatane.tea@gmail.com>
   Copyright (C) 2012-2013 Michael Ficarra <escodegen.copyright@michael.ficarra.me>
@@ -36375,366 +36764,7 @@ var global=self;/*
 }());
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{"./package.json":22,"estraverse":30,"source-map":21}],15:[function(require,module,exports){
-/*******************************************************************************
- * Copyright (c) 2012 IBM Corporation.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *     IBM Corporation - initial API and implementation
- *******************************************************************************/
-
-/**
- * Convenience functions for constructing and navigating ASTs.
- */
-//if(typeof define !== 'function') {
-//  var define = require('amdefine')(module);
-//}
-//
-//define(function(require, exports) {
-  var position = require('./position');
-  
-  // constructor signatures; arguments in angle brackets are terminal children, the others subtrees
-  var signatures = {
-      AssignmentExpression: [ '<operator>', 'left', 'right'],
-      ArrayExpression: [ 'elements' ],
-      BlockStatement: [ 'body' ],
-      BinaryExpression: [ '<operator>', 'left', 'right'],
-      BreakStatement: [ 'label' ],
-      CallExpression: [ 'callee', 'arguments' ],
-      CatchClause: [ 'param', 'body' ],
-      ConditionalExpression: [ 'test', 'consequent', 'alternate' ],
-      ContinueStatement: [ 'label' ],
-      DirectiveStatement: [ ],
-      DoWhileStatement: [ 'body', 'test' ],
-      DebuggerStatement: [ ],
-      EmptyStatement: [ ],
-      ExpressionStatement: [ 'expression' ],
-      ForStatement: [ 'init', 'test', 'update', 'body' ],
-      ForInStatement: [ 'left', 'right', 'body' ],
-      FunctionDeclaration: [ 'id', 'params', 'body' ],
-      FunctionExpression: [ 'id', 'params', 'body' ],
-      Identifier: [ '<name>' ],
-      IfStatement: [ 'test', 'consequent', 'alternate' ],
-      Literal: [ '<value>' ],
-      LabeledStatement: [ 'label', 'body' ],
-      LogicalExpression: [ '<operator>', 'left', 'right' ],
-      MemberExpression: [ 'object', 'property', '<computed>' ],
-      NewExpression: [ 'callee', 'arguments' ],
-      ObjectExpression: [ 'properties' ],
-      Program: [ 'body' ],
-      Property: [ 'key', 'value', '<kind>' ],
-      ReturnStatement: [ 'argument' ],
-      SequenceExpression: [ 'expressions' ],
-      SwitchStatement: [ 'discriminant', 'cases' ],
-      SwitchCase: [ 'test', 'consequent' ],
-      ThisExpression: [ ],
-      ThrowStatement: [ 'argument' ],
-      TryStatement: [ 'block', 'guardedHandlers', 'handlers', 'finalizer' ],
-      UnaryExpression: [ '<operator>', 'argument' ],
-      UpdateExpression: [ '<operator>', 'argument', '<prefix>' ],
-      VariableDeclaration: [ 'declarations', '<kind>' ],
-      VariableDeclarator: [ 'id', 'init' ],
-      WhileStatement: [ 'test', 'body' ],
-      WithStatement: [ 'object', 'body' ]
-  };
-
-  // define a constructor from a signature
-  function defconstructor(tpname, signature) {
-    var child_names = [], nonterminal_children = [];
-    for(var i=0;i<signature.length;++i)
-      if(signature[i][0] === '<') {
-        child_names[child_names.length] = signature[i].substring(1, signature[i].length-1);
-      } else {
-        child_names[child_names.length] = signature[i];
-        nonterminal_children[nonterminal_children.length] = signature[i];
-      }
-    
-    exports[tpname] = function() {
-      this.type = tpname;
-      this.attr = {};
-      for(var i=0;i<arguments.length;++i)
-        this[child_names[i]] = arguments[i];
-      for(;i<child_names.length;++i)
-        this[child_names[i]] = null;
-    };
-    exports[tpname].children = nonterminal_children;
-  }
-  
-  // several convenience methods for accessing subtrees
-  var getNumChild = exports.getNumChild = function(nd) {
-    if(Array.isArray(nd))
-      return nd.length;
-    
-    if(nd && nd.type)
-      return exports[nd.type].children.length;
-    
-    return 0;
-  };
-  
-  var getChild = exports.getChild = function(nd, i) {
-    if(Array.isArray(nd))
-      return nd[i];
-    
-    return nd[exports[nd.type].children[i]];
-  };
-
-  var setChild = exports.setChild = function(nd, i, v) {
-    if(Array.isArray(nd))
-      return nd[i] = v;
-
-    return nd[exports[nd.type].children[i]] = v;
-  };
-  
-  var forEachChild = exports.forEachChild = function(nd, cb) {
-    for(var i = 0, n = getNumChild(nd); i < n; ++i)
-      cb(getChild(nd, i), i);
-  };
-  
-  var mapChildren = exports.mapChildren = function(nd, cb) {
-    var res = [];
-    forEachChild(nd, function(ch, i) {
-      res[res.length] = cb(ch, i);
-    });
-    return res;
-  };
-
-  // simple debug printing function
-  var dump = exports.dump = function(nd) {
-    if(Array.isArray(nd))
-      return "[" + nd.map(dump).join() + "]";
-    
-    if(!nd || !nd.type)
-      return nd+"";
-    
-    return nd.type + "(" + mapChildren(nd, dump).join() + ")";
-  };
-  
-  // we give every AST node a property "attr" for storing attributes
-  exports.getAttribute = function(nd, name) {
-    nd.attr = nd.attr || {};
-    return nd.attr[name];
-  };
-  
-  exports.setAttribute = function(nd, name, value) {
-    nd.attr = nd.attr || {};
-    nd.attr[name] = value;
-    return nd;
-  };
-  
-  // positions are attached as attributes
-  exports.hasPosition = function(nd) {
-      return !!exports.getAttribute(nd, 'pos') || !!nd.loc || !!nd.range;
-  };
-  
-  exports.getPosition = function(nd) {
-      if(!exports.getAttribute(nd, 'pos')) {
-      var pos = position.DUMMY_POS.clone();
-      if(nd.loc) {
-	  if(nd.loc.source) {
-	      pos.url = nd.loc.source;
-	  }
-        pos.start_line = nd.loc.start.line;
-        pos.end_line = nd.loc.start.line;
-      }
-      if(nd.range) {
-        pos.start_offset = nd.range[0];
-        pos.end_offset = nd.range[1];
-      }
-      exports.setAttribute(nd, 'pos', pos);
-    }
-    return exports.getAttribute(nd, 'pos');
-  };
-  
-  exports.setPosition = function(nd, pos) {
-    exports.setAttribute(nd, 'pos', pos);
-  };
-  
-  for(var p in signatures)
-    defconstructor(p, signatures[p]);
-//});
-
-},{"./position":19}],17:[function(require,module,exports){
-/*******************************************************************************
- * Copyright (c) 2012 IBM Corporation.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *     IBM Corporation - initial API and implementation
- *******************************************************************************/
-
-/**
- * Utility functions to collect all variable and function declarations in a subtree.
- */
-//if(typeof define !== 'function') {
-//  var define = require('amdefine')(module);
-//}
-//
-//define(function(require, exports) {
-  var ast = require('../../common/lib/ast');
-
-  function getDeclName(decl) {
-    if(decl.type === 'Identifier')
-      return decl.name;
-    return decl.id.name;
-  }
-
-  function collectDecls(nd, accu) {
-    if(!nd)
-      return accu;
-    
-    if(nd.type === 'FunctionDeclaration') {
-      accu[accu.length] = nd;
-    } else if(nd.type === 'VariableDeclarator') {
-      accu[accu.length] = nd;
-    } else if(nd.type !== 'FunctionExpression') {
-      ast.forEachChild(nd, function(ch) {
-        collectDecls(ch, accu);
-      });
-    }
-    return accu;
-  }
-  
-  exports.collectDecls = collectDecls;
-  exports.getDeclName = getDeclName;
-//});
-
-},{"../../common/lib/ast":15}],18:[function(require,module,exports){
-/*******************************************************************************
- * Copyright (c) 2012 IBM Corporation.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *     IBM Corporation - initial API and implementation
- *******************************************************************************/
-
-/**
- * Scope objects keep track of name binding. Each scope object represents
- * either the global scope, a function scope, a catch clause scope, or
- * a 'with' scope.
- */
-
-//if(typeof define !== 'function') {
-//  var define = require('amdefine')(module);
-//}
-//
-//define(function(require, exports) {
-  var decls = require('./decls');
-  
-  // abstract base class of all scopes
-  function Scope(outer, decls) {
-    this.outer = outer;
-    this.decls = decls;
-  }
-  
-  // is x a global variable in this scope?
-  Scope.prototype.isGlobal = function(x) {
-    return !this.isLocal(x) && this.outer.isGlobal(x);
-  };
-  
-  // does x have a declaration at the global level?
-  Scope.prototype.isDeclaredGlobal = function(x) {
-    return this.outer.isDeclaredGlobal();
-  };
-  
-  // look up x among the local declarations in this scope
-  Scope.prototype.localLookup = function(x) {
-    for(var i=0;i<this.decls.length;++i)
-      if(decls.getDeclName(this.decls[i]) === x)
-        return this.decls[i];
-    return null;
-  };
-  
-  // is x a local variable declared in this scope?
-  Scope.prototype.isLocal = function(x) { return !!this.localLookup(x); };
-  
-  // look up x in this or an enclosing scope
-  Scope.prototype.lookup = function(x) {
-    return this.localLookup(x) || this.outer && this.outer.lookup(x);
-  };
-  
-  // object representing the global scope
-  function GlobalScope(root) {
-    Scope.call(this, null, decls.collectDecls(root, []));
-  }
-  GlobalScope.prototype = Object.create(Scope.prototype);
-  
-  GlobalScope.prototype.isGlobal = function(x) { return true; };
-  GlobalScope.prototype.isLocal = function(x) { return false; };
-  GlobalScope.prototype.possibleWithBindings = function(x) { return []; };
-  GlobalScope.prototype.isDeclaredGlobal = function(x) {
-    return !!this.localLookup(x);
-  };
-    
-  // constructor representing a function scope
-  function FunctionScope(outer, fn) {
-    this.fn = fn;
-    Scope.call(this, outer, fn.params.concat(decls.collectDecls(fn.body, [])));
-  }
-  FunctionScope.prototype = Object.create(Scope.prototype);
-  
-  // 'arguments' and (in a named function expression) the function itself are local,
-  // even though they are not declared
-  FunctionScope.prototype.isLocal = function(x) {
-    return x === 'arguments' ||
-           this.fn.type === 'FunctionExpression' && this.fn.id && this.fn.id.name === x ||
-           Scope.prototype.isLocal.call(this, x);
-  };
-  
-  // list of enclosing with statements (represented by the variables they 'with' on) that
-  // may bind x
-  FunctionScope.prototype.possibleWithBindings = function(x) {
-    if(this.isLocal(x))
-      return [];
-    return this.outer.possibleWithBindings(x);
-  };
-  
-  // constructor representing a catch clause scope
-  function CatchScope(outer, cc) {
-    Scope.call(this, outer, [cc.param]);
-  }
-  CatchScope.prototype = Object.create(Scope.prototype);
-  
-  CatchScope.prototype.isLocal = function(x) { return x === this.decls[0].name || this.outer.isLocal(x); };
-  
-  CatchScope.prototype.possibleWithBindings = function(x) {
-    if(x === this.decls[0].name)
-      return [];
-    return this.outer.possibleWithBindings(x);
-  };
-  
-  // constructor representing a with scope
-  function WithScope(outer, with_var) {
-    Scope.call(this, outer, []);
-    this.with_var = with_var;
-  }
-  WithScope.prototype = Object.create(Scope.prototype);
-  
-  WithScope.prototype.isLocal = function(x) { return this.outer.isLocal(x); };
-  
-  WithScope.prototype.possibleWithBindings = function(x) {
-    var bindings = this.outer.possibleWithBindings(x);
-    bindings.unshift(this.with_var);
-    return bindings;
-  };
-  
-  exports.Scope = Scope;
-  exports.GlobalScope = GlobalScope;
-  exports.FunctionScope = FunctionScope;
-  exports.CatchScope = CatchScope;
-  exports.WithScope = WithScope;
-//});
-
-},{"./decls":17}],11:[function(require,module,exports){
+},{"./package.json":22,"estraverse":30,"source-map":21}],11:[function(require,module,exports){
 /*!
  * JSHint, by JSHint Community.
  *

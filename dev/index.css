@@ -90,7 +90,7 @@ pre { font-size: 12px; }
 }
 
 .ace_editor .executed {
-  background-color: rgba(216, 88, 44, 0.25);
+  background-color: rgba(216, 88, 44, 0.125);
   position: absolute;
 }
 

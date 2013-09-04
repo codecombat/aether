@@ -62,7 +62,7 @@ module.exports.RuntimeProblem = class RuntimeProblem extends UserCodeProblem
     @message = RuntimeProblem.explainErrorMessage error  # TODO: this should be done with configurable rules
     @ranges = RuntimeProblem.getAnonymousErrorRanges error  # later this will go away because we'll instrument all the statements
     if @ranges?.length
-      console.log "Got ranges:", @ranges
+      console.log "Runtime problem got ranges:", @ranges
       lineNumber = @ranges[0][0][0]
       if @message.search(/^Line \d+/) != -1
         @message = @message.replace /^Line \d+/, (match, n) => "Line #{lineNumber}"
