@@ -17,19 +17,24 @@ transforms = require './transforms'
 optionsValidator = require './validators/options'
 
 module.exports = class Aether
-  @defaults: defaults
+  @defaults: defaults 
   @problems: problems
   @execution: execution
   constructor: (options) ->
+    #do a deep copy of the options (using lodash, not underscore)
     @originalOptions = _.cloneDeep options
+
+    #if options and options.problems do not exist, create them as empty objects
     options ?= {}
     options.problems ?= {}
     unless options.excludeDefaultProblems
+      #merge the default problems and the existing problems array
       options.problems = _.merge _.cloneDeep(Aether.problems.problems), options.problems
+    #validate the options
 
     optionsValidation = optionsValidator options
     throw new Error("Options array is not valid: " + JSON.stringify(optionsValidation.errors, null, 4)) if not optionsValidation.valid
-
+    #merge the given options with the default
     @options = _.merge _.cloneDeep(Aether.defaults), options
     @reset()
 
@@ -77,11 +82,9 @@ module.exports = class Aether
     problem
 
   wrap: (rawCode) ->
-    @wrappedCodePrefix ?=
-    """
+    @wrappedCodePrefix ?="""
     function #{@options.functionName or 'foo'}(#{@options.functionParameters.join(', ')}) {
     \"use strict\";
-
     """
     @wrappedCodeSuffix ?= "\n}"
     @wrappedCodePrefix + rawCode + @wrappedCodeSuffix
