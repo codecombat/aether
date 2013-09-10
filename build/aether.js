@@ -21149,7 +21149,7 @@ var global=self;(function() {
 
   transforms = require('./transforms');
 
-  optionsValidator = require('./validators/optionstv4');
+  optionsValidator = require('./validators/options');
 
   module.exports = Aether = (function() {
     Aether.defaults = defaults;
@@ -21645,7 +21645,7 @@ var global=self;(function() {
 
 }).call(this);
 
-},{"./defaults":2,"./execution":3,"./morph":4,"./problems":5,"./transforms":6,"./validators/optionstv4":7,"JS_WALA/normalizer/lib/normalizer":12,"acorn/acorn_loose":16,"escodegen":17,"esprima":20,"jshint":32,"lodash":21,"traceur":21}],2:[function(require,module,exports){
+},{"./defaults":2,"./execution":3,"./morph":4,"./problems":5,"./transforms":6,"./validators/options":7,"JS_WALA/normalizer/lib/normalizer":12,"acorn/acorn_loose":16,"escodegen":17,"esprima":20,"jshint":32,"lodash":21,"traceur":21}],2:[function(require,module,exports){
 (function() {
   var defaults, execution;
 
