@@ -14,7 +14,8 @@ execution = require './execution'
 morph = require './morph'
 transforms = require './transforms'
 
-optionsValidator = require './validators/options'
+#optionsValidator = require './validators/options'
+optionsValidator = require './validators/optionstv4'
 
 module.exports = class Aether
   @defaults: defaults 
@@ -33,7 +34,8 @@ module.exports = class Aether
     #validate the options
 
     optionsValidation = optionsValidator options
-    throw new Error("Options array is not valid: " + JSON.stringify(optionsValidation.errors, null, 4)) if not optionsValidation.valid
+    #throw new Error("Options array is not valid: " + JSON.stringify(optionsValidation.errors, null, 4)) if not optionsValidation.valid
+    throw new Error("Options array is not valid: " + JSON.stringify(optionsValidation.error, null, 4)) if not optionsValidation.valid
     #merge the given options with the default
     @options = _.merge _.cloneDeep(Aether.defaults), options
     @reset()
