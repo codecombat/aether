@@ -1,7 +1,8 @@
-revalidator = require 'revalidator'
+tv4 = require('tv4').tv4
 
 module.exports = (options) ->
-  revalidator.validate options,
+  tv4.validateMultiple options, 
+    "type": "object"
     additionalProperties: false
     properties:
       thisValue:
@@ -47,3 +48,4 @@ module.exports = (options) ->
       includeStyle:
         type: 'boolean'
         default: true
+        
