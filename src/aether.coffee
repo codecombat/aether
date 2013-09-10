@@ -35,7 +35,7 @@ module.exports = class Aether
 
     optionsValidation = optionsValidator options
     #throw new Error("Options array is not valid: " + JSON.stringify(optionsValidation.errors, null, 4)) if not optionsValidation.valid
-    throw new Error("Options array is not valid: " + JSON.stringify(optionsValidation.error, null, 4)) if not optionsValidation.valid
+    throw new Error("Options array is not valid: " + JSON.stringify(optionsValidation.errors, null, 4)) if not optionsValidation.valid
     #merge the given options with the default
     @options = _.merge _.cloneDeep(Aether.defaults), options
     @reset()
