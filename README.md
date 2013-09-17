@@ -1,5 +1,6 @@
 ![aether logo](http://i.imgur.com/uf36eRD.jpg)
-![Build Status](https://travis-ci.org/nwinter/aether.png)](https://travis-ci.org/nwinter/aether)
+======
+[![Build Status](https://travis-ci.org/nwinter/aether.png)](https://travis-ci.org/nwinter/aether)
 
 ## Purpose
 Aether aims to make it easy for people to learn and write JavaScript and CoffeeScript by helping them catch and fix bugs, 

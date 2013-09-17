@@ -1,9 +1,6 @@
-<<<<<<< HEAD
-=======
 # Don't include intermediate JS
 lib
 
->>>>>>> 1c2da46f48c15b8c0d8f924b8a642f52f059b693
 lib-cov
 *.seed
 *.log
@@ -12,18 +9,13 @@ lib-cov
 *.out
 *.pid
 *.gz
-<<<<<<< HEAD
 
-=======
 node_modules/
->>>>>>> 1c2da46f48c15b8c0d8f924b8a642f52f059b693
 pids
 logs
 results
 
 npm-debug.log
-<<<<<<< HEAD
-=======
 
 # OS X
 .DS_Store
@@ -64,4 +56,3 @@ Thumbs.db
 .tmproj
 .idea
 nbproject
->>>>>>> 1c2da46f48c15b8c0d8f924b8a642f52f059b693
