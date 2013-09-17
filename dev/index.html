@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+
+<title>Aether</title>
+<meta charset="utf-8">
+<!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><![endif]-->
+
+<script src="http://cdnjs.cloudflare.com/ajax/libs/lodash.js/1.3.1/lodash.min.js"></script>
+<script src="http://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+<script src="http://cdnjs.cloudflare.com/ajax/libs/ace/1.1.01/ace.js"></script>
+<script src="http://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.0.0/js/bootstrap.min.js"></script>
+<script src="http://sderickson.github.io/treema/js/vendor/tv4.js"></script>
+<!--<script src="http://sderickson.github.io/treema/js/treema.js"></script>-->
+<script src="../../treema/treema.js"></script>
+<script src="../build/aether.js"></script>
+<script src="index.js" href="index.js"></script>
+<link rel="stylesheet" href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.min.css">
+<link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css">
+<!--<link rel="stylesheet" href="http://sderickson.github.io/treema/css/treema.css">-->
+<link rel="stylesheet" href="../../treema/treema.css">
+<link rel="stylesheet" href="index.css">
+
+<div id="content">
+  <a href="https://github.com/you"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_orange_ff7600.png" alt="Fork me on GitHub"></a>
+
+  <h1>Aether - Purify Your Users' JavaScript</h1>
+
+  <ul class="nav nav-pills navbar navbar-default">
+    <li><a href="#overview" data-toggle="tab">Overview</a></li>
+    <li class="active"><a href="#demo" data-toggle="tab">Demo</a></li>
+    <li><a href="#usage" data-toggle="tab">Usage</a></li>
+    <li><a href="#develop" data-toggle="tab">Dev</a></li>
+    <li id="github-link"><a href="https://github.com/nwinter/aether">Aether on Github</a></li>
+  </ul>
+  
+  <hr />
+
+  <div class="tab-content">
+
+    <div class="tab-pane fade" id="overview">
+      <p class="lead"><strong>Aether</strong> aims to make it easy for people to learn and write JavaScript and CoffeeScript by helping them catch and fix bugs, 
+	letting them see and more easily understand the execution of their program <a href="http://youtu.be/PUv66718DII?t=17m25s">(like Brett Victor commanded!)</a>, 
+	and giving them tips on how they can improve their code. <a href="http://codecombat.com/">CodeCombat</a> is behind it.
+      </p>
+      <hr />
+      
+      <h2><a name="get-in-touch" class="anchor" href="#get-in-touch"></a>Get in touch</h2>
+      
+      <p>You can use the <a href="https://github.com/nwinter/aether/issues">GitHub issues</a>, the <a href="http://discourse.codecombat.com/">Discourse forum</a>, the <a href="https://groups.google.com/forum/#!forum/aether-dev">Google Group</a>, the <a href="http://www.hipchat.com/g3plnOKqa">HipChat</a>, or <a href="mailto:nick@codecombat.com">email</a> <a href="http://www.nickwinter.net/">Nick</a>.</p>
+      
+      <h2><a name="what-is-it" class="anchor" href="#what-is-it"></a>What is it?</h2>
+      
+      <p>It's a JavaScript library (written in CoffeeScript) that takes user code as input; does computer-sciencey transpilation things to it with the help of <a href="http://jshint.com/">JSHint</a>, <a href="http://esprima.org/">Esprima</a>, <a href="https://github.com/wala/JS_WALA">JS_WALA</a>, <a href="https://github.com/Constellation/escodegen">escodegen</a>, and <a href="https://github.com/google/traceur-compiler">traceur</a>; and gives you:</p>
+      
+      <ol>
+	<li><p><em>incomplete</em> <strong>Linting</strong> with totally configurable error/warning/info messages. Instead of <code>"Warning: Line 2: Missing semicolon."</code>, you could make Aether say, <code>"Error: You need a semicolon here on line 2 after 'this.explode()' to end the statement."</code>, or <code>"fyi: might want a ; here amiga"</code>, or nothing at all. Aether does spellchecking based on what properties should exist, too: <code>Should be 'destroy', not 'destory'.</code></p></li>
+	<li><p><em>incomplete</em> <strong>Transformation</strong> like with <a href="https://github.com/substack/node-falafel">node-falafel</a>, but even easier, because your source transformation plugins can run either before or after the <a href="http://en.wikipedia.org/wiki/Abstract_syntax_tree">AST</a> is normalized with <a href="https://github.com/wala/JS_WALA">JS_WALA</a>.</p></li>
+	<li><p><em>incomplete</em> <strong>Sandboxing</strong> so that you can actually run user code in the browser without worrying if the world will end. Well, not actually. <a href="http://www.adsafe.org/">That</a> is <a href="http://seclab.stanford.edu/websec/jsPapers/w2sp.pdf">hard</a>; one should at least use a web worker. But good enough to foil most hacking attempts.</p></li>
+	<li><p><em>planned</em> <strong>Instrumentation</strong> so that when the code is run, you'll know everything that happened. Count statements executed, step through the flow of execution, retrieve past variable states, and even pause and resume execution whenever you want. Pause after every statement? Sure!</p></li>
+	<li><p><em>planned</em> <strong>Style analysis</strong>: metrics on things like what kind of indentation and bracket style the code uses, whether it uses recursion or regular expressions, etc.</p></li>
+	<li><p><em>planned</em> <strong>Autocompletion</strong> suggestions based on unfinished code.</p></li>
+	<li><p><em>planned</em> <strong>Visualization</strong> of the program's execution. (Well, maybe. We haven't started that part yet; we might not do it.)</p></li>
+	<li><p><em>planned</em> <strong>Other goodies</strong>! You can let your users code in <a href="http://www.slideshare.net/domenicdenicola/es6-the-awesome-parts">ES6</a> now and hopefully <a href="https://github.com/michaelficarra/CoffeeScriptRedux">CoffeeScript</a> soon.</p></li>
+      </ol>
+
+      <h3><a name="development-status" class="anchor" href="#development-status"></a>Development Status</h3>
+      
+      <p>Pre-alpha! Watch out! We've converted the dev version of <a href="http://codecombat.com/">CodeCombat</a> to use it, but there are many bugs and missing pieces. If you'd be interested in Aether were it solid and finished, <em>please</em> tell us so we can get an idea of where else it might be useful and how it should work.</p>
+ 
+      <h3>What is it good for?</h3>
+
+      <p>TODO: give some examples of what kind of projects would use it</p>
+
+    </div>
+
+    <div class="tab-pane fade in active" id="demo">
+
+      <p class="lead text-center">
+	Load example: <select id="example-select"></select>
+      </p>
+
+      <div class="row demo-row">
+	<div class="col-md-4">
+	  <p class="lead">Write some JavaScript here.</p>
+	  <div class="ace_editor_wrapper dev_section" id="javascript_input"></div>
+	</div>
+	<div class="col-md-4">
+	  <p class="lead">Use Aether on it.</p>
+	  <div class="ace_editor_wrapper dev_section" id="aether_input"></div>
+	</div>
+	<div class="col-md-4">
+	  <p class="lead">Problems detected show up here.</p>
+	  <div class="dev_section" id="aether_problems"></div>
+	</div>
+      </div>
+
+      <div class="row demo-row">
+	<div class="col-md-4">
+	  <p class="lead">Gory transpiled code!</p>
+	  <div class="ace_editor_wrapper dev_section" id="aether_input"></div>
+	</div>
+	<div class="col-md-4">
+	  <p class="lead">Execution metrics!</p>
+	  <div class="dev_section" id="aether_metrics"></div>
+	  <p class="lead">Console output lurks here.</p>
+	  <pre id="aether_console"></pre>
+	</div>
+	<div class="col-md-4">
+	  <p class="lead">Flow analysis!</p>
+	  <div class="dev_section" id="aether_flow"></div>
+	</div>
+    </div>
+
+    <div class="tab-pane fade" id="usage">
+      <p class="lead">Aether runs in node and the browser using <a href="http://addyosmani.com/writing-modular-js/">node-style CommonJS requires</a>.</p>
+      
+      <p>In the browser, grab <a href="https://github.com/nwinter/aether/blob/master/build/aether.js">build/aether.js</a> or <a href="https://github.com/nwinter/aether/blob/master/build/aether.min.js">build/aether.min.js</a>. Or in node, add <code>"aether": "https://github.com/nwinter/aether/tarball/master"</code> to your <code>dependencies</code> in <code>package.json</code> and then <code>npm install</code>. (This may not work yet.) Then, in your code:</p>
+      
+      <pre>
+var Aether = require('aether');
+var aether = new Aether();
+aether.lint(someGnarlyUserCode);
+aether.problems.warnings;
+[{ranges: [[[15, 15], [15, 22]]],
+  id: 'aether_MissingThis',
+  message: 'Missing `this.` keyword; should be `this.getEnemies`.',
+  hint: 'There is no function `getEnemys`, but `this` has a method `getEnemies`.',
+  level: "warning"}]
+aether.transpile(someGnarlyUserCode);
+var gnarlyFunc = aether.createFunction();
+gnarlyFunc();
+// At any point, you can check aether.problems, aether.style, aether.flow, aether.metrics, etc.
+// See more examples in the tests: https://github.com/nwinter/aether/tree/master/test
+// Or planned examples in the plan: https://github.com/nwinter/aether/blob/master/plan.md
+      </pre>
+      
+      <p>In the browser, it currently depends on <a href="http://lodash.com/">lodash</a> or <a href="http://underscorejs.org/">underscore</a>. We test in Chrome and node, and it will probably work in other modern browsers.</p>
+
+    </div>
+
+    <div class="tab-pane fade" id="develop">
+      <p class="lead">Want to hack on Aether? Awesome!</p>
+      
+      <h3>Setting Up Your Environment</h3>
+      
+      <p>
+	The <a href="https://github.com/nwinter/aether">Github Repository</a>
+	has <strong>everything</strong> you need to work on Aether.
+	You'll need <a href="http://www.joyent.com/blog/installing-node-and-npm">Node, NPM</a>
+	and <a href="http://git-scm.com/">Git</a> installed.
+      </p>
+      
+      <ol>
+	<li>
+	  <strong>Clone the repository</strong>:
+	  <pre>git clone https://github.com/nwinter/aether.git</pre>
+	</li>
+	<li>
+	  Go to the directory and <strong>npm install</strong>:
+	  <pre>cd aether
+npm install</pre>
+	</li>
+      </ol>
+      
+      <h3>Running The Environment</h3>
+      
+      <p>
+	From the aether directory, run:
+      </p>
+      
+      <pre>grunt build  # or grunt watch, to recompile on any changes</pre>
+      
+      <p>
+	Then you can navigate to <code>file://localhost/some/path/to/aether/dev/index.html</code> and see it in action.
+      </p>
+
+      <h3>Things to keep in mind</h3>
+      
+      <ul>
+	<li>Edit the CoffeeScript sourc in /src and /test, not the transpiled JavaScript in aether/lib.</li>
+	<li>Remember to create tests in the /test folder.</li>
+      </ul>
+
+      <h3>What to work on?</h3>
+
+      <p>TODO</p>
+      
+      <p>You could always also add more tests or handle	<a href="https://github.com/nwinter/aether/issues">reported issues</a>.
+      </p>
+
+    </div>
+  </div>
+
+
+  <footer><div></div><div></div></footer>
+</div>

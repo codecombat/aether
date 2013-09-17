@@ -1,0 +1,52 @@
+# Don't include GitHub stuff or local scripts
+Gruntfile.coffee
+.gitignore
+.travis.yml
+
+# Only provide compiled JS output, not browserified
+src
+build
+test
+lib/test
+
+### Stuff from .gitignore ###
+
+# OS X
+.DS_Store
+Icon?
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+
+# Emacs
+*.*~
+*.#
+.#*
+*#
+
+# Vim
+.*.sw[a-z]
+*.un~i
+
+# Sublime
+*.sublime-project
+*.sublime-workspace
+
+*.diff
+*.err
+*.orig
+*.log
+*.rej
+*.vi
+*.sass-cache
+
+# OS or Editor folders
+.cache
+.project
+.settings
+.tmproj
+.idea
+nbproject
