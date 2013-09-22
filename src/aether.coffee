@@ -17,49 +17,65 @@ transforms = require './transforms'
 optionsValidator = require './validators/options'
 
 module.exports = class Aether
+  #various declarations
   @defaults: defaults 
   @problems: problems
   @execution: execution
+
+  #MODIFIES: @options
+  #EFFECTS: Initialize the Aether object by modifying @options by combining the default options with the options parameter 
+  #         and doing validation. 
   constructor: (options) ->
+
     #do a deep copy of the options (using lodash, not underscore)
     @originalOptions = _.cloneDeep options
 
     #if options and options.problems do not exist, create them as empty objects
     options ?= {}
     options.problems ?= {}
+    #unless the user has specified to exclude the default options, merge the given options with the default options
     unless options.excludeDefaultProblems
-      #merge the default problems and the existing problems array
       options.problems = _.merge _.cloneDeep(Aether.problems.problems), options.problems
+    
     #validate the options
-
     optionsValidation = optionsValidator options
     throw new Error("Options array is not valid: " + JSON.stringify(optionsValidation.errors, null, 4)) if not optionsValidation.valid
+
     #merge the given options with the default
     @options = _.merge _.cloneDeep(Aether.defaults), options
+
+    #reset the state of the Aether object
     @reset()
 
+  #EFFECTS: Performs quick heuristics to determine whether the code will run or produce compilation errors.
+  #         If the bool thorough is specified, it will perform detailed linting. Returns true if raw will run, and false if it won't. 
+  #NOTES:   First check inspired by ACE: https://github.com/ajaxorg/ace/blob/master/lib/ace/mode/javascript_worker.js
   canTranspile: (raw, thorough=false) ->
-    # Quick heuristics: can this code be run, or will it produce a compilation error?
-    # First check inspired by ACE: https://github.com/ajaxorg/ace/blob/master/lib/ace/mode/javascript_worker.js
+ 
     return true if not raw #blank code should compile, but bypass the other steps
     try
       eval "'use strict;'\nthrow 0;" + raw  # evaluated code can only create variables in this function
     catch e
       return false if e isnt 0
     return true unless thorough
+    #lint the code and return errors
     lintProblems = @lint raw
     return lintProblems.errors.length is 0
 
+  #EFFECTS: Compare the previously generated AST to the new code's AST. Returns true they are different, and false if they are the same. 
+  #TODO:    add AST checks
   hasChangedSignificantly: (raw, oldAether) ->
     # Barring things like comments and whitespace and such, are the ASTs going to be different? (oldAether being a previously compiled instance)
     return true unless oldAether
-    return raw isnt oldAether.raw  # TODO: add AST checks
-
+    return raw isnt oldAether.raw  
+  #EFFECTS: Compares the text of the new code to the old code. If it is exactly the same, it returns false, and if not, returns true
   hasChanged: (raw, oldAether) ->
     # Is the code exactly the same?
     return true unless oldAether
     return raw isnt oldAether.raw
 
+
+  #EFFECTS: Resets the state of Aether. 
   reset: ->
     @problems = errors: [], warnings: [], infos: []
     @style = {}
@@ -68,6 +84,7 @@ module.exports = class Aether
     @visualization = {}
     @pure = null
 
+  
   transpile: (@raw) ->
     # Transpile it. Even if it can't transpile, it will give syntax errors and warnings and such. Clears any old state.
     @reset()

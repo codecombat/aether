@@ -27362,7 +27362,6 @@ var global=self;/*
   THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/*jslint bitwise:true */
 /*global exports:true, generateStatement:true, generateExpression:true, require:true, global:true*/
 (function () {
     'use strict';
@@ -27399,6 +27398,7 @@ var global=self;/*
         AssignmentExpression: 'AssignmentExpression',
         ArrayExpression: 'ArrayExpression',
         ArrayPattern: 'ArrayPattern',
+        ArrowFunctionExpression: 'ArrowFunctionExpression',
         BlockStatement: 'BlockStatement',
         BinaryExpression: 'BinaryExpression',
         BreakStatement: 'BreakStatement',
@@ -27449,6 +27449,7 @@ var global=self;/*
         Sequence: 0,
         Assignment: 1,
         Conditional: 2,
+        ArrowFunction: 2,
         LogicalOR: 3,
         LogicalAND: 4,
         BitwiseOR: 5,
@@ -27911,6 +27912,11 @@ var global=self;/*
             ((ch.charCodeAt(0) >= 0x80) && Regex.NonAsciiIdentifierPart.test(ch));
     }
 
+    // takes char code
+    function isDecimalDigit(ch) {
+        return (ch >= 48 && ch <= 57);   // 0..9
+    }
+
     function toSourceNode(generated, node) {
         if (node == null) {
             if (generated instanceof SourceNode) {
@@ -27931,7 +27937,9 @@ var global=self;/*
             leftChar = leftSource.charAt(leftSource.length - 1),
             rightChar = rightSource.charAt(0);
 
-        if (((leftChar === '+' || leftChar === '-') && leftChar === rightChar) || (isIdentifierPart(leftChar) && isIdentifierPart(rightChar))) {
+        if ((leftChar === '+' || leftChar === '-') && leftChar === rightChar ||
+        isIdentifierPart(leftChar) && isIdentifierPart(rightChar) ||
+        leftChar === '/' && rightChar === 'i') { // infix word operators all start with `i`
             return [left, ' ', right];
         } else if (isWhiteSpace(leftChar) || isLineTerminator(leftChar) || isWhiteSpace(rightChar) || isLineTerminator(rightChar)) {
             return [left, right];
@@ -28140,15 +28148,27 @@ var global=self;/*
     }
 
     function generateFunctionBody(node) {
-        var result, i, len, expr;
-        result = ['('];
-        for (i = 0, len = node.params.length; i < len; i += 1) {
-            result.push(generateIdentifier(node.params[i]));
-            if (i + 1 < len) {
-                result.push(',' + space);
+        var result, i, len, expr, arrow;
+
+        arrow = node.type === Syntax.ArrowFunctionExpression;
+
+        if (arrow && node.params.length === 1 && node.params[0].type === Syntax.Identifier) {
+            // arg => { } case
+            result = [generateIdentifier(node.params[0])];
+        } else {
+            result = ['('];
+            for (i = 0, len = node.params.length; i < len; i += 1) {
+                result.push(generateIdentifier(node.params[i]));
+                if (i + 1 < len) {
+                    result.push(',' + space);
+                }
             }
+            result.push(')');
         }
-        result.push(')');
+
+        if (arrow) {
+            result.push(space, '=>');
+        }
 
         if (node.expression) {
             result.push(space);
@@ -28168,7 +28188,22 @@ var global=self;/*
     }
 
     function generateExpression(expr, option) {
-        var result, precedence, type, currentPrecedence, i, len, raw, fragment, multiline, leftChar, leftSource, rightChar, allowIn, allowCall, allowUnparenthesizedNew, property;
+        var result,
+            precedence,
+            type,
+            currentPrecedence,
+            i,
+            len,
+            raw,
+            fragment,
+            multiline,
+            leftChar,
+            leftSource,
+            rightChar,
+            allowIn,
+            allowCall,
+            allowUnparenthesizedNew,
+            property;
 
         precedence = option.precedence;
         allowIn = option.allowIn;
@@ -28215,6 +28250,11 @@ var global=self;/*
                 Precedence.Assignment,
                 precedence
             );
+            break;
+
+        case Syntax.ArrowFunctionExpression:
+            allowIn |= (Precedence.ArrowFunction < precedence);
+            result = parenthesize(generateFunctionBody(expr), Precedence.ArrowFunction, precedence);
             break;
 
         case Syntax.ConditionalExpression:
@@ -28270,7 +28310,8 @@ var global=self;/*
                 allowCall: true
             });
 
-            if (expr.operator === '/' && fragment.toString().charAt(0) === '/') {
+            if (expr.operator === '/' && fragment.toString().charAt(0) === '/' ||
+            expr.operator.slice(-1) === '<' && fragment.toString().slice(0, 3) === '!--') {
                 // If '/' concats with '/', it is interpreted as comment start
                 result.push(' ', fragment);
             } else {
@@ -28362,11 +28403,19 @@ var global=self;/*
             } else {
                 if (expr.object.type === Syntax.Literal && typeof expr.object.value === 'number') {
                     fragment = toSourceNode(result).toString();
-                    if (fragment.indexOf('.') < 0) {
-                        if (!/[eExX]/.test(fragment) &&
-                                !(fragment.length >= 2 && fragment.charCodeAt(0) === 48)) {  // '0'
-                            result.push('.');
-                        }
+                    // When the following conditions are all true,
+                    //   1. No floating point
+                    //   2. Don't have exponents
+                    //   3. The last character is a decimal digit
+                    //   4. Not hexadecimal OR octal number literal
+                    // we should add a floating point.
+                    if (
+                            fragment.indexOf('.') < 0 &&
+                            !/[eExX]/.test(fragment) &&
+                            isDecimalDigit(fragment.charCodeAt(fragment.length - 1)) &&
+                            !(fragment.length >= 2 && fragment.charCodeAt(0) === 48)  // '0'
+                            ) {
+                        result.push('.');
                     }
                 }
                 result.push('.', generateIdentifier(expr.property));
@@ -29420,7 +29469,7 @@ var global=self;/*
   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
   THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-/*jslint vars:false*/
+/*jslint vars:false, bitwise:true*/
 /*jshint indent:4*/
 /*global exports:true, define:true*/
 (function (root, factory) {
@@ -29448,6 +29497,7 @@ var global=self;/*
     Syntax = {
         AssignmentExpression: 'AssignmentExpression',
         ArrayExpression: 'ArrayExpression',
+        ArrowFunctionExpression: 'ArrowFunctionExpression',
         BlockStatement: 'BlockStatement',
         BinaryExpression: 'BinaryExpression',
         BreakStatement: 'BreakStatement',
@@ -29570,6 +29620,7 @@ var global=self;/*
     VisitorKeys = {
         AssignmentExpression: ['left', 'right'],
         ArrayExpression: ['elements'],
+        ArrowFunctionExpression: ['params', 'body'],
         BlockStatement: ['body'],
         BinaryExpression: ['left', 'right'],
         BreakStatement: ['label'],
@@ -30064,7 +30115,7 @@ var global=self;/*
         return tree;
     }
 
-    exports.version = '1.3.0';
+    exports.version = '1.3.1';
     exports.Syntax = Syntax;
     exports.traverse = traverse;
     exports.replace = replace;
@@ -30085,7 +30136,7 @@ module.exports={
     "esgenerate": "./bin/esgenerate.js",
     "escodegen": "./bin/escodegen.js"
   },
-  "version": "0.0.26",
+  "version": "0.0.27",
   "engines": {
     "node": ">=0.4.0"
   },
@@ -30135,7 +30186,7 @@ module.exports={
   },
   "readme": "\n### Escodegen [![Build Status](https://secure.travis-ci.org/Constellation/escodegen.png)](http://travis-ci.org/Constellation/escodegen) [![Build Status](https://drone.io/github.com/Constellation/escodegen/status.png)](https://drone.io/github.com/Constellation/escodegen/latest)\n\nEscodegen ([escodegen](http://github.com/Constellation/escodegen)) is\n[ECMAScript](http://www.ecma-international.org/publications/standards/Ecma-262.htm)\n(also popularly known as [JavaScript](http://en.wikipedia.org/wiki/JavaScript>JavaScript))\ncode generator from [Parser API](https://developer.mozilla.org/en/SpiderMonkey/Parser_API) AST.\nSee [online generator demo](http://constellation.github.com/escodegen/demo/index.html).\n\n\n### Install\n\nEscodegen can be used in a web browser:\n\n    <script src=\"escodegen.browser.js\"></script>\n\nor in a Node.js application via the package manager:\n\n    npm install escodegen\n\n\n### Usage\n\nA simple example: the program\n\n    escodegen.generate({\n        type: 'BinaryExpression',\n        operator: '+',\n        left: { type: 'Literal', value: 40 },\n        right: { type: 'Literal', value: 2 }\n    });\n\nproduces the string `'40 + 2'`\n\nSee the [API page](https://github.com/Constellation/escodegen/wiki/API) for\noptions. To run the tests, execute `npm test` in the root directory.\n\n\n### License\n\n#### Escodegen\n\nCopyright (C) 2012 [Yusuke Suzuki](http://github.com/Constellation)\n (twitter: [@Constellation](http://twitter.com/Constellation)) and other contributors.\n\nRedistribution and use in source and binary forms, with or without\nmodification, are permitted provided that the following conditions are met:\n\n  * Redistributions of source code must retain the above copyright\n    notice, this list of conditions and the following disclaimer.\n\n  * Redistributions in binary form must reproduce the above copyright\n    notice, this list of conditions and the following disclaimer in the\n    documentation and/or other materials provided with the distribution.\n\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\"\nAND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE\nIMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE\nARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY\nDIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES\n(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;\nLOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND\nON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT\n(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF\nTHIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n\n#### source-map\n\nSourceNodeMocks has a limited interface of mozilla/source-map SourceNode implementations.\n\nCopyright (c) 2009-2011, Mozilla Foundation and contributors\nAll rights reserved.\n\nRedistribution and use in source and binary forms, with or without\nmodification, are permitted provided that the following conditions are met:\n\n* Redistributions of source code must retain the above copyright notice, this\n  list of conditions and the following disclaimer.\n\n* Redistributions in binary form must reproduce the above copyright notice,\n  this list of conditions and the following disclaimer in the documentation\n  and/or other materials provided with the distribution.\n\n* Neither the names of the Mozilla Foundation nor the names of project\n  contributors may be used to endorse or promote products derived from this\n  software without specific prior written permission.\n\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AND\nANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED\nWARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE\nDISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE\nFOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL\nDAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR\nSERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER\nCAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,\nOR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE\nOF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n",
   "readmeFilename": "README.md",
-  "_id": "escodegen@0.0.26",
+  "_id": "escodegen@0.0.27",
   "_from": "escodegen@~0.0.25"
 }
 
@@ -40853,7 +40904,11 @@ var JSHINT = (function () {
 			return;
 		}
 		for (;;) {
-			t = peek(i);
+			do {
+				t = peek(i);
+				i += 1;
+			} while (t.id != "(end)" && t.id === "(comment)");
+
 			if (t.reach) {
 				return;
 			}
@@ -40870,7 +40925,6 @@ var JSHINT = (function () {
 				warning("W027", t, t.value, s);
 				break;
 			}
-			i += 1;
 		}
 	}
 
@@ -42109,7 +42163,6 @@ var JSHINT = (function () {
 		}
 
 		funct["(params)"] = functionparams(fatarrowparams);
-
 		funct["(metrics)"].verifyMaxParametersPerFunction(funct["(params)"]);
 
 		block(false, true, true, fatarrowparams ? true:false);
@@ -42137,6 +42190,7 @@ var JSHINT = (function () {
 			statementCount: 0,
 			nestedBlockDepth: -1,
 			ComplexityCount: 1,
+
 			verifyMaxStatementsPerFunction: function () {
 				if (state.option.maxstatements &&
 					this.statementCount > state.option.maxstatements) {
@@ -44129,6 +44183,7 @@ var JSHINT = (function () {
 			functions: [],
 			options: state.option
 		};
+
 		var implieds = [];
 		var members = [];
 		var fu, f, i, j, n, globals;
@@ -44183,6 +44238,13 @@ var JSHINT = (function () {
 			fu.character = f["(character)"];
 			fu.last = f["(last)"];
 			fu.lastcharacter = f["(lastcharacter)"];
+
+			fu.metrics = {
+				complexity: f["(metrics)"].ComplexityCount,
+				parameters: (f["(params)"] || []).length,
+				statements: f["(metrics)"].statementCount
+			};
+
 			data.functions.push(fu);
 		}
 
@@ -45860,7 +45922,7 @@ Lexer.prototype = {
 					line: this.line,
 					character: this.char
 				}, checks, function () {
-					return state.directive["use strict"] && token.base === 8; 
+					return state.directive["use strict"] && token.base === 8;
 				});
 
 				this.trigger("Number", {
@@ -45882,6 +45944,7 @@ Lexer.prototype = {
 
 				if (token.isSpecial) {
 					return {
+						id: '(comment)',
 						value: token.value,
 						body: token.body,
 						type: token.commentType,
@@ -49939,23 +50002,22 @@ function ValidationError(code, message, dataPath, schemaPath, subErrors) {
 	this.schemaPath = schemaPath || "";
 	this.subErrors = subErrors || null;
 }
-ValidationError.prototype = {
-	prefixWith: function (dataPrefix, schemaPrefix) {
-		if (dataPrefix !== null) {
-			dataPrefix = dataPrefix.replace("~", "~0").replace("/", "~1");
-			this.dataPath = "/" + dataPrefix + this.dataPath;
-		}
-		if (schemaPrefix !== null) {
-			schemaPrefix = schemaPrefix.replace("~", "~0").replace("/", "~1");
-			this.schemaPath = "/" + schemaPrefix + this.schemaPath;
-		}
-		if (this.subErrors !== null) {
-			for (var i = 0; i < this.subErrors.length; i++) {
-				this.subErrors[i].prefixWith(dataPrefix, schemaPrefix);
-			}
-		}
-		return this;
+ValidationError.prototype = new Error();
+ValidationError.prototype.prefixWith = function (dataPrefix, schemaPrefix) {
+	if (dataPrefix !== null) {
+		dataPrefix = dataPrefix.replace("~", "~0").replace("/", "~1");
+		this.dataPath = "/" + dataPrefix + this.dataPath;
 	}
+	if (schemaPrefix !== null) {
+		schemaPrefix = schemaPrefix.replace("~", "~0").replace("/", "~1");
+		this.schemaPath = "/" + schemaPrefix + this.schemaPath;
+	}
+	if (this.subErrors !== null) {
+		for (var i = 0; i < this.subErrors.length; i++) {
+			this.subErrors[i].prefixWith(dataPrefix, schemaPrefix);
+		}
+	}
+	return this;
 };
 
 function isTrustedUrl(baseUrl, testUrl) {
@@ -50085,10 +50147,20 @@ function createApi(language) {
 	return api;
 }
 
-global.tv4 = createApi();
-global.tv4.addLanguage('en-gb', ErrorMessagesDefault);
+var tv4 = createApi();
+tv4.addLanguage('en-gb', ErrorMessagesDefault);
 
-})((typeof module !== 'undefined' && module.exports) ? exports : this);
+//legacy property
+tv4.tv4 = tv4;
+
+if (typeof module !== 'undefined' && module.exports){
+	module.exports = tv4;
+}
+else {
+	global.tv4 = tv4;
+}
+
+})(this);
 
 //@ sourceMappingURL=tv4.js.map
 },{}]},{},[1])
