@@ -21202,10 +21202,29 @@ var global=self;(function() {
     };
 
     Aether.prototype.hasChangedSignificantly = function(raw, oldAether) {
+      var oldAetherAST, rawAST;
       if (!oldAether) {
         return true;
       }
-      return raw !== oldAether.raw;
+      rawAST = JSON.stringify(esprima.parse(raw, {
+        loc: false,
+        range: false,
+        raw: true,
+        comment: false,
+        tolerant: true
+      }));
+      oldAetherAST = JSON.stringify(esprima.parse(oldAether.raw, {
+        loc: false,
+        range: false,
+        raw: true,
+        comment: false,
+        tolerant: true
+      }));
+      if (rawAST === oldAetherAST) {
+        return false;
+      } else {
+        return true;
+      }
     };
 
     Aether.prototype.hasChanged = function(raw, oldAether) {

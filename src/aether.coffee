@@ -67,7 +67,10 @@ module.exports = class Aether
   hasChangedSignificantly: (raw, oldAether) ->
     # Barring things like comments and whitespace and such, are the ASTs going to be different? (oldAether being a previously compiled instance)
     return true unless oldAether
-    return raw isnt oldAether.raw  
+    rawAST = JSON.stringify(esprima.parse(raw, {loc: false, range: false, raw: true, comment: false, tolerant: true}))
+    oldAetherAST = JSON.stringify(esprima.parse(oldAether.raw, {loc: false, range: false, raw: true, comment: false, tolerant: true}))
+    if rawAST == oldAetherAST then false else true
+    #return raw isnt oldAether.raw  
   #EFFECTS: Compares the text of the new code to the old code. If it is exactly the same, it returns false, and if not, returns true
   hasChanged: (raw, oldAether) ->
     # Is the code exactly the same?
