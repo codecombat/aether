@@ -18,13 +18,13 @@ optionsValidator = require './validators/options'
 
 module.exports = class Aether
   #various declarations
-  @defaults: defaults 
+  @defaults: defaults
   @problems: problems
   @execution: execution
 
   #MODIFIES: @options
-  #EFFECTS: Initialize the Aether object by modifying @options by combining the default options with the options parameter 
-  #         and doing validation. 
+  #EFFECTS: Initialize the Aether object by modifying @options by combining the default options with the options parameter
+  #         and doing validation.
   constructor: (options) ->
 
     #do a deep copy of the options (using lodash, not underscore)
@@ -36,7 +36,7 @@ module.exports = class Aether
     #unless the user has specified to exclude the default options, merge the given options with the default options
     unless options.excludeDefaultProblems
       options.problems = _.merge _.cloneDeep(Aether.problems.problems), options.problems
-    
+
     #validate the options
     optionsValidation = optionsValidator options
     throw new Error("Options array is not valid: " + JSON.stringify(optionsValidation.errors, null, 4)) if not optionsValidation.valid
@@ -48,10 +48,10 @@ module.exports = class Aether
     @reset()
 
   #EFFECTS: Performs quick heuristics to determine whether the code will run or produce compilation errors.
-  #         If the bool thorough is specified, it will perform detailed linting. Returns true if raw will run, and false if it won't. 
+  #         If the bool thorough is specified, it will perform detailed linting. Returns true if raw will run, and false if it won't.
   #NOTES:   First check inspired by ACE: https://github.com/ajaxorg/ace/blob/master/lib/ace/mode/javascript_worker.js
   canTranspile: (raw, thorough=false) ->
- 
+
     return true if not raw #blank code should compile, but bypass the other steps
     try
       eval "'use strict;'\nthrow 0;" + raw  # evaluated code can only create variables in this function
@@ -62,7 +62,7 @@ module.exports = class Aether
     lintProblems = @lint raw
     return lintProblems.errors.length is 0
 
-  #EFFECTS: Compare the previously generated AST to the new code's AST. Returns true they are different, and false if they are the same. 
+  #EFFECTS: Compare the previously generated AST to the new code's AST. Returns true they are different, and false if they are the same.
   #TODO:    add AST checks
   hasChangedSignificantly: (raw, oldAether) ->
     # Barring things like comments and whitespace and such, are the ASTs going to be different? (oldAether being a previously compiled instance)
@@ -70,7 +70,7 @@ module.exports = class Aether
     rawAST = JSON.stringify(esprima.parse(raw, {loc: false, range: false, raw: true, comment: false, tolerant: true}))
     oldAetherAST = JSON.stringify(esprima.parse(oldAether.raw, {loc: false, range: false, raw: true, comment: false, tolerant: true}))
     if rawAST == oldAetherAST then false else true
-    #return raw isnt oldAether.raw  
+    #return raw isnt oldAether.raw
   #EFFECTS: Compares the text of the new code to the old code. If it is exactly the same, it returns false, and if not, returns true
   hasChanged: (raw, oldAether) ->
     # Is the code exactly the same?
@@ -78,7 +78,7 @@ module.exports = class Aether
     return raw isnt oldAether.raw
 
 
-  #EFFECTS: Resets the state of Aether. 
+  #EFFECTS: Resets the state of Aether.
   reset: ->
     @problems = errors: [], warnings: [], infos: []
     @style = {}
@@ -87,7 +87,7 @@ module.exports = class Aether
     @visualization = {}
     @pure = null
 
-  
+
   transpile: (@raw) ->
     # Transpile it. Even if it can't transpile, it will give syntax errors and warnings and such. Clears any old state.
     @reset()
@@ -152,7 +152,8 @@ module.exports = class Aether
 
   serialize: ->
     # Convert to JSON so we can pass it across web workers and HTTP requests and store it in databases and such
-    serialized = originalOptions: @originalOptions, raw: @raw, pure: @pure, problems: @problems, style: @style, flow: @flow, metrics: @metrics, visualization: @visualization
+    #serialized = originalOptions: @originalOptions, raw: @raw, pure: @pure, problems: @problems, style: @style, flow: @flow, metrics: @metrics, visualization: @visualization  # TODO: the flow in here is suuuper slow and we're not using it yet, so I temporarily turned it off
+    serialized = originalOptions: @originalOptions, raw: @raw, pure: @pure, problems: @problems, style: @style, metrics: @metrics, visualization: @visualization
     serialized = _.cloneDeep serialized
     serialized.originalOptions.thisValue = null  # TODO: haaack, what
     # TODO: serialize problems, too

@@ -21364,7 +21364,6 @@ var global=self;(function() {
         pure: this.pure,
         problems: this.problems,
         style: this.style,
-        flow: this.flow,
         metrics: this.metrics,
         visualization: this.visualization
       };
@@ -30205,6 +30204,9 @@ module.exports={
   },
   "readme": "\n### Escodegen [![Build Status](https://secure.travis-ci.org/Constellation/escodegen.png)](http://travis-ci.org/Constellation/escodegen) [![Build Status](https://drone.io/github.com/Constellation/escodegen/status.png)](https://drone.io/github.com/Constellation/escodegen/latest)\n\nEscodegen ([escodegen](http://github.com/Constellation/escodegen)) is\n[ECMAScript](http://www.ecma-international.org/publications/standards/Ecma-262.htm)\n(also popularly known as [JavaScript](http://en.wikipedia.org/wiki/JavaScript>JavaScript))\ncode generator from [Parser API](https://developer.mozilla.org/en/SpiderMonkey/Parser_API) AST.\nSee [online generator demo](http://constellation.github.com/escodegen/demo/index.html).\n\n\n### Install\n\nEscodegen can be used in a web browser:\n\n    <script src=\"escodegen.browser.js\"></script>\n\nor in a Node.js application via the package manager:\n\n    npm install escodegen\n\n\n### Usage\n\nA simple example: the program\n\n    escodegen.generate({\n        type: 'BinaryExpression',\n        operator: '+',\n        left: { type: 'Literal', value: 40 },\n        right: { type: 'Literal', value: 2 }\n    });\n\nproduces the string `'40 + 2'`\n\nSee the [API page](https://github.com/Constellation/escodegen/wiki/API) for\noptions. To run the tests, execute `npm test` in the root directory.\n\n\n### License\n\n#### Escodegen\n\nCopyright (C) 2012 [Yusuke Suzuki](http://github.com/Constellation)\n (twitter: [@Constellation](http://twitter.com/Constellation)) and other contributors.\n\nRedistribution and use in source and binary forms, with or without\nmodification, are permitted provided that the following conditions are met:\n\n  * Redistributions of source code must retain the above copyright\n    notice, this list of conditions and the following disclaimer.\n\n  * Redistributions in binary form must reproduce the above copyright\n    notice, this list of conditions and the following disclaimer in the\n    documentation and/or other materials provided with the distribution.\n\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\"\nAND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE\nIMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE\nARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY\nDIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES\n(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;\nLOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND\nON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT\n(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF\nTHIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n\n#### source-map\n\nSourceNodeMocks has a limited interface of mozilla/source-map SourceNode implementations.\n\nCopyright (c) 2009-2011, Mozilla Foundation and contributors\nAll rights reserved.\n\nRedistribution and use in source and binary forms, with or without\nmodification, are permitted provided that the following conditions are met:\n\n* Redistributions of source code must retain the above copyright notice, this\n  list of conditions and the following disclaimer.\n\n* Redistributions in binary form must reproduce the above copyright notice,\n  this list of conditions and the following disclaimer in the documentation\n  and/or other materials provided with the distribution.\n\n* Neither the names of the Mozilla Foundation nor the names of project\n  contributors may be used to endorse or promote products derived from this\n  software without specific prior written permission.\n\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AND\nANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED\nWARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE\nDISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE\nFOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL\nDAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR\nSERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER\nCAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,\nOR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE\nOF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n",
   "readmeFilename": "README.md",
+  "bugs": {
+    "url": "https://github.com/Constellation/escodegen/issues"
+  },
   "_id": "escodegen@0.0.27",
   "_from": "escodegen@~0.0.25"
 }
@@ -40923,11 +40925,7 @@ var JSHINT = (function () {
 			return;
 		}
 		for (;;) {
-			do {
-				t = peek(i);
-				i += 1;
-			} while (t.id != "(end)" && t.id === "(comment)");
-
+			t = peek(i);
 			if (t.reach) {
 				return;
 			}
@@ -40944,6 +40942,7 @@ var JSHINT = (function () {
 				warning("W027", t, t.value, s);
 				break;
 			}
+			i += 1;
 		}
 	}
 
@@ -42182,6 +42181,7 @@ var JSHINT = (function () {
 		}
 
 		funct["(params)"] = functionparams(fatarrowparams);
+
 		funct["(metrics)"].verifyMaxParametersPerFunction(funct["(params)"]);
 
 		block(false, true, true, fatarrowparams ? true:false);
@@ -42209,7 +42209,6 @@ var JSHINT = (function () {
 			statementCount: 0,
 			nestedBlockDepth: -1,
 			ComplexityCount: 1,
-
 			verifyMaxStatementsPerFunction: function () {
 				if (state.option.maxstatements &&
 					this.statementCount > state.option.maxstatements) {
@@ -44202,7 +44201,6 @@ var JSHINT = (function () {
 			functions: [],
 			options: state.option
 		};
-
 		var implieds = [];
 		var members = [];
 		var fu, f, i, j, n, globals;
@@ -44257,13 +44255,6 @@ var JSHINT = (function () {
 			fu.character = f["(character)"];
 			fu.last = f["(last)"];
 			fu.lastcharacter = f["(lastcharacter)"];
-
-			fu.metrics = {
-				complexity: f["(metrics)"].ComplexityCount,
-				parameters: (f["(params)"] || []).length,
-				statements: f["(metrics)"].statementCount
-			};
-
 			data.functions.push(fu);
 		}
 
@@ -45941,7 +45932,7 @@ Lexer.prototype = {
 					line: this.line,
 					character: this.char
 				}, checks, function () {
-					return state.directive["use strict"] && token.base === 8;
+					return state.directive["use strict"] && token.base === 8; 
 				});
 
 				this.trigger("Number", {
@@ -45963,7 +45954,6 @@ Lexer.prototype = {
 
 				if (token.isSpecial) {
 					return {
-						id: '(comment)',
 						value: token.value,
 						body: token.body,
 						type: token.commentType,
