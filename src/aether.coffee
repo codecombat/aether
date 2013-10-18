@@ -152,8 +152,8 @@ module.exports = class Aether
 
   serialize: ->
     # Convert to JSON so we can pass it across web workers and HTTP requests and store it in databases and such
-    #serialized = originalOptions: @originalOptions, raw: @raw, pure: @pure, problems: @problems, style: @style, flow: @flow, metrics: @metrics, visualization: @visualization  # TODO: the flow in here is suuuper slow and we're not using it yet, so I temporarily turned it off
-    serialized = originalOptions: @originalOptions, raw: @raw, pure: @pure, problems: @problems, style: @style, metrics: @metrics, visualization: @visualization
+    serialized = originalOptions: @originalOptions, raw: @raw, pure: @pure, problems: @problems, style: @style, flow: @flow, metrics: @metrics, visualization: @visualization  # TODO: the flow in here is suuuper slow and we're not using it yet, so I temporarily turned it off
+    #serialized = originalOptions: @originalOptions, raw: @raw, pure: @pure, problems: @problems, style: @style, metrics: @metrics, visualization: @visualization
     serialized = _.cloneDeep serialized
     serialized.originalOptions.thisValue = null  # TODO: haaack, what
     # TODO: serialize problems, too

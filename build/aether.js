@@ -21364,6 +21364,7 @@ var global=self;(function() {
         pure: this.pure,
         problems: this.problems,
         style: this.style,
+        flow: this.flow,
         metrics: this.metrics,
         visualization: this.visualization
       };
