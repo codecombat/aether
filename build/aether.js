@@ -21362,12 +21362,20 @@ var global=self;(function() {
         originalOptions: this.originalOptions,
         raw: this.raw,
         pure: this.pure,
-        problems: this.problems,
-        style: this.style,
-        flow: this.flow,
-        metrics: this.metrics,
-        visualization: this.visualization
+        problems: this.problems
       };
+      if (this.options.includeFlow) {
+        serialized.flow = this.flow;
+      }
+      if (this.options.includeMetrics) {
+        serialized.metrics = this.metrics;
+      }
+      if (this.options.includeStyle) {
+        serialized.style = this.style;
+      }
+      if (this.options.includeVisualization) {
+        serialized.visualization = this.visualization;
+      }
       serialized = _.cloneDeep(serialized);
       serialized.originalOptions.thisValue = null;
       return serialized;
@@ -21691,7 +21699,8 @@ var global=self;(function() {
     executionCosts: execution,
     includeFlow: true,
     includeMetrics: true,
-    includeStyle: true
+    includeStyle: true,
+    includeVisualization: false
   };
 
 }).call(this);
@@ -23299,6 +23308,10 @@ var global=self;(function() {
         includeStyle: {
           type: 'boolean',
           "default": true
+        },
+        includeVisualization: {
+          type: 'boolean',
+          "default": false
         }
       }
     });

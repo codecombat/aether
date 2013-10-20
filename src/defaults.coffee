@@ -14,3 +14,4 @@ module.exports = defaults =
   includeFlow: true
   includeMetrics: true
   includeStyle: true
+  includeVisualization: false
