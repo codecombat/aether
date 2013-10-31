@@ -95,7 +95,7 @@ module.exports.RuntimeProblem = class RuntimeProblem extends UserCodeProblem
   @explainErrorMessage: (error) ->
     m = error.toString()  # or maybe error.message?
     if m is "RangeError: Maximum call stack size exceeded"
-      m += ". (Did you use #{methodName}() recursively?)"
+      m += ". (Did you use call a function recursively?)"
 
     missingMethodMatch = m.match /has no method '(.*?)'/
     if missingMethodMatch
