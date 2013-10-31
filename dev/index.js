@@ -54,7 +54,7 @@ function showProblems(aether) {
   var treema = TreemaNode.make(el, treemaOptions);
   treema.build();
   $('#aether_problems').empty().append(el);
-  treema.openDeep(2);
+  treema.open(2);
 
   var editor = editors[0];
   var session = editor.getSession();
@@ -98,7 +98,7 @@ function showFlow(aether) {
   var treema = TreemaNode.make(el, treemaOptions);
   treema.build();
   $('#aether_flow').append(el);
-  treema.openDeep(3);
+  treema.open(3);
 }
 
 function showMetrics(aether) {
@@ -109,7 +109,7 @@ function showMetrics(aether) {
   var treema = TreemaNode.make(el, treemaOptions);
   treema.build();
   $('#aether_metrics').append(el);
-  treema.openDeep(3);
+  treema.open(3);
 }
 
 function demoShowOutput(aether) {

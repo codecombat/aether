@@ -21916,7 +21916,7 @@ var global=self;(function() {
     __extends(TranspileProblem, _super);
 
     function TranspileProblem(aether, reporter, kind, error, userInfo, code, codePrefix) {
-      var endCol, line, lineOffset, originalLines, startCol;
+      var endCol, line, lineOffset, originalLines, startCol, _ref, _ref1;
       this.userInfo = userInfo;
       if (code == null) {
         code = '';
@@ -21939,8 +21939,12 @@ var global=self;(function() {
           this.message = error.reason;
           line = error.line - codePrefix.split('\n').length;
           if (line >= 0) {
-            startCol = originalLines[line].indexOf(error.evidence);
-            endCol = startCol + error.evidence.length;
+            if ((_ref = error.evidence) != null ? _ref.length : void 0) {
+              startCol = originalLines[line].indexOf(error.evidence);
+              endCol = startCol + error.evidence.length;
+            } else {
+              _ref1 = [0, originalLines[line].length - 1], startCol = _ref1[0], endCol = _ref1[1];
+            }
             this.ranges = [[[line, startCol], [line, endCol]]];
           } else {
             this.ranges = [[[0, 0], [originalLines.length - 1, originalLines[originalLines.length - 1].length - 1]]];

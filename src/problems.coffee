@@ -35,8 +35,11 @@ module.exports.TranspileProblem = class TranspileProblem extends UserCodeProblem
         @message = error.reason
         line = error.line - codePrefix.split('\n').length
         if line >= 0
-          startCol = originalLines[line].indexOf error.evidence
-          endCol = startCol + error.evidence.length
+          if error.evidence?.length
+            startCol = originalLines[line].indexOf error.evidence
+            endCol = startCol + error.evidence.length
+          else
+            [startCol, endCol] = [0, originalLines[line].length - 1]
           @ranges = [[[line, startCol], [line, endCol]]]
         else
           # TODO: if we type an unmatched {, for example, then it thinks that line -2's function wrapped() { is unmatched...
