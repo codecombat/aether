@@ -40,10 +40,10 @@
     "grunt-contrib-watch": "~0.5.1",
     "grunt-browserify": "~1.2.1",
     "grunt-contrib-copy": "~0.4.1",
-    "grunt-contrib-jasmine-node": "~0.1.1",
     "jasmine-node": "~1.11.0",
     "grunt-contrib-concat": "~0.3.0",
-    "grunt-notify": "~0.2.7"
+    "grunt-notify": "~0.2.7",
+    "grunt-jasmine-node": "~0.1.0"
   },
   "scripts": {
     "test": "grunt travis --verbose"
