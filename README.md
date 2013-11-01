@@ -30,7 +30,10 @@ It's a JavaScript library (written in CoffeeScript) that takes user code as inpu
 1. *planned* **Other goodies**! You can let your users code in [ES6](http://www.slideshare.net/domenicdenicola/es6-the-awesome-parts) now and hopefully [CoffeeScript](https://github.com/michaelficarra/CoffeeScriptRedux) soon.
 
 ### Development Status
-Pre-alpha! Watch out! We've converted the dev version of [CodeCombat](http://codecombat.com/) to use it, but there are many bugs and missing pieces. If you'd be interested in Aether were it solid and finished, *please* tell us so we can get an idea of where else it might be useful and how it should work.
+Pre-alpha! Watch out! [CodeCombat](http://codecombat.com/) is using it right now, but there are many bugs and missing pieces. If you'd be interested in Aether were it solid and finished, *please* tell us so we can get an idea of where else it might be useful and how it should work.
+
+### Public TODO: Trello
+See what we're planning, comment, and vote on priorities at [the Aether Trello board](https://trello.com/b/8UkcBbDp/aether). If you want to tackle any issues, let me know and I'll add you.
 
 ### How to Use It
 In the browser, grab [build/aether.js](https://github.com/nwinter/aether/blob/master/build/aether.js) or [build/aether.min.js](https://github.com/nwinter/aether/blob/master/build/aether.min.js). Or in node, add `"aether": "https://github.com/nwinter/aether/tarball/master"` to your `dependencies` in `package.json` and then `npm install`. (This may not work yet.) Then, in your code:
@@ -46,7 +49,7 @@ var gnarlyFunc = aether.createFunction();
 gnarlyFunc();
 // At any point, you can check aether.problems, aether.style, aether.flow, aether.metrics, etc.
 // See more examples in the tests: https://github.com/nwinter/aether/tree/master/test
-// Or planned examples in the plan: https://github.com/nwinter/aether/blob/master/plan.md
+// Or planned examples in the very-out-of-date plan: https://github.com/nwinter/aether/blob/master/plan.md
 ```
 
 In the browser, it currently depends on [lodash](http://lodash.com/) or [underscore](http://underscorejs.org/). We test in Chrome and node, and it will probably work in other modern browsers.
