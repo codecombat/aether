@@ -125,7 +125,7 @@ var lastAetherInput = '';
 function watchForCodeChanges() {
   var aetherInput = editors[1].getValue();
   var code = grabDemoCode();
-  if(!lastJSInputAether.hasChangedSignificantly(code, lastJSInputAether) &&
+  if(!Aether.hasChangedSignificantly(code, lastJSInputAether.raw) &&
      aetherInput == lastAetherInput)
     return;
   clearOutput();

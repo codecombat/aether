@@ -62,21 +62,46 @@ module.exports = class Aether
     lintProblems = @lint raw
     return lintProblems.errors.length is 0
 
-  #EFFECTS: Compare the previously generated AST to the new code's AST. Returns true they are different, and false if they are the same.
-  #TODO:    add AST checks
-  hasChangedSignificantly: (raw, oldAether) ->
-    # Barring things like comments and whitespace and such, are the ASTs going to be different? (oldAether being a previously compiled instance)
-    return true unless oldAether
-    rawAST = JSON.stringify(esprima.parse(raw, {loc: false, range: false, raw: true, comment: false, tolerant: true}))
-    oldAetherAST = JSON.stringify(esprima.parse(oldAether.raw, {loc: false, range: false, raw: true, comment: false, tolerant: true}))
-    if rawAST == oldAetherAST then false else true
-    #return raw isnt oldAether.raw
-  #EFFECTS: Compares the text of the new code to the old code. If it is exactly the same, it returns false, and if not, returns true
-  hasChanged: (raw, oldAether) ->
-    # Is the code exactly the same?
-    return true unless oldAether
-    return raw isnt oldAether.raw
-
+  # Determine whether two strings of code are significantly different.
+  # If careAboutLineNumbers, we strip trailing comments and whitespace and compare line count.
+  # If the simple tests fail, we compare abstract syntax trees for equality.
+  # We try first with Esprima, to be precise, then with acorn_loose if that doesn't work.
+  @hasChangedSignificantly: (a, b, careAboutLineNumbers=false) ->
+    return true unless a? and b?
+    return false if a is b
+    if careAboutLineNumbers
+      a = a.replace(/^[ \t]+\/\/.*/g, '').trimRight()
+      b = b.replace(/^[ \t]+\/\/.*/g, '').trimRight()
+      return true if a.split('\n').length isnt b.split('\n').length
+    options = {loc: false, range: false, raw: true, comment: false, tolerant: true}
+    try
+      aAST = esprima.parse a, options
+    catch e
+      aAST = null
+    try
+      bAST = esprima.parse b, options
+    catch e
+      bAST = null
+    return true if (not aAST or not bAST) and (aAST or bAST)
+    if aAST and bAST
+      return true if (aAST.errors ? []).length isnt (bAST.errors ? []).length
+      return not _.isEqual(aAST.body, bAST.body)
+    # Esprima couldn't parse either ASTs, so let's fall back to acorn_loose
+    options = {locations: false, tabSize: 4, ecmaVersion: 5}
+    aAST = acorn_loose.parse_dammit a, options
+    bAST = acorn_loose.parse_dammit b, options
+    # acorn_loose annoying puts start/end in every node; we'll remove before comparing
+    walk = (node) ->
+      node.start = node.end = null
+      for key, child of node
+        if _.isArray child
+          for grandchild in child
+            walk grandchild if _.isString grandchild?.type
+        else if _.isString child?.type
+          walk child
+    walk(aAST)
+    walk(bAST)
+    return not _.isEqual(aAST, bAST)
 
   #EFFECTS: Resets the state of Aether.
   reset: ->
@@ -86,7 +111,6 @@ module.exports = class Aether
     @metrics = {}
     @visualization = {}
     @pure = null
-
 
   transpile: (@raw) ->
     # Transpile it. Even if it can't transpile, it will give syntax errors and warnings and such. Clears any old state.
