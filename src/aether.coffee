@@ -64,24 +64,22 @@ module.exports = class Aether
 
   # Determine whether two strings of code are significantly different.
   # If careAboutLineNumbers, we strip trailing comments and whitespace and compare line count.
+  # If careAboutLint, we also lint and make sure lint problems are the same. Use this instance for lint config.
+  hasChangedSignificantly: (a, b, careAboutLineNumbers=false, careAboutLint=false) ->
+    lintAether = @ if careAboutLint
+    Aether.hasChangedSignificantly a, b, careAboutLineNumbers, lintAether
+
   # If the simple tests fail, we compare abstract syntax trees for equality.
   # We try first with Esprima, to be precise, then with acorn_loose if that doesn't work.
-  @hasChangedSignificantly: (a, b, careAboutLineNumbers=false) ->
+  @hasChangedSignificantly: (a, b, careAboutLineNumbers=false, lintAether=null) ->
     return true unless a? and b?
     return false if a is b
-    if careAboutLineNumbers
-      a = a.replace(/^[ \t]+\/\/.*/g, '').trimRight()
-      b = b.replace(/^[ \t]+\/\/.*/g, '').trimRight()
-      return true if a.split('\n').length isnt b.split('\n').length
+    return true if careAboutLineNumbers and @hasChangedLineNumbers a, b
+    return true if lintAether?.hasChangedLintProblems a, b
     options = {loc: false, range: false, raw: true, comment: false, tolerant: true}
-    try
-      aAST = esprima.parse a, options
-    catch e
-      aAST = null
-    try
-      bAST = esprima.parse b, options
-    catch e
-      bAST = null
+    [aAST, bAST] = [null, null]
+    try aAST = esprima.parse a, options
+    try bAST = esprima.parse b, options
     return true if (not aAST or not bAST) and (aAST or bAST)
     if aAST and bAST
       return true if (aAST.errors ? []).length isnt (bAST.errors ? []).length
@@ -90,7 +88,7 @@ module.exports = class Aether
     options = {locations: false, tabSize: 4, ecmaVersion: 5}
     aAST = acorn_loose.parse_dammit a, options
     bAST = acorn_loose.parse_dammit b, options
-    # acorn_loose annoying puts start/end in every node; we'll remove before comparing
+    # acorn_loose annoyingly puts start/end in every node; we'll remove before comparing
     walk = (node) ->
       node.start = node.end = null
       for key, child of node
@@ -102,6 +100,16 @@ module.exports = class Aether
     walk(aAST)
     walk(bAST)
     return not _.isEqual(aAST, bAST)
+
+  @hasChangedLineNumbers: (a, b) ->
+    a = a.replace(/^[ \t]+\/\/.*/g, '').trimRight()
+    b = b.replace(/^[ \t]+\/\/.*/g, '').trimRight()
+    return a.split('\n').length isnt b.split('\n').length
+
+  hasChangedLintProblems: (a, b) ->
+    aLintProblems = [p.id, p.message, p.hint] for p in @getAllProblems @lint a
+    bLintProblems = [p.id, p.message, p.hint] for p in @getAllProblems @lint b
+    return not _.isEqual aLintProblems, bLintProblems
 
   #EFFECTS: Resets the state of Aether.
   reset: ->
@@ -130,6 +138,8 @@ module.exports = class Aether
     function #{@options.functionName or 'foo'}(#{@options.functionParameters.join(', ')}) {
     \"use strict\";
     """
+    # Should add \n after? (Not `"use strict";this.moveXY(30, 26);` on one line.)
+    # TODO: Try it and make sure our line counts are fine.
     @wrappedCodeSuffix ?= "\n}"
     @wrappedCodePrefix + rawCode + @wrappedCodeSuffix
 
@@ -143,9 +153,12 @@ module.exports = class Aether
     jshintOptions = browser: false, couch: false, devel: false, dojo: false, jquery: false, mootools: false, node: false, nonstandard: false, phantom: false, prototypejs: false, rhino: false, worker: false, wsh: false, yui: false
     jshintGlobals = _.keys(@options.global)
     jshintGlobals = _.zipObject jshintGlobals, (false for g in jshintGlobals)  # JSHint expects {key: writable} globals
-    jshintSuccess = jshint(wrappedCode, jshintOptions, jshintGlobals)
+    try
+      jshintSuccess = jshint(wrappedCode, jshintOptions, jshintGlobals)
+    catch e
+      console.warn "JSHint died with error", e  #, "on code\n", wrappedCode
     for error in jshint.errors
-      @addProblem new problems.TranspileProblem(@, 'jshint', error.code, error, {}, wrappedCode, @wrappedCodePrefix), lintProblems
+      @addProblem new problems.TranspileProblem(@, 'jshint', error?.code, error, {}, wrappedCode, @wrappedCodePrefix), lintProblems
 
     lintProblems
 
@@ -171,8 +184,8 @@ module.exports = class Aether
     catch error
       @addProblem new Aether.problems.RuntimeProblem @, error, {}
 
-  getAllProblems: ->
-    _.flatten _.values @problems
+  getAllProblems: (problems) ->
+    _.flatten _.values (problems ? @problems)
 
   serialize: ->
     # Convert to JSON so we can pass it across web workers and HTTP requests and store it in databases and such

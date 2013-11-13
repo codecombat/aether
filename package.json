@@ -22,7 +22,7 @@
     "coffee-script": "~1.6.3",
     "esprima": "https://github.com/ariya/esprima/tarball/harmony",
     "lodash": "~1.3.1",
-    "jshint": "~2.1.9",
+    "jshint": "https://github.com/jshint/jshint/tarball/2.x",
     "tv4": "~1.0.7",
     "traceur": "~0.0.4",
     "JS_WALA": "https://github.com/nwinter/JS_WALA/tarball/master",

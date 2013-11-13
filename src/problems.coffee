@@ -32,6 +32,7 @@ module.exports.TranspileProblem = class TranspileProblem extends UserCodeProblem
 
     switch reporter
       when 'jshint'
+        error ?= {reason: "Unknown problem"}
         @message = error.reason
         line = error.line - codePrefix.split('\n').length
         if line >= 0
