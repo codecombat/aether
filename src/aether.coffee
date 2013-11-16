@@ -310,6 +310,7 @@ module.exports = class Aether
   @getFunctionBody: (func) ->
     # Remove function() { ... } wrapper and any extra indentation
     source = if _.isString func then func else func.toString()
+    return "" if source.trim() is "function () {}"
     source = source.substring(source.indexOf('{') + 2, source.lastIndexOf('}'))  #.trim()
     lines = source.split /\r?\n/
     indent = if lines.length then lines[0].length - lines[0].replace(/^ +/, '').length else 0

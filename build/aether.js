@@ -21679,6 +21679,9 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
     Aether.getFunctionBody = function(func) {
       var indent, line, lines, source;
       source = _.isString(func) ? func : func.toString();
+      if (source.trim() === "function () {}") {
+        return "";
+      }
       source = source.substring(source.indexOf('{') + 2, source.lastIndexOf('}'));
       lines = source.split(/\r?\n/);
       indent = lines.length ? lines[0].length - lines[0].replace(/^ +/, '').length : 0;
