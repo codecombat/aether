@@ -24,7 +24,7 @@ module.exports = (grunt) ->
 
     watch:
       files: ['src/**/*', 'test/**/*.coffee']
-      tasks: ['coffeelint', 'coffee', 'browserify', 'concat', 'jasmine_node', 'copy']  #, 'uglify']
+      tasks: ['coffeelint', 'coffee', 'browserify', 'jasmine_node', 'copy']  #, 'uglify']
       options:
         spawn: false
 
@@ -63,15 +63,10 @@ module.exports = (grunt) ->
         dest: 'build/<%= pkg.name %>.js'
         options:
           #standalone: "Aether"  # can't figure out how to get this to work
-          ignore: ['lodash', 'traceur']
+          ignore: ['lodash']
       #test:  # We're not using jasmine but now jasmine_node, so we don't need to browserify the tests
       #  src: ['lib/test/*.js']
       #  dest: 'build/test/<%= pkg.name %>_specs.js'
-
-    concat:
-      build:
-        src: ['node_modules/traceur/bin/traceur.js', 'build/<%= pkg.name %>.js']
-        dest: 'build/<%= pkg.name %>.js'
 
     copy:
       main:
@@ -86,10 +81,9 @@ module.exports = (grunt) ->
   grunt.loadNpmTasks 'grunt-contrib-watch'
   grunt.loadNpmTasks 'grunt-browserify'
   grunt.loadNpmTasks 'grunt-contrib-copy'
-  grunt.loadNpmTasks 'grunt-contrib-concat'
   grunt.loadNpmTasks 'grunt-notify'
 
   # Default task(s).
-  grunt.registerTask 'default', ['coffeelint', 'coffee', 'browserify', 'concat', 'jasmine_node', 'copy', 'uglify']
-  grunt.registerTask 'travis', ['coffeelint', 'coffee', 'browserify', 'concat', 'jasmine_node']
-  grunt.registerTask 'build', ['coffeelint', 'coffee', 'browserify', 'concat', 'copy', 'uglify']
+  grunt.registerTask 'default', ['coffeelint', 'coffee', 'browserify', 'jasmine_node', 'copy', 'uglify']
+  grunt.registerTask 'travis', ['coffeelint', 'coffee', 'browserify', 'jasmine_node']
+  grunt.registerTask 'build', ['coffeelint', 'coffee', 'browserify', 'copy', 'uglify']
