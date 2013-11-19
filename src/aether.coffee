@@ -1,11 +1,11 @@
 _ = window?._ ? self?._ ? global?._ ? require 'lodash'  # rely on lodash existing, since it busts CodeCombat to browserify it--TODO
-regenerator = window?.regenerator ? self?.regenerator ? global?.regenerator ? require 'regenerator'  # rely on regenerator existing, since it busts CodeCombat to browserify it--TODO
 
 esprima = require 'esprima'  # getting our Esprima Harmony
 acorn_loose = require 'acorn/acorn_loose'  # for if Esprima dies. Note it can't do ES6.
 jshint = require('jshint').JSHINT
 normalizer = require 'JS_WALA/normalizer/lib/normalizer'
 escodegen = require 'escodegen'
+regenerator = require 'regenerator'
 regenerator_runtime = require './regenerator_runtime'  # my hack
 #infer = require 'tern/lib/infer'  # Not enough time to figure out how to integrate this yet
 
@@ -221,10 +221,7 @@ module.exports = class Aether
       fn child
 
   regenerate: (code) ->
-    return code unless @options.yieldConditionally or @options.yieldAutomatically
-    regenerated = regenerator(code, esprima)
-    return code if regenerated is code  # no generators actually detected
-    regenerator_runtime + '\n' + regenerated
+    regenerator_runtime + '\n' + regenerator(code, esprima)
 
   transform: (code, transforms, parser="esprima", withAST=false) ->
     transformedCode = morph code, (_.bind t, @ for t in transforms), parser
@@ -282,6 +279,7 @@ module.exports = class Aether
       console.log "---TRANSFORMED-: #{transformedCode.split('\n').length}\n", {code: transformedCode}
       console.log "---NORMALIZED--: #{normalizedCode.split('\n').length}\n", {code: normalizedCode}
       console.log "---INSTRUMENTED: #{instrumentedCode.split('\n').length}\n", {code: "return " + instrumentedCode}
+      console.log "---TRACEURED---: #{traceuredCode.split('\n').length}\n", {code: traceuredCode}
       console.log "---REGENERATED-: #{regeneratedCode.split('\n').length}\n", {code: regeneratedCode}
     return regeneratedCode
 
