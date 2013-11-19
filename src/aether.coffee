@@ -102,6 +102,8 @@ module.exports = class Aether
     return not _.isEqual(aAST, bAST)
 
   @hasChangedLineNumbers: (a, b) ->
+    unless String.prototype.trimRight
+      String.prototype.trimRight = -> String(@).replace /\s\s*$/, ''
     a = a.replace(/^[ \t]+\/\/.*/g, '').trimRight()
     b = b.replace(/^[ \t]+\/\/.*/g, '').trimRight()
     return a.split('\n').length isnt b.split('\n').length
@@ -279,8 +281,11 @@ module.exports = class Aether
     postNormalizationTransforms.unshift transforms.makeInstrumentStatements() if @options.includeMetrics or @options.includeFlow
     postNormalizationTransforms.unshift transforms.makeInstrumentCalls() if @options.includeMetrics or @options.includeFlow
     postNormalizationTransforms.unshift transforms.makeFindOriginalNodes originalNodeRanges, @wrappedCodePrefix, wrappedCode, normalizedSourceMap, normalizedNodeIndex
-    instrumentedCode = @transform normalizedCode, postNormalizationTransforms
-    traceuredCode = @traceurify "return " + instrumentedCode
+    instrumentedCode = "return " + @transform normalizedCode, postNormalizationTransforms
+    if @options.yieldConditionally or @options.yieldAutomatically
+      purifiedCode = @traceurify instrumentedCode
+    else
+      purifiedCode = instrumentedCode
     if false
       console.log "---NODE RANGES---:\n" + _.map(originalNodeRanges, (n) -> "#{n.originalRange.start} - #{n.originalRange.end}\t#{n.originalSource.replace(/\n/g, '↵')}").join('\n')
       console.log "---RAW CODE----: #{rawCode.split('\n').length}\n", {code: rawCode}
@@ -288,8 +293,8 @@ module.exports = class Aether
       console.log "---TRANSFORMED-: #{transformedCode.split('\n').length}\n", {code: transformedCode}
       console.log "---NORMALIZED--: #{normalizedCode.split('\n').length}\n", {code: normalizedCode}
       console.log "---INSTRUMENTED: #{instrumentedCode.split('\n').length}\n", {code: "return " + instrumentedCode}
-      console.log "---TRACEURED---: #{traceuredCode.split('\n').length}\n", {code: traceuredCode}
-    return traceuredCode
+      console.log "---PURIFIED----: #{purifiedCode.split('\n').length}\n", {code: purifiedCode}
+    return purifiedCode
 
   getLineNumberForPlannedMethod: (plannedMethod, numMethodsSeen) ->
     n = 0
