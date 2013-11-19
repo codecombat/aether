@@ -1,12 +1,11 @@
 _ = window?._ ? self?._ ? global?._ ? require 'lodash'  # rely on lodash existing, since it busts CodeCombat to browserify it--TODO
+traceur = window?.traceur ? self?.traceur ? global?.traceur ? require 'traceur'  # rely on traceur existing, since it busts CodeCombat to browserify it--TODO
 
 esprima = require 'esprima'  # getting our Esprima Harmony
 acorn_loose = require 'acorn/acorn_loose'  # for if Esprima dies. Note it can't do ES6.
 jshint = require('jshint').JSHINT
 normalizer = require 'JS_WALA/normalizer/lib/normalizer'
 escodegen = require 'escodegen'
-regenerator = require 'regenerator'
-regenerator_runtime = require './regenerator_runtime'  # my hack
 #infer = require 'tern/lib/infer'  # Not enough time to figure out how to integrate this yet
 
 defaults = require './defaults'
@@ -103,8 +102,6 @@ module.exports = class Aether
     return not _.isEqual(aAST, bAST)
 
   @hasChangedLineNumbers: (a, b) ->
-    unless String.prototype.trimRight
-      String.prototype.trimRight = -> String(@).replace /\s\s*$/, ''
     a = a.replace(/^[ \t]+\/\/.*/g, '').trimRight()
     b = b.replace(/^[ \t]+\/\/.*/g, '').trimRight()
     return a.split('\n').length isnt b.split('\n').length
@@ -220,8 +217,20 @@ module.exports = class Aether
         @walk child, fn
       fn child
 
-  regenerate: (code) ->
-    regenerator_runtime + '\n' + regenerator(code, esprima)
+  traceurify: (code) ->
+    # TODO: where to put this?
+    project = new traceur.semantics.symbols.Project('codecombat')
+    reporter = new traceur.util.ErrorReporter()
+    compiler = new traceur.codegeneration.Compiler(reporter, project)
+    sourceFile = new traceur.syntax.SourceFile("randotron_" + Math.random(), code)
+    project.addFile(sourceFile)
+    trees = compiler.compile_()
+    if reporter.hadError()
+      console.log "traceur had error trying to compile"
+    tree = trees.values()[0]
+    opts = showLineNumbers: false
+    tree.generatedSource = traceur.outputgeneration.TreeWriter.write(tree, opts)
+    tree.generatedSource
 
   transform: (code, transforms, parser="esprima", withAST=false) ->
     transformedCode = morph code, (_.bind t, @ for t in transforms), parser
@@ -271,7 +280,7 @@ module.exports = class Aether
     postNormalizationTransforms.unshift transforms.makeInstrumentCalls() if @options.includeMetrics or @options.includeFlow
     postNormalizationTransforms.unshift transforms.makeFindOriginalNodes originalNodeRanges, @wrappedCodePrefix, wrappedCode, normalizedSourceMap, normalizedNodeIndex
     instrumentedCode = @transform normalizedCode, postNormalizationTransforms
-    regeneratedCode = @regenerate "return " + instrumentedCode
+    traceuredCode = @traceurify "return " + instrumentedCode
     if false
       console.log "---NODE RANGES---:\n" + _.map(originalNodeRanges, (n) -> "#{n.originalRange.start} - #{n.originalRange.end}\t#{n.originalSource.replace(/\n/g, '↵')}").join('\n')
       console.log "---RAW CODE----: #{rawCode.split('\n').length}\n", {code: rawCode}
@@ -280,8 +289,7 @@ module.exports = class Aether
       console.log "---NORMALIZED--: #{normalizedCode.split('\n').length}\n", {code: normalizedCode}
       console.log "---INSTRUMENTED: #{instrumentedCode.split('\n').length}\n", {code: "return " + instrumentedCode}
       console.log "---TRACEURED---: #{traceuredCode.split('\n').length}\n", {code: traceuredCode}
-      console.log "---REGENERATED-: #{regeneratedCode.split('\n').length}\n", {code: regeneratedCode}
-    return regeneratedCode
+    return traceuredCode
 
   getLineNumberForPlannedMethod: (plannedMethod, numMethodsSeen) ->
     n = 0
