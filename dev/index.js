@@ -307,6 +307,95 @@ var examples = [
     aether: function() {
       // TODO: write a good test/demo here
     }
+  },
+
+  {
+    name: "Rectangles",
+    code: function() {
+      function largestRectangle(grid, bottomY, leftX, width, height) {
+        var coveredRows = [];
+        var shortestCoveredRow = width - leftX;
+        var done = false;
+        for(var y = bottomY; !done && y < grid.height; ++y) {
+          var coveredRow = 0, done2 = false;
+          for(var x = leftX; !done2 && x < leftX + shortestCoveredRow; ++x) {
+            if(grid[y][x].length)
+              ++coveredRow;
+            else
+              done2 = true;
+          }
+          if(!coveredRow)
+            done = true;
+          else {
+            coveredRows.push(coveredRow);
+            shortestCoveredRow = Math.min(shortestCoveredRow, coveredRow);
+          }
+        }
+        var maxArea = 0, maxAreaRows = 0, maxAreaRowLength = 0, shortestRow = 0;
+        for(var rowIndex = 0; rowIndex < coveredRows.length; ++rowIndex) {
+          var rowLength = coveredRows[rowIndex];
+          if(!shortestRow)
+            shortestRow = rowLength;
+          area = rowLength * (rowIndex + 1);
+          if(area > maxArea) {
+            maxAreaRows = rowIndex +1;
+            maxAreaRowLength = shortestRow;
+            maxArea = area;
+          }
+          shortestRow = Math.min(rowLength, shortestRow);
+        }
+        return {x: leftX + maxAreaRowLength / 2, y: bottomY + maxAreaRows / 2, width: maxAreaRowLength, height: maxAreaRows};
+      }
+
+      var grid = this.getNavGrid().grid;
+      var tileSize = 2;
+      for(var y = tileSize / 2; y < grid.length; y += tileSize) {
+        for(var x = tileSize / 2; x < grid[0].length; x += tileSize) {
+          var occupied = grid[y][x].length > 0;
+          if(!occupied) {
+            var rect = largestRectangle(grid, y, x, grid[0].length, grid.length);
+            this.say("rect", rect.x, rect.y, rect.width, rect.height);
+            this.addRect(rect.x, rect.y, rect.width, rect.height);
+            this.wait(0.01);
+          }
+        }
+      }
+    },
+    aether: function() {
+      var aetherOptions = {
+        thisValue: {
+          getNavGrid: function() { return {grid: [[[], [], []], [[], [], []], [['ho'], ['you'], []]]}; },
+          addRect: function() { },
+          say: console.log,
+          wait: function() { }
+        },
+        problems: {
+          jshint_W040: {level: "ignore"},
+          aether_MissingThis: {level: 'warning'}
+        },
+        functionName: 'plan',
+        functionParameters: [],
+        yieldConditionally: true,
+        requiresThis: true
+      };
+      var aether = new Aether(aetherOptions);
+      var code = grabDemoCode();
+      aether.transpile(code);
+      var method = aether.createMethod();
+      var generator = method();
+      if(aetherOptions.yieldConditionally) {
+        var executeSomeMore = function executeSomeMore() {
+          var result = generator.next();
+          demoShowOutput(aether);
+          if(!result.done)
+            setTimeout(executeSomeMore, 2000);
+        };
+        executeSomeMore();
+      }
+      else {
+        demoShowOutput(aether);
+      }
+    }
   }
 ];
 

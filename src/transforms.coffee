@@ -119,6 +119,9 @@ possiblyGeneratorifyAncestorFunction = (node) ->
 # ... we can basically just put a yield check in after every CallExpression except the outermost one if we are yielding conditionally.
 module.exports.yieldConditionally = yieldConditionally = (node) ->
   if node.type is S.ExpressionStatement and node.expression.right?.type is S.CallExpression
+    # Because we have a wrapper function which shouldn't yield, we only yield inside nested functions.
+    # We can't generatorify inner functions or when they're called, they'll return generator values, not real values.
+    return unless getFunctionNestingLevel(node) is 2
     node.update "#{node.source()} if (this._aetherShouldYield) { var _yieldValue = this._aetherShouldYield; this._aetherShouldYield = false; yield _yieldValue; }"
     node.yields = true
     possiblyGeneratorifyAncestorFunction node
@@ -130,7 +133,8 @@ module.exports.yieldAutomatically = yieldAutomatically = (node) ->
   # TODO: think about only doing this after some of the statements which have a different original range?
   if node.type in statements
     # Because we have a wrapper function which shouldn't yield, we only yield inside nested functions.
-    return unless getFunctionNestingLevel(node) > 1
+    # We can't generatorify inner functions or when they're called, they'll return generator values, not real values.
+    return unless getFunctionNestingLevel(node) is 2
     node.update "#{node.source()} yield 'waiting...';"
     node.yields = true
     possiblyGeneratorifyAncestorFunction node

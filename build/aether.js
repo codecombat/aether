@@ -22721,6 +22721,9 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
   module.exports.yieldConditionally = yieldConditionally = function(node) {
     var _ref3;
     if (node.type === S.ExpressionStatement && ((_ref3 = node.expression.right) != null ? _ref3.type : void 0) === S.CallExpression) {
+      if (getFunctionNestingLevel(node) !== 2) {
+        return;
+      }
       node.update("" + (node.source()) + " if (this._aetherShouldYield) { var _yieldValue = this._aetherShouldYield; this._aetherShouldYield = false; yield _yieldValue; }");
       node.yields = true;
       return possiblyGeneratorifyAncestorFunction(node);
@@ -22732,7 +22735,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
   module.exports.yieldAutomatically = yieldAutomatically = function(node) {
     var _ref3;
     if (_ref3 = node.type, __indexOf.call(statements, _ref3) >= 0) {
-      if (!(getFunctionNestingLevel(node) > 1)) {
+      if (getFunctionNestingLevel(node) !== 2) {
         return;
       }
       node.update("" + (node.source()) + " yield 'waiting...';");
