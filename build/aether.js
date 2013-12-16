@@ -22654,6 +22654,9 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
 
   module.exports.validateReturns = validateReturns = function(node) {
     var _ref3;
+    if (getFunctionNestingLevel(node) !== 2) {
+      return;
+    }
     if (node.type === S.ReturnStatement && !node.argument) {
       return node.update(node.source().replace("return;", "return this.validateReturn('" + this.options.functionName + "', null);"));
     } else if (((_ref3 = node.parent) != null ? _ref3.type : void 0) === S.ReturnStatement) {

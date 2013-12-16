@@ -66,7 +66,8 @@ module.exports.makeCheckThisKeywords = makeCheckThisKeywords = (global) ->
           node.update "this.#{node.source()}"
 
 module.exports.validateReturns = validateReturns = (node) ->
-  # TODO: what if this is in an inner function they defined?
+  # Only on top-level function (inside the wrapper), not inner functions.
+  return unless getFunctionNestingLevel(node) is 2
   if node.type is S.ReturnStatement and not node.argument
     node.update node.source().replace "return;", "return this.validateReturn('#{@options.functionName}', null);"
   else if node.parent?.type is S.ReturnStatement
