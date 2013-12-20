@@ -22626,7 +22626,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
     return function(node) {
       var p, problem, v, _i, _len, _ref3;
       if (node.type === S.VariableDeclarator) {
-        return vars[node.id] = true;
+        return vars[node.id.name] = true;
       } else if (node.type === S.FunctionDeclaration) {
         return vars[node.id.name] = true;
       } else if (node.type === S.CallExpression) {

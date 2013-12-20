@@ -48,7 +48,7 @@ module.exports.makeCheckThisKeywords = makeCheckThisKeywords = (global) ->
   vars = {}
   return (node) ->
     if node.type is S.VariableDeclarator
-      vars[node.id] = true
+      vars[node.id.name] = true
     else if node.type is S.FunctionDeclaration
       vars[node.id.name] = true
     else if node.type is S.CallExpression

@@ -316,10 +316,10 @@ var examples = [
         var coveredRows = [];
         var shortestCoveredRow = width - leftX;
         var done = false;
-        for(var y = bottomY; !done && y < grid.height; ++y) {
+        for(var y = bottomY; !done && y < height; ++y) {
           var coveredRow = 0, done2 = false;
           for(var x = leftX; !done2 && x < leftX + shortestCoveredRow; ++x) {
-            if(grid[y][x].length)
+            if(!grid[y][x].length)
               ++coveredRow;
             else
               done2 = true;
@@ -348,15 +348,20 @@ var examples = [
       }
 
       var grid = this.getNavGrid().grid;
-      var tileSize = 2;
-      for(var y = tileSize / 2; y < grid.length; y += tileSize) {
-        for(var x = tileSize / 2; x < grid[0].length; x += tileSize) {
+      var tileSize = 4;
+      for(var y = 0; y < grid.length - tileSize / 2; y += tileSize) {
+        for(var x = 0; x < grid[0].length - tileSize / 2; x += tileSize) {
           var occupied = grid[y][x].length > 0;
           if(!occupied) {
             var rect = largestRectangle(grid, y, x, grid[0].length, grid.length);
-            this.say("rect", rect.x, rect.y, rect.width, rect.height);
             this.addRect(rect.x, rect.y, rect.width, rect.height);
-            this.wait(0.01);
+            //this.say("Placed rect " + rect.x + ", " + rect.y + ", " + rect.width + ", " + rect.height + " for " + grid[0].length + ",  " + grid.length + ", " + x + ", " + y);
+            this.wait(0.1);
+            for(var y2 = rect.y - rect.height / 2; y2 < rect.y + rect.height / 2; ++y2) {
+              for(var x2 = rect.x - rect.width / 2; x2 < rect.x + rect.width / 2; ++x2) {
+                grid[y2][x2] = [rect];
+              }
+            }
           }
         }
       }
