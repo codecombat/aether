@@ -363,6 +363,9 @@ module.exports = class Aether
 
 self.Aether = Aether if self?
 window.Aether = Aether if window?
+self.esprima ?= esprima if self?
+window.esprima ?= esprima if window?
+
 
 
 # In order to be able to highlight the currently executing statement, then every time we yield, we can just grab the last-executed AST start/end and store it in our Thang as a trackedProperty. ... per method...

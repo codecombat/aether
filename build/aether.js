@@ -19853,6 +19853,18 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
     window.Aether = Aether;
   }
 
+  if (typeof self !== "undefined" && self !== null) {
+    if (self.esprima == null) {
+      self.esprima = esprima;
+    }
+  }
+
+  if (typeof window !== "undefined" && window !== null) {
+    if (window.esprima == null) {
+      window.esprima = esprima;
+    }
+  }
+
 }).call(this);
 
 },{"./defaults":2,"./execution":3,"./morph":4,"./problems":5,"./transforms":6,"./validators/options":7,"JS_WALA/normalizer/lib/normalizer":12,"acorn/acorn_loose":16,"escodegen":17,"esprima":20,"jshint":34,"lodash":21,"traceur":21}],2:[function(require,module,exports){

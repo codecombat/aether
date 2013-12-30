@@ -69,7 +69,7 @@ module.exports.RuntimeProblem = class RuntimeProblem extends UserCodeProblem
       console.log "Runtime problem got ranges:", @ranges
       lineNumber = @ranges[0][0][0]
       if @message.search(/^Line \d+/) != -1
-        @message = @message.replace /^Line \d+/, (match, n) => "Line #{lineNumber}"
+        @message = @message.replace /^Line \d+/, (match, n) -> "Line #{lineNumber}"
       else
         @message = "Line #{lineNumber}: #{@message}"
 
