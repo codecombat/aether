@@ -24,7 +24,7 @@ module.exports = (grunt) ->
 
     watch:
       files: ['src/**/*', 'test/**/*.coffee']
-      tasks: ['coffeelint', 'coffee', 'browserify', 'concat', 'jasmine_node', 'copy']  #, 'uglify']
+      tasks: ['coffeelint', 'coffee', 'browserify', 'concat', 'jasmine_node']  #, 'uglify']
       options:
         spawn: false
 
@@ -73,10 +73,6 @@ module.exports = (grunt) ->
         src: ['node_modules/traceur/bin/traceur.js', 'build/<%= pkg.name %>.js']
         dest: 'build/<%= pkg.name %>.js'
 
-    copy:
-      main:
-        src: "build/<%= pkg.name %>.js", dest: "../coco/vendor/scripts/<%= pkg.name %>.js"
-
   # Load the plugin that provides the "uglify" task.
   grunt.loadNpmTasks 'grunt-contrib-uglify'
   #grunt.loadNpmTasks 'grunt-contrib-jasmine'
@@ -85,11 +81,10 @@ module.exports = (grunt) ->
   grunt.loadNpmTasks 'grunt-contrib-coffee'
   grunt.loadNpmTasks 'grunt-contrib-watch'
   grunt.loadNpmTasks 'grunt-browserify'
-  grunt.loadNpmTasks 'grunt-contrib-copy'
   grunt.loadNpmTasks 'grunt-contrib-concat'
   grunt.loadNpmTasks 'grunt-notify'
 
   # Default task(s).
-  grunt.registerTask 'default', ['coffeelint', 'coffee', 'browserify', 'concat', 'jasmine_node', 'copy', 'uglify']
+  grunt.registerTask 'default', ['coffeelint', 'coffee', 'browserify', 'concat', 'jasmine_node', 'uglify']
   grunt.registerTask 'travis', ['coffeelint', 'coffee', 'browserify', 'concat', 'jasmine_node']
-  grunt.registerTask 'build', ['coffeelint', 'coffee', 'browserify', 'concat', 'copy', 'uglify']
+  grunt.registerTask 'build', ['coffeelint', 'coffee', 'browserify', 'concat', 'uglify']
