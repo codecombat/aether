@@ -284,7 +284,7 @@ module.exports = class Aether
     instrumentedCode = "return " + @transform normalizedCode, postNormalizationTransforms
     if @options.yieldConditionally or @options.yieldAutomatically
       # Unlabel breaks and pray for correct behavior: https://github.com/google/traceur-compiler/issues/605
-      instrumentedCode = instrumentedCode.replace /break [A-z0-9]+;/g, 'break;'
+      instrumentedCode = instrumentedCode.replace /(break|continue) [A-z0-9]+;/g, '$1;'
       purifiedCode = @traceurify instrumentedCode
     else
       purifiedCode = instrumentedCode
