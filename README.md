@@ -8,7 +8,7 @@ letting them see and more easily understand the execution of their program [(lik
 and giving them tips on how they can improve their code. [CodeCombat](http://codecombat.com/) is behind it.
 
 ## Get in touch
-You can use the [GitHub issues](https://github.com/nwinter/aether/issues), the [Discourse forum](http://discourse.codecombat.com/), the [Google Group](https://groups.google.com/forum/#!forum/aether-dev), the [HipChat](http://www.hipchat.com/g3plnOKqa), or [email](mailto:nick@codecombat.com) [Nick](http://www.nickwinter.net/).
+You can use the [GitHub issues](https://github.com/nwinter/aether/issues), the [Discourse forum](http://discourse.codecombat.com/), the [HipChat](http://www.hipchat.com/g3plnOKqa), or [email](mailto:nick@codecombat.com) [Nick](http://www.nickwinter.net/).
 
 ## What is it?
 It's a JavaScript library (written in CoffeeScript) that takes user code as input; does computer-sciencey transpilation things to it with the help of [JSHint](http://jshint.com/), [Esprima](http://esprima.org/), [JS_WALA](https://github.com/wala/JS_WALA), [escodegen](https://github.com/Constellation/escodegen), and [traceur](https://github.com/google/traceur-compiler); and gives you:
@@ -19,7 +19,9 @@ It's a JavaScript library (written in CoffeeScript) that takes user code as inpu
 
 1. *incomplete* **Sandboxing** so that you can actually run user code in the browser without worrying if the world will end. Well, not actually. [That](http://www.adsafe.org/) is [hard](http://seclab.stanford.edu/websec/jsPapers/w2sp.pdf); one should at least use a web worker. But good enough to foil most hacking attempts.
 
-1. *planned* **Instrumentation** so that when the code is run, you'll know everything that happened. Count statements executed, step through the flow of execution, retrieve past variable states, and even pause and resume execution whenever you want. Pause after every statement? Sure!
+1. *incomplete* **Instrumentation** so that when the code is run, you'll know everything that happened. Count statements executed, step through the flow of execution, retrieve past variable states, and even pause and resume execution whenever you want. Pause after every statement? Sure!
+
+1. *planned* **[Time-travel debugging](https://github.com/codecombat/aether/issues/2)** to combine and surpass the best parts of both stepping debugging and logging.
 
 1. *planned* **Style analysis**: metrics on things like what kind of indentation and bracket style the code uses, whether it uses recursion or regular expressions, etc.
 
@@ -30,10 +32,10 @@ It's a JavaScript library (written in CoffeeScript) that takes user code as inpu
 1. *planned* **Other goodies**! You can let your users code in [ES6](http://www.slideshare.net/domenicdenicola/es6-the-awesome-parts) now and hopefully [CoffeeScript](https://github.com/michaelficarra/CoffeeScriptRedux) soon.
 
 ### Development Status
-Pre-alpha! Watch out! [CodeCombat](http://codecombat.com/) is using it right now, but there are many bugs and missing pieces. If you'd be interested in Aether were it solid and finished, *please* tell us so we can get an idea of where else it might be useful and how it should work.
+Alpha--watch out! [CodeCombat](http://codecombat.com/) is using it right now, but there are many bugs and missing pieces. If you'd be interested in Aether were it solid and finished, *please* tell us so we can get an idea of where else it might be useful and how it should work.
 
-### Public TODO: Trello
-See what we're planning, comment, and vote on priorities at [the Aether Trello board](https://trello.com/b/8UkcBbDp/aether). If you want to tackle any issues, let me know and I'll add you.
+### TODO: GitHub Issues
+We were using [a Trello board](https://trello.com/b/8UkcBbDp/aether) for this, but we'll be migrating everything to the [GitHub issues](https://github.com/codecombat/aether/issues) soon.
 
 ### How to Use It
 In the browser, grab [build/aether.js](https://github.com/nwinter/aether/blob/master/build/aether.js) or [build/aether.min.js](https://github.com/nwinter/aether/blob/master/build/aether.min.js). Or in node, add `"aether": "https://github.com/nwinter/aether/tarball/master"` to your `dependencies` in `package.json` and then `npm install`. (This may not work yet.) Then, in your code:
@@ -49,13 +51,11 @@ var gnarlyFunc = aether.createFunction();
 gnarlyFunc();
 // At any point, you can check aether.problems, aether.style, aether.flow, aether.metrics, etc.
 // See more examples in the tests: https://github.com/nwinter/aether/tree/master/test
-// Or planned examples in the very-out-of-date plan: https://github.com/nwinter/aether/blob/master/plan.md
 ```
 
 In the browser, it currently depends on [lodash](http://lodash.com/) or [underscore](http://underscorejs.org/). We test in Chrome and node, and it will probably work in other modern browsers.
 
 ## Functionality
-Because we're developing exploratively, here are some **not-up-to-date** details on what it does and how. See also [plan.md](https://github.com/nwinter/aether/blob/master/plan.md) for also outdated sample-code brainstorming on the API.
 
 ### Compilation
 Aether can determine whether a given piece of code compiles.
@@ -68,7 +68,7 @@ Aether should return a list of syntax errors and warnings coupled with the line 
 ##### Additional Errors and Error Modification
 Aether should allow custom errors and modification of errors generated by the parser.
 
-For example, spell checking could be ran at compile time (and configured at runtime), and detailed compile errors thrown. 
+For example, spell checking could be run at compile time (and configured at runtime), and detailed compile errors thrown. 
 
 In addition, validation of method arguments and return values should be performed, catching many imminent runtime errors.
 
@@ -78,7 +78,7 @@ By giving the user more detailed errors than those generated by the parser, a ge
 On certain errors, Aether should manipulate the syntax to conform and throw a warning instead. For instance, if the user forgets a "this." while calling a method, it should be corrected, and the user educated about the mistake they made.
 
 ### Strict compilation
-The code shall be compiled with the "use strict;" option to prevent the user from breaking the code with unsafe actions, such as accessing the global object, as well as catch some runtime errors before they happen.
+The code shall be compiled with the "use strict;" option to prevent the user from breaking the code with unsafe actions, such as accessing the global object, as well as catch some runtime errors before they happen. Later we'll want to use or adapt ideas from [localeval](https://github.com/espadrine/localeval).
 
 ## Runtime Error Detection
 The code should catch common runtime errors as they happen, and instead of crashing, present configurable error messages that match up to the original, not compiled, source code.
@@ -132,4 +132,4 @@ Aether will be highly customizable and configurable in order to facilitate use b
 ## License
 [The MIT License (MIT)](https://github.com/nwinter/aether/blob/master/LICENSE)
 
-We'll probably also have a simple [CLA](http://en.wikipedia.org/wiki/Contributor_License_Agreement) soon because Michael's roommate is a lawyer.
+Please also [sign the CodeCombat contributor license agreement](http://codecombat.com/cla) so we can accept your pull requests. It is easy.
