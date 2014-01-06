@@ -51,6 +51,7 @@ function showProblems(aether) {
       "warnings": {type: 'array', maxItems: aether.problems.warnings.length},
       "infos": {type: 'array', maxItems: aether.problems.infos.length}
     }}};
+  console.log("problems", treemaOptions);
   var treema = TreemaNode.make(el, treemaOptions);
   treema.build();
   $('#aether_problems').empty().append(el);

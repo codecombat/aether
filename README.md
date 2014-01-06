@@ -1,6 +1,6 @@
 ![aether logo](http://i.imgur.com/uf36eRD.jpg)
 ======
-[![Build Status](https://travis-ci.org/nwinter/aether.png)](https://travis-ci.org/nwinter/aether)
+[![Build Status](https://travis-ci.org/codecombat/aether.png)](https://travis-ci.org/codecombat/aether)
 
 ## Purpose
 Aether aims to make it easy for people to learn and write JavaScript and CoffeeScript by helping them catch and fix bugs, 
@@ -8,7 +8,7 @@ letting them see and more easily understand the execution of their program [(lik
 and giving them tips on how they can improve their code. [CodeCombat](http://codecombat.com/) is behind it.
 
 ## Get in touch
-You can use the [GitHub issues](https://github.com/nwinter/aether/issues), the [Discourse forum](http://discourse.codecombat.com/), the [HipChat](http://www.hipchat.com/g3plnOKqa), or [email](mailto:nick@codecombat.com) [Nick](http://www.nickwinter.net/).
+You can use the [GitHub issues](https://github.com/codecombat/aether/issues), the [Discourse forum](http://discourse.codecombat.com/), the [HipChat](http://www.hipchat.com/g3plnOKqa), or [email](mailto:nick@codecombat.com) [Nick](http://www.nickwinter.net/).
 
 ## What is it?
 It's a JavaScript library (written in CoffeeScript) that takes user code as input; does computer-sciencey transpilation things to it with the help of [JSHint](http://jshint.com/), [Esprima](http://esprima.org/), [JS_WALA](https://github.com/wala/JS_WALA), [escodegen](https://github.com/Constellation/escodegen), and [traceur](https://github.com/google/traceur-compiler); and gives you:
@@ -38,7 +38,7 @@ Alpha--watch out! [CodeCombat](http://codecombat.com/) is using it right now, bu
 We were using [a Trello board](https://trello.com/b/8UkcBbDp/aether) for this, but we'll be migrating everything to the [GitHub issues](https://github.com/codecombat/aether/issues) soon.
 
 ### How to Use It
-In the browser, grab [build/aether.js](https://github.com/nwinter/aether/blob/master/build/aether.js) or [build/aether.min.js](https://github.com/nwinter/aether/blob/master/build/aether.min.js). Or in node, add `"aether": "https://github.com/nwinter/aether/tarball/master"` to your `dependencies` in `package.json` and then `npm install`. (This may not work yet.) Then, in your code:
+In the browser, grab [build/aether.js](https://github.com/codecombat/aether/blob/master/build/aether.js) or [build/aether.min.js](https://github.com/codecombat/aether/blob/master/build/aether.min.js). Or in node, add `"aether": "https://github.com/codecombat/aether/tarball/master"` to your `dependencies` in `package.json` and then `npm install`. (This may not work yet.) Then, in your code:
 
 ```javascript
 var Aether = require('aether');  // It's a node/browserify module, so use node-style CommonJS requires: http://addyosmani.com/writing-modular-js/
@@ -50,7 +50,7 @@ aether.transpile(someGnarlyUserCode);
 var gnarlyFunc = aether.createFunction();
 gnarlyFunc();
 // At any point, you can check aether.problems, aether.style, aether.flow, aether.metrics, etc.
-// See more examples in the tests: https://github.com/nwinter/aether/tree/master/test
+// See more examples in the tests: https://github.com/codecombat/aether/tree/master/test
 ```
 
 In the browser, it currently depends on [lodash](http://lodash.com/) or [underscore](http://underscorejs.org/). We test in Chrome and node, and it will probably work in other modern browsers.
@@ -130,6 +130,6 @@ A nice feature for Aether would be code visualization, for instance a rendering 
 Aether will be highly customizable and configurable in order to facilitate use by other projects.
 
 ## License
-[The MIT License (MIT)](https://github.com/nwinter/aether/blob/master/LICENSE)
+[The MIT License (MIT)](https://github.com/codecombat/aether/blob/master/LICENSE)
 
 Please also [sign the CodeCombat contributor license agreement](http://codecombat.com/cla) so we can accept your pull requests. It is easy.

@@ -10,13 +10,13 @@
 <script src="http://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.0.0/js/bootstrap.min.js"></script>
 <script src="http://codecombat.github.io/treema/js/vendor/tv4.js"></script>
 <!--<script src="http://codecombat.github.io/treema/js/treema.js"></script>-->
-<script src="../../treema/treema.js"></script>
+<script src="treema.js"></script>
 <script src="../build/aether.js"></script>
 <script src="index.js" href="index.js"></script>
 <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.min.css">
 <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css">
 <!--<link rel="stylesheet" href="http://codecombat.github.io/treema/css/treema.css">-->
-<link rel="stylesheet" href="../../treema/treema.css">
+<link rel="stylesheet" href="treema.css">
 <link rel="stylesheet" href="index.css">
 
 <div id="content">
@@ -29,7 +29,7 @@
     <li class="active"><a href="#demo" data-toggle="tab">Demo</a></li>
     <li><a href="#usage" data-toggle="tab">Usage</a></li>
     <li><a href="#develop" data-toggle="tab">Dev</a></li>
-    <li id="github-link"><a href="https://github.com/nwinter/aether">Aether on Github</a></li>
+    <li id="github-link"><a href="https://github.com/codecombat/aether">Aether on Github</a></li>
   </ul>
   
   <hr />
@@ -45,7 +45,7 @@
       
       <h2><a name="get-in-touch" class="anchor" href="#get-in-touch"></a>Get in touch</h2>
       
-      <p>You can use the <a href="https://github.com/nwinter/aether/issues">GitHub issues</a>, the <a href="http://discourse.codecombat.com/">Discourse forum</a>, the <a href="https://groups.google.com/forum/#!forum/aether-dev">Google Group</a>, the <a href="http://www.hipchat.com/g3plnOKqa">HipChat</a>, or <a href="mailto:nick@codecombat.com">email</a> <a href="http://www.nickwinter.net/">Nick</a>.</p>
+      <p>You can use the <a href="https://github.com/codecombat/aether/issues">GitHub issues</a>, the <a href="http://discourse.codecombat.com/">Discourse forum</a>, the <a href="https://groups.google.com/forum/#!forum/aether-dev">Google Group</a>, the <a href="http://www.hipchat.com/g3plnOKqa">HipChat</a>, or <a href="mailto:nick@codecombat.com">email</a> <a href="http://www.nickwinter.net/">Nick</a>.</p>
       
       <h2><a name="what-is-it" class="anchor" href="#what-is-it"></a>What is it?</h2>
       
@@ -55,7 +55,8 @@
 	<li><p><em>incomplete</em> <strong>Linting</strong> with totally configurable error/warning/info messages. Instead of <code>"Warning: Line 2: Missing semicolon."</code>, you could make Aether say, <code>"Error: You need a semicolon here on line 2 after 'this.explode()' to end the statement."</code>, or <code>"fyi: might want a ; here amiga"</code>, or nothing at all. Aether does spellchecking based on what properties should exist, too: <code>Should be 'destroy', not 'destory'.</code></p></li>
 	<li><p><em>incomplete</em> <strong>Transformation</strong> like with <a href="https://github.com/substack/node-falafel">node-falafel</a>, but even easier, because your source transformation plugins can run either before or after the <a href="http://en.wikipedia.org/wiki/Abstract_syntax_tree">AST</a> is normalized with <a href="https://github.com/wala/JS_WALA">JS_WALA</a>.</p></li>
 	<li><p><em>incomplete</em> <strong>Sandboxing</strong> so that you can actually run user code in the browser without worrying if the world will end. Well, not actually. <a href="http://www.adsafe.org/">That</a> is <a href="http://seclab.stanford.edu/websec/jsPapers/w2sp.pdf">hard</a>; one should at least use a web worker. But good enough to foil most hacking attempts.</p></li>
-	<li><p><em>planned</em> <strong>Instrumentation</strong> so that when the code is run, you'll know everything that happened. Count statements executed, step through the flow of execution, retrieve past variable states, and even pause and resume execution whenever you want. Pause after every statement? Sure!</p></li>
+	<li><p><em>incomplete</em> <strong>Instrumentation</strong> so that when the code is run, you'll know everything that happened. Count statements executed, step through the flow of execution, retrieve past variable states, and even pause and resume execution whenever you want. Pause after every statement? Sure!</p></li>
+	<li><p><em>*planned*</em> <strong><a href="https://github.com/codecombat/aether/issues/2">Time-travel debugging</a></strong> to combine and surpass the best parts of both stepping debugging and logging.
 	<li><p><em>planned</em> <strong>Style analysis</strong>: metrics on things like what kind of indentation and bracket style the code uses, whether it uses recursion or regular expressions, etc.</p></li>
 	<li><p><em>planned</em> <strong>Autocompletion</strong> suggestions based on unfinished code.</p></li>
 	<li><p><em>planned</em> <strong>Visualization</strong> of the program's execution. (Well, maybe. We haven't started that part yet; we might not do it.)</p></li>
@@ -64,11 +65,7 @@
 
       <h3><a name="development-status" class="anchor" href="#development-status"></a>Development Status</h3>
       
-      <p>Pre-alpha! Watch out! We've converted the dev version of <a href="http://codecombat.com/">CodeCombat</a> to use it, but there are many bugs and missing pieces. If you'd be interested in Aether were it solid and finished, <em>please</em> tell us so we can get an idea of where else it might be useful and how it should work.</p>
- 
-      <h3>What is it good for?</h3>
-
-      <p>TODO: give some examples of what kind of projects would use it</p>
+      <p>Alpha! Watch out! <a href="http://codecombat.com/">CodeCombat</a> is using it right now, but there are many bugs and missing pieces. If you'd be interested in Aether were it solid and finished, <em>please</em> tell us so we can get an idea of where else it might be useful and how it should work.</p>
 
     </div>
 
@@ -113,7 +110,7 @@
     <div class="tab-pane fade" id="usage">
       <p class="lead">Aether runs in node and the browser using <a href="http://addyosmani.com/writing-modular-js/">node-style CommonJS requires</a>.</p>
       
-      <p>In the browser, grab <a href="https://github.com/nwinter/aether/blob/master/build/aether.js">build/aether.js</a> or <a href="https://github.com/nwinter/aether/blob/master/build/aether.min.js">build/aether.min.js</a>. Or in node, add <code>"aether": "https://github.com/nwinter/aether/tarball/master"</code> to your <code>dependencies</code> in <code>package.json</code> and then <code>npm install</code>. (This may not work yet.) Then, in your code:</p>
+      <p>In the browser, grab <a href="https://github.com/codecombat/aether/blob/master/build/aether.js">build/aether.js</a> or <a href="https://github.com/codecombat/aether/blob/master/build/aether.min.js">build/aether.min.js</a>. Or in node, add <code>"aether": "https://github.com/codecombat/aether/tarball/master"</code> to your <code>dependencies</code> in <code>package.json</code> and then <code>npm install</code>. (This may not work yet.) Then, in your code:</p>
       
       <pre>
 var Aether = require('aether');
@@ -129,8 +126,8 @@ aether.transpile(someGnarlyUserCode);
 var gnarlyFunc = aether.createFunction();
 gnarlyFunc();
 // At any point, you can check aether.problems, aether.style, aether.flow, aether.metrics, etc.
-// See more examples in the tests: https://github.com/nwinter/aether/tree/master/test
-// Or planned examples in the plan: https://github.com/nwinter/aether/blob/master/plan.md
+// See more examples in the tests: https://github.com/codecombat/aether/tree/master/test
+// Or planned examples in the plan: https://github.com/codecombat/aether/blob/master/plan.md
       </pre>
       
       <p>In the browser, it currently depends on <a href="http://lodash.com/">lodash</a> or <a href="http://underscorejs.org/">underscore</a>. We test in Chrome and node, and it will probably work in other modern browsers.</p>
@@ -143,7 +140,7 @@ gnarlyFunc();
       <h3>Setting Up Your Environment</h3>
       
       <p>
-	The <a href="https://github.com/nwinter/aether">Github Repository</a>
+	The <a href="https://github.com/codecombat/aether">GitHub Repository</a>
 	has <strong>everything</strong> you need to work on Aether.
 	You'll need <a href="http://www.joyent.com/blog/installing-node-and-npm">Node, NPM</a>
 	and <a href="http://git-scm.com/">Git</a> installed.
@@ -152,7 +149,7 @@ gnarlyFunc();
       <ol>
 	<li>
 	  <strong>Clone the repository</strong>:
-	  <pre>git clone https://github.com/nwinter/aether.git</pre>
+	  <pre>git clone https://github.com/codecombat/aether.git</pre>
 	</li>
 	<li>
 	  Go to the directory and <strong>npm install</strong>:
@@ -184,7 +181,7 @@ npm install</pre>
 
       <p>TODO</p>
       
-      <p>You could always also add more tests or handle	<a href="https://github.com/nwinter/aether/issues">reported issues</a>.
+      <p>You could always also add more tests or handle	<a href="https://github.com/codecombat/aether/issues">reported issues</a>.
       </p>
 
     </div>
