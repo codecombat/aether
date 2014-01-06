@@ -168,7 +168,30 @@ module.exports = class Aether
     # Return a ready-to-execute, instrumented function from the purified code
     # Because JS_WALA normalizes it to define a wrapper function on this, we need to run the wrapper to get our real function out.
     wrapper = new Function ['_aether'], @pure
-    dummyContext = {Math: Math}  # TODO: put real globals in
+    globals = [
+        # Other
+        'eval',
+
+        # Math related
+        'NaN', 'Infinity', 'undefined', 'parseInt', 'parseFloat', 'isNaN', 'isFinite',
+
+        # URI related
+        'decodeURI', 'decodeURIComponent', 'encodeURI', 'encodeURIComponent',
+
+        # Built-in objects
+        'Object', 'Function', 'Array', 'String', 'Boolean', 'Number', 'Date', 'RegExp', 'Math', 'JSON',
+
+        # Error Objects
+        'Error', 'EvalError', 'RangeError', 'ReferenceError', 'SyntaxError', 'TypeError', 'URIError'
+    ]
+
+    dummyContext = {}
+
+    globalRef = global ? window
+
+    for name in globals
+      dummyContext[name] = globalRef[name]
+
     wrapper.call dummyContext, @
     dummyContext[@options.functionName or 'foo']
 
