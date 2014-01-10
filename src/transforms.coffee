@@ -157,6 +157,12 @@ module.exports.makeInstrumentStatements = makeInstrumentStatements = ->
     node.update "#{node.source()} _aether.logStatement(#{range[0]}, #{range[1]}, \"#{safeSource}\", this._aetherUserInfo);"
     #console.log " ... created logger", node.source(), node.originalNode
 
+module.exports.interceptThis = interceptThis = ->
+  return (node)->
+    return unless node.type == S.ThisExpression
+    return unless getFunctionNestingLevel(node) > 1
+    node.update "__interceptThis(this, __global)"
+
 module.exports.makeInstrumentCalls = makeInstrumentCalls = ->
   # set up any state tracking here
   return (node) ->

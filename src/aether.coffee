@@ -14,6 +14,8 @@ execution = require './execution'
 morph = require './morph'
 transforms = require './transforms'
 
+protectBuiltins = require './protectBuiltins'
+
 optionsValidator = require './validators/options'
 
 module.exports = class Aether
@@ -170,7 +172,7 @@ module.exports = class Aether
     wrapper = new Function ['_aether'], @pure
     globals = [
         # Other
-        'eval',
+        # 'eval',
 
         # Math related
         'NaN', 'Infinity', 'undefined', 'parseInt', 'parseFloat', 'isNaN', 'isFinite',
@@ -192,8 +194,27 @@ module.exports = class Aether
     for name in globals
       dummyContext[name] = globalRef[name]
 
+    dummyFunction = ->
+      throw new Error '[Sandbox] Function::constructor is disabled. If you are a developer please make sure you have a reference to your builtins'
+
+    protectBuiltins.copyBuiltin Function, dummyFunction
+    dummyContext.Function = dummyFunction
+
+
     wrapper.call dummyContext, @
-    dummyContext[@options.functionName or 'foo']
+    f = dummyContext[@options.functionName or 'foo']
+
+    ## Wrapper function
+    ->
+      Function::constructor = ->
+        throw new Error '[Sandbox] Function::constructor is disabled. If you are a developer please make sure you have a reference to your builtins'
+
+      try
+        result = f.apply @, arguments
+      finally
+        protectBuiltins.restoreBuiltins()
+
+      return result
 
   createMethod: ->
     # Like createFunction, but binds method to thisValue if specified
@@ -304,6 +325,7 @@ module.exports = class Aether
     postNormalizationTransforms.unshift transforms.makeInstrumentStatements() if @options.includeMetrics or @options.includeFlow
     postNormalizationTransforms.unshift transforms.makeInstrumentCalls() if @options.includeMetrics or @options.includeFlow
     postNormalizationTransforms.unshift transforms.makeFindOriginalNodes originalNodeRanges, @wrappedCodePrefix, wrappedCode, normalizedSourceMap, normalizedNodeIndex
+    postNormalizationTransforms.unshift transforms.interceptThis()
     instrumentedCode = "return " + @transform normalizedCode, postNormalizationTransforms
     if @options.yieldConditionally or @options.yieldAutomatically
       # Unlabel breaks and pray for correct behavior: https://github.com/google/traceur-compiler/issues/605
@@ -319,7 +341,11 @@ module.exports = class Aether
       console.log "---NORMALIZED--: #{normalizedCode.split('\n').length}\n", {code: normalizedCode}
       console.log "---INSTRUMENTED: #{instrumentedCode.split('\n').length}\n", {code: "return " + instrumentedCode}
       console.log "---PURIFIED----: #{purifiedCode.split('\n').length}\n", {code: purifiedCode}
-    return purifiedCode
+
+    # Inject __interceptThis
+    interceptThis = 'var __interceptThis=(function(){var G=this;return function($this,sandbox){if($this==G){return sandbox;}return $this;};})();'
+
+    return interceptThis + purifiedCode
 
   getLineNumberForPlannedMethod: (plannedMethod, numMethodsSeen) ->
     n = 0
