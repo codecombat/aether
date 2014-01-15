@@ -2,15 +2,15 @@ var editors = [];
 var Range = ace.require('ace/range').Range;
 
 $(function() {
-  $('.ace_editor_wrapper').each(function() {
+  $('.ace-editor-wrapper').each(function() {
     var editor = ace.edit(this);
     editor.setTheme("ace/theme/xcode");
-    //editor.getSession().setMode("ace/mode/javascript");
+    editor.getSession().setUseWorker(false);
+    editor.getSession().setMode("ace/mode/javascript");
+    editor.getSession().getDocument().on('change', watchForCodeChanges);
     editors.push(editor);
   });
   populateExamples();
-
-  setInterval(watchForCodeChanges, 500);
 });
 
 function grabDemoCode() {
@@ -51,10 +51,9 @@ function showProblems(aether) {
       "warnings": {type: 'array', maxItems: aether.problems.warnings.length},
       "infos": {type: 'array', maxItems: aether.problems.infos.length}
     }}};
-  console.log("problems", treemaOptions);
   var treema = TreemaNode.make(el, treemaOptions);
   treema.build();
-  $('#aether_problems').empty().append(el);
+  $('#aether-problems').empty().append(el);
   treema.open(2);
 
   var editor = editors[0];
@@ -73,11 +72,20 @@ function showProblems(aether) {
     annotations.push(ann);
   }
   session.setAnnotations(annotations);
+
+  var wrapper = $("#worst-problem-wrapper").empty();
+  var worst = allProblems[0];
+  if(worst) {
+    wrapper.text(worst.type + " " + worst.level + " line " + worst.ranges[0][0][0] + ": " + worst.message);
+    wrapper.toggleClass('error', worst.level === 'error');
+    wrapper.toggleClass('warning', worst.level === 'warning');
+    wrapper.toggleClass('info', worst.level === 'info');
+  }
 }
 
 function showFlow(aether) {
   clearMarkers();
-  $('#aether_flow').empty();
+  $('#aether-flow').empty();
   if(!aether.flow || !aether.flow.states) return;
   var text = editors[0].getValue();
   var session = editors[0].getSession();
@@ -98,18 +106,18 @@ function showFlow(aether) {
   var treemaOptions = {preventEditing: true, data: aether.flow, schema: {type: "object", additionalProperties: false, properties: {states: {type: "array"}}}};
   var treema = TreemaNode.make(el, treemaOptions);
   treema.build();
-  $('#aether_flow').append(el);
+  $('#aether-flow').append(el);
   treema.open(3);
 }
 
 function showMetrics(aether) {
-  $('#aether_metrics').empty();
+  $('#aether-metrics').empty();
   if(!aether.metrics) return;
   var el = $("<div></div>");
   var treemaOptions = {preventEditing: true, data: aether.metrics, schema: {type: "object"}};
   var treema = TreemaNode.make(el, treemaOptions);
   treema.build();
-  $('#aether_metrics').append(el);
+  $('#aether-metrics').append(el);
   treema.open(3);
 }
 
@@ -134,20 +142,21 @@ function watchForCodeChanges() {
   lastJSInputAether.transpile(code);
   eval(aetherInput);
 }
+watchForCodeChanges = _.debounce(watchForCodeChanges, 1000);
 
 var oldConsoleLog = console.log;
 console.log = function() {
   oldConsoleLog.apply(console, arguments);
-  var oldText = $("#aether_console").text();
+  var oldText = $("#aether-console").text();
   var newText = oldText + Array.prototype.slice.call(arguments).join(' ')+ '\n';
-  $("#aether_console").text(newText);
+  $("#aether-console").text(newText);
 };
 
 function clearOutput() {
-  $("#aether_console").text('');
-  $("#aether_metrics").empty();
-  $("#aether_flows").empty();
-  $("#aether_problems").empty();
+  $("#aether-console").text('');
+  $("#aether-metrics").empty();
+  $("#aether-flows").empty();
+  $("#aether-problems").empty();
 }
 
 var examples = [
@@ -294,6 +303,9 @@ var examples = [
     name: "Hacker",
     code: function() {
       // TODO: write a good test/demo here where the user tries to hack out of the sandbox
+      (function(){}).__proto__.constructor(
+        "var x=new XMLHttpRequest();x.open('GET','/auth/whoami',false);x.send();var u=JSON.parse(x.responseText);u.name='Nick!';x=new XMLHttpRequest();x.open('PUT','/db/user/'+u._id,false);x.setRequestHeader('Content-Type','application/json');x.send(JSON.stringify(u));"
+        )();
     },
     aether: function() {
       // TODO: write a good test/demo here to show how we can stop her

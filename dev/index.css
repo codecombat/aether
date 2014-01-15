@@ -67,7 +67,7 @@ pre { font-size: 12px; }
   top: 180px;
 }
 
-#demo .ace_editor_wrapper {
+#demo .ace-editor-wrapper {
   position: absolute;
   top: 35px;
   right: 20px;
@@ -76,16 +76,16 @@ pre { font-size: 12px; }
   height: 380px;
 }
 
-#aether_problems, #aether_console, #aether_metrics, #aether_flow {
+#aether-problems, #aether-console, #aether-metrics, #aether-flow {
   overflow: scroll;
   max-height: 380px;
 }
 
-#demo #aether_metrics {
+#demo #aether-metrics {
   height: 200px;
 }
 
-#demo #aether_console {
+#demo #aether-console {
   height: 100px;
 }
 
@@ -98,6 +98,19 @@ pre { font-size: 12px; }
   height: 430px;
 }
 
-.dev_section {
+.dev-section {
   background-color: #fafafa;
 }
+
+#worst-problem-wrapper {
+  position: absolute;
+  z-index: 100;
+  top: 445px;
+  left: 60px;
+  font-size: 20px;
+  background-color: rgba(240, 240, 255, 0.8);
+}
+
+#worst-problem-wrapper.error { color: red; }
+#worst-problem-wrapper.warning { color: orange; }
+#worst-problem-wrapper.info { color: green; }
