@@ -7,6 +7,12 @@ describe "Aether", ->
       code = "var x = 3;"
       expect(aether.canTranspile(code)).toEqual true
 
+    it "running functions isn't broken horribly", ->
+      aether = new Aether()
+      code = "return 1000;"
+      aether.transpile(code)
+      expect(aether.run()).toEqual 1000
+
   describe "Transpile heuristics", ->
     aether = null
     beforeEach ->
