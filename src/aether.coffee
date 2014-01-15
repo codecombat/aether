@@ -6,6 +6,7 @@ acorn_loose = require 'acorn/acorn_loose'  # for if Esprima dies. Note it can't 
 jshint = require('jshint').JSHINT
 normalizer = require 'JS_WALA/normalizer/lib/normalizer'
 escodegen = require 'escodegen'
+csredux = require 'coffee-script-redux'
 #infer = require 'tern/lib/infer'  # Not enough time to figure out how to integrate this yet
 
 defaults = require './defaults'
@@ -125,7 +126,8 @@ module.exports = class Aether
   transpile: (@raw) ->
     # Transpile it. Even if it can't transpile, it will give syntax errors and warnings and such. Clears any old state.
     @reset()
-    @problems = @lint @raw
+    if @options.languageVersion is not 'CS'
+      @problems = @lint @raw
     @pure = @purifyCode @raw
     @pure
 
@@ -144,6 +146,14 @@ module.exports = class Aether
     # TODO: Try it and make sure our line counts are fine.
     @wrappedCodeSuffix ?= "\n}"
     @wrappedCodePrefix + rawCode + @wrappedCodeSuffix
+
+  wrapCS: (rawCode) ->
+    @wrappedCodePrefix ?="""
+    #{@options.functionName or 'foo'} = (#{@options.functionParameters.join(', ')}) ->
+    \t
+    """
+    @wrappedCodeSuffix ?= "\n"
+    @wrappedCodePrefix + rawCode + @wrappedCodeSuffix 
 
   lint: (rawCode) ->
     wrappedCode = @wrap rawCode
@@ -240,12 +250,16 @@ module.exports = class Aether
     [parse, options] = switch parser
       when "esprima" then [esprima.parse, {loc: true, range: true, raw: true, comment: true, tolerant: true}]
       when "acorn_loose" then [acorn_loose.parse_dammit, {locations: true, tabSize: 4, ecmaVersion: 5}]
+      when "csredux" then [csredux.compile, {bare: true}]
     transformedAST = parse transformedCode, options
     [transformedCode, transformedAST]
 
   purifyCode: (rawCode) ->
-    preprocessedCode = @checkCommonMistakes rawCode  # TODO: if we could somehow not change the source ranges here, that would be awesome....
-    wrappedCode = @wrap preprocessedCode
+    if @options.languageVersion is 'CS'
+      wrappedCode = @wrapCS rawCode  
+    else
+      preprocessedCode = @checkCommonMistakes rawCode  # TODO: if we could somehow not change the source ranges here, that would be awesome....
+      wrappedCode = @wrap preprocessedCode      
     @vars = {}
 
     originalNodeRanges = []
@@ -254,6 +268,9 @@ module.exports = class Aether
       transforms.makeCheckThisKeywords @options.global
       transforms.checkIncompleteMembers
     ]
+
+    if @options.languageVersion is 'CS'
+      [transformedCode, transformedAST] = @transform wrappedCode, preNormalizationTransforms, "csredux", true
     try
       [transformedCode, transformedAST] = @transform wrappedCode, preNormalizationTransforms, "esprima", true
     catch error
