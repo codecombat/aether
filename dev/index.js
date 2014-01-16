@@ -62,7 +62,7 @@ function showProblems(aether) {
   var allProblems = aether.getAllProblems();
   for(var problemIndex in allProblems) {
     var problem = allProblems[problemIndex];
-    if(!problem.ranges) continue;
+    if(!problem.ranges || !problem.ranges.length) continue;
     var ann = {row: problem.ranges[0][0][0],
                column: problem.ranges[0][0][1],
                raw: problem.message,
@@ -76,7 +76,11 @@ function showProblems(aether) {
   var wrapper = $("#worst-problem-wrapper").empty();
   var worst = allProblems[0];
   if(worst) {
-    wrapper.text(worst.type + " " + worst.level + " line " + worst.ranges[0][0][0] + ": " + worst.message);
+    var text = worst.type + " " + worst.level;
+    if(worst.ranges && worst.ranges.length)
+      text += " line " + worst.ranges[0][0][0];
+    text += ": "+ worst.message;
+    wrapper.text(text);
     wrapper.toggleClass('error', worst.level === 'error');
     wrapper.toggleClass('warning', worst.level === 'warning');
     wrapper.toggleClass('info', worst.level === 'info');
@@ -279,6 +283,7 @@ var examples = [
       aether.transpile(code);
       var method = aether.createMethod();
       var generator = method();
+      aether.sandboxGenerator(generator);
       var executeSomeMore = function executeSomeMore() {
         var result = generator.next();
         demoShowOutput(aether);

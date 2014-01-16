@@ -19,6 +19,7 @@ cloneBuiltin = (obj,name)->
 
   return masked
 
+
 module.exports.copyBuiltin = copyBuiltin = (source, target)->
   copy source, target
 
@@ -39,3 +40,7 @@ module.exports.restoreBuiltins = restoreBuiltins = (globals)->
     global[name] = real
 
   return
+
+module.exports.raiseDisabledFunctionConstructor = raiseDisabledFunctionConstructor = ->
+  # Should we make this a normal Aether UserCodeProblem?
+  throw new Error '[Sandbox] Function::constructor is disabled. If you are a developer, please make sure you have a reference to your builtins.'

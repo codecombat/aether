@@ -166,10 +166,7 @@ module.exports = class Aether
 
     lintProblems
 
-  createFunction: ->
-    # Return a ready-to-execute, instrumented function from the purified code
-    # Because JS_WALA normalizes it to define a wrapper function on this, we need to run the wrapper to get our real function out.
-    wrapper = new Function ['_aether'], @pure
+  createSandboxedFunction: ->
     globals = [
         # Other
         # 'eval',
@@ -186,41 +183,49 @@ module.exports = class Aether
         # Error Objects
         'Error', 'EvalError', 'RangeError', 'ReferenceError', 'SyntaxError', 'TypeError', 'URIError'
     ]
-
     dummyContext = {}
-
     globalRef = global ? window
+    dummyContext[name] = globalRef[name] for name in globals
 
-    for name in globals
-      dummyContext[name] = globalRef[name]
-
-    dummyFunction = ->
-      throw new Error '[Sandbox] Function::constructor is disabled. If you are a developer please make sure you have a reference to your builtins'
-
+    dummyFunction = protectBuiltins.raiseDisabledFunctionConstructor
     protectBuiltins.copyBuiltin Function, dummyFunction
     dummyContext.Function = dummyFunction
 
-
+    wrapper = new Function ['_aether'], @pure
     wrapper.call dummyContext, @
-    f = dummyContext[@options.functionName or 'foo']
+    dummyContext[@options.functionName or 'foo']
+
+  createFunction: ->
+    # Return a ready-to-execute, instrumented function from the purified code
+    # Because JS_WALA normalizes it to define a wrapper function on this, we need to run the wrapper to get our real function out.
+    fn = @createSandboxedFunction()
 
     ## Wrapper function
     ->
-      Function::constructor = ->
-        throw new Error '[Sandbox] Function::constructor is disabled. If you are a developer please make sure you have a reference to your builtins'
-
+      Function::constructor = protectBuiltins.raiseDisabledFunctionConstructor
       try
-        result = f.apply @, arguments
+        result = fn.apply @, arguments
       finally
         protectBuiltins.restoreBuiltins()
-
-      return result
+      result
 
   createMethod: ->
     # Like createFunction, but binds method to thisValue if specified
-    func = @createFunction()
-    func = _.bind func, @options.thisValue if @options.thisValue
-    func
+    fn = @createFunction()
+    fn = _.bind fn, @options.thisValue if @options.thisValue
+    fn
+
+  sandboxGenerator: (fn) ->
+    # If you want to sandbox a generator each time it's called, then call result of createFunction and hand to this.
+    oldNext = fn.next
+    fn.next = ->
+      Function::constructor = protectBuiltins.raiseDisabledFunctionConstructor
+      try
+        result = oldNext.apply fn, arguments
+      finally
+        protectBuiltins.restoreBuiltins()
+      result
+    fn
 
   run: (fn, args...) ->
     # Convenience wrapper for running the compiled function with default error handling
@@ -329,6 +334,7 @@ module.exports = class Aether
     instrumentedCode = "return " + @transform normalizedCode, postNormalizationTransforms
     if @options.yieldConditionally or @options.yieldAutomatically
       # Unlabel breaks and pray for correct behavior: https://github.com/google/traceur-compiler/issues/605
+      # Seems to turn continues into breaks the way JS_WALA does it.
       instrumentedCode = instrumentedCode.replace /(break|continue) [A-z0-9]+;/g, '$1;'
       purifiedCode = @traceurify instrumentedCode
     else
