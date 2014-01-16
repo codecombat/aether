@@ -11,13 +11,15 @@ describe "Global Scope Exploit Suite", ->
     code = "Function('')"
     aether = new Aether()
     aether.transpile(code)
-    expect(->aether.run()).toThrow
+    func = aether.createFunction()
+    expect(func).toThrow()
 
   it 'should disallow Function.__proto__.constructor', ->
     code = "(function(){}).__proto__.constructor('')"
     aether = new Aether()
     aether.transpile(code)
-    expect(->aether.run()).toThrow
+    func = aether.createFunction()
+    expect(func).toThrow()
 
   it 'should protect builtins', ->
     code = "(function(){}).__proto__.constructor = 100;"
