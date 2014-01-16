@@ -24,6 +24,9 @@ module.exports = class Aether
   @problems: problems
   @execution: execution
 
+  # Current call depth
+  depth: 0
+
   #MODIFIES: @options
   #EFFECTS: Initialize the Aether object by modifying @options by combining the default options with the options parameter
   #         and doing validation.
@@ -201,12 +204,25 @@ module.exports = class Aether
     fn = @createSandboxedFunction()
 
     ## Wrapper function
+    @wrapWithSandbox fn
+
+  wrapWithSandbox: (fn)->
+    # Wrap calls to aether function in a sandbox
+    #  This is NOT safe with functions parsed outside of aether
+    self = @
+
     ->
       Function::constructor = protectBuiltins.raiseDisabledFunctionConstructor
       try
+        self.depth++
         result = fn.apply @, arguments
       finally
-        protectBuiltins.restoreBuiltins()
+        self.depth--
+        if self.depth <= 0
+          # Shouldn't ever be less than 0
+          #  Should we throw an exception if it is?
+          protectBuiltins.restoreBuiltins()
+
       result
 
   createMethod: ->
@@ -218,13 +234,8 @@ module.exports = class Aether
   sandboxGenerator: (fn) ->
     # If you want to sandbox a generator each time it's called, then call result of createFunction and hand to this.
     oldNext = fn.next
-    fn.next = ->
-      Function::constructor = protectBuiltins.raiseDisabledFunctionConstructor
-      try
-        result = oldNext.apply fn, arguments
-      finally
-        protectBuiltins.restoreBuiltins()
-      result
+    fn.next = @wrapWithSandbox ->
+      oldNext.apply fn, arguments
     fn
 
   run: (fn, args...) ->
