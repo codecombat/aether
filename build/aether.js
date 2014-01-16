@@ -19240,6 +19240,8 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
 
     Aether.execution = execution;
 
+    Aether.prototype.depth = 0;
+
     function Aether(options) {
       var optionsValidation;
       this.originalOptions = _.cloneDeep(options);
@@ -19516,13 +19518,23 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
     Aether.prototype.createFunction = function() {
       var fn;
       fn = this.createSandboxedFunction();
+      return this.wrapWithSandbox(fn);
+    };
+
+    Aether.prototype.wrapWithSandbox = function(fn) {
+      var self;
+      self = this;
       return function() {
         var result;
         Function.prototype.constructor = protectBuiltins.raiseDisabledFunctionConstructor;
         try {
+          self.depth++;
           result = fn.apply(this, arguments);
         } finally {
-          protectBuiltins.restoreBuiltins();
+          self.depth--;
+          if (self.depth <= 0) {
+            protectBuiltins.restoreBuiltins();
+          }
         }
         return result;
       };
@@ -19540,16 +19552,9 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
     Aether.prototype.sandboxGenerator = function(fn) {
       var oldNext;
       oldNext = fn.next;
-      fn.next = function() {
-        var result;
-        Function.prototype.constructor = protectBuiltins.raiseDisabledFunctionConstructor;
-        try {
-          result = oldNext.apply(fn, arguments);
-        } finally {
-          protectBuiltins.restoreBuiltins();
-        }
-        return result;
-      };
+      fn.next = this.wrapWithSandbox(function() {
+        return oldNext.apply(fn, arguments);
+      });
       return fn;
     };
 
