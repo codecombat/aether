@@ -280,19 +280,14 @@ module.exports = class Aether
       fn child
 
   traceurify: (code) ->
-    # TODO: where to put this?
-    project = new traceur.semantics.symbols.Project('codecombat')
+    url = "randotron_" + Math.random()
     reporter = new traceur.util.ErrorReporter()
-    compiler = new traceur.codegeneration.Compiler(reporter, project)
-    sourceFile = new traceur.syntax.SourceFile("randotron_" + Math.random(), code)
-    project.addFile(sourceFile)
-    trees = compiler.compile_()
+    loaderHooks = new traceur.runtime.InterceptOutputLoaderHooks reporter, url
+    loader = new traceur.modules.Loader loaderHooks
+    loader.module code, url
     if reporter.hadError()
-      console.log "traceur had error trying to compile"
-    tree = trees.values()[0]
-    opts = showLineNumbers: false
-    tree.generatedSource = traceur.outputgeneration.TreeWriter.write(tree, opts)
-    tree.generatedSource
+      console.warn "traceur had error trying to compile"
+    loaderHooks.transcoded
 
   transform: (code, transforms, parser="esprima", withAST=false) ->
     transformedCode = morph code, (_.bind t, @ for t in transforms), parser
@@ -346,7 +341,8 @@ module.exports = class Aether
     postNormalizationTransforms.unshift transforms.makeInstrumentCalls() if @options.includeMetrics or @options.includeFlow
     postNormalizationTransforms.unshift transforms.makeFindOriginalNodes originalNodeRanges, @wrappedCodePrefix, wrappedCode, normalizedSourceMap, normalizedNodeIndex
     postNormalizationTransforms.unshift transforms.interceptThis()
-    instrumentedCode = "return " + @transform normalizedCode, postNormalizationTransforms
+    instrumentedCode = @transform normalizedCode, postNormalizationTransforms
+    #instrumentedCode = "return " + @transform normalizedCode, postNormalizationTransforms
     if @options.yieldConditionally or @options.yieldAutomatically
       # Unlabel breaks and pray for correct behavior: https://github.com/google/traceur-compiler/issues/605
       # Seems to turn continues into breaks the way JS_WALA does it.
@@ -354,8 +350,8 @@ module.exports = class Aether
       purifiedCode = @traceurify instrumentedCode
     else
       purifiedCode = instrumentedCode
-    interceptThis = 'var __interceptThis=(function(){var G=this;return function($this,sandbox){if($this==G){return sandbox;}return $this;};})();'
-    purifiedCode = interceptThis + purifiedCode
+    interceptThis = 'var __interceptThis=(function(){var G=this;return function($this,sandbox){if($this==G){return sandbox;}return $this;};})();\n'
+    purifiedCode = interceptThis + "return " + purifiedCode
     if false
       console.log "---NODE RANGES---:\n" + _.map(originalNodeRanges, (n) -> "#{n.originalRange.start} - #{n.originalRange.end}\t#{n.originalSource.replace(/\n/g, '↵')}").join('\n')
       console.log "---RAW CODE----: #{rawCode.split('\n').length}\n", {code: rawCode}
