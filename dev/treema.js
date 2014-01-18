@@ -2678,6 +2678,9 @@ TreemaNode = (function() {
         if ($.type(value) !== 'string') {
           valueString = JSON.stringify(value);
         }
+        if (typeof value === 'undefined') {
+          valueString = 'undefined';
+        }
         if (valueString.length > 20) {
           valueString = valueString.slice(0, 21) + ' ...';
         }

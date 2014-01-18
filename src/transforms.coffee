@@ -44,19 +44,18 @@ module.exports.makeGatherNodeRanges = makeGatherNodeRanges = (nodeRanges, codePr
   nodeRanges.push node
 
 # Making
-module.exports.makeCheckThisKeywords = makeCheckThisKeywords = (global) ->
-  vars = {}
+module.exports.makeCheckThisKeywords = makeCheckThisKeywords = (global, varNames) ->
   return (node) ->
     if node.type is S.VariableDeclarator
-      vars[node.id.name] = true
-    else if node.type is S.FunctionDeclaration
-      vars[node.id.name] = true
+      varNames[node.id.name] = true
+    else if node.type is S.FunctionDeclaration# and node.parent.type isnt S.Program
+      varNames[node.id.name] = true
     else if node.type is S.CallExpression
       v = node.callee.name
-      if v and not vars[v] and not global[v]
+      if v and not varNames[v] and not global[v]
         # Probably MissingThis, but let's check if we're recursively calling an inner function from itself first.
         for p in getParentsOfType node, S.FunctionDeclaration
-          vars[p.id.name] = true
+          varNames[p.id.name] = true
           return if p.id.name is v
         problem = new problems.TranspileProblem @, 'aether', 'MissingThis', {}, '', ''  # TODO: last args
         problem.message = "Missing `this.` keyword; should be `this.#{v}`."
@@ -142,7 +141,7 @@ module.exports.yieldAutomatically = yieldAutomatically = (node) ->
   else if node.mustBecomeGeneratorFunction
     node.update node.source().replace /^function \(/, 'function* ('
 
-module.exports.makeInstrumentStatements = makeInstrumentStatements = ->
+module.exports.makeInstrumentStatements = makeInstrumentStatements = (varNames) ->
   # set up any state tracking here
   return (node) ->
     return unless node.originalNode and node.originalNode.originalRange.start >= 0
@@ -154,16 +153,18 @@ module.exports.makeInstrumentStatements = makeInstrumentStatements = ->
     range = [node.originalNode.originalRange.start, node.originalNode.originalRange.end]
     source = node.originalNode.originalSource
     safeSource = source.replace(/\"/g, '\\"').replace(/\n/g, '\\n')
-    node.update "#{node.source()} _aether.logStatement(#{range[0]}, #{range[1]}, \"#{safeSource}\", this._aetherUserInfo);"
+    loggers = ("_aether.vars['#{varName}'] = typeof #{varName} == 'undefined' ? undefined : #{varName};" for varName of varNames)
+    loggers.push "_aether.logStatement(#{range[0]}, #{range[1]}, \"#{safeSource}\", this._aetherUserInfo);"
+    node.update "#{node.source()} #{loggers.join ' '}"
     #console.log " ... created logger", node.source(), node.originalNode
 
 module.exports.interceptThis = interceptThis = ->
-  return (node)->
-    return unless node.type == S.ThisExpression
+  return (node) ->
+    return unless node.type is S.ThisExpression
     return unless getFunctionNestingLevel(node) > 1
     node.update "__interceptThis(this, __global)"
 
-module.exports.makeInstrumentCalls = makeInstrumentCalls = ->
+module.exports.makeInstrumentCalls = makeInstrumentCalls = (varNames) ->
   # set up any state tracking here
   return (node) ->
     # Don't do this if it's an inner function they defined

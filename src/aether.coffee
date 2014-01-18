@@ -306,12 +306,13 @@ module.exports = class Aether
   purifyCode: (rawCode) ->
     preprocessedCode = @checkCommonMistakes rawCode  # TODO: if we could somehow not change the source ranges here, that would be awesome....
     wrappedCode = @wrap preprocessedCode
-    @vars = {}
 
     originalNodeRanges = []
+    varNames = {}
+    @vars = {}
     preNormalizationTransforms = [
       transforms.makeGatherNodeRanges originalNodeRanges, @wrappedCodePrefix
-      transforms.makeCheckThisKeywords @options.global
+      transforms.makeCheckThisKeywords @options.global, varNames
       transforms.checkIncompleteMembers
     ]
     try
@@ -338,7 +339,10 @@ module.exports = class Aether
     postNormalizationTransforms.unshift transforms.validateReturns if @options.thisValue?.validateReturn  # TODO: parameter/return validation should be part of Aether, not some half-external function call
     postNormalizationTransforms.unshift transforms.yieldConditionally if @options.yieldConditionally
     postNormalizationTransforms.unshift transforms.yieldAutomatically if @options.yieldAutomatically
-    postNormalizationTransforms.unshift transforms.makeInstrumentStatements() if @options.includeMetrics or @options.includeFlow
+    if @options.includeFlow
+      postNormalizationTransforms.unshift transforms.makeInstrumentStatements varNames
+    else if @options.includeMetrics
+      postNormalizationTransforms.unshift transforms.makeInstrumentStatements()
     postNormalizationTransforms.unshift transforms.makeInstrumentCalls() if @options.includeMetrics or @options.includeFlow
     postNormalizationTransforms.unshift transforms.makeFindOriginalNodes originalNodeRanges, @wrappedCodePrefix, wrappedCode, normalizedSourceMap, normalizedNodeIndex
     postNormalizationTransforms.unshift transforms.interceptThis()
@@ -350,6 +354,8 @@ module.exports = class Aether
       purifiedCode = @traceurify instrumentedCode
     else
       purifiedCode = instrumentedCode
+    interceptThis = 'var __interceptThis=(function(){var G=this;return function($this,sandbox){if($this==G){return sandbox;}return $this;};})();'
+    purifiedCode = interceptThis + purifiedCode
     if false
       console.log "---NODE RANGES---:\n" + _.map(originalNodeRanges, (n) -> "#{n.originalRange.start} - #{n.originalRange.end}\t#{n.originalSource.replace(/\n/g, '↵')}").join('\n')
       console.log "---RAW CODE----: #{rawCode.split('\n').length}\n", {code: rawCode}
@@ -358,11 +364,7 @@ module.exports = class Aether
       console.log "---NORMALIZED--: #{normalizedCode.split('\n').length}\n", {code: normalizedCode}
       console.log "---INSTRUMENTED: #{instrumentedCode.split('\n').length}\n", {code: "return " + instrumentedCode}
       console.log "---PURIFIED----: #{purifiedCode.split('\n').length}\n", {code: purifiedCode}
-
-    # Inject __interceptThis
-    interceptThis = 'var __interceptThis=(function(){var G=this;return function($this,sandbox){if($this==G){return sandbox;}return $this;};})();'
-
-    return interceptThis + purifiedCode
+    purifiedCode
 
   getLineNumberForPlannedMethod: (plannedMethod, numMethodsSeen) ->
     n = 0
@@ -398,19 +400,29 @@ module.exports = class Aether
       ++m.executions
       @metrics.statementsExecuted ?= 0
       @metrics.statementsExecuted += 1
-    if @options.includeFlow
+    if flopt = @options.includeFlow
+      call = _.last @callStack
+      ++call.statementsExecuted
+      # TODO: track any changes to timelessVariables
+      return if flopt.callIndex? and flopt.callIndex isnt @callStack.length - 1
+      return if flopt.statementIndex? and flopt.statementIndex isnt call.statementsExecuted
+      variables = {}
+      for name, value of @vars
+        if _.isFunction value
+          variables[name] = "<function>"
+        else
+          variables[name] = _.cloneDeep value
       state =
         range: [start, end]
         source: source
-        variables: {}  # TODO
+        variables: variables
         userInfo: _.cloneDeep userInfo
-      callState = _.last @callStack
-      callState.push state
+      call.statements.push state
 
     #console.log "Logged statement", range, "'#{source}'", "with userInfo", userInfo#, "and now have metrics", @metrics
 
   logCallStart: ->
-    call = []
+    call = {statementsExecuted: 0, statements: []}
     (@callStack ?= []).push call
     if @options.includeMetrics
       @metrics.callsExecuted ?= 0
@@ -455,5 +467,3 @@ window.esprima ?= esprima if window?
 # I could just set _aetherUserInfo to whatever value I want, just like I set _shouldYield (which should be _aetherShouldYield).
 # Okay, let's try that.
 # Okay, that works. (Shudder to think of performance.)
-# Checked JSDares, and it looks like there's no means of inspecting the value of an arbitrary variable.
-# It just allows you step forward and backward with an annotation of what happened in that operation.
