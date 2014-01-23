@@ -30,13 +30,13 @@ module.exports = (options) ->
         type: 'string'
         description: "Input language"
         minLength:1
-        'enum': ['javascript']
+        'enum': ['javascript', 'coffeescript']
         required: false
       languageVersion:
         type: 'string'
         description: "Input language version"
         minLength:1
-        'enum': ["ES5", "ES6", "CS"] #change this later
+        'enum': ["ES5", "ES6"] #change this later
       problems:
         required: false
       includeFlow:

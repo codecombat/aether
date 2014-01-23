@@ -128,7 +128,7 @@ module.exports = class Aether
   transpile: (@raw) ->
     # Transpile it. Even if it can't transpile, it will give syntax errors and warnings and such. Clears any old state.
     @reset()
-    if @options.languageVersion is not 'CS'
+    if @options.language != 'coffeescript'
       @problems = @lint @raw
     @pure = @purifyCode @raw
     @pure
@@ -294,12 +294,12 @@ module.exports = class Aether
     [parse, options] = switch parser
       when "esprima" then [esprima.parse, {loc: true, range: true, raw: true, comment: true, tolerant: true}]
       when "acorn_loose" then [acorn_loose.parse_dammit, {locations: true, tabSize: 4, ecmaVersion: 5}]
-      when "csredux" then [csredux.compile, {bare: true}]
+      when "csredux" then [csredux.compile, {bare: true}]    
     transformedAST = parse transformedCode, options
     [transformedCode, transformedAST]
 
   purifyCode: (rawCode) ->
-    if @options.languageVersion is 'CS'
+    if @options.language == 'coffeescript'
       wrappedCode = @wrapCS rawCode  
     else
       preprocessedCode = @checkCommonMistakes rawCode  # TODO: if we could somehow not change the source ranges here, that would be awesome....
@@ -313,7 +313,7 @@ module.exports = class Aether
       transforms.checkIncompleteMembers
     ]
 
-    if @options.languageVersion is 'CS'
+    if @options.language == 'coffeescript'
       [transformedCode, transformedAST] = @transform wrappedCode, preNormalizationTransforms, "csredux", true
     try
       [transformedCode, transformedAST] = @transform wrappedCode, preNormalizationTransforms, "esprima", true

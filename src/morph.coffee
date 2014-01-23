@@ -16,6 +16,7 @@ module.exports = morph = (source, transforms, parser="esprima") ->
     csAST = csredux.parse source, {optimise: false, raw: true}
     ast = csredux.compile csAST, {bare: true}
     attachLocation ast
+    #console.log ast
     locToRange = null  
   else if parser is 'acorn_loose'
     ast = acorn_loose.parse_dammit source, {locations: true}
@@ -29,20 +30,19 @@ module.exports = morph = (source, transforms, parser="esprima") ->
 
   walk = (node, parent) ->
     insertHelpers node, parent, chunks, locToRange
-    for key, child of node
-      continue if key is 'parent'
-      if _.isArray child
-        for grandchild in child
+    for key, child of node     
+      continue if key is 'parent' or key is 'leadingComments'       
+      if _.isArray child     
+        for grandchild in child   
           walk grandchild, node if _.isString grandchild?.type
       else if _.isString child?.type
-        insertHelpers child, node, chunks, locToRange
         walk child, node      
     transform node for transform in transforms   
   walk ast, undefined
   chunks.join ''
 
 insertHelpers = (node, parent, chunks, locToRange) ->
-  node.range = locToRange(node.loc) if node.loc and locToRange
+  node.range = locToRange(node.loc) if node.loc and locToRange   
   return unless node.range
   node.parent = parent
   node.source = -> chunks.slice(node.range[0], node.range[1]).join ''
@@ -63,9 +63,6 @@ calculateColumn = (raw, offset) ->
   (removeIndent lines[lines.length - 1]).length  
 
 attachLocation = (program)->
-  # TODO(Constellation)
-  # calculate precise offset or attach in
-  # CoffeeScriptRedux compiler
   estraverse.traverse program,
     leave: (node, parent) ->
       if node.loc? and node.range? and (node.raw? or node.value?)

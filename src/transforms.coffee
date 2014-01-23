@@ -39,6 +39,7 @@ getLineNumberForNode = (node) ->
 # 3. A postNormalizationTransform can then get the original ranges for each node by going through the source map to our normalized mapping to our original node ranges.
 # 4. Instrumentation can then include the original ranges and node source in the saved flow state.
 module.exports.makeGatherNodeRanges = makeGatherNodeRanges = (nodeRanges, codePrefix) -> (node) ->
+  return unless node.range    
   node.originalRange = start: node.range[0] - codePrefix.length, end: node.range[1] - codePrefix.length
   node.originalSource = node.source()
   nodeRanges.push node
