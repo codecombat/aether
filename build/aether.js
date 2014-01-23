@@ -21562,7 +21562,8 @@ System.set('traceur@', traceur);
 ;(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {};(function() {
   var Aether, acorn_loose, defaults, escodegen, esprima, execution, jshint, morph, normalizer, optionsValidator, problems, protectBuiltins, traceur, transforms, _, _ref, _ref1, _ref2, _ref3, _ref4, _ref5,
-    __slice = [].slice;
+    __slice = [].slice,
+    __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
   _ = (_ref = (_ref1 = (_ref2 = typeof window !== "undefined" && window !== null ? window._ : void 0) != null ? _ref2 : typeof self !== "undefined" && self !== null ? self._ : void 0) != null ? _ref1 : typeof global !== "undefined" && global !== null ? global._ : void 0) != null ? _ref : require('lodash');
 
@@ -21955,7 +21956,6 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
       if (this.options.includeVisualization) {
         serialized.visualization = this.visualization;
       }
-      serialized = _.cloneDeep(serialized);
       serialized.originalOptions.thisValue = null;
       return serialized;
     };
@@ -22055,7 +22055,6 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
       wrappedCode = this.wrap(preprocessedCode);
       originalNodeRanges = [];
       varNames = {};
-      this.vars = {};
       preNormalizationTransforms = [transforms.makeGatherNodeRanges(originalNodeRanges, this.wrappedCodePrefix), transforms.makeCheckThisKeywords(this.options.global, varNames), transforms.checkIncompleteMembers];
       try {
         _ref6 = this.transform(wrappedCode, preNormalizationTransforms, "esprima", true), transformedCode = _ref6[0], transformedAST = _ref6[1];
@@ -22193,8 +22192,61 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
     /* Flow/metrics -- put somewhere else?*/
 
 
+    Aether.prototype.serializeVariableValue = function(value, depth) {
+      var brackets, isArray, key, max, size, v, values;
+      if (depth == null) {
+        depth = 0;
+      }
+      if (!value) {
+        return value;
+      }
+      if (_.isFunction(value)) {
+        return "<Function>";
+      }
+      isArray = _.isArray(value);
+      if (isArray || _.isPlainObject(value)) {
+        brackets = isArray ? ["[", "]"] : ["{", "}"];
+        size = _.size(value);
+        if (!size) {
+          return brackets.join("");
+        }
+        if (depth > 0) {
+          return "" + brackets[0] + "... " + size + " items ..." + brackets[1];
+        }
+        max = 5;
+        values = [];
+        if (isArray) {
+          values = (function() {
+            var _i, _len, _ref6, _results;
+            _ref6 = value.slice(0, max);
+            _results = [];
+            for (_i = 0, _len = _ref6.length; _i < _len; _i++) {
+              v = _ref6[_i];
+              _results.push(this.serializeVariableValue(v, depth + 1));
+            }
+            return _results;
+          }).call(this);
+        } else {
+          for (key in value) {
+            v = value[key];
+            if (values.length > max) {
+              break;
+            }
+            values.push(key + ": " + this.serializeVariableValue(v, depth + 1));
+          }
+        }
+        if (size > max) {
+          values.push("(... " + (value.length - max) + " more)");
+        }
+        return "" + brackets[0] + "\n  " + (values.join('\n  ')) + "\n" + brackets[1];
+      } else if (value.toString) {
+        return value.toString();
+      }
+      return value;
+    };
+
     Aether.prototype.logStatement = function(start, end, source, userInfo) {
-      var call, flopt, m, name, range, state, value, variables, _base, _base1, _base2, _base3, _ref6;
+      var call, capture, flopt, m, name, range, state, value, variables, _base, _base1, _base2, _base3, _ref6, _ref7;
       range = [start, end];
       if (this.options.includeMetrics) {
         m = (_base = ((_base1 = this.metrics).statements != null ? (_base1 = this.metrics).statements : _base1.statements = {}))[range] != null ? (_base = ((_base2 = this.metrics).statements != null ? (_base2 = this.metrics).statements : _base2.statements = {}))[range] : _base[range] = {
@@ -22212,37 +22264,42 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
       if (flopt = this.options.includeFlow) {
         call = _.last(this.callStack);
         ++call.statementsExecuted;
-        if ((flopt.callIndex != null) && flopt.callIndex !== this.callStack.length - 1) {
-          return;
+        capture = true;
+        if ((flopt.callIndex != null) && flopt.callIndex !== this.flow.states.length - 1) {
+          capture = false;
         }
         if ((flopt.statementIndex != null) && flopt.statementIndex !== call.statementsExecuted) {
-          return;
+          capture = false;
         }
         variables = {};
         _ref6 = this.vars;
         for (name in _ref6) {
           value = _ref6[name];
-          if (_.isFunction(value)) {
-            variables[name] = "<function>";
-          } else {
-            variables[name] = _.cloneDeep(value);
+          if (capture || __indexOf.call((_ref7 = flopt.timelessVariables) != null ? _ref7 : [], name) >= 0) {
+            variables[name] = this.serializeVariableValue(value);
           }
         }
-        state = {
-          range: [start, end],
-          source: source,
-          variables: variables,
-          userInfo: _.cloneDeep(userInfo)
-        };
-        return call.statements.push(state);
+        if (capture || !_.isEmpty(variables)) {
+          state = {
+            range: [start, end],
+            source: source,
+            variables: variables,
+            userInfo: _.cloneDeep(userInfo)
+          };
+          return call.statements.push(state);
+        }
       }
     };
 
-    Aether.prototype.logCallStart = function() {
+    Aether.prototype.logCallStart = function(userInfo) {
       var call, _base, _base1;
+      if (this.vars == null) {
+        this.vars = {};
+      }
       call = {
         statementsExecuted: 0,
-        statements: []
+        statements: [],
+        userInfo: _.cloneDeep(userInfo)
       };
       (this.callStack != null ? this.callStack : this.callStack = []).push(call);
       if (this.options.includeMetrics) {
@@ -23738,7 +23795,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
 
   S = esprima.Syntax;
 
-  statements = [S.EmptyStatement, S.ExpressionStatement, S.BreakStatement, S.ContinueStatement, S.DebuggerStatement, S.DoWhileStatement, S.ForStatement, S.FunctionDeclaration, S.ClassDeclaration, S.IfStatement, S.ReturnStatement, S.SwitchStatement, S.ThrowStatement, S.TryStatement, S.VariableStatement, S.WhileStatement, S.WithStatement];
+  statements = [S.EmptyStatement, S.ExpressionStatement, S.BreakStatement, S.ContinueStatement, S.DebuggerStatement, S.DoWhileStatement, S.ForStatement, S.FunctionDeclaration, S.ClassDeclaration, S.IfStatement, S.ReturnStatement, S.SwitchStatement, S.ThrowStatement, S.TryStatement, S.VariableStatement, S.WhileStatement, S.WithStatement, S.VariableDeclaration];
 
   getParents = function(node) {
     var parents;
@@ -23915,21 +23972,27 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
 
   module.exports.makeInstrumentStatements = makeInstrumentStatements = function(varNames) {
     return function(node) {
-      var loggers, range, safeSource, source, varName, _ref3, _ref4;
-      if (!(node.originalNode && node.originalNode.originalRange.start >= 0)) {
+      var loggers, orig, range, safeSource, source, varName, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8;
+      orig = node.originalNode;
+      if (!(orig && orig.originalRange.start >= 0)) {
         return;
       }
       if (_ref3 = node.type, __indexOf.call(statements, _ref3) < 0) {
         return;
       }
-      if ((_ref4 = node.originalNode.type) === S.ThisExpression || _ref4 === S.Identifier || _ref4 === S.Literal) {
+      if ((_ref4 = orig.type) === S.ThisExpression || _ref4 === S.Identifier) {
         return;
       }
       if (!(getFunctionNestingLevel(node) > 1)) {
         return;
       }
-      range = [node.originalNode.originalRange.start, node.originalNode.originalRange.end];
-      source = node.originalNode.originalSource;
+      if (((_ref5 = orig.parent) != null ? _ref5.type : void 0) === S.AssignmentExpression && ((_ref6 = orig.parent.parent) != null ? _ref6.type : void 0) === S.ExpressionStatement) {
+        orig = orig.parent.parent;
+      } else if (((_ref7 = orig.parent) != null ? _ref7.type : void 0) === S.VariableDeclarator && ((_ref8 = orig.parent.parent) != null ? _ref8.type : void 0) === S.VariableDeclaration) {
+        orig = orig.parent.parent;
+      }
+      range = [orig.originalRange.start, orig.originalRange.end];
+      source = orig.originalSource;
       safeSource = source.replace(/\"/g, '\\"').replace(/\n/g, '\\n');
       loggers = (function() {
         var _results;
@@ -23967,7 +24030,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
       if (node.type !== S.VariableDeclaration) {
         return;
       }
-      return node.update("_aether.logCallStart(); " + (node.source()));
+      return node.update("_aether.logCallStart(this._aetherUserInfo); " + (node.source()));
     };
   };
 

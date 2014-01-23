@@ -4,7 +4,7 @@ esprima = require 'esprima'
 SourceMap = require 'source-map'
 S = esprima.Syntax
 
-statements = [S.EmptyStatement, S.ExpressionStatement, S.BreakStatement, S.ContinueStatement, S.DebuggerStatement, S.DoWhileStatement, S.ForStatement, S.FunctionDeclaration, S.ClassDeclaration, S.IfStatement, S.ReturnStatement, S.SwitchStatement, S.ThrowStatement, S.TryStatement, S.VariableStatement, S.WhileStatement, S.WithStatement]
+statements = [S.EmptyStatement, S.ExpressionStatement, S.BreakStatement, S.ContinueStatement, S.DebuggerStatement, S.DoWhileStatement, S.ForStatement, S.FunctionDeclaration, S.ClassDeclaration, S.IfStatement, S.ReturnStatement, S.SwitchStatement, S.ThrowStatement, S.TryStatement, S.VariableStatement, S.WhileStatement, S.WithStatement, S.VariableDeclaration]
 
 getParents = (node) ->
   parents = []
@@ -144,19 +144,25 @@ module.exports.yieldAutomatically = yieldAutomatically = (node) ->
 module.exports.makeInstrumentStatements = makeInstrumentStatements = (varNames) ->
   # set up any state tracking here
   return (node) ->
-    return unless node.originalNode and node.originalNode.originalRange.start >= 0
+    orig = node.originalNode
+    #console.log "Should we instrument", orig?.originalSource, node.source(), node, "?", (orig and orig.originalRange.start >= 0), (node.type in statements), orig?.type, getFunctionNestingLevel(node) if node.source().search("chupacabra") isnt -1 and node.source().length < 50
+    return unless orig and orig.originalRange.start >= 0
     return unless node.type in statements
-    return if node.originalNode.type in [S.ThisExpression, S.Identifier, S.Literal]  # probably need to add to this to get statements which corresponded to interesting expressions before normalization
+    return if orig.type in [S.ThisExpression, S.Identifier]  # probably need to add to this to get statements which corresponded to interesting expressions before normalization
     # Only do this in nested functions, not our wrapper
     return unless getFunctionNestingLevel(node) > 1
+    if orig.parent?.type is S.AssignmentExpression and orig.parent.parent?.type is S.ExpressionStatement
+      orig = orig.parent.parent
+    else if orig.parent?.type is S.VariableDeclarator and orig.parent.parent?.type is S.VariableDeclaration
+      orig = orig.parent.parent
     # TODO: actually save this into aether.flow, and have it happen before the yield happens
-    range = [node.originalNode.originalRange.start, node.originalNode.originalRange.end]
-    source = node.originalNode.originalSource
+    range = [orig.originalRange.start, orig.originalRange.end]
+    source = orig.originalSource
     safeSource = source.replace(/\"/g, '\\"').replace(/\n/g, '\\n')
     loggers = ("_aether.vars['#{varName}'] = typeof #{varName} == 'undefined' ? undefined : #{varName};" for varName of varNames)
     loggers.push "_aether.logStatement(#{range[0]}, #{range[1]}, \"#{safeSource}\", this._aetherUserInfo);"
     node.update "#{node.source()} #{loggers.join ' '}"
-    #console.log " ... created logger", node.source(), node.originalNode
+    #console.log " ... created logger", node.source(), orig
 
 module.exports.interceptThis = interceptThis = ->
   return (node) ->
@@ -173,4 +179,4 @@ module.exports.makeInstrumentCalls = makeInstrumentCalls = (varNames) ->
       node.update "_aether.logCallEnd(); #{node.source()}"
     # Look at the top variable declaration inside our appropriately nested function to see where the call starts
     return unless node.type is S.VariableDeclaration
-    node.update "_aether.logCallStart(); #{node.source()}"  # TODO: pull in arguments?
+    node.update "_aether.logCallStart(this._aetherUserInfo); #{node.source()}"  # TODO: pull in arguments?

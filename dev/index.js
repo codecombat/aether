@@ -107,7 +107,7 @@ function showFlow(aether) {
   }
 
   var el = $("<div></div>");
-  var treemaOptions = {preventEditing: true, data: aether.flow, schema: {type: "object", additionalProperties: false, properties: {states: {type: "array"}}}};
+  var treemaOptions = {preventEditing: true, data: aether.flow, schema: {type: "object", additionalProperties: false, properties: {states: {type: "array"}, vars: {type: "object"}}}};
   var treema = TreemaNode.make(el, treemaOptions);
   treema.build();
   $('#aether-flow').append(el);
