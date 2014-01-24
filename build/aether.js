@@ -21965,7 +21965,9 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
       aether = new Aether(serialized.originalOptions);
       for (prop in serialized) {
         val = serialized[prop];
-        aether[prop] = val;
+        if (prop !== "originalOptions") {
+          aether[prop] = val;
+        }
       }
       return aether;
     };
@@ -22203,6 +22205,9 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
       if (_.isFunction(value)) {
         return "<Function>";
       }
+      if (!depth && value.serializeForAether) {
+        return value.serializeForAether();
+      }
       isArray = _.isArray(value);
       if (isArray || _.isPlainObject(value)) {
         brackets = isArray ? ["[", "]"] : ["{", "}"];
@@ -22222,7 +22227,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
             _results = [];
             for (_i = 0, _len = _ref6.length; _i < _len; _i++) {
               v = _ref6[_i];
-              _results.push(this.serializeVariableValue(v, depth + 1));
+              _results.push("" + this.serializeVariableValue(v, depth + 1));
             }
             return _results;
           }).call(this);

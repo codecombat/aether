@@ -265,7 +265,7 @@ module.exports = class Aether
   @deserialize: (serialized) ->
     # Convert a serialized Aether instance back from JSON
     aether = new Aether serialized.originalOptions
-    for prop, val of serialized
+    for prop, val of serialized when prop isnt "originalOptions"
       aether[prop] = val
     aether
 
@@ -389,8 +389,10 @@ module.exports = class Aether
   serializeVariableValue: (value, depth=0) ->
     return value unless value
     return "<Function>" if _.isFunction value
+    return value.serializeForAether() if not depth and value.serializeForAether
     isArray = _.isArray(value)
     if isArray or _.isPlainObject(value)
+      # TODO: this string-based approach doesn't let us get into any nested properties.
       brackets = if isArray then ["[", "]"] else ["{", "}"]
       size = _.size value
       return brackets.join "" unless size
@@ -398,7 +400,7 @@ module.exports = class Aether
       max = 5
       values = []
       if isArray
-        values = (@serializeVariableValue(v, depth + 1) for v in value[0 ... max])
+        values = ("" + @serializeVariableValue(v, depth + 1) for v in value[0 ... max])
       else
         for key, v of value
           break if values.length > max
