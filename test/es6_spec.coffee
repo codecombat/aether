@@ -70,7 +70,7 @@ describe "ES6 Test Suite", ->
       # Should stop eventually
       while i < 100
         if gen.next().done then break else ++i
-      expect(i < 100).toBeTrue
+      expect(i < 100).toBe true
 
   describe "No yielding", ->
     aether = new Aether

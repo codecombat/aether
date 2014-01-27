@@ -1,7 +1,7 @@
 execution = require './execution'
 
 module.exports = defaults =
-  thisValue: null
+  thisValue: null  # TODO: don't use this. Aether doesn't use it at compile time and CodeCombat uses it just at runtime, and it makes cloning original options weird/unintuitive/slow.
   global: {Math: Math, parseInt: parseInt, parseFloat: parseFloat, eval: eval, isNaN: isNaN, escape: escape, unescape: unescape}
   language: "javascript"
   languageVersion: "ES5"

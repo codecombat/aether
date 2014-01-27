@@ -224,10 +224,10 @@ module.exports = class Aether
 
       result
 
-  createMethod: ->
+  createMethod: (thisValue) ->
     # Like createFunction, but binds method to thisValue if specified
     fn = @createFunction()
-    fn = _.bind fn, @options.thisValue if @options.thisValue
+    fn = _.bind fn, thisValue or @options.thisValue if thisValue or @options.thisValue
     fn
 
   sandboxGenerator: (fn) ->
@@ -338,7 +338,7 @@ module.exports = class Aether
       postNormalizationTransforms.unshift transforms.makeInstrumentStatements()
     postNormalizationTransforms.unshift transforms.makeInstrumentCalls() if @options.includeMetrics or @options.includeFlow
     postNormalizationTransforms.unshift transforms.makeFindOriginalNodes originalNodeRanges, @wrappedCodePrefix, wrappedCode, normalizedSourceMap, normalizedNodeIndex
-    postNormalizationTransforms.unshift transforms.protectAPI if @options.protectAPI
+    postNormalizationTransforms.unshift transforms.makeProtectAPI @options.functionParameters if @options.protectAPI
     postNormalizationTransforms.unshift transforms.interceptThis
     instrumentedCode = @transform normalizedCode, postNormalizationTransforms
     if @options.yieldConditionally or @options.yieldAutomatically

@@ -145,7 +145,7 @@ module.exports.makeInstrumentStatements = makeInstrumentStatements = (varNames) 
   # set up any state tracking here
   return (node) ->
     orig = node.originalNode
-    #console.log "Should we instrument", orig?.originalSource, node.source(), node, "?", (orig and orig.originalRange.start >= 0), (node.type in statements), orig?.type, getFunctionNestingLevel(node) if node.source().search("chupacabra") isnt -1 and node.source().length < 50
+    #console.log "Should we instrument", orig?.originalSource, node.source(), node, "?", (orig and orig.originalRange.start >= 0), (node.type in statements), orig?.type, getFunctionNestingLevel(node) if node.source().length < 50
     return unless orig and orig.originalRange.start >= 0
     return unless node.type in statements
     return if orig.type in [S.ThisExpression, S.Identifier]  # probably need to add to this to get statements which corresponded to interesting expressions before normalization
@@ -180,11 +180,21 @@ module.exports.makeInstrumentCalls = makeInstrumentCalls = (varNames) ->
     return unless node.type is S.VariableDeclaration
     node.update "_aether.logCallStart(this._aetherUserInfo); #{node.source()}"  # TODO: pull in arguments?
 
-module.exports.protectAPI = protectAPI = (node) ->
-  return unless node.type is S.CallExpression
-  return unless getFunctionNestingLevel(node) > 1
-  for arg in node.arguments
-    arg.update "_aether.restoreAPIClone(#{arg.source()})"
-  if node.parent.type is S.AssignmentExpression
-    node.update "_aether.createAPIClone(#{node.source()})"
-  #console.log "protectAPI?", node, node.source()
+module.exports.makeProtectAPI = makeProtectAPI = (parameters) ->
+  parameters ?= []
+  return (node) ->
+    return unless node.type in [S.CallExpression, S.ThisExpression, S.VariableDeclaration, S.ReturnStatement]
+    level = getFunctionNestingLevel node
+    return unless level > 1
+    if node.type is S.CallExpression
+      for arg in node.arguments
+        arg.update "_aether.restoreAPIClone(#{arg.source()})"
+    if node.parent.type is S.AssignmentExpression or node.type is S.ThisExpression
+      node.update "_aether.createAPIClone(#{node.source()})"
+    else if level is 2
+      if node.type is S.VariableDeclaration and parameters.length
+        protectors = ("#{parameter} = _aether.createAPIClone(#{parameter});" for parameter in parameters)
+        node.update "#{node.source()} #{protectors.join ' '}"
+      else if node.type is S.ReturnStatement and arg = node.argument
+        arg.update "_aether.restoreAPIClone(#{arg.source()})"
+    #console.log "protectAPI?", node, node.source()

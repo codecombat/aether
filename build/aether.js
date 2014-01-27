@@ -21902,11 +21902,11 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
       };
     };
 
-    Aether.prototype.createMethod = function() {
+    Aether.prototype.createMethod = function(thisValue) {
       var fn;
       fn = this.createFunction();
-      if (this.options.thisValue) {
-        fn = _.bind(fn, this.options.thisValue);
+      if (thisValue || this.options.thisValue) {
+        fn = _.bind(fn, thisValue || this.options.thisValue);
       }
       return fn;
     };
@@ -22114,7 +22114,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
       }
       postNormalizationTransforms.unshift(transforms.makeFindOriginalNodes(originalNodeRanges, this.wrappedCodePrefix, wrappedCode, normalizedSourceMap, normalizedNodeIndex));
       if (this.options.protectAPI) {
-        postNormalizationTransforms.unshift(transforms.protectAPI);
+        postNormalizationTransforms.unshift(transforms.makeProtectAPI(this.options.functionParameters));
       }
       postNormalizationTransforms.unshift(transforms.interceptThis);
       instrumentedCode = this.transform(normalizedCode, postNormalizationTransforms);
@@ -23756,7 +23756,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
   reFlags = /\w*$/;
 
   module.exports.createAPIClone = createAPIClone = function(value) {
-    var className, clone, ctor, i, isArr, k, prop, result, v, _i, _j, _len, _len1, _ref3;
+    var className, clone, ctor, i, isArr, k, prop, result, v, _fn, _i, _j, _k, _len, _len1, _len2, _ref3, _ref4, _ref5;
     if (!_.isObject(value)) {
       return value;
     }
@@ -23792,15 +23792,9 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
       result = {};
     }
     Object.defineProperty(value, "__aetherAPIClone", {
-      configurable: false,
-      enumerable: false,
-      writable: false,
       value: result
     });
     Object.defineProperty(result, "__aetherAPIValue", {
-      configurable: false,
-      enumerable: false,
-      writable: false,
       value: value
     });
     if (isArr) {
@@ -23808,23 +23802,31 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
         v = value[i];
         result[i] = createAPIClone(v);
       }
+      Object.freeze(result);
     } else if (value.apiProperties) {
-      _.bindAll(value, (function() {
-        var _j, _len1, _ref3, _results;
-        _ref3 = value.apiProperties;
-        _results = [];
-        for (_j = 0, _len1 = _ref3.length; _j < _len1; _j++) {
-          prop = _ref3[_j];
-          if (_.isFunction(value[prop])) {
-            _results.push(prop);
-          }
-        }
-        return _results;
-      })());
-      _ref3 = value.apiProperties;
-      for (_j = 0, _len1 = _ref3.length; _j < _len1; _j++) {
-        k = _ref3[_j];
-        result[k] = createAPIClone(value[k]);
+      _ref4 = (_ref3 = value.apiMethods) != null ? _ref3 : [];
+      _fn = function(method) {
+        var fn;
+        fn = function() {
+          method.apply(this, arguments);
+          return method.apply(value, arguments);
+        };
+        return Object.defineProperty(result, prop, {
+          value: fn,
+          enumerable: true
+        });
+      };
+      for (_j = 0, _len1 = _ref4.length; _j < _len1; _j++) {
+        prop = _ref4[_j];
+        _fn(value[prop]);
+      }
+      _ref5 = value.apiProperties;
+      for (_k = 0, _len2 = _ref5.length; _k < _len2; _k++) {
+        k = _ref5[_k];
+        Object.defineProperty(result, k, {
+          value: createAPIClone(value[k]),
+          enumerable: true
+        });
       }
     } else {
       for (k in value) {
@@ -23955,7 +23957,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
 
 },{}],8:[function(require,module,exports){
 var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {};(function() {
-  var S, SourceMap, checkIncompleteMembers, esprima, getFunctionNestingLevel, getLineNumberForNode, getParents, getParentsOfType, interceptThis, makeCheckThisKeywords, makeFindOriginalNodes, makeGatherNodeRanges, makeInstrumentCalls, makeInstrumentStatements, possiblyGeneratorifyAncestorFunction, problems, protectAPI, statements, validateReturns, yieldAutomatically, yieldConditionally, _, _ref, _ref1, _ref2,
+  var S, SourceMap, checkIncompleteMembers, esprima, getFunctionNestingLevel, getLineNumberForNode, getParents, getParentsOfType, interceptThis, makeCheckThisKeywords, makeFindOriginalNodes, makeGatherNodeRanges, makeInstrumentCalls, makeInstrumentStatements, makeProtectAPI, possiblyGeneratorifyAncestorFunction, problems, statements, validateReturns, yieldAutomatically, yieldConditionally, _, _ref, _ref1, _ref2,
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
   _ = (_ref = (_ref1 = (_ref2 = typeof window !== "undefined" && window !== null ? window._ : void 0) != null ? _ref2 : typeof self !== "undefined" && self !== null ? self._ : void 0) != null ? _ref1 : typeof global !== "undefined" && global !== null ? global._ : void 0) != null ? _ref : require('lodash');
@@ -24205,22 +24207,45 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
     };
   };
 
-  module.exports.protectAPI = protectAPI = function(node) {
-    var arg, _i, _len, _ref3;
-    if (node.type !== S.CallExpression) {
-      return;
+  module.exports.makeProtectAPI = makeProtectAPI = function(parameters) {
+    if (parameters == null) {
+      parameters = [];
     }
-    if (!(getFunctionNestingLevel(node) > 1)) {
-      return;
-    }
-    _ref3 = node["arguments"];
-    for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
-      arg = _ref3[_i];
-      arg.update("_aether.restoreAPIClone(" + (arg.source()) + ")");
-    }
-    if (node.parent.type === S.AssignmentExpression) {
-      return node.update("_aether.createAPIClone(" + (node.source()) + ")");
-    }
+    return function(node) {
+      var arg, level, parameter, protectors, _i, _len, _ref3, _ref4;
+      if ((_ref3 = node.type) !== S.CallExpression && _ref3 !== S.ThisExpression && _ref3 !== S.VariableDeclaration && _ref3 !== S.ReturnStatement) {
+        return;
+      }
+      level = getFunctionNestingLevel(node);
+      if (!(level > 1)) {
+        return;
+      }
+      if (node.type === S.CallExpression) {
+        _ref4 = node["arguments"];
+        for (_i = 0, _len = _ref4.length; _i < _len; _i++) {
+          arg = _ref4[_i];
+          arg.update("_aether.restoreAPIClone(" + (arg.source()) + ")");
+        }
+      }
+      if (node.parent.type === S.AssignmentExpression || node.type === S.ThisExpression) {
+        return node.update("_aether.createAPIClone(" + (node.source()) + ")");
+      } else if (level === 2) {
+        if (node.type === S.VariableDeclaration && parameters.length) {
+          protectors = (function() {
+            var _j, _len1, _results;
+            _results = [];
+            for (_j = 0, _len1 = parameters.length; _j < _len1; _j++) {
+              parameter = parameters[_j];
+              _results.push("" + parameter + " = _aether.createAPIClone(" + parameter + ");");
+            }
+            return _results;
+          })();
+          return node.update("" + (node.source()) + " " + (protectors.join(' ')));
+        } else if (node.type === S.ReturnStatement && (arg = node.argument)) {
+          return arg.update("_aether.restoreAPIClone(" + (arg.source()) + ")");
+        }
+      }
+    };
   };
 
 }).call(this);
