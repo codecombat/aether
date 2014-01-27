@@ -69,3 +69,7 @@ module.exports = (options) ->
       includeVisualization:
         type: 'boolean'
         default: false
+      protectAPI:
+        type: 'boolean'
+        default: false
+        description: "Whether to clone/restore values coming in and out of user code to limit them to apiProperties."

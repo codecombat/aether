@@ -6,14 +6,13 @@ acorn_loose = require 'acorn/acorn_loose'  # for if Esprima dies. Note it can't 
 jshint = require('jshint').JSHINT
 normalizer = require 'JS_WALA/normalizer/lib/normalizer'
 escodegen = require 'escodegen'
-#infer = require 'tern/lib/infer'  # Not enough time to figure out how to integrate this yet
 
 defaults = require './defaults'
 problems = require './problems'
 execution = require './execution'
 morph = require './morph'
 transforms = require './transforms'
-
+protectAPI = require './protectAPI'
 protectBuiltins = require './protectBuiltins'
 
 optionsValidator = require './validators/options'
@@ -339,7 +338,8 @@ module.exports = class Aether
       postNormalizationTransforms.unshift transforms.makeInstrumentStatements()
     postNormalizationTransforms.unshift transforms.makeInstrumentCalls() if @options.includeMetrics or @options.includeFlow
     postNormalizationTransforms.unshift transforms.makeFindOriginalNodes originalNodeRanges, @wrappedCodePrefix, wrappedCode, normalizedSourceMap, normalizedNodeIndex
-    postNormalizationTransforms.unshift transforms.interceptThis()
+    postNormalizationTransforms.unshift transforms.protectAPI if @options.protectAPI
+    postNormalizationTransforms.unshift transforms.interceptThis
     instrumentedCode = @transform normalizedCode, postNormalizationTransforms
     if @options.yieldConditionally or @options.yieldAutomatically
       # Unlabel breaks and pray for correct behavior: https://github.com/google/traceur-compiler/issues/605
@@ -358,6 +358,8 @@ module.exports = class Aether
       console.log "---NORMALIZED--: #{normalizedCode.split('\n').length}\n", {code: normalizedCode}
       console.log "---INSTRUMENTED: #{instrumentedCode.split('\n').length}\n", {code: "return " + instrumentedCode}
       console.log "---PURIFIED----: #{purifiedCode.split('\n').length}\n", {code: purifiedCode}
+    if false and @options.protectAPI
+      console.log "---PURIFIED----: #{purifiedCode}\n"
     purifiedCode
 
   getLineNumberForPlannedMethod: (plannedMethod, numMethodsSeen) ->
@@ -458,31 +460,10 @@ module.exports = class Aether
   logCallEnd: ->
     @callStack.pop()
 
+  createAPIClone: protectAPI.createAPIClone
+  restoreAPIClone: protectAPI.restoreAPIClone
+
 self.Aether = Aether if self?
 window.Aether = Aether if window?
 self.esprima ?= esprima if self?
 window.esprima ?= esprima if window?
-
-
-
-# In order to be able to highlight the currently executing statement, then every time we yield, we can just grab the last-executed AST start/end and store it in our Thang as a trackedProperty. ... per method...
-# Then eventually we can convert those start/ends to handle changed whitespace in identical ASTs, but we'll wait until we've refactored the editor for that.
-# But what about stepping through non-yielding flow?
-# The easiest thing from the editor's point of view would be to have, for each frame, for each method, a flat list of calls (list of statements) in the flow.
-# Aether isn't going to organize things by frame, though; that's a CoCo concept.
-# Aether can organize them by calls.
-# We can reorganize them by frame, or make a getter that appears to, after we're done.
-# We just need to have the frame numbers inserted in each ... statement, to support yielding, or call, if not, but let's do statements to make it general.
-# So logStatement needs to include userInfo.
-# It is already supposed to capture variable values.
-# Let's see how JSDares did that part.
-# Ah, every operation is wrapped in a function which outputs step messages.
-# So we could do something like that: every time there's an assignment expression where the LHS has an original node, we add a mapping from that to the value of the RHS to our flow state.
-# By the way, CoCo will eventually give its nodes IDs and then convert between ranges and IDs, but we might do this in Aether instead, since other users of Aether might also want to change the code and still preserve the range info when the ASTs haven't changed.
-# So if that's how we track variable states, then we actually won't get anything that happens as a side effect.
-# Like if I call this.setTarget(nearestEnemy), then this.target won't be updated, because I didn't explicitly assign to it.
-# Hmm; maybe I should worry about that a bit later and get the stepping working properly.
-# All that requires is to include the frameIndex as part of the userInfo for each logStatement.
-# I could just set _aetherUserInfo to whatever value I want, just like I set _shouldYield (which should be _aetherShouldYield).
-# Okay, let's try that.
-# Okay, that works. (Shudder to think of performance.)

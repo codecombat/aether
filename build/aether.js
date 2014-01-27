@@ -21561,7 +21561,7 @@ System.set('traceur@', traceur);
 
 ;(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {};(function() {
-  var Aether, acorn_loose, defaults, escodegen, esprima, execution, jshint, morph, normalizer, optionsValidator, problems, protectBuiltins, traceur, transforms, _, _ref, _ref1, _ref2, _ref3, _ref4, _ref5,
+  var Aether, acorn_loose, defaults, escodegen, esprima, execution, jshint, morph, normalizer, optionsValidator, problems, protectAPI, protectBuiltins, traceur, transforms, _, _ref, _ref1, _ref2, _ref3, _ref4, _ref5,
     __slice = [].slice,
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
@@ -21588,6 +21588,8 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
   morph = require('./morph');
 
   transforms = require('./transforms');
+
+  protectAPI = require('./protectAPI');
 
   protectBuiltins = require('./protectBuiltins');
 
@@ -22111,7 +22113,10 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
         postNormalizationTransforms.unshift(transforms.makeInstrumentCalls());
       }
       postNormalizationTransforms.unshift(transforms.makeFindOriginalNodes(originalNodeRanges, this.wrappedCodePrefix, wrappedCode, normalizedSourceMap, normalizedNodeIndex));
-      postNormalizationTransforms.unshift(transforms.interceptThis());
+      if (this.options.protectAPI) {
+        postNormalizationTransforms.unshift(transforms.protectAPI);
+      }
+      postNormalizationTransforms.unshift(transforms.interceptThis);
       instrumentedCode = this.transform(normalizedCode, postNormalizationTransforms);
       if (this.options.yieldConditionally || this.options.yieldAutomatically) {
         instrumentedCode = instrumentedCode.replace(/(break|continue) [A-z0-9]+;/g, '$1;');
@@ -22143,6 +22148,9 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
         console.log("---PURIFIED----: " + (purifiedCode.split('\n').length) + "\n", {
           code: purifiedCode
         });
+      }
+      if (false && this.options.protectAPI) {
+        console.log("---PURIFIED----: " + purifiedCode + "\n");
       }
       return purifiedCode;
     };
@@ -22327,6 +22335,10 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
       return this.callStack.pop();
     };
 
+    Aether.prototype.createAPIClone = protectAPI.createAPIClone;
+
+    Aether.prototype.restoreAPIClone = protectAPI.restoreAPIClone;
+
     return Aether;
 
   })();
@@ -22353,7 +22365,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
 
 }).call(this);
 
-},{"./defaults":2,"./execution":3,"./morph":4,"./problems":5,"./protectBuiltins":6,"./transforms":7,"./validators/options":8,"JS_WALA/normalizer/lib/normalizer":13,"acorn/acorn_loose":17,"escodegen":25,"esprima":28,"jshint":34,"lodash":18,"traceur":18}],2:[function(require,module,exports){
+},{"./defaults":2,"./execution":3,"./morph":4,"./problems":5,"./protectAPI":6,"./protectBuiltins":7,"./transforms":8,"./validators/options":9,"JS_WALA/normalizer/lib/normalizer":14,"acorn/acorn_loose":18,"escodegen":26,"esprima":29,"jshint":35,"lodash":19,"traceur":19}],2:[function(require,module,exports){
 (function() {
   var defaults, execution;
 
@@ -22381,7 +22393,8 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
     includeFlow: true,
     includeMetrics: true,
     includeStyle: true,
-    includeVisualization: false
+    includeVisualization: false,
+    protectAPI: false
   };
 
 }).call(this);
@@ -22553,7 +22566,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
 
 }).call(this);
 
-},{"acorn/acorn_loose":17,"esprima":28,"lodash":18}],5:[function(require,module,exports){
+},{"acorn/acorn_loose":18,"esprima":29,"lodash":19}],5:[function(require,module,exports){
 (function() {
   var RuntimeProblem, TranspileProblem, UserCodeProblem, commonMethods, problems,
     __hasProp = {}.hasOwnProperty,
@@ -23706,6 +23719,161 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
 }).call(this);
 
 },{}],6:[function(require,module,exports){
+var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {};(function() {
+  var argsClass, arrayClass, boolClass, cloneableClasses, createAPIClone, ctorByClass, dateClass, errorClass, funcClass, numberClass, objectClass, reFlags, regexpClass, restoreAPIClone, stringClass, _, _ref, _ref1, _ref2,
+    __hasProp = {}.hasOwnProperty;
+
+  _ = (_ref = (_ref1 = (_ref2 = typeof window !== "undefined" && window !== null ? window._ : void 0) != null ? _ref2 : typeof self !== "undefined" && self !== null ? self._ : void 0) != null ? _ref1 : typeof global !== "undefined" && global !== null ? global._ : void 0) != null ? _ref : require('lodash');
+
+  ctorByClass = {};
+
+  argsClass = "[object Arguments]";
+
+  ctorByClass[arrayClass = "[object Array]"] = Array;
+
+  ctorByClass[boolClass = "[object Boolean]"] = Boolean;
+
+  ctorByClass[dateClass = "[object Date]"] = Date;
+
+  ctorByClass[errorClass = "[object Error]"] = Error;
+
+  ctorByClass[funcClass = "[object Function]"] = Function;
+
+  ctorByClass[numberClass = "[object Number]"] = Number;
+
+  ctorByClass[objectClass = "[object Object]"] = Object;
+
+  ctorByClass[regexpClass = "[object RegExp]"] = RegExp;
+
+  ctorByClass[stringClass = "[object String]"] = String;
+
+  cloneableClasses = {};
+
+  cloneableClasses[funcClass] = false;
+
+  cloneableClasses[argsClass] = cloneableClasses[arrayClass] = cloneableClasses[boolClass] = cloneableClasses[dateClass] = cloneableClasses[numberClass] = cloneableClasses[objectClass] = cloneableClasses[regexpClass] = cloneableClasses[stringClass] = true;
+
+  reFlags = /\w*$/;
+
+  module.exports.createAPIClone = createAPIClone = function(value) {
+    var className, clone, ctor, i, isArr, k, prop, result, v, _i, _j, _len, _len1, _ref3;
+    if (!_.isObject(value)) {
+      return value;
+    }
+    className = Object.prototype.toString.call(value);
+    if (!cloneableClasses[className]) {
+      return value;
+    }
+    ctor = ctorByClass[className];
+    switch (className) {
+      case boolClass:
+      case dateClass:
+        return new ctor(+value);
+      case numberClass:
+      case stringClass:
+        return new ctor(value);
+      case regexpClass:
+        result = ctor(value.source, reFlags.exec(value));
+        result.lastIndex = value.lastIndex;
+        return result;
+    }
+    if (clone = value.__aetherAPIClone) {
+      return clone;
+    }
+    if (isArr = _.isArray(value)) {
+      result = ctor(value.length);
+      if (value.hasOwnProperty("index")) {
+        result.index = value.index;
+      }
+      if (value.hasOwnProperty("input")) {
+        result.input = value.input;
+      }
+    } else {
+      result = {};
+    }
+    Object.defineProperty(value, "__aetherAPIClone", {
+      configurable: false,
+      enumerable: false,
+      writable: false,
+      value: result
+    });
+    Object.defineProperty(result, "__aetherAPIValue", {
+      configurable: false,
+      enumerable: false,
+      writable: false,
+      value: value
+    });
+    if (isArr) {
+      for (i = _i = 0, _len = value.length; _i < _len; i = ++_i) {
+        v = value[i];
+        result[i] = createAPIClone(v);
+      }
+    } else if (value.apiProperties) {
+      _.bindAll(value, (function() {
+        var _j, _len1, _ref3, _results;
+        _ref3 = value.apiProperties;
+        _results = [];
+        for (_j = 0, _len1 = _ref3.length; _j < _len1; _j++) {
+          prop = _ref3[_j];
+          if (_.isFunction(value[prop])) {
+            _results.push(prop);
+          }
+        }
+        return _results;
+      })());
+      _ref3 = value.apiProperties;
+      for (_j = 0, _len1 = _ref3.length; _j < _len1; _j++) {
+        k = _ref3[_j];
+        result[k] = createAPIClone(value[k]);
+      }
+    } else {
+      for (k in value) {
+        if (!__hasProp.call(value, k)) continue;
+        v = value[k];
+        result[k] = createAPIClone(v);
+      }
+    }
+    return result;
+  };
+
+  module.exports.restoreAPIClone = restoreAPIClone = function(value) {
+    var className, isArr, k, result, source, v;
+    if (!_.isObject(value)) {
+      return value;
+    }
+    className = Object.prototype.toString.call(value);
+    if (!cloneableClasses[className]) {
+      return value;
+    }
+    if (className === boolClass || className === dateClass || className === numberClass || className === stringClass || className === regexpClass) {
+      return value;
+    }
+    if (source = value.__aetherAPIValue) {
+      return source;
+    }
+    if (isArr = _.isArray(value)) {
+      result = (function() {
+        var _i, _len, _results;
+        _results = [];
+        for (_i = 0, _len = value.length; _i < _len; _i++) {
+          v = value[_i];
+          _results.push(restoreAPIClone(v));
+        }
+        return _results;
+      })();
+    } else {
+      result = {};
+      for (k in value) {
+        v = value[k];
+        result[k] = restoreAPIClone(v);
+      }
+    }
+    return result;
+  };
+
+}).call(this);
+
+},{"lodash":19}],7:[function(require,module,exports){
 (function() {
   var builtinClones, builtinNames, builtinReal, cloneBuiltin, copy, copyBuiltin, getOwnPropertyNames, global, name, raiseDisabledFunctionConstructor, restoreBuiltins;
 
@@ -23785,9 +23953,9 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
 
 }).call(this);
 
-},{}],7:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {};(function() {
-  var S, SourceMap, checkIncompleteMembers, esprima, getFunctionNestingLevel, getLineNumberForNode, getParents, getParentsOfType, interceptThis, makeCheckThisKeywords, makeFindOriginalNodes, makeGatherNodeRanges, makeInstrumentCalls, makeInstrumentStatements, possiblyGeneratorifyAncestorFunction, problems, statements, validateReturns, yieldAutomatically, yieldConditionally, _, _ref, _ref1, _ref2,
+  var S, SourceMap, checkIncompleteMembers, esprima, getFunctionNestingLevel, getLineNumberForNode, getParents, getParentsOfType, interceptThis, makeCheckThisKeywords, makeFindOriginalNodes, makeGatherNodeRanges, makeInstrumentCalls, makeInstrumentStatements, possiblyGeneratorifyAncestorFunction, problems, protectAPI, statements, validateReturns, yieldAutomatically, yieldConditionally, _, _ref, _ref1, _ref2,
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
   _ = (_ref = (_ref1 = (_ref2 = typeof window !== "undefined" && window !== null ? window._ : void 0) != null ? _ref2 : typeof self !== "undefined" && self !== null ? self._ : void 0) != null ? _ref1 : typeof global !== "undefined" && global !== null ? global._ : void 0) != null ? _ref : require('lodash');
@@ -24012,16 +24180,14 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
     };
   };
 
-  module.exports.interceptThis = interceptThis = function() {
-    return function(node) {
-      if (node.type !== S.ThisExpression) {
-        return;
-      }
-      if (!(getFunctionNestingLevel(node) > 1)) {
-        return;
-      }
-      return node.update("__interceptThis(this, __global)");
-    };
+  module.exports.interceptThis = interceptThis = function(node) {
+    if (node.type !== S.ThisExpression) {
+      return;
+    }
+    if (!(getFunctionNestingLevel(node) > 1)) {
+      return;
+    }
+    return node.update("__interceptThis(this, __global)");
   };
 
   module.exports.makeInstrumentCalls = makeInstrumentCalls = function(varNames) {
@@ -24039,9 +24205,27 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
     };
   };
 
+  module.exports.protectAPI = protectAPI = function(node) {
+    var arg, _i, _len, _ref3;
+    if (node.type !== S.CallExpression) {
+      return;
+    }
+    if (!(getFunctionNestingLevel(node) > 1)) {
+      return;
+    }
+    _ref3 = node["arguments"];
+    for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
+      arg = _ref3[_i];
+      arg.update("_aether.restoreAPIClone(" + (arg.source()) + ")");
+    }
+    if (node.parent.type === S.AssignmentExpression) {
+      return node.update("_aether.createAPIClone(" + (node.source()) + ")");
+    }
+  };
+
 }).call(this);
 
-},{"./problems":5,"esprima":28,"lodash":18,"source-map":41}],8:[function(require,module,exports){
+},{"./problems":5,"esprima":29,"lodash":19,"source-map":42}],9:[function(require,module,exports){
 (function() {
   var tv4;
 
@@ -24137,6 +24321,11 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
         includeVisualization: {
           type: 'boolean',
           "default": false
+        },
+        protectAPI: {
+          type: 'boolean',
+          "default": false,
+          description: "Whether to clone/restore values coming in and out of user code to limit them to apiProperties."
         }
       }
     });
@@ -24144,7 +24333,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
 
 }).call(this);
 
-},{"tv4":51}],9:[function(require,module,exports){
+},{"tv4":52}],10:[function(require,module,exports){
 /*******************************************************************************
  * Copyright (c) 2012 IBM Corporation.
  * All rights reserved. This program and the accompanying materials
@@ -24326,7 +24515,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
     defconstructor(p, signatures[p]);
 //});
 
-},{"./position":10}],10:[function(require,module,exports){
+},{"./position":11}],11:[function(require,module,exports){
 /*******************************************************************************
  * Copyright (c) 2012 IBM Corporation.
  * All rights reserved. This program and the accompanying materials
@@ -24388,7 +24577,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
   exports.DUMMY_POS = DUMMY_POS;
 //});
 
-},{}],11:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 /*******************************************************************************
  * Copyright (c) 2012 IBM Corporation.
  * All rights reserved. This program and the accompanying materials
@@ -24431,7 +24620,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
   };
 //});
 
-},{}],12:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 /*******************************************************************************
  * Copyright (c) 2012 IBM Corporation.
  * All rights reserved. This program and the accompanying materials
@@ -24479,7 +24668,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
   exports.getDeclName = getDeclName;
 //});
 
-},{"../../common/lib/ast":9}],13:[function(require,module,exports){
+},{"../../common/lib/ast":10}],14:[function(require,module,exports){
 /*******************************************************************************
  * Copyright (c) 2012 IBM Corporation.
  * All rights reserved. This program and the accompanying materials
@@ -25521,7 +25710,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
   exports.normalize = normalize;
 //});
 
-},{"../../common/lib/ast":9,"../../common/lib/position":10,"./cflow":11,"./decls":12,"./scope":14,"./util":15}],14:[function(require,module,exports){
+},{"../../common/lib/ast":10,"../../common/lib/position":11,"./cflow":12,"./decls":13,"./scope":15,"./util":16}],15:[function(require,module,exports){
 /*******************************************************************************
  * Copyright (c) 2012 IBM Corporation.
  * All rights reserved. This program and the accompanying materials
@@ -25650,7 +25839,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
   exports.WithScope = WithScope;
 //});
 
-},{"./decls":12}],15:[function(require,module,exports){
+},{"./decls":13}],16:[function(require,module,exports){
 /*******************************************************************************
  * Copyright (c) 2012 IBM Corporation.
  * All rights reserved. This program and the accompanying materials
@@ -25688,7 +25877,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
     Array.prototype.flatmap = flatmap;
 //});
 
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 // Acorn is a tiny, fast JavaScript parser written in JavaScript.
 //
 // Acorn was written by Marijn Haverbeke and released under an MIT
@@ -27409,7 +27598,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
 
 });
 
-},{}],17:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 // Acorn: Loose parser
 //
 // This module provides an alternative parser (`parse_dammit`) that
@@ -28185,9 +28374,9 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
   }
 });
 
-},{"./acorn":16}],18:[function(require,module,exports){
+},{"./acorn":17}],19:[function(require,module,exports){
 
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 
 
 //
@@ -28405,7 +28594,7 @@ if (typeof Object.getOwnPropertyDescriptor === 'function') {
   exports.getOwnPropertyDescriptor = valueObject;
 }
 
-},{}],20:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -28722,7 +28911,7 @@ assert.doesNotThrow = function(block, /*optional*/message) {
 };
 
 assert.ifError = function(err) { if (err) {throw err;}};
-},{"_shims":19,"util":23}],21:[function(require,module,exports){
+},{"_shims":20,"util":24}],22:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -29003,7 +29192,7 @@ EventEmitter.listenerCount = function(emitter, type) {
     ret = emitter._events[type].length;
   return ret;
 };
-},{"util":23}],22:[function(require,module,exports){
+},{"util":24}],23:[function(require,module,exports){
 var process=require("__browserify_process");// Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -29214,7 +29403,7 @@ exports.extname = function(path) {
   return splitPath(path)[3];
 };
 
-},{"__browserify_process":24,"_shims":19,"util":23}],23:[function(require,module,exports){
+},{"__browserify_process":25,"_shims":20,"util":24}],24:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -29759,7 +29948,7 @@ function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-},{"_shims":19}],24:[function(require,module,exports){
+},{"_shims":20}],25:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -29814,7 +30003,7 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
-},{}],25:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {};/*
   Copyright (C) 2012-2013 Yusuke Suzuki <utatane.tea@gmail.com>
   Copyright (C) 2012-2013 Michael Ficarra <escodegen.copyright@michael.ficarra.me>
@@ -31935,7 +32124,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
 }());
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{"./package.json":27,"estraverse":26,"source-map":41}],26:[function(require,module,exports){
+},{"./package.json":28,"estraverse":27,"source-map":42}],27:[function(require,module,exports){
 /*
   Copyright (C) 2012-2013 Yusuke Suzuki <utatane.tea@gmail.com>
   Copyright (C) 2012 Ariya Hidayat <ariya.hidayat@gmail.com>
@@ -32621,7 +32810,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
 }));
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{}],27:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 module.exports={
   "name": "escodegen",
   "description": "ECMAScript code generator",
@@ -32689,7 +32878,7 @@ module.exports={
   "_from": "escodegen@0.0.28"
 }
 
-},{}],28:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 /*
   Copyright (C) 2013 Ariya Hidayat <ariya.hidayat@gmail.com>
   Copyright (C) 2013 Thaddee Tyl <thaddee.tyl@gmail.com>
@@ -38205,7 +38394,7 @@ parseYieldExpression: true
 }));
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{}],29:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 var identifierStartTable = [];
 
 for (var i = 0; i < 128; i++) {
@@ -38229,7 +38418,7 @@ module.exports = {
 	asciiIdentifierPartTable: identifierPartTable
 };
 
-},{}],30:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 module.exports = [
 	768,
 	769,
@@ -39801,7 +39990,7 @@ module.exports = [
 	65343
 ];
 
-},{}],31:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 module.exports = [
 	170,
 	181,
@@ -88280,7 +88469,7 @@ module.exports = [
 	65500
 ];
 
-},{}],32:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {};/*global window, global*/
 var util = require("util")
 var assert = require("assert")
@@ -88367,7 +88556,7 @@ function assert(expression) {
     }
 }
 
-},{"assert":20,"util":23}],33:[function(require,module,exports){
+},{"assert":21,"util":24}],34:[function(require,module,exports){
 //     Underscore.js 1.4.4
 //     http://underscorejs.org
 //     (c) 2009-2013 Jeremy Ashkenas, DocumentCloud Inc.
@@ -89595,7 +89784,7 @@ function assert(expression) {
 
 }).call(this);
 
-},{}],34:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 /*!
  * JSHint, by JSHint Community.
  *
@@ -94599,7 +94788,7 @@ if (typeof exports === "object" && exports) {
 	exports.JSHINT = JSHINT;
 }
 
-},{"./lex.js":35,"./messages.js":36,"./reg.js":37,"./state.js":38,"./style.js":39,"./vars.js":40,"console-browserify":32,"events":21,"underscore":33}],35:[function(require,module,exports){
+},{"./lex.js":36,"./messages.js":37,"./reg.js":38,"./state.js":39,"./style.js":40,"./vars.js":41,"console-browserify":33,"events":22,"underscore":34}],36:[function(require,module,exports){
 /*
  * Lexical analysis and token construction.
  */
@@ -96177,7 +96366,7 @@ Lexer.prototype = {
 
 exports.Lexer = Lexer;
 
-},{"../data/ascii-identifier-data.js":29,"../data/non-ascii-identifier-part-only.js":30,"../data/non-ascii-identifier-start.js":31,"./reg.js":37,"./state.js":38,"events":21,"underscore":33}],36:[function(require,module,exports){
+},{"../data/ascii-identifier-data.js":30,"../data/non-ascii-identifier-part-only.js":31,"../data/non-ascii-identifier-start.js":32,"./reg.js":38,"./state.js":39,"events":22,"underscore":34}],37:[function(require,module,exports){
 "use strict";
 
 var _ = require("underscore");
@@ -96399,7 +96588,7 @@ _.each(info, function (desc, code) {
 	exports.info[code] = { code: code, desc: desc };
 });
 
-},{"underscore":33}],37:[function(require,module,exports){
+},{"underscore":34}],38:[function(require,module,exports){
 /*
  * Regular expressions. Some of these are stupidly long.
  */
@@ -96435,7 +96624,7 @@ exports.javascriptURL = /^(?:javascript|jscript|ecmascript|vbscript|mocha|livesc
 // Catches /* falls through */ comments (ft)
 exports.fallsThrough = /^\s*\/\*\s*falls?\sthrough\s*\*\/\s*$/;
 
-},{}],38:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 "use strict";
 
 var state = {
@@ -96463,7 +96652,7 @@ var state = {
 
 exports.state = state;
 
-},{}],39:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 "use strict";
 
 exports.register = function (linter) {
@@ -96635,7 +96824,7 @@ exports.register = function (linter) {
 		}
 	});
 };
-},{}],40:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 // jshint -W001
 
 "use strict";
@@ -97226,7 +97415,7 @@ exports.yui = {
 };
 
 
-},{}],41:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 /*
  * Copyright 2009-2011 Mozilla Foundation and contributors
  * Licensed under the New BSD license. See LICENSE.txt or:
@@ -97236,7 +97425,7 @@ exports.SourceMapGenerator = require('./source-map/source-map-generator').Source
 exports.SourceMapConsumer = require('./source-map/source-map-consumer').SourceMapConsumer;
 exports.SourceNode = require('./source-map/source-node').SourceNode;
 
-},{"./source-map/source-map-consumer":46,"./source-map/source-map-generator":47,"./source-map/source-node":48}],42:[function(require,module,exports){
+},{"./source-map/source-map-consumer":47,"./source-map/source-map-generator":48,"./source-map/source-node":49}],43:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -97335,7 +97524,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./util":49,"amdefine":50}],43:[function(require,module,exports){
+},{"./util":50,"amdefine":51}],44:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -97481,7 +97670,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./base64":44,"amdefine":50}],44:[function(require,module,exports){
+},{"./base64":45,"amdefine":51}],45:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -97525,7 +97714,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"amdefine":50}],45:[function(require,module,exports){
+},{"amdefine":51}],46:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -97608,7 +97797,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"amdefine":50}],46:[function(require,module,exports){
+},{"amdefine":51}],47:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -98087,7 +98276,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./array-set":42,"./base64-vlq":43,"./binary-search":45,"./util":49,"amdefine":50}],47:[function(require,module,exports){
+},{"./array-set":43,"./base64-vlq":44,"./binary-search":46,"./util":50,"amdefine":51}],48:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -98469,7 +98658,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./array-set":42,"./base64-vlq":43,"./util":49,"amdefine":50}],48:[function(require,module,exports){
+},{"./array-set":43,"./base64-vlq":44,"./util":50,"amdefine":51}],49:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -98842,7 +99031,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./source-map-generator":47,"./util":49,"amdefine":50}],49:[function(require,module,exports){
+},{"./source-map-generator":48,"./util":50,"amdefine":51}],50:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -99049,7 +99238,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"amdefine":50}],50:[function(require,module,exports){
+},{"amdefine":51}],51:[function(require,module,exports){
 var process=require("__browserify_process"),__filename="/../node_modules/source-map/node_modules/amdefine/amdefine.js";/** vim: et:ts=4:sw=4:sts=4
  * @license amdefine 0.1.0 Copyright (c) 2011, The Dojo Foundation All Rights Reserved.
  * Available via the MIT or new BSD license.
@@ -99350,7 +99539,7 @@ function amdefine(module, requireFn) {
 
 module.exports = amdefine;
 
-},{"__browserify_process":24,"path":22}],51:[function(require,module,exports){
+},{"__browserify_process":25,"path":23}],52:[function(require,module,exports){
 /*
 Author: Geraint Luff and others
 Year: 2013

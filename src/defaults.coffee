@@ -15,3 +15,4 @@ module.exports = defaults =
   includeMetrics: true
   includeStyle: true
   includeVisualization: false
+  protectAPI: false

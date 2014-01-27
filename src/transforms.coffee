@@ -164,11 +164,10 @@ module.exports.makeInstrumentStatements = makeInstrumentStatements = (varNames) 
     node.update "#{node.source()} #{loggers.join ' '}"
     #console.log " ... created logger", node.source(), orig
 
-module.exports.interceptThis = interceptThis = ->
-  return (node) ->
-    return unless node.type is S.ThisExpression
-    return unless getFunctionNestingLevel(node) > 1
-    node.update "__interceptThis(this, __global)"
+module.exports.interceptThis = interceptThis = (node) ->
+  return unless node.type is S.ThisExpression
+  return unless getFunctionNestingLevel(node) > 1
+  node.update "__interceptThis(this, __global)"
 
 module.exports.makeInstrumentCalls = makeInstrumentCalls = (varNames) ->
   # set up any state tracking here
@@ -180,3 +179,12 @@ module.exports.makeInstrumentCalls = makeInstrumentCalls = (varNames) ->
     # Look at the top variable declaration inside our appropriately nested function to see where the call starts
     return unless node.type is S.VariableDeclaration
     node.update "_aether.logCallStart(this._aetherUserInfo); #{node.source()}"  # TODO: pull in arguments?
+
+module.exports.protectAPI = protectAPI = (node) ->
+  return unless node.type is S.CallExpression
+  return unless getFunctionNestingLevel(node) > 1
+  for arg in node.arguments
+    arg.update "_aether.restoreAPIClone(#{arg.source()})"
+  if node.parent.type is S.AssignmentExpression
+    node.update "_aether.createAPIClone(#{node.source()})"
+  #console.log "protectAPI?", node, node.source()
