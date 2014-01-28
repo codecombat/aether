@@ -56,22 +56,25 @@ module.exports.createAPIClone = createAPIClone = (value) ->
   # Recursively populate clone (susceptible to call stack limits) with non-configurable, non-writable properties.
   if isArr
     result[i] = createAPIClone v for v, i in value
-    Object.freeze result  # Do we want to freeze arrays?
+    #Object.freeze result  # Do we want to freeze arrays? Maybe not; caused bug with defining __aetherAPIClone.
   else if value.apiProperties
     for prop in value.apiMethods ? []
-      # Make a version of the function that calls itself both on the clone and the original.
-      do (method = value[prop]) ->
+      # Make a version of the function that calls itself on the original, and only if allowed.
+      do (prop) ->
         fn = ->
-          method.apply @, arguments
-          method.apply value, arguments  # Use return value from original value, not clone.
+          throw new Error "Calling #{prop} is not allowed." unless value._aetherAPIMethodsAllowed
+          value[prop].apply value, arguments
         Object.defineProperty result, prop, value: fn, enumerable: true
-    #result[k] = createAPIClone value[k] for k in value.apiProperties
-    Object.defineProperty result, k, value: createAPIClone(value[k]), enumerable: true for k in value.apiProperties
+    for prop in value.apiProperties
+      do (prop) ->
+        # Accessing a property on the clone will get the value from the original.
+        fn = -> createAPIClone value[prop]
+        Object.defineProperty result, prop, get: fn, enumerable: true
   else
     # Hmm, should we protect normal objects?
-    result[k] = createAPIClone v for own k, v of value
-    #Object.defineProperty result, k, value: createAPIClone(v), enumerable: true for own k, v of value
-  #Object.freeze result  # bad, doesn't let us define our own methods on this
+    #result[k] = createAPIClone(v) for own k, v of value
+    Object.defineProperty result, k, value: createAPIClone(v), enumerable: true for own k, v of value
+
   result
 
 # Hmm; this will make it so that if we are, say, passing an array or object around, even if it doesn't have an API,

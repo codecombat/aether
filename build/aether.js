@@ -22249,7 +22249,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
           }
         }
         if (size > max) {
-          values.push("(... " + (value.length - max) + " more)");
+          values.push("(... " + (size - max) + " more)");
         }
         return "" + brackets[0] + "\n  " + (values.join('\n  ')) + "\n" + brackets[1];
       } else if (value.toString) {
@@ -23756,7 +23756,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
   reFlags = /\w*$/;
 
   module.exports.createAPIClone = createAPIClone = function(value) {
-    var className, clone, ctor, i, isArr, k, prop, result, v, _fn, _i, _j, _k, _len, _len1, _len2, _ref3, _ref4, _ref5;
+    var className, clone, ctor, i, isArr, k, prop, result, v, _fn, _fn1, _i, _j, _k, _len, _len1, _len2, _ref3, _ref4, _ref5;
     if (!_.isObject(value)) {
       return value;
     }
@@ -23802,14 +23802,15 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
         v = value[i];
         result[i] = createAPIClone(v);
       }
-      Object.freeze(result);
     } else if (value.apiProperties) {
       _ref4 = (_ref3 = value.apiMethods) != null ? _ref3 : [];
-      _fn = function(method) {
+      _fn = function(prop) {
         var fn;
         fn = function() {
-          method.apply(this, arguments);
-          return method.apply(value, arguments);
+          if (!value._aetherAPIMethodsAllowed) {
+            throw new Error("Calling " + prop + " is not allowed.");
+          }
+          return value[prop].apply(value, arguments);
         };
         return Object.defineProperty(result, prop, {
           value: fn,
@@ -23818,21 +23819,31 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
       };
       for (_j = 0, _len1 = _ref4.length; _j < _len1; _j++) {
         prop = _ref4[_j];
-        _fn(value[prop]);
+        _fn(prop);
       }
       _ref5 = value.apiProperties;
-      for (_k = 0, _len2 = _ref5.length; _k < _len2; _k++) {
-        k = _ref5[_k];
-        Object.defineProperty(result, k, {
-          value: createAPIClone(value[k]),
+      _fn1 = function(prop) {
+        var fn;
+        fn = function() {
+          return createAPIClone(value[prop]);
+        };
+        return Object.defineProperty(result, prop, {
+          get: fn,
           enumerable: true
         });
+      };
+      for (_k = 0, _len2 = _ref5.length; _k < _len2; _k++) {
+        prop = _ref5[_k];
+        _fn1(prop);
       }
     } else {
       for (k in value) {
         if (!__hasProp.call(value, k)) continue;
         v = value[k];
-        result[k] = createAPIClone(v);
+        Object.defineProperty(result, k, {
+          value: createAPIClone(v),
+          enumerable: true
+        });
       }
     }
     return result;

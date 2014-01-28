@@ -26,10 +26,9 @@ describe "API Protection Test Suite", ->
   hero.target = enemy
   hero.getTarget = enemy.getTarget = -> @target
   hero.setTarget = enemy.setTarget = (@target) ->
-  hero.apiProperties = ['id', 'pos', 'target']
-  hero.apiMethods = ['getTarget', 'setTarget']
-  enemy.apiProperties = ['id', 'pos', 'target']
-  enemy.apiMethods = ['getTarget']
+  hero.apiProperties = ['id', 'pos', 'target', 'getTarget']
+  hero.apiMethods = ['setTarget']
+  enemy.apiProperties = ['id', 'pos', 'target', 'getTarget']
 
   it 'should not let you mess with original objects', ->
     code = """
@@ -42,7 +41,9 @@ describe "API Protection Test Suite", ->
     aether = new Aether protectAPI: true
     aether.transpile code
     method = aether.createMethod hero
+    hero._aetherAPIMethodsAllowed = true
     result = method()
+    hero._aetherAPIMethodsAllowed = false
     expect(aether.problems.errors.length).toEqual 0
     expect(result).toEqual 'Skeletor'  # Writes fail to non-writable property
     expect(enemy.id).toEqual 'Skeletor'
@@ -61,7 +62,9 @@ describe "API Protection Test Suite", ->
     aether = new Aether protectAPI: true
     aether.transpile code
     method = aether.createMethod hero
+    hero._aetherAPIMethodsAllowed = true
     result = method()
+    hero._aetherAPIMethodsAllowed = false
     expect(aether.problems.errors.length).toEqual 0
     expect(result).toEqual "He-Man"
     expect(hero.id).toEqual 'He-Man'
@@ -93,7 +96,9 @@ describe "API Protection Test Suite", ->
     aether = new Aether protectAPI: true
     aether.transpile code
     method = aether.createMethod hand
+    hand._aetherAPIMethodsAllowed = true
     result = method()
+    hand._aetherAPIMethodsAllowed = false
     expect(aether.problems.errors.length).toEqual 0
     expect(result.ourWorld).toEqual undefined
     expect(result.theirWorld).toEqual undefined
@@ -105,7 +110,7 @@ describe "API Protection Test Suite", ->
     expect(hand.enemies[1].id).toEqual 'Butt'
     expect(hand.enemies.length).toEqual 2
     expect(result.ourWorldAttempted).toEqual 'Public'  # Not in API, they can write their own values
-    expect(result.ourEnemiesAttempted.length).toEqual 2  # Array clones are frozen; might not want?
+    expect(result.ourEnemiesAttempted.length).toEqual 2  # Don't let them modify the array
     expect(result.ourEnemiesAttempted[0].id).toEqual 'Foot'  # Non-writable
 
   it 'should handle instances of classes', ->
@@ -141,7 +146,9 @@ describe "API Protection Test Suite", ->
     aether = new Aether protectAPI: true
     aether.transpile code
     method = aether.createMethod milo
+    milo._aetherAPIMethodsAllowed = true
     points = method()
+    milo._aetherAPIMethodsAllowed = false
     expect(aether.problems.errors.length).toEqual 0
     expect(milo.pos).toBe p0
     expect(milo.target).toBe p2
@@ -150,8 +157,8 @@ describe "API Protection Test Suite", ->
     expect(points[1].equals(originalPoints[0])).toBe true
     expect(points[2].equals(originalPoints[0])).toBe true
     # These two don't pass because I haven't yet figured out how to get this.move() to update the non-writable this.pos
-    #expect(points[3].equals(originalPoints[1])).toBe true
-    #expect(points[4].equals(originalPoints[2])).toBe true
+    expect(points[3].equals(originalPoints[1])).toBe true
+    expect(points[4].equals(originalPoints[2])).toBe true
 
   it 'should protect function arguments', ->
     p0 = new Vector 10, 10, 10

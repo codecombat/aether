@@ -407,7 +407,7 @@ module.exports = class Aether
         for key, v of value
           break if values.length > max
           values.push key + ": " + @serializeVariableValue(v, depth + 1)
-      values.push "(... #{value.length - max} more)" if size > max
+      values.push "(... #{size - max} more)" if size > max
       return "#{brackets[0]}\n  #{values.join '\n  '}\n#{brackets[1]}"
     else if value.toString
       return value.toString()
