@@ -22054,26 +22054,31 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
     };
 
     Aether.prototype.purifyCode = function(rawCode) {
-      var error, instrumentedCode, interceptThis, normalized, normalizedAST, normalizedCode, normalizedNodeIndex, normalizedSourceMap, originalNodeRanges, postNormalizationTransforms, preNormalizationTransforms, preprocessedCode, problem, purifiedCode, transformedAST, transformedCode, varNames, wrappedCode, _ref6, _ref7, _ref8;
+      var error, instrumentedCode, interceptThis, normalized, normalizedAST, normalizedCode, normalizedNodeIndex, normalizedSourceMap, originalNodeRanges, parameter, postNormalizationTransforms, preNormalizationTransforms, preprocessedCode, problem, purifiedCode, transformedAST, transformedCode, varNames, wrappedCode, _i, _len, _ref6, _ref7, _ref8, _ref9;
       preprocessedCode = this.checkCommonMistakes(rawCode);
       wrappedCode = this.wrap(preprocessedCode);
       originalNodeRanges = [];
       varNames = {};
+      _ref6 = this.options.functionParameters;
+      for (_i = 0, _len = _ref6.length; _i < _len; _i++) {
+        parameter = _ref6[_i];
+        varNames[parameter] = true;
+      }
       preNormalizationTransforms = [transforms.makeGatherNodeRanges(originalNodeRanges, this.wrappedCodePrefix), transforms.makeCheckThisKeywords(this.options.global, varNames), transforms.checkIncompleteMembers];
       try {
-        _ref6 = this.transform(wrappedCode, preNormalizationTransforms, "esprima", true), transformedCode = _ref6[0], transformedAST = _ref6[1];
+        _ref7 = this.transform(wrappedCode, preNormalizationTransforms, "esprima", true), transformedCode = _ref7[0], transformedAST = _ref7[1];
       } catch (_error) {
         error = _error;
         problem = new problems.TranspileProblem(this, 'esprima', error.id, error, {}, wrappedCode, '');
         this.addProblem(problem);
         originalNodeRanges.splice();
-        _ref7 = this.transform(wrappedCode, preNormalizationTransforms, "acorn_loose", true), transformedCode = _ref7[0], transformedAST = _ref7[1];
+        _ref8 = this.transform(wrappedCode, preNormalizationTransforms, "acorn_loose", true), transformedCode = _ref8[0], transformedAST = _ref8[1];
       }
       normalizedAST = normalizer.normalize(transformedAST);
       normalizedNodeIndex = [];
       this.walk(normalizedAST, function(node) {
-        var pos, _ref8;
-        if (!(pos = node != null ? (_ref8 = node.attr) != null ? _ref8.pos : void 0 : void 0)) {
+        var pos, _ref9;
+        if (!(pos = node != null ? (_ref9 = node.attr) != null ? _ref9.pos : void 0 : void 0)) {
           return;
         }
         node.loc = {
@@ -22095,7 +22100,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
       normalizedCode = normalized.code;
       normalizedSourceMap = normalized.map;
       postNormalizationTransforms = [];
-      if ((_ref8 = this.options.thisValue) != null ? _ref8.validateReturn : void 0) {
+      if ((_ref9 = this.options.thisValue) != null ? _ref9.validateReturn : void 0) {
         postNormalizationTransforms.unshift(transforms.validateReturns);
       }
       if (this.options.yieldConditionally) {
@@ -22212,6 +22217,9 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
       }
       if (_.isFunction(value)) {
         return "<Function>";
+      }
+      if (value.__aetherAPIValue) {
+        value = value.__aetherAPIValue;
       }
       if (!depth && value.serializeForAether) {
         return value.serializeForAether();

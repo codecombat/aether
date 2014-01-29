@@ -303,6 +303,7 @@ module.exports = class Aether
 
     originalNodeRanges = []
     varNames = {}
+    varNames[parameter] = true for parameter in @options.functionParameters
     preNormalizationTransforms = [
       transforms.makeGatherNodeRanges originalNodeRanges, @wrappedCodePrefix
       transforms.makeCheckThisKeywords @options.global, varNames
@@ -391,6 +392,7 @@ module.exports = class Aether
   serializeVariableValue: (value, depth=0) ->
     return value unless value
     return "<Function>" if _.isFunction value
+    value = value.__aetherAPIValue if value.__aetherAPIValue
     return value.serializeForAether() if not depth and value.serializeForAether
     isArray = _.isArray(value)
     if isArray or _.isPlainObject(value)
