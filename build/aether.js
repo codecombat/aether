@@ -23788,6 +23788,9 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
     if (clone = value.__aetherAPIClone) {
       return clone;
     }
+    if (value.__aetherAPIValue) {
+      return value;
+    }
     if (isArr = _.isArray(value)) {
       result = ctor(value.length);
       if (value.hasOwnProperty("index")) {

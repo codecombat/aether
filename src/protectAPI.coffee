@@ -39,6 +39,7 @@ module.exports.createAPIClone = createAPIClone = (value) ->
 
   # Check for circular references and return corresponding clone.
   return clone if clone = value.__aetherAPIClone
+  return value if value.__aetherAPIValue
 
   if isArr = _.isArray value
     result = ctor value.length
