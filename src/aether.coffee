@@ -282,8 +282,11 @@ module.exports = class Aether
     url = "randotron_" + Math.random()
     reporter = new traceur.util.ErrorReporter()
     loaderHooks = new traceur.runtime.InterceptOutputLoaderHooks reporter, url
-    loader = new traceur.modules.Loader loaderHooks
-    loader.module code, url
+    loader = new traceur.modules.InternalLoader loaderHooks
+    loader.script code, url
+    # Could also do the following, but that wraps in a module
+    #loader = new traceur.runtime.Loader loaderHooks
+    #loader.module code, url
     if reporter.hadError()
       console.warn "traceur had error trying to compile"
     loaderHooks.transcoded
@@ -343,9 +346,10 @@ module.exports = class Aether
     postNormalizationTransforms.unshift transforms.interceptThis
     instrumentedCode = @transform normalizedCode, postNormalizationTransforms
     if @options.yieldConditionally or @options.yieldAutomatically
-      # Unlabel breaks and pray for correct behavior: https://github.com/google/traceur-compiler/issues/605
-      # Seems to turn continues into breaks the way JS_WALA does it.
-      instrumentedCode = instrumentedCode.replace /(break|continue) [A-z0-9]+;/g, '$1;'
+      if rawCode.search("continue") isnt -1
+        # Unlabel breaks and pray for correct behavior: https://github.com/google/traceur-compiler/issues/605
+        # Seems to turn continues into breaks the way JS_WALA does it.
+        instrumentedCode = instrumentedCode.replace /break [A-z0-9]+;/g, 'break;'
       purifiedCode = @traceurify instrumentedCode
     else
       purifiedCode = instrumentedCode
