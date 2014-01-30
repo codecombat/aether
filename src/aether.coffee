@@ -464,6 +464,7 @@ module.exports = class Aether
 
   createAPIClone: protectAPI.createAPIClone
   restoreAPIClone: protectAPI.restoreAPIClone
+  restoreBuiltins: protectBuiltins.restoreBuiltins
 
 self.Aether = Aether if self?
 window.Aether = Aether if window?

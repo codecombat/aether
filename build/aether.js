@@ -22347,6 +22347,8 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
 
     Aether.prototype.restoreAPIClone = protectAPI.restoreAPIClone;
 
+    Aether.prototype.restoreBuiltins = protectBuiltins.restoreBuiltins;
+
     return Aether;
 
   })();
