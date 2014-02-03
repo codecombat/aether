@@ -82,7 +82,7 @@ module.exports = (grunt) ->
     "gh-pages":
       options:
         base: 'build'
-        src: ['**/*']
+      src: ['**/*']
 
     push:
       options:
