@@ -2287,12 +2287,13 @@ $traceurRuntime.ModuleStore.registerModule("traceur@0.0.20/src/options", functio
   addFeatureOption('deferredFunctions', EXPERIMENTAL);
   addFeatureOption('types', EXPERIMENTAL);
   addFeatureOption('annotations', EXPERIMENTAL);
+  addBoolOption('commentCallback');
   addBoolOption('debug');
-  addBoolOption('sourceMaps');
   addBoolOption('freeVariableChecker');
-  addBoolOption('validate');
-  addBoolOption('unstarredGenerators');
+  addBoolOption('sourceMaps');
   addBoolOption('typeAssertions');
+  addBoolOption('unstarredGenerators');
+  addBoolOption('validate');
   defaultValues.referrer = '';
   options.referrer = null;
   defaultValues.typeAssertionModule = null;
@@ -9719,7 +9720,10 @@ $traceurRuntime.ModuleStore.registerModule("traceur@0.0.20/src/util/SourceRange"
     this.start = start;
     this.end = end;
   };
-  ($traceurRuntime.createClass)(SourceRange, {}, {});
+  ($traceurRuntime.createClass)(SourceRange, {toString: function() {
+      var str = this.start.source.contents;
+      return str.slice(this.start.offset, this.end.offset);
+    }}, {});
   return {get SourceRange() {
       return SourceRange;
     }};
@@ -9837,7 +9841,9 @@ $traceurRuntime.ModuleStore.registerModule("traceur@0.0.20/src/syntax/Scanner", 
   var $__80 = $traceurRuntime.getModuleImpl("traceur@0.0.20/src/syntax/unicode-tables"),
       idContinueTable = $__80.idContinueTable,
       idStartTable = $__80.idStartTable;
-  var parseOptions = $traceurRuntime.getModuleImpl("traceur@0.0.20/src/options").parseOptions;
+  var $__80 = $traceurRuntime.getModuleImpl("traceur@0.0.20/src/options"),
+      options = $__80.options,
+      parseOptions = $__80.parseOptions;
   var $__80 = $traceurRuntime.getModuleImpl("traceur@0.0.20/src/syntax/TokenType"),
       AMPERSAND = $__80.AMPERSAND,
       AMPERSAND_EQUAL = $__80.AMPERSAND_EQUAL,
@@ -10265,15 +10271,22 @@ $traceurRuntime.ModuleStore.registerModule("traceur@0.0.20/src/syntax/Scanner", 
     }
     return false;
   }
+  function commentCallback(start, index) {
+    if (options.commentCallback) currentParser.handleComment(lineNumberTable.getSourceRange(start, index));
+  }
   function skipSingleLineComment() {
+    var start = index;
     index += 2;
     while (!isAtEnd() && !isLineTerminator(input.charCodeAt(index++))) {}
     updateCurrentCharCode();
+    commentCallback(start, index);
   }
   function skipMultiLineComment() {
+    var start = index;
     var i = input.indexOf('*/', index + 2);
     if (i !== - 1) index = i + 2; else index = length;
     updateCurrentCharCode();
+    commentCallback(start, index);
   }
   function scanToken() {
     skipComments();
@@ -12909,6 +12922,7 @@ $traceurRuntime.ModuleStore.registerModule("traceur@0.0.20/src/syntax/Parser", f
     getTreeLocation_: function(start) {
       return new SourceRange(start, this.getTreeEndLocation_());
     },
+    handleComment: function(range) {},
     nextToken_: function() {
       return this.scanner_.nextToken();
     },
@@ -21656,7 +21670,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
 
 }).call(this);
 
-},{"./defaults":2,"./execution":3,"./instrumentation":4,"./morph":5,"./problems":6,"./protectAPI":7,"./protectBuiltins":8,"./transforms":10,"./validators/options":11,"JS_WALA/normalizer/lib/normalizer":16,"acorn/acorn_loose":20,"escodegen":28,"esprima":31,"jshint":37,"lodash":21,"traceur":21}],2:[function(require,module,exports){
+},{"./defaults":2,"./execution":3,"./instrumentation":4,"./morph":5,"./problems":6,"./protectAPI":7,"./protectBuiltins":8,"./transforms":10,"./validators/options":11,"JS_WALA/normalizer/lib/normalizer":16,"acorn/acorn_loose":20,"escodegen":28,"esprima":34,"jshint":40,"lodash":21,"traceur":21}],2:[function(require,module,exports){
 (function() {
   var defaults, execution;
 
@@ -22006,7 +22020,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
 
 }).call(this);
 
-},{"acorn/acorn_loose":20,"esprima":31,"lodash":21}],6:[function(require,module,exports){
+},{"acorn/acorn_loose":20,"esprima":34,"lodash":21}],6:[function(require,module,exports){
 (function() {
   var RuntimeProblem, TranspileProblem, UserCodeProblem, commonMethods, problems, ranges,
     __hasProp = {}.hasOwnProperty,
@@ -23818,7 +23832,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
 
 }).call(this);
 
-},{"./problems":6,"./ranges":9,"esprima":31,"lodash":21,"source-map":44}],11:[function(require,module,exports){
+},{"./problems":6,"./ranges":9,"esprima":34,"lodash":21,"source-map":47}],11:[function(require,module,exports){
 (function() {
   var tv4;
 
@@ -23926,7 +23940,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
 
 }).call(this);
 
-},{"tv4":54}],12:[function(require,module,exports){
+},{"tv4":57}],12:[function(require,module,exports){
 /*******************************************************************************
  * Copyright (c) 2012 IBM Corporation.
  * All rights reserved. This program and the accompanying materials
@@ -29637,9 +29651,9 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
     var Syntax,
         Precedence,
         BinaryPrecedence,
-        Regex,
         SourceNode,
         estraverse,
+        esutils,
         isArray,
         base,
         indent,
@@ -29661,6 +29675,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
         FORMAT_DEFAULTS;
 
     estraverse = require('estraverse');
+    esutils = require('esutils');
 
     Syntax = {
         AssignmentExpression: 'AssignmentExpression',
@@ -29680,11 +29695,13 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
         DoWhileStatement: 'DoWhileStatement',
         DebuggerStatement: 'DebuggerStatement',
         EmptyStatement: 'EmptyStatement',
+        ExportDeclaration: 'ExportDeclaration',
         ExpressionStatement: 'ExpressionStatement',
         ForStatement: 'ForStatement',
         ForInStatement: 'ForInStatement',
         FunctionDeclaration: 'FunctionDeclaration',
         FunctionExpression: 'FunctionExpression',
+        GeneratorExpression: 'GeneratorExpression',
         Identifier: 'Identifier',
         IfStatement: 'IfStatement',
         Literal: 'Literal',
@@ -29710,11 +29727,11 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
         WhileStatement: 'WhileStatement',
         WithStatement: 'WithStatement',
         YieldExpression: 'YieldExpression'
-
     };
 
     Precedence = {
         Sequence: 0,
+        Yield: 1,
         Assignment: 1,
         Conditional: 2,
         ArrowFunction: 2,
@@ -29764,10 +29781,6 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
         '/': Precedence.Multiplicative
     };
 
-    Regex = {
-        NonAsciiIdentifierPart: new RegExp('[\xaa\xb5\xba\xc0-\xd6\xd8-\xf6\xf8-\u02c1\u02c6-\u02d1\u02e0-\u02e4\u02ec\u02ee\u0300-\u0374\u0376\u0377\u037a-\u037d\u0386\u0388-\u038a\u038c\u038e-\u03a1\u03a3-\u03f5\u03f7-\u0481\u0483-\u0487\u048a-\u0527\u0531-\u0556\u0559\u0561-\u0587\u0591-\u05bd\u05bf\u05c1\u05c2\u05c4\u05c5\u05c7\u05d0-\u05ea\u05f0-\u05f2\u0610-\u061a\u0620-\u0669\u066e-\u06d3\u06d5-\u06dc\u06df-\u06e8\u06ea-\u06fc\u06ff\u0710-\u074a\u074d-\u07b1\u07c0-\u07f5\u07fa\u0800-\u082d\u0840-\u085b\u08a0\u08a2-\u08ac\u08e4-\u08fe\u0900-\u0963\u0966-\u096f\u0971-\u0977\u0979-\u097f\u0981-\u0983\u0985-\u098c\u098f\u0990\u0993-\u09a8\u09aa-\u09b0\u09b2\u09b6-\u09b9\u09bc-\u09c4\u09c7\u09c8\u09cb-\u09ce\u09d7\u09dc\u09dd\u09df-\u09e3\u09e6-\u09f1\u0a01-\u0a03\u0a05-\u0a0a\u0a0f\u0a10\u0a13-\u0a28\u0a2a-\u0a30\u0a32\u0a33\u0a35\u0a36\u0a38\u0a39\u0a3c\u0a3e-\u0a42\u0a47\u0a48\u0a4b-\u0a4d\u0a51\u0a59-\u0a5c\u0a5e\u0a66-\u0a75\u0a81-\u0a83\u0a85-\u0a8d\u0a8f-\u0a91\u0a93-\u0aa8\u0aaa-\u0ab0\u0ab2\u0ab3\u0ab5-\u0ab9\u0abc-\u0ac5\u0ac7-\u0ac9\u0acb-\u0acd\u0ad0\u0ae0-\u0ae3\u0ae6-\u0aef\u0b01-\u0b03\u0b05-\u0b0c\u0b0f\u0b10\u0b13-\u0b28\u0b2a-\u0b30\u0b32\u0b33\u0b35-\u0b39\u0b3c-\u0b44\u0b47\u0b48\u0b4b-\u0b4d\u0b56\u0b57\u0b5c\u0b5d\u0b5f-\u0b63\u0b66-\u0b6f\u0b71\u0b82\u0b83\u0b85-\u0b8a\u0b8e-\u0b90\u0b92-\u0b95\u0b99\u0b9a\u0b9c\u0b9e\u0b9f\u0ba3\u0ba4\u0ba8-\u0baa\u0bae-\u0bb9\u0bbe-\u0bc2\u0bc6-\u0bc8\u0bca-\u0bcd\u0bd0\u0bd7\u0be6-\u0bef\u0c01-\u0c03\u0c05-\u0c0c\u0c0e-\u0c10\u0c12-\u0c28\u0c2a-\u0c33\u0c35-\u0c39\u0c3d-\u0c44\u0c46-\u0c48\u0c4a-\u0c4d\u0c55\u0c56\u0c58\u0c59\u0c60-\u0c63\u0c66-\u0c6f\u0c82\u0c83\u0c85-\u0c8c\u0c8e-\u0c90\u0c92-\u0ca8\u0caa-\u0cb3\u0cb5-\u0cb9\u0cbc-\u0cc4\u0cc6-\u0cc8\u0cca-\u0ccd\u0cd5\u0cd6\u0cde\u0ce0-\u0ce3\u0ce6-\u0cef\u0cf1\u0cf2\u0d02\u0d03\u0d05-\u0d0c\u0d0e-\u0d10\u0d12-\u0d3a\u0d3d-\u0d44\u0d46-\u0d48\u0d4a-\u0d4e\u0d57\u0d60-\u0d63\u0d66-\u0d6f\u0d7a-\u0d7f\u0d82\u0d83\u0d85-\u0d96\u0d9a-\u0db1\u0db3-\u0dbb\u0dbd\u0dc0-\u0dc6\u0dca\u0dcf-\u0dd4\u0dd6\u0dd8-\u0ddf\u0df2\u0df3\u0e01-\u0e3a\u0e40-\u0e4e\u0e50-\u0e59\u0e81\u0e82\u0e84\u0e87\u0e88\u0e8a\u0e8d\u0e94-\u0e97\u0e99-\u0e9f\u0ea1-\u0ea3\u0ea5\u0ea7\u0eaa\u0eab\u0ead-\u0eb9\u0ebb-\u0ebd\u0ec0-\u0ec4\u0ec6\u0ec8-\u0ecd\u0ed0-\u0ed9\u0edc-\u0edf\u0f00\u0f18\u0f19\u0f20-\u0f29\u0f35\u0f37\u0f39\u0f3e-\u0f47\u0f49-\u0f6c\u0f71-\u0f84\u0f86-\u0f97\u0f99-\u0fbc\u0fc6\u1000-\u1049\u1050-\u109d\u10a0-\u10c5\u10c7\u10cd\u10d0-\u10fa\u10fc-\u1248\u124a-\u124d\u1250-\u1256\u1258\u125a-\u125d\u1260-\u1288\u128a-\u128d\u1290-\u12b0\u12b2-\u12b5\u12b8-\u12be\u12c0\u12c2-\u12c5\u12c8-\u12d6\u12d8-\u1310\u1312-\u1315\u1318-\u135a\u135d-\u135f\u1380-\u138f\u13a0-\u13f4\u1401-\u166c\u166f-\u167f\u1681-\u169a\u16a0-\u16ea\u16ee-\u16f0\u1700-\u170c\u170e-\u1714\u1720-\u1734\u1740-\u1753\u1760-\u176c\u176e-\u1770\u1772\u1773\u1780-\u17d3\u17d7\u17dc\u17dd\u17e0-\u17e9\u180b-\u180d\u1810-\u1819\u1820-\u1877\u1880-\u18aa\u18b0-\u18f5\u1900-\u191c\u1920-\u192b\u1930-\u193b\u1946-\u196d\u1970-\u1974\u1980-\u19ab\u19b0-\u19c9\u19d0-\u19d9\u1a00-\u1a1b\u1a20-\u1a5e\u1a60-\u1a7c\u1a7f-\u1a89\u1a90-\u1a99\u1aa7\u1b00-\u1b4b\u1b50-\u1b59\u1b6b-\u1b73\u1b80-\u1bf3\u1c00-\u1c37\u1c40-\u1c49\u1c4d-\u1c7d\u1cd0-\u1cd2\u1cd4-\u1cf6\u1d00-\u1de6\u1dfc-\u1f15\u1f18-\u1f1d\u1f20-\u1f45\u1f48-\u1f4d\u1f50-\u1f57\u1f59\u1f5b\u1f5d\u1f5f-\u1f7d\u1f80-\u1fb4\u1fb6-\u1fbc\u1fbe\u1fc2-\u1fc4\u1fc6-\u1fcc\u1fd0-\u1fd3\u1fd6-\u1fdb\u1fe0-\u1fec\u1ff2-\u1ff4\u1ff6-\u1ffc\u200c\u200d\u203f\u2040\u2054\u2071\u207f\u2090-\u209c\u20d0-\u20dc\u20e1\u20e5-\u20f0\u2102\u2107\u210a-\u2113\u2115\u2119-\u211d\u2124\u2126\u2128\u212a-\u212d\u212f-\u2139\u213c-\u213f\u2145-\u2149\u214e\u2160-\u2188\u2c00-\u2c2e\u2c30-\u2c5e\u2c60-\u2ce4\u2ceb-\u2cf3\u2d00-\u2d25\u2d27\u2d2d\u2d30-\u2d67\u2d6f\u2d7f-\u2d96\u2da0-\u2da6\u2da8-\u2dae\u2db0-\u2db6\u2db8-\u2dbe\u2dc0-\u2dc6\u2dc8-\u2dce\u2dd0-\u2dd6\u2dd8-\u2dde\u2de0-\u2dff\u2e2f\u3005-\u3007\u3021-\u302f\u3031-\u3035\u3038-\u303c\u3041-\u3096\u3099\u309a\u309d-\u309f\u30a1-\u30fa\u30fc-\u30ff\u3105-\u312d\u3131-\u318e\u31a0-\u31ba\u31f0-\u31ff\u3400-\u4db5\u4e00-\u9fcc\ua000-\ua48c\ua4d0-\ua4fd\ua500-\ua60c\ua610-\ua62b\ua640-\ua66f\ua674-\ua67d\ua67f-\ua697\ua69f-\ua6f1\ua717-\ua71f\ua722-\ua788\ua78b-\ua78e\ua790-\ua793\ua7a0-\ua7aa\ua7f8-\ua827\ua840-\ua873\ua880-\ua8c4\ua8d0-\ua8d9\ua8e0-\ua8f7\ua8fb\ua900-\ua92d\ua930-\ua953\ua960-\ua97c\ua980-\ua9c0\ua9cf-\ua9d9\uaa00-\uaa36\uaa40-\uaa4d\uaa50-\uaa59\uaa60-\uaa76\uaa7a\uaa7b\uaa80-\uaac2\uaadb-\uaadd\uaae0-\uaaef\uaaf2-\uaaf6\uab01-\uab06\uab09-\uab0e\uab11-\uab16\uab20-\uab26\uab28-\uab2e\uabc0-\uabea\uabec\uabed\uabf0-\uabf9\uac00-\ud7a3\ud7b0-\ud7c6\ud7cb-\ud7fb\uf900-\ufa6d\ufa70-\ufad9\ufb00-\ufb06\ufb13-\ufb17\ufb1d-\ufb28\ufb2a-\ufb36\ufb38-\ufb3c\ufb3e\ufb40\ufb41\ufb43\ufb44\ufb46-\ufbb1\ufbd3-\ufd3d\ufd50-\ufd8f\ufd92-\ufdc7\ufdf0-\ufdfb\ufe00-\ufe0f\ufe20-\ufe26\ufe33\ufe34\ufe4d-\ufe4f\ufe70-\ufe74\ufe76-\ufefc\uff10-\uff19\uff21-\uff3a\uff3f\uff41-\uff5a\uff66-\uffbe\uffc2-\uffc7\uffca-\uffcf\uffd2-\uffd7\uffda-\uffdc]')
-    };
-
     function getDefaultOptions() {
         // default options
         return {
@@ -29794,6 +29807,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
                 safeConcatenation: false
             },
             moz: {
+                comprehensionExpressionStartsWithAssignment: false,
                 starlessGenerator: false,
                 parenthesizedComprehensionBlock: false
             },
@@ -29803,16 +29817,6 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
             directive: false,
             verbatim: null
         };
-    }
-
-    function stringToArray(str) {
-        var length = str.length,
-            result = [],
-            i;
-        for (i = 0; i < length; i += 1) {
-            result[i] = str.charAt(i);
-        }
-        return result;
     }
 
     function stringRepeat(str, num) {
@@ -29834,73 +29838,13 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
         };
     }
 
-    // Fallback for the non SourceMap environment
-    function SourceNodeMock(line, column, filename, chunk) {
-        var result = [];
-
-        function flatten(input) {
-            var i, iz;
-            if (isArray(input)) {
-                for (i = 0, iz = input.length; i < iz; ++i) {
-                    flatten(input[i]);
-                }
-            } else if (input instanceof SourceNodeMock) {
-                result.push(input);
-            } else if (typeof input === 'string' && input) {
-                result.push(input);
-            }
-        }
-
-        flatten(chunk);
-        this.children = result;
-    }
-
-    SourceNodeMock.prototype.toString = function toString() {
-        var res = '', i, iz, node;
-        for (i = 0, iz = this.children.length; i < iz; ++i) {
-            node = this.children[i];
-            if (node instanceof SourceNodeMock) {
-                res += node.toString();
-            } else {
-                res += node;
-            }
-        }
-        return res;
-    };
-
-    SourceNodeMock.prototype.replaceRight = function replaceRight(pattern, replacement) {
-        var last = this.children[this.children.length - 1];
-        if (last instanceof SourceNodeMock) {
-            last.replaceRight(pattern, replacement);
-        } else if (typeof last === 'string') {
-            this.children[this.children.length - 1] = last.replace(pattern, replacement);
-        } else {
-            this.children.push(''.replace(pattern, replacement));
-        }
-        return this;
-    };
-
-    SourceNodeMock.prototype.join = function join(sep) {
-        var i, iz, result;
-        result = [];
-        iz = this.children.length;
-        if (iz > 0) {
-            for (i = 0, iz -= 1; i < iz; ++i) {
-                result.push(this.children[i], sep);
-            }
-            result.push(this.children[iz]);
-            this.children = result;
-        }
-        return this;
-    };
-
     function hasLineTerminator(str) {
         return (/[\r\n]/g).test(str);
     }
 
     function endsWithLineTerminator(str) {
-        var ch = str.charAt(str.length - 1);
-        return ch && isLineTerminator(ch);
+        var len = str.length;
+        return len && esutils.code.isLineTerminator(str.charCodeAt(len - 1));
     }
 
     function updateDeeply(target, override) {
@@ -29947,7 +29891,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
         }
 
         point = result.indexOf('.');
-        if (!json && result.charAt(0) === '0' && point === 1) {
+        if (!json && result.charCodeAt(0) === 0x30  /* 0 */ && point === 1) {
             point = 0;
             result = result.slice(1);
         }
@@ -29963,8 +29907,8 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
             temp = +(temp.slice(0, point) + temp.slice(point + 1)) + '';
         }
         pos = 0;
-        while (temp.charAt(temp.length + pos - 1) === '0') {
-            pos -= 1;
+        while (temp.charCodeAt(temp.length + pos - 1) === 0x30  /* 0 */) {
+            --pos;
         }
         if (pos !== 0) {
             exponent -= pos;
@@ -30043,25 +29987,26 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
         return result;
     }
 
-    function escapeAllowedCharacter(ch, next) {
-        var code = ch.charCodeAt(0), hex = code.toString(16), result = '\\';
+    function escapeAllowedCharacter(code, next) {
+        var hex, result = '\\';
 
-        switch (ch) {
-        case '\b':
+        switch (code) {
+        case 0x08  /* \b */:
             result += 'b';
             break;
-        case '\f':
+        case 0x0C  /* \f */:
             result += 'f';
             break;
-        case '\t':
+        case 0x09  /* \t */:
             result += 't';
             break;
         default:
-            if (json || code > 0xff) {
+            hex = code.toString(16).toUpperCase();
+            if (json || code > 0xFF) {
                 result += 'u' + '0000'.slice(hex.length) + hex;
-            } else if (ch === '\u0000' && '0123456789'.indexOf(next) < 0) {
+            } else if (code === 0x0000 && !esutils.code.isDecimalDigit(next)) {
                 result += '0';
-            } else if (ch === '\x0B') { // '\v'
+            } else if (code === 0x000B  /* \v */) { // '\v'
                 result += 'x0B';
             } else {
                 result += 'x' + '00'.slice(hex.length) + hex;
@@ -30072,22 +30017,22 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
         return result;
     }
 
-    function escapeDisallowedCharacter(ch) {
+    function escapeDisallowedCharacter(code) {
         var result = '\\';
-        switch (ch) {
-        case '\\':
+        switch (code) {
+        case 0x5C  /* \ */:
             result += '\\';
             break;
-        case '\n':
+        case 0x0A  /* \n */:
             result += 'n';
             break;
-        case '\r':
+        case 0x0D  /* \r */:
             result += 'r';
             break;
-        case '\u2028':
+        case 0x2028:
             result += 'u2028';
             break;
-        case '\u2029':
+        case 0x2029:
             result += 'u2029';
             break;
         default:
@@ -30098,24 +30043,19 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
     }
 
     function escapeDirective(str) {
-        var i, iz, ch, buf, quote;
-
-        buf = str;
-        if (typeof buf[0] === 'undefined') {
-            buf = stringToArray(buf);
-        }
+        var i, iz, code, quote;
 
         quote = quotes === 'double' ? '"' : '\'';
-        for (i = 0, iz = buf.length; i < iz; i += 1) {
-            ch = buf[i];
-            if (ch === '\'') {
+        for (i = 0, iz = str.length; i < iz; ++i) {
+            code = str.charCodeAt(i);
+            if (code === 0x27  /* ' */) {
                 quote = '"';
                 break;
-            } else if (ch === '"') {
+            } else if (code === 0x22  /* " */) {
                 quote = '\'';
                 break;
-            } else if (ch === '\\') {
-                i += 1;
+            } else if (code === 0x5C  /* \ */) {
+                ++i;
             }
         }
 
@@ -30123,71 +30063,74 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
     }
 
     function escapeString(str) {
-        var result = '', i, len, ch, singleQuotes = 0, doubleQuotes = 0, single;
+        var result = '', i, len, code, singleQuotes = 0, doubleQuotes = 0, single, quote;
 
-        if (typeof str[0] === 'undefined') {
-            str = stringToArray(str);
-        }
-
-        for (i = 0, len = str.length; i < len; i += 1) {
-            ch = str[i];
-            if (ch === '\'') {
-                singleQuotes += 1;
-            } else if (ch === '"') {
-                doubleQuotes += 1;
-            } else if (ch === '/' && json) {
+        for (i = 0, len = str.length; i < len; ++i) {
+            code = str.charCodeAt(i);
+            if (code === 0x27  /* ' */) {
+                ++singleQuotes;
+            } else if (code === 0x22  /* " */) {
+                ++doubleQuotes;
+            } else if (code === 0x2F  /* / */ && json) {
                 result += '\\';
-            } else if ('\\\n\r\u2028\u2029'.indexOf(ch) >= 0) {
-                result += escapeDisallowedCharacter(ch);
+            } else if (esutils.code.isLineTerminator(code) || code === 0x5C  /* \ */) {
+                result += escapeDisallowedCharacter(code);
                 continue;
-            } else if ((json && ch < ' ') || !(json || escapeless || (ch >= ' ' && ch <= '~'))) {
-                result += escapeAllowedCharacter(ch, str[i + 1]);
+            } else if ((json && code < 0x20  /* SP */) || !(json || escapeless || (code >= 0x20  /* SP */ && code <= 0x7E  /* ~ */))) {
+                result += escapeAllowedCharacter(code, str.charCodeAt(i + 1));
                 continue;
             }
-            result += ch;
+            result += String.fromCharCode(code);
         }
 
         single = !(quotes === 'double' || (quotes === 'auto' && doubleQuotes < singleQuotes));
-        str = result;
-        result = single ? '\'' : '"';
+        quote = single ? '\'' : '"';
 
-        if (typeof str[0] === 'undefined') {
-            str = stringToArray(str);
+        if (!(single ? singleQuotes : doubleQuotes)) {
+            return quote + result + quote;
         }
 
-        for (i = 0, len = str.length; i < len; i += 1) {
-            ch = str[i];
-            if ((ch === '\'' && single) || (ch === '"' && !single)) {
+        str = result;
+        result = quote;
+
+        for (i = 0, len = str.length; i < len; ++i) {
+            code = str.charCodeAt(i);
+            if ((code === 0x27  /* ' */ && single) || (code === 0x22  /* " */ && !single)) {
                 result += '\\';
             }
-            result += ch;
+            result += String.fromCharCode(code);
         }
 
-        return result + (single ? '\'' : '"');
+        return result + quote;
     }
 
-    function isWhiteSpace(ch) {
-        // Use `\x0B` instead of `\v` for IE < 9 compatibility
-        return '\t\x0B\f \xa0'.indexOf(ch) >= 0 || (ch.charCodeAt(0) >= 0x1680 && '\u1680\u180e\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u202f\u205f\u3000\ufeff'.indexOf(ch) >= 0);
+    /**
+     * flatten an array to a string, where the array can contain
+     * either strings or nested arrays
+     */
+    function flattenToString(arr) {
+        var i, iz, elem, result = '';
+        for (i = 0, iz = arr.length; i < iz; ++i) {
+            elem = arr[i];
+            result += isArray(elem) ? flattenToString(elem) : elem;
+        }
+        return result;
     }
 
-    function isLineTerminator(ch) {
-        return '\n\r\u2028\u2029'.indexOf(ch) >= 0;
-    }
-
-    function isIdentifierPart(ch) {
-        return (ch === '$') || (ch === '_') || (ch === '\\') ||
-            (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') ||
-            ((ch >= '0') && (ch <= '9')) ||
-            ((ch.charCodeAt(0) >= 0x80) && Regex.NonAsciiIdentifierPart.test(ch));
-    }
-
-    // takes char code
-    function isDecimalDigit(ch) {
-        return (ch >= 48 && ch <= 57);   // 0..9
-    }
-
-    function toSourceNode(generated, node) {
+    /**
+     * convert generated to a SourceNode when source maps are enabled.
+     */
+    function toSourceNodeWhenNeeded(generated, node) {
+        if (!sourceMap) {
+            // with no source maps, generated is either an
+            // array or a string.  if an array, flatten it.
+            // if a string, just return it
+            if (isArray(generated)) {
+                return flattenToString(generated);
+            } else {
+                return generated;
+            }
+        }
         if (node == null) {
             if (generated instanceof SourceNode) {
                 return generated;
@@ -30206,16 +30149,17 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
     }
 
     function join(left, right) {
-        var leftSource = toSourceNode(left).toString(),
-            rightSource = toSourceNode(right).toString(),
-            leftChar = leftSource.charAt(leftSource.length - 1),
-            rightChar = rightSource.charAt(0);
+        var leftSource = toSourceNodeWhenNeeded(left).toString(),
+            rightSource = toSourceNodeWhenNeeded(right).toString(),
+            leftCharCode = leftSource.charCodeAt(leftSource.length - 1),
+            rightCharCode = rightSource.charCodeAt(0);
 
-        if ((leftChar === '+' || leftChar === '-') && leftChar === rightChar ||
-        isIdentifierPart(leftChar) && isIdentifierPart(rightChar) ||
-        leftChar === '/' && rightChar === 'i') { // infix word operators all start with `i`
+        if ((leftCharCode === 0x2B  /* + */ || leftCharCode === 0x2D  /* - */) && leftCharCode === rightCharCode ||
+        esutils.code.isIdentifierPart(leftCharCode) && esutils.code.isIdentifierPart(rightCharCode) ||
+        leftCharCode === 0x2F  /* / */ && rightCharCode === 0x69  /* i */) { // infix word operators all start with `i`
             return [left, noEmptySpace(), right];
-        } else if (isWhiteSpace(leftChar) || isLineTerminator(leftChar) || isWhiteSpace(rightChar) || isLineTerminator(rightChar)) {
+        } else if (esutils.code.isWhiteSpace(leftCharCode) || esutils.code.isLineTerminator(leftCharCode) ||
+                esutils.code.isWhiteSpace(rightCharCode) || esutils.code.isLineTerminator(rightCharCode)) {
             return [left, right];
         }
         return [left, space, right];
@@ -30236,8 +30180,8 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
 
     function calculateSpaces(str) {
         var i;
-        for (i = str.length - 1; i >= 0; i -= 1) {
-            if (isLineTerminator(str.charAt(i))) {
+        for (i = str.length - 1; i >= 0; --i) {
+            if (esutils.code.isLineTerminator(str.charCodeAt(i))) {
                 break;
             }
         }
@@ -30245,17 +30189,17 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
     }
 
     function adjustMultilineComment(value, specialBase) {
-        var array, i, len, line, j, spaces, previousBase;
+        var array, i, len, line, j, spaces, previousBase, sn;
 
         array = value.split(/\r\n|[\r\n]/);
         spaces = Number.MAX_VALUE;
 
         // first line doesn't have indentation
-        for (i = 1, len = array.length; i < len; i += 1) {
+        for (i = 1, len = array.length; i < len; ++i) {
             line = array[i];
             j = 0;
-            while (j < line.length && isWhiteSpace(line[j])) {
-                j += 1;
+            while (j < line.length && esutils.code.isWhiteSpace(line.charCodeAt(j))) {
+                ++j;
             }
             if (spaces > j) {
                 spaces = j;
@@ -30281,13 +30225,14 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
                 //  */
                 // If spaces are odd number, above pattern is considered.
                 // We waste 1 space.
-                spaces -= 1;
+                --spaces;
             }
             previousBase = base;
         }
 
-        for (i = 1, len = array.length; i < len; i += 1) {
-            array[i] = toSourceNode(addIndent(array[i].slice(spaces))).join('');
+        for (i = 1, len = array.length; i < len; ++i) {
+            sn = toSourceNodeWhenNeeded(addIndent(array[i].slice(spaces)));
+            array[i] = sourceMap ? sn.join('') : sn;
         }
 
         base = previousBase;
@@ -30322,14 +30267,14 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
                 result.push('\n');
             }
             result.push(generateComment(comment));
-            if (!endsWithLineTerminator(toSourceNode(result).toString())) {
+            if (!endsWithLineTerminator(toSourceNodeWhenNeeded(result).toString())) {
                 result.push('\n');
             }
 
-            for (i = 1, len = stmt.leadingComments.length; i < len; i += 1) {
+            for (i = 1, len = stmt.leadingComments.length; i < len; ++i) {
                 comment = stmt.leadingComments[i];
                 fragment = [generateComment(comment)];
-                if (!endsWithLineTerminator(toSourceNode(fragment).toString())) {
+                if (!endsWithLineTerminator(toSourceNodeWhenNeeded(fragment).toString())) {
                     fragment.push('\n');
                 }
                 result.push(addIndent(fragment));
@@ -30339,9 +30284,9 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
         }
 
         if (stmt.trailingComments) {
-            tailingToStatement = !endsWithLineTerminator(toSourceNode(result).toString());
-            specialBase = stringRepeat(' ', calculateSpaces(toSourceNode([base, result, indent]).toString()));
-            for (i = 0, len = stmt.trailingComments.length; i < len; i += 1) {
+            tailingToStatement = !endsWithLineTerminator(toSourceNodeWhenNeeded(result).toString());
+            specialBase = stringRepeat(' ', calculateSpaces(toSourceNodeWhenNeeded([base, result, indent]).toString()));
+            for (i = 0, len = stmt.trailingComments.length; i < len; ++i) {
                 comment = stmt.trailingComments[i];
                 if (tailingToStatement) {
                     // We assume target like following script
@@ -30359,7 +30304,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
                 } else {
                     result = [result, addIndent(generateComment(comment))];
                 }
-                if (i !== len - 1 && !endsWithLineTerminator(toSourceNode(result).toString())) {
+                if (i !== len - 1 && !endsWithLineTerminator(toSourceNodeWhenNeeded(result).toString())) {
                     result = [result, '\n'];
                 }
             }
@@ -30396,7 +30341,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
     }
 
     function maybeBlockSuffix(stmt, result) {
-        var ends = endsWithLineTerminator(toSourceNode(result).toString());
+        var ends = endsWithLineTerminator(toSourceNodeWhenNeeded(result).toString());
         if (stmt.type === Syntax.BlockStatement && (!extra.comment || !stmt.leadingComments) && !ends) {
             return [result, space];
         }
@@ -30414,11 +30359,27 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
         }
 
         result = parenthesize(result, Precedence.Sequence, option.precedence);
-        return toSourceNode(result, expr);
+        return toSourceNodeWhenNeeded(result, expr);
     }
 
     function generateIdentifier(node) {
-        return toSourceNode(node.name, node);
+        return toSourceNodeWhenNeeded(node.name, node);
+    }
+
+    function generatePattern(node, options) {
+        var result;
+
+        if (node.type === Syntax.Identifier) {
+            result = generateIdentifier(node);
+        } else {
+            result = generateExpression(node, {
+                precedence: options.precedence,
+                allowIn: options.allowIn,
+                allowCall: true
+            });
+        }
+
+        return result;
     }
 
     function generateFunctionBody(node) {
@@ -30431,8 +30392,11 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
             result = [generateIdentifier(node.params[0])];
         } else {
             result = ['('];
-            for (i = 0, len = node.params.length; i < len; i += 1) {
-                result.push(generateIdentifier(node.params[i]));
+            for (i = 0, len = node.params.length; i < len; ++i) {
+                result.push(generatePattern(node.params[i], {
+                    precedence: Precedence.Assignment,
+                    allowIn: true
+                }));
                 if (i + 1 < len) {
                     result.push(',' + space);
                 }
@@ -30471,13 +30435,14 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
             raw,
             fragment,
             multiline,
-            leftChar,
+            leftCharCode,
             leftSource,
-            rightChar,
+            rightCharCode,
             allowIn,
             allowCall,
             allowUnparenthesizedNew,
-            property;
+            property,
+            isGenerator;
 
         precedence = option.precedence;
         allowIn = option.allowIn;
@@ -30492,7 +30457,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
         case Syntax.SequenceExpression:
             result = [];
             allowIn |= (Precedence.Sequence < precedence);
-            for (i = 0, len = expr.expressions.length; i < len; i += 1) {
+            for (i = 0, len = expr.expressions.length; i < len; ++i) {
                 result.push(generateExpression(expr.expressions[i], {
                     precedence: Precedence.Assignment,
                     allowIn: allowIn,
@@ -30572,7 +30537,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
 
             leftSource = fragment.toString();
 
-            if (leftSource.charAt(leftSource.length - 1) === '/' && isIdentifierPart(expr.operator.charAt(0))) {
+            if (leftSource.charCodeAt(leftSource.length - 1) === 0x2F /* / */ && esutils.code.isIdentifierPart(expr.operator.charCodeAt(0))) {
                 result = [fragment, noEmptySpace(), expr.operator];
             } else {
                 result = join(fragment, expr.operator);
@@ -30609,7 +30574,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
             })];
 
             result.push('(');
-            for (i = 0, len = expr['arguments'].length; i < len; i += 1) {
+            for (i = 0, len = expr['arguments'].length; i < len; ++i) {
                 result.push(generateExpression(expr['arguments'][i], {
                     precedence: Precedence.Assignment,
                     allowIn: true,
@@ -30644,7 +30609,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
 
             if (!allowUnparenthesizedNew || parentheses || len > 0) {
                 result.push('(');
-                for (i = 0; i < len; i += 1) {
+                for (i = 0; i < len; ++i) {
                     result.push(generateExpression(expr['arguments'][i], {
                         precedence: Precedence.Assignment,
                         allowIn: true,
@@ -30676,7 +30641,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
                 }), ']');
             } else {
                 if (expr.object.type === Syntax.Literal && typeof expr.object.value === 'number') {
-                    fragment = toSourceNode(result).toString();
+                    fragment = toSourceNodeWhenNeeded(result).toString();
                     // When the following conditions are all true,
                     //   1. No floating point
                     //   2. Don't have exponents
@@ -30686,7 +30651,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
                     if (
                             fragment.indexOf('.') < 0 &&
                             !/[eExX]/.test(fragment) &&
-                            isDecimalDigit(fragment.charCodeAt(fragment.length - 1)) &&
+                            esutils.code.isDecimalDigit(fragment.charCodeAt(fragment.length - 1)) &&
                             !(fragment.length >= 2 && fragment.charCodeAt(0) === 48)  // '0'
                             ) {
                         result.push('.');
@@ -30716,11 +30681,12 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
                 } else {
                     // Prevent inserting spaces between operator and argument if it is unnecessary
                     // like, `!cond`
-                    leftSource = toSourceNode(result).toString();
-                    leftChar = leftSource.charAt(leftSource.length - 1);
-                    rightChar = fragment.toString().charAt(0);
+                    leftSource = toSourceNodeWhenNeeded(result).toString();
+                    leftCharCode = leftSource.charCodeAt(leftSource.length - 1);
+                    rightCharCode = fragment.toString().charCodeAt(0);
 
-                    if (((leftChar === '+' || leftChar === '-') && leftChar === rightChar) || (isIdentifierPart(leftChar) && isIdentifierPart(rightChar))) {
+                    if (((leftCharCode === 0x2B  /* + */ || leftCharCode === 0x2D  /* - */) && leftCharCode === rightCharCode) ||
+                            (esutils.code.isIdentifierPart(leftCharCode) && esutils.code.isIdentifierPart(rightCharCode))) {
                         result.push(noEmptySpace(), fragment);
                     } else {
                         result.push(fragment);
@@ -30740,12 +30706,13 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
                 result = join(
                     result,
                     generateExpression(expr.argument, {
-                        precedence: Precedence.Assignment,
+                        precedence: Precedence.Yield,
                         allowIn: true,
                         allowCall: true
                     })
                 );
             }
+            result = parenthesize(result, Precedence.Yield, precedence);
             break;
 
         case Syntax.UpdateExpression:
@@ -30779,10 +30746,11 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
             break;
 
         case Syntax.FunctionExpression:
-            result = 'function';
+            isGenerator = expr.generator && !extra.moz.starlessGenerator;
+            result = isGenerator ? 'function*' : 'function';
 
             if (expr.id) {
-                result = [result, noEmptySpace(),
+                result = [result, (isGenerator) ? space : noEmptySpace(),
                           generateIdentifier(expr.id),
                           generateFunctionBody(expr)];
             } else {
@@ -30800,7 +30768,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
             multiline = expr.elements.length > 1;
             result = ['[', multiline ? newline : ''];
             withIndent(function (indent) {
-                for (i = 0, len = expr.elements.length; i < len; i += 1) {
+                for (i = 0, len = expr.elements.length; i < len; ++i) {
                     if (!expr.elements[i]) {
                         if (multiline) {
                             result.push(indent);
@@ -30820,7 +30788,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
                     }
                 }
             });
-            if (multiline && !endsWithLineTerminator(toSourceNode(result).toString())) {
+            if (multiline && !endsWithLineTerminator(toSourceNodeWhenNeeded(result).toString())) {
                 result.push(newline);
             }
             result.push(multiline ? base : '', ']');
@@ -30897,7 +30865,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
                 // to
                 //   dejavu.Class.declare({method2: function () {
                 //       }});
-                if (!hasLineTerminator(toSourceNode(fragment).toString())) {
+                if (!hasLineTerminator(toSourceNodeWhenNeeded(fragment).toString())) {
                     result = [ '{', space, fragment, space, '}' ];
                     break;
                 }
@@ -30908,7 +30876,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
 
                 if (multiline) {
                     result.push(',' + newline);
-                    for (i = 1, len = expr.properties.length; i < len; i += 1) {
+                    for (i = 1, len = expr.properties.length; i < len; ++i) {
                         result.push(indent, generateExpression(expr.properties[i], {
                             precedence: Precedence.Sequence,
                             allowIn: true,
@@ -30922,7 +30890,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
                 }
             });
 
-            if (!endsWithLineTerminator(toSourceNode(result).toString())) {
+            if (!endsWithLineTerminator(toSourceNodeWhenNeeded(result).toString())) {
                 result.push(newline);
             }
             result.push(base, '}');
@@ -30941,7 +30909,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
                     multiline = true;
                 }
             } else {
-                for (i = 0, len = expr.properties.length; i < len; i += 1) {
+                for (i = 0, len = expr.properties.length; i < len; ++i) {
                     property = expr.properties[i];
                     if (!property.shorthand) {
                         multiline = true;
@@ -30952,7 +30920,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
             result = ['{', multiline ? newline : '' ];
 
             withIndent(function (indent) {
-                for (i = 0, len = expr.properties.length; i < len; i += 1) {
+                for (i = 0, len = expr.properties.length; i < len; ++i) {
                     result.push(multiline ? indent : '', generateExpression(expr.properties[i], {
                         precedence: Precedence.Sequence,
                         allowIn: true,
@@ -30964,7 +30932,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
                 }
             });
 
-            if (multiline && !endsWithLineTerminator(toSourceNode(result).toString())) {
+            if (multiline && !endsWithLineTerminator(toSourceNodeWhenNeeded(result).toString())) {
                 result.push(newline);
             }
             result.push(multiline ? base : '', '}');
@@ -31016,25 +30984,38 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
             result = generateRegExp(expr.value);
             break;
 
+        case Syntax.GeneratorExpression:
         case Syntax.ComprehensionExpression:
-            result = [
-                '[',
-                generateExpression(expr.body, {
+            // GeneratorExpression should be parenthesized with (...), ComprehensionExpression with [...]
+            // Due to https://bugzilla.mozilla.org/show_bug.cgi?id=883468 position of expr.body can differ in Spidermonkey and ES6
+            result = (type === Syntax.GeneratorExpression) ? ['('] : ['['];
+
+            if (extra.moz.comprehensionExpressionStartsWithAssignment) {
+                fragment = generateExpression(expr.body, {
                     precedence: Precedence.Assignment,
                     allowIn: true,
                     allowCall: true
-                })
-            ];
+                });
+
+                result.push(fragment);
+            }
 
             if (expr.blocks) {
-                for (i = 0, len = expr.blocks.length; i < len; i += 1) {
-                    fragment = generateExpression(expr.blocks[i], {
-                        precedence: Precedence.Sequence,
-                        allowIn: true,
-                        allowCall: true
-                    });
-                    result = join(result, fragment);
-                }
+                withIndent(function () {
+                    for (i = 0, len = expr.blocks.length; i < len; ++i) {
+                        fragment = generateExpression(expr.blocks[i], {
+                            precedence: Precedence.Sequence,
+                            allowIn: true,
+                            allowCall: true
+                        });
+
+                        if (i > 0 || extra.moz.comprehensionExpressionStartsWithAssignment) {
+                            result = join(result, fragment);
+                        } else {
+                            result.push(fragment);
+                        }
+                    }
+                });
             }
 
             if (expr.filter) {
@@ -31050,7 +31031,18 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
                     result = join(result, fragment);
                 }
             }
-            result.push(']');
+
+            if (!extra.moz.comprehensionExpressionStartsWithAssignment) {
+                fragment = generateExpression(expr.body, {
+                    precedence: Precedence.Assignment,
+                    allowIn: true,
+                    allowCall: true
+                });
+
+                result = join(result, fragment);
+            }
+
+            result.push((type === Syntax.GeneratorExpression) ? ')' : ']');
             break;
 
         case Syntax.ComprehensionBlock:
@@ -31087,11 +31079,20 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
             throw new Error('Unknown expression type: ' + expr.type);
         }
 
-        return toSourceNode(result, expr);
+        return toSourceNodeWhenNeeded(result, expr);
     }
 
     function generateStatement(stmt, option) {
-        var i, len, result, node, allowIn, functionBody, directiveContext, fragment, semicolon;
+        var i,
+            len,
+            result,
+            node,
+            allowIn,
+            functionBody,
+            directiveContext,
+            fragment,
+            semicolon,
+            isGenerator;
 
         allowIn = true;
         semicolon = ';';
@@ -31111,13 +31112,13 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
             result = ['{', newline];
 
             withIndent(function () {
-                for (i = 0, len = stmt.body.length; i < len; i += 1) {
+                for (i = 0, len = stmt.body.length; i < len; ++i) {
                     fragment = addIndent(generateStatement(stmt.body[i], {
                         semicolonOptional: i === len - 1,
                         directiveContext: functionBody
                     }));
                     result.push(fragment);
-                    if (!endsWithLineTerminator(toSourceNode(fragment).toString())) {
+                    if (!endsWithLineTerminator(toSourceNodeWhenNeeded(fragment).toString())) {
                         result.push(newline);
                     }
                 }
@@ -31167,6 +31168,8 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
 
         case Syntax.CatchClause:
             withIndent(function () {
+                var guard;
+
                 result = [
                     'catch' + space + '(',
                     generateExpression(stmt.param, {
@@ -31176,6 +31179,16 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
                     }),
                     ')'
                 ];
+
+                if (stmt.guard) {
+                    guard = generateExpression(stmt.guard, {
+                        precedence: Precedence.Sequence,
+                        allowIn: true,
+                        allowCall: true
+                    });
+
+                    result.splice(2, 0, ' if ', guard);
+                }
             });
             result.push(maybeBlock(stmt.body));
             break;
@@ -31188,6 +31201,15 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
             result = ';';
             break;
 
+        case Syntax.ExportDeclaration:
+            result = 'export ';
+            if (stmt.declaration) {
+                // FunctionDeclaration or VariableDeclaration
+                result = [result, generateStatement(stmt.declaration, { semicolonOptional: semicolon === '' })];
+                break;
+            }
+            break;
+
         case Syntax.ExpressionStatement:
             result = [generateExpression(stmt.expression, {
                 precedence: Precedence.Sequence,
@@ -31196,8 +31218,10 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
             })];
             // 12.4 '{', 'function' is not allowed in this position.
             // wrap expression with parentheses
-            fragment = toSourceNode(result).toString();
-            if (fragment.charAt(0) === '{' || (fragment.slice(0, 8) === 'function' && ' ('.indexOf(fragment.charAt(8)) >= 0) || (directive && directiveContext && stmt.expression.type === Syntax.Literal && typeof stmt.expression.value === 'string')) {
+            fragment = toSourceNodeWhenNeeded(result).toString();
+            if (fragment.charAt(0) === '{' ||  // ObjectExpression
+                    (fragment.slice(0, 8) === 'function' && '* ('.indexOf(fragment.charAt(8)) >= 0) ||  // function or generator
+                    (directive && directiveContext && stmt.expression.type === Syntax.Literal && typeof stmt.expression.value === 'string')) {
                 result = ['(', result, ')' + semicolon];
             } else {
                 result.push(semicolon);
@@ -31222,7 +31246,10 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
                     })
                 ];
             } else {
-                result = generateIdentifier(stmt.id);
+                result = generatePattern(stmt.id, {
+                    precedence: Precedence.Assignment,
+                    allowIn: allowIn
+                });
             }
             break;
 
@@ -31252,7 +31279,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
                         }));
                     }
 
-                    for (i = 1, len = stmt.declarations.length; i < len; i += 1) {
+                    for (i = 1, len = stmt.declarations.length; i < len; ++i) {
                         node = stmt.declarations[i];
                         if (extra.comment && node.leadingComments) {
                             result.push(',' + newline, addIndent(generateStatement(node, {
@@ -31283,27 +31310,39 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
         case Syntax.TryStatement:
             result = ['try', maybeBlock(stmt.block)];
             result = maybeBlockSuffix(stmt.block, result);
+
             if (stmt.handlers) {
                 // old interface
-                for (i = 0, len = stmt.handlers.length; i < len; i += 1) {
+                for (i = 0, len = stmt.handlers.length; i < len; ++i) {
                     result = join(result, generateStatement(stmt.handlers[i]));
                     if (stmt.finalizer || i + 1 !== len) {
                         result = maybeBlockSuffix(stmt.handlers[i].body, result);
                     }
                 }
             } else {
-                // new interface
-                if (stmt.handler) {
-                    result = join(result, generateStatement(stmt.handler));
-                    if (stmt.finalizer || stmt.guardedHandlers.length > 0) {
-                        result = maybeBlockSuffix(stmt.handler.body, result);
-                    }
-                }
+                stmt.guardedHandlers = stmt.guardedHandlers || [];
 
-                for (i = 0, len = stmt.guardedHandlers.length; i < len; i += 1) {
+                for (i = 0, len = stmt.guardedHandlers.length; i < len; ++i) {
                     result = join(result, generateStatement(stmt.guardedHandlers[i]));
                     if (stmt.finalizer || i + 1 !== len) {
                         result = maybeBlockSuffix(stmt.guardedHandlers[i].body, result);
+                    }
+                }
+
+                // new interface
+                if (stmt.handler) {
+                    if (isArray(stmt.handler)) {
+                        for (i = 0, len = stmt.handler.length; i < len; ++i) {
+                            result = join(result, generateStatement(stmt.handler[i]));
+                            if (stmt.finalizer || i + 1 !== len) {
+                                result = maybeBlockSuffix(stmt.handler[i].body, result);
+                            }
+                        }
+                    } else {
+                        result = join(result, generateStatement(stmt.handler));
+                        if (stmt.finalizer) {
+                            result = maybeBlockSuffix(stmt.handler.body, result);
+                        }
                     }
                 }
             }
@@ -31325,10 +31364,10 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
                 ];
             });
             if (stmt.cases) {
-                for (i = 0, len = stmt.cases.length; i < len; i += 1) {
+                for (i = 0, len = stmt.cases.length; i < len; ++i) {
                     fragment = addIndent(generateStatement(stmt.cases[i], {semicolonOptional: i === len - 1}));
                     result.push(fragment);
-                    if (!endsWithLineTerminator(toSourceNode(fragment).toString())) {
+                    if (!endsWithLineTerminator(toSourceNodeWhenNeeded(fragment).toString())) {
                         result.push(newline);
                     }
                 }
@@ -31359,14 +31398,14 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
                     i = 1;
                 }
 
-                if (i !== len && !endsWithLineTerminator(toSourceNode(result).toString())) {
+                if (i !== len && !endsWithLineTerminator(toSourceNodeWhenNeeded(result).toString())) {
                     result.push(newline);
                 }
 
-                for (; i < len; i += 1) {
+                for (; i < len; ++i) {
                     fragment = addIndent(generateStatement(stmt.consequent[i], {semicolonOptional: i === len - 1 && semicolon === ''}));
                     result.push(fragment);
-                    if (i + 1 !== len && !endsWithLineTerminator(toSourceNode(fragment).toString())) {
+                    if (i + 1 !== len && !endsWithLineTerminator(toSourceNodeWhenNeeded(fragment).toString())) {
                         result.push(newline);
                     }
                 }
@@ -31476,7 +31515,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
         case Syntax.Program:
             len = stmt.body.length;
             result = [safeConcatenation && len > 0 ? '\n' : ''];
-            for (i = 0; i < len; i += 1) {
+            for (i = 0; i < len; ++i) {
                 fragment = addIndent(
                     generateStatement(stmt.body[i], {
                         semicolonOptional: !safeConcatenation && i === len - 1,
@@ -31484,16 +31523,20 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
                     })
                 );
                 result.push(fragment);
-                if (i + 1 < len && !endsWithLineTerminator(toSourceNode(fragment).toString())) {
+                if (i + 1 < len && !endsWithLineTerminator(toSourceNodeWhenNeeded(fragment).toString())) {
                     result.push(newline);
                 }
             }
             break;
 
         case Syntax.FunctionDeclaration:
-            result = [(stmt.generator && !extra.moz.starlessGenerator ? 'function* ' : 'function '),
-                      generateIdentifier(stmt.id),
-                      generateFunctionBody(stmt)];
+            isGenerator = stmt.generator && !extra.moz.starlessGenerator;
+            result = [
+                (isGenerator ? 'function*' : 'function'),
+                (isGenerator ? space : noEmptySpace()),
+                generateIdentifier(stmt.id),
+                generateFunctionBody(stmt)
+            ];
             break;
 
         case Syntax.ReturnStatement:
@@ -31551,12 +31594,12 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
             result = addCommentsToStatement(stmt, result);
         }
 
-        fragment = toSourceNode(result).toString();
+        fragment = toSourceNodeWhenNeeded(result).toString();
         if (stmt.type === Syntax.Program && !safeConcatenation && newline === '' &&  fragment.charAt(fragment.length - 1) === '\n') {
-            result = toSourceNode(result).replaceRight(/\s+$/, '');
+            result = sourceMap ? toSourceNodeWhenNeeded(result).replaceRight(/\s+$/, '') : fragment.replace(/\s+$/, '');
         }
 
-        return toSourceNode(result, stmt);
+        return toSourceNodeWhenNeeded(result, stmt);
     }
 
     function generate(node, options) {
@@ -31613,8 +31656,6 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
             } else {
                 SourceNode = global.sourceMap.SourceNode;
             }
-        } else {
-            SourceNode = SourceNodeMock;
         }
 
         switch (node.type) {
@@ -31681,14 +31722,21 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
             return result.toString();
         }
 
+
         pair = result.toStringWithSourceMap({
             file: options.file,
             sourceRoot: options.sourceMapRoot
         });
 
+        if (options.sourceContent) {
+            pair.map.setSourceContent(options.sourceMap,
+                                      options.sourceContent);
+        }
+
         if (options.sourceMapWithCode) {
             return pair;
         }
+
         return pair.map.toString();
     }
 
@@ -31717,7 +31765,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
 }());
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{"./package.json":30,"estraverse":29,"source-map":44}],29:[function(require,module,exports){
+},{"./package.json":33,"estraverse":29,"esutils":32,"source-map":47}],29:[function(require,module,exports){
 /*
   Copyright (C) 2012-2013 Yusuke Suzuki <utatane.tea@gmail.com>
   Copyright (C) 2012 Ariya Hidayat <ariya.hidayat@gmail.com>
@@ -31770,6 +31818,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
     Syntax = {
         AssignmentExpression: 'AssignmentExpression',
         ArrayExpression: 'ArrayExpression',
+        ArrayPattern: 'ArrayPattern',
         ArrowFunctionExpression: 'ArrowFunctionExpression',
         BlockStatement: 'BlockStatement',
         BinaryExpression: 'BinaryExpression',
@@ -31799,6 +31848,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
         MethodDefinition: 'MethodDefinition',
         NewExpression: 'NewExpression',
         ObjectExpression: 'ObjectExpression',
+        ObjectPattern: 'ObjectPattern',
         Program: 'Program',
         Property: 'Property',
         ReturnStatement: 'ReturnStatement',
@@ -31897,7 +31947,8 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
     VisitorKeys = {
         AssignmentExpression: ['left', 'right'],
         ArrayExpression: ['elements'],
-        ArrowFunctionExpression: ['params', 'body'],
+        ArrayPattern: ['elements'],
+        ArrowFunctionExpression: ['params', 'defaults', 'rest', 'body'],
         BlockStatement: ['body'],
         BinaryExpression: ['left', 'right'],
         BreakStatement: ['label'],
@@ -31915,8 +31966,8 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
         ExpressionStatement: ['expression'],
         ForStatement: ['init', 'test', 'update', 'body'],
         ForInStatement: ['left', 'right', 'body'],
-        FunctionDeclaration: ['id', 'params', 'body'],
-        FunctionExpression: ['id', 'params', 'body'],
+        FunctionDeclaration: ['id', 'params', 'defaults', 'rest', 'body'],
+        FunctionExpression: ['id', 'params', 'defaults', 'rest', 'body'],
         Identifier: [],
         IfStatement: ['test', 'consequent', 'alternate'],
         Literal: [],
@@ -31926,6 +31977,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
         MethodDefinition: ['key', 'value'],
         NewExpression: ['callee', 'arguments'],
         ObjectExpression: ['properties'],
+        ObjectPattern: ['properties'],
         Program: ['body'],
         Property: ['key', 'value'],
         ReturnStatement: ['argument'],
@@ -32141,7 +32193,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
                         if (!candidate[current2]) {
                             continue;
                         }
-                        if (nodeType === Syntax.ObjectExpression && 'properties' === candidates[current]) {
+                        if ((nodeType === Syntax.ObjectExpression || nodeType === Syntax.ObjectPattern) && 'properties' === candidates[current]) {
                             element = new Element(candidate[current2], [key, current2], 'Property', null);
                         } else {
                             element = new Element(candidate[current2], [key, current2], null, null);
@@ -32392,7 +32444,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
         return tree;
     }
 
-    exports.version = '1.3.2';
+    exports.version = '1.3.3-dev';
     exports.Syntax = Syntax;
     exports.traverse = traverse;
     exports.replace = replace;
@@ -32404,16 +32456,261 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
 /* vim: set sw=4 ts=4 et tw=80 : */
 
 },{}],30:[function(require,module,exports){
+/*
+  Copyright (C) 2013 Yusuke Suzuki <utatane.tea@gmail.com>
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+(function () {
+    'use strict';
+
+    var Regex;
+
+    // See also tools/generate-unicode-regex.py.
+    Regex = {
+        NonAsciiIdentifierStart: new RegExp('[\xAA\xB5\xBA\xC0-\xD6\xD8-\xF6\xF8-\u02C1\u02C6-\u02D1\u02E0-\u02E4\u02EC\u02EE\u0370-\u0374\u0376\u0377\u037A-\u037D\u0386\u0388-\u038A\u038C\u038E-\u03A1\u03A3-\u03F5\u03F7-\u0481\u048A-\u0527\u0531-\u0556\u0559\u0561-\u0587\u05D0-\u05EA\u05F0-\u05F2\u0620-\u064A\u066E\u066F\u0671-\u06D3\u06D5\u06E5\u06E6\u06EE\u06EF\u06FA-\u06FC\u06FF\u0710\u0712-\u072F\u074D-\u07A5\u07B1\u07CA-\u07EA\u07F4\u07F5\u07FA\u0800-\u0815\u081A\u0824\u0828\u0840-\u0858\u08A0\u08A2-\u08AC\u0904-\u0939\u093D\u0950\u0958-\u0961\u0971-\u0977\u0979-\u097F\u0985-\u098C\u098F\u0990\u0993-\u09A8\u09AA-\u09B0\u09B2\u09B6-\u09B9\u09BD\u09CE\u09DC\u09DD\u09DF-\u09E1\u09F0\u09F1\u0A05-\u0A0A\u0A0F\u0A10\u0A13-\u0A28\u0A2A-\u0A30\u0A32\u0A33\u0A35\u0A36\u0A38\u0A39\u0A59-\u0A5C\u0A5E\u0A72-\u0A74\u0A85-\u0A8D\u0A8F-\u0A91\u0A93-\u0AA8\u0AAA-\u0AB0\u0AB2\u0AB3\u0AB5-\u0AB9\u0ABD\u0AD0\u0AE0\u0AE1\u0B05-\u0B0C\u0B0F\u0B10\u0B13-\u0B28\u0B2A-\u0B30\u0B32\u0B33\u0B35-\u0B39\u0B3D\u0B5C\u0B5D\u0B5F-\u0B61\u0B71\u0B83\u0B85-\u0B8A\u0B8E-\u0B90\u0B92-\u0B95\u0B99\u0B9A\u0B9C\u0B9E\u0B9F\u0BA3\u0BA4\u0BA8-\u0BAA\u0BAE-\u0BB9\u0BD0\u0C05-\u0C0C\u0C0E-\u0C10\u0C12-\u0C28\u0C2A-\u0C33\u0C35-\u0C39\u0C3D\u0C58\u0C59\u0C60\u0C61\u0C85-\u0C8C\u0C8E-\u0C90\u0C92-\u0CA8\u0CAA-\u0CB3\u0CB5-\u0CB9\u0CBD\u0CDE\u0CE0\u0CE1\u0CF1\u0CF2\u0D05-\u0D0C\u0D0E-\u0D10\u0D12-\u0D3A\u0D3D\u0D4E\u0D60\u0D61\u0D7A-\u0D7F\u0D85-\u0D96\u0D9A-\u0DB1\u0DB3-\u0DBB\u0DBD\u0DC0-\u0DC6\u0E01-\u0E30\u0E32\u0E33\u0E40-\u0E46\u0E81\u0E82\u0E84\u0E87\u0E88\u0E8A\u0E8D\u0E94-\u0E97\u0E99-\u0E9F\u0EA1-\u0EA3\u0EA5\u0EA7\u0EAA\u0EAB\u0EAD-\u0EB0\u0EB2\u0EB3\u0EBD\u0EC0-\u0EC4\u0EC6\u0EDC-\u0EDF\u0F00\u0F40-\u0F47\u0F49-\u0F6C\u0F88-\u0F8C\u1000-\u102A\u103F\u1050-\u1055\u105A-\u105D\u1061\u1065\u1066\u106E-\u1070\u1075-\u1081\u108E\u10A0-\u10C5\u10C7\u10CD\u10D0-\u10FA\u10FC-\u1248\u124A-\u124D\u1250-\u1256\u1258\u125A-\u125D\u1260-\u1288\u128A-\u128D\u1290-\u12B0\u12B2-\u12B5\u12B8-\u12BE\u12C0\u12C2-\u12C5\u12C8-\u12D6\u12D8-\u1310\u1312-\u1315\u1318-\u135A\u1380-\u138F\u13A0-\u13F4\u1401-\u166C\u166F-\u167F\u1681-\u169A\u16A0-\u16EA\u16EE-\u16F0\u1700-\u170C\u170E-\u1711\u1720-\u1731\u1740-\u1751\u1760-\u176C\u176E-\u1770\u1780-\u17B3\u17D7\u17DC\u1820-\u1877\u1880-\u18A8\u18AA\u18B0-\u18F5\u1900-\u191C\u1950-\u196D\u1970-\u1974\u1980-\u19AB\u19C1-\u19C7\u1A00-\u1A16\u1A20-\u1A54\u1AA7\u1B05-\u1B33\u1B45-\u1B4B\u1B83-\u1BA0\u1BAE\u1BAF\u1BBA-\u1BE5\u1C00-\u1C23\u1C4D-\u1C4F\u1C5A-\u1C7D\u1CE9-\u1CEC\u1CEE-\u1CF1\u1CF5\u1CF6\u1D00-\u1DBF\u1E00-\u1F15\u1F18-\u1F1D\u1F20-\u1F45\u1F48-\u1F4D\u1F50-\u1F57\u1F59\u1F5B\u1F5D\u1F5F-\u1F7D\u1F80-\u1FB4\u1FB6-\u1FBC\u1FBE\u1FC2-\u1FC4\u1FC6-\u1FCC\u1FD0-\u1FD3\u1FD6-\u1FDB\u1FE0-\u1FEC\u1FF2-\u1FF4\u1FF6-\u1FFC\u2071\u207F\u2090-\u209C\u2102\u2107\u210A-\u2113\u2115\u2119-\u211D\u2124\u2126\u2128\u212A-\u212D\u212F-\u2139\u213C-\u213F\u2145-\u2149\u214E\u2160-\u2188\u2C00-\u2C2E\u2C30-\u2C5E\u2C60-\u2CE4\u2CEB-\u2CEE\u2CF2\u2CF3\u2D00-\u2D25\u2D27\u2D2D\u2D30-\u2D67\u2D6F\u2D80-\u2D96\u2DA0-\u2DA6\u2DA8-\u2DAE\u2DB0-\u2DB6\u2DB8-\u2DBE\u2DC0-\u2DC6\u2DC8-\u2DCE\u2DD0-\u2DD6\u2DD8-\u2DDE\u2E2F\u3005-\u3007\u3021-\u3029\u3031-\u3035\u3038-\u303C\u3041-\u3096\u309D-\u309F\u30A1-\u30FA\u30FC-\u30FF\u3105-\u312D\u3131-\u318E\u31A0-\u31BA\u31F0-\u31FF\u3400-\u4DB5\u4E00-\u9FCC\uA000-\uA48C\uA4D0-\uA4FD\uA500-\uA60C\uA610-\uA61F\uA62A\uA62B\uA640-\uA66E\uA67F-\uA697\uA6A0-\uA6EF\uA717-\uA71F\uA722-\uA788\uA78B-\uA78E\uA790-\uA793\uA7A0-\uA7AA\uA7F8-\uA801\uA803-\uA805\uA807-\uA80A\uA80C-\uA822\uA840-\uA873\uA882-\uA8B3\uA8F2-\uA8F7\uA8FB\uA90A-\uA925\uA930-\uA946\uA960-\uA97C\uA984-\uA9B2\uA9CF\uAA00-\uAA28\uAA40-\uAA42\uAA44-\uAA4B\uAA60-\uAA76\uAA7A\uAA80-\uAAAF\uAAB1\uAAB5\uAAB6\uAAB9-\uAABD\uAAC0\uAAC2\uAADB-\uAADD\uAAE0-\uAAEA\uAAF2-\uAAF4\uAB01-\uAB06\uAB09-\uAB0E\uAB11-\uAB16\uAB20-\uAB26\uAB28-\uAB2E\uABC0-\uABE2\uAC00-\uD7A3\uD7B0-\uD7C6\uD7CB-\uD7FB\uF900-\uFA6D\uFA70-\uFAD9\uFB00-\uFB06\uFB13-\uFB17\uFB1D\uFB1F-\uFB28\uFB2A-\uFB36\uFB38-\uFB3C\uFB3E\uFB40\uFB41\uFB43\uFB44\uFB46-\uFBB1\uFBD3-\uFD3D\uFD50-\uFD8F\uFD92-\uFDC7\uFDF0-\uFDFB\uFE70-\uFE74\uFE76-\uFEFC\uFF21-\uFF3A\uFF41-\uFF5A\uFF66-\uFFBE\uFFC2-\uFFC7\uFFCA-\uFFCF\uFFD2-\uFFD7\uFFDA-\uFFDC]'),
+        NonAsciiIdentifierPart: new RegExp('[\xAA\xB5\xBA\xC0-\xD6\xD8-\xF6\xF8-\u02C1\u02C6-\u02D1\u02E0-\u02E4\u02EC\u02EE\u0300-\u0374\u0376\u0377\u037A-\u037D\u0386\u0388-\u038A\u038C\u038E-\u03A1\u03A3-\u03F5\u03F7-\u0481\u0483-\u0487\u048A-\u0527\u0531-\u0556\u0559\u0561-\u0587\u0591-\u05BD\u05BF\u05C1\u05C2\u05C4\u05C5\u05C7\u05D0-\u05EA\u05F0-\u05F2\u0610-\u061A\u0620-\u0669\u066E-\u06D3\u06D5-\u06DC\u06DF-\u06E8\u06EA-\u06FC\u06FF\u0710-\u074A\u074D-\u07B1\u07C0-\u07F5\u07FA\u0800-\u082D\u0840-\u085B\u08A0\u08A2-\u08AC\u08E4-\u08FE\u0900-\u0963\u0966-\u096F\u0971-\u0977\u0979-\u097F\u0981-\u0983\u0985-\u098C\u098F\u0990\u0993-\u09A8\u09AA-\u09B0\u09B2\u09B6-\u09B9\u09BC-\u09C4\u09C7\u09C8\u09CB-\u09CE\u09D7\u09DC\u09DD\u09DF-\u09E3\u09E6-\u09F1\u0A01-\u0A03\u0A05-\u0A0A\u0A0F\u0A10\u0A13-\u0A28\u0A2A-\u0A30\u0A32\u0A33\u0A35\u0A36\u0A38\u0A39\u0A3C\u0A3E-\u0A42\u0A47\u0A48\u0A4B-\u0A4D\u0A51\u0A59-\u0A5C\u0A5E\u0A66-\u0A75\u0A81-\u0A83\u0A85-\u0A8D\u0A8F-\u0A91\u0A93-\u0AA8\u0AAA-\u0AB0\u0AB2\u0AB3\u0AB5-\u0AB9\u0ABC-\u0AC5\u0AC7-\u0AC9\u0ACB-\u0ACD\u0AD0\u0AE0-\u0AE3\u0AE6-\u0AEF\u0B01-\u0B03\u0B05-\u0B0C\u0B0F\u0B10\u0B13-\u0B28\u0B2A-\u0B30\u0B32\u0B33\u0B35-\u0B39\u0B3C-\u0B44\u0B47\u0B48\u0B4B-\u0B4D\u0B56\u0B57\u0B5C\u0B5D\u0B5F-\u0B63\u0B66-\u0B6F\u0B71\u0B82\u0B83\u0B85-\u0B8A\u0B8E-\u0B90\u0B92-\u0B95\u0B99\u0B9A\u0B9C\u0B9E\u0B9F\u0BA3\u0BA4\u0BA8-\u0BAA\u0BAE-\u0BB9\u0BBE-\u0BC2\u0BC6-\u0BC8\u0BCA-\u0BCD\u0BD0\u0BD7\u0BE6-\u0BEF\u0C01-\u0C03\u0C05-\u0C0C\u0C0E-\u0C10\u0C12-\u0C28\u0C2A-\u0C33\u0C35-\u0C39\u0C3D-\u0C44\u0C46-\u0C48\u0C4A-\u0C4D\u0C55\u0C56\u0C58\u0C59\u0C60-\u0C63\u0C66-\u0C6F\u0C82\u0C83\u0C85-\u0C8C\u0C8E-\u0C90\u0C92-\u0CA8\u0CAA-\u0CB3\u0CB5-\u0CB9\u0CBC-\u0CC4\u0CC6-\u0CC8\u0CCA-\u0CCD\u0CD5\u0CD6\u0CDE\u0CE0-\u0CE3\u0CE6-\u0CEF\u0CF1\u0CF2\u0D02\u0D03\u0D05-\u0D0C\u0D0E-\u0D10\u0D12-\u0D3A\u0D3D-\u0D44\u0D46-\u0D48\u0D4A-\u0D4E\u0D57\u0D60-\u0D63\u0D66-\u0D6F\u0D7A-\u0D7F\u0D82\u0D83\u0D85-\u0D96\u0D9A-\u0DB1\u0DB3-\u0DBB\u0DBD\u0DC0-\u0DC6\u0DCA\u0DCF-\u0DD4\u0DD6\u0DD8-\u0DDF\u0DF2\u0DF3\u0E01-\u0E3A\u0E40-\u0E4E\u0E50-\u0E59\u0E81\u0E82\u0E84\u0E87\u0E88\u0E8A\u0E8D\u0E94-\u0E97\u0E99-\u0E9F\u0EA1-\u0EA3\u0EA5\u0EA7\u0EAA\u0EAB\u0EAD-\u0EB9\u0EBB-\u0EBD\u0EC0-\u0EC4\u0EC6\u0EC8-\u0ECD\u0ED0-\u0ED9\u0EDC-\u0EDF\u0F00\u0F18\u0F19\u0F20-\u0F29\u0F35\u0F37\u0F39\u0F3E-\u0F47\u0F49-\u0F6C\u0F71-\u0F84\u0F86-\u0F97\u0F99-\u0FBC\u0FC6\u1000-\u1049\u1050-\u109D\u10A0-\u10C5\u10C7\u10CD\u10D0-\u10FA\u10FC-\u1248\u124A-\u124D\u1250-\u1256\u1258\u125A-\u125D\u1260-\u1288\u128A-\u128D\u1290-\u12B0\u12B2-\u12B5\u12B8-\u12BE\u12C0\u12C2-\u12C5\u12C8-\u12D6\u12D8-\u1310\u1312-\u1315\u1318-\u135A\u135D-\u135F\u1380-\u138F\u13A0-\u13F4\u1401-\u166C\u166F-\u167F\u1681-\u169A\u16A0-\u16EA\u16EE-\u16F0\u1700-\u170C\u170E-\u1714\u1720-\u1734\u1740-\u1753\u1760-\u176C\u176E-\u1770\u1772\u1773\u1780-\u17D3\u17D7\u17DC\u17DD\u17E0-\u17E9\u180B-\u180D\u1810-\u1819\u1820-\u1877\u1880-\u18AA\u18B0-\u18F5\u1900-\u191C\u1920-\u192B\u1930-\u193B\u1946-\u196D\u1970-\u1974\u1980-\u19AB\u19B0-\u19C9\u19D0-\u19D9\u1A00-\u1A1B\u1A20-\u1A5E\u1A60-\u1A7C\u1A7F-\u1A89\u1A90-\u1A99\u1AA7\u1B00-\u1B4B\u1B50-\u1B59\u1B6B-\u1B73\u1B80-\u1BF3\u1C00-\u1C37\u1C40-\u1C49\u1C4D-\u1C7D\u1CD0-\u1CD2\u1CD4-\u1CF6\u1D00-\u1DE6\u1DFC-\u1F15\u1F18-\u1F1D\u1F20-\u1F45\u1F48-\u1F4D\u1F50-\u1F57\u1F59\u1F5B\u1F5D\u1F5F-\u1F7D\u1F80-\u1FB4\u1FB6-\u1FBC\u1FBE\u1FC2-\u1FC4\u1FC6-\u1FCC\u1FD0-\u1FD3\u1FD6-\u1FDB\u1FE0-\u1FEC\u1FF2-\u1FF4\u1FF6-\u1FFC\u200C\u200D\u203F\u2040\u2054\u2071\u207F\u2090-\u209C\u20D0-\u20DC\u20E1\u20E5-\u20F0\u2102\u2107\u210A-\u2113\u2115\u2119-\u211D\u2124\u2126\u2128\u212A-\u212D\u212F-\u2139\u213C-\u213F\u2145-\u2149\u214E\u2160-\u2188\u2C00-\u2C2E\u2C30-\u2C5E\u2C60-\u2CE4\u2CEB-\u2CF3\u2D00-\u2D25\u2D27\u2D2D\u2D30-\u2D67\u2D6F\u2D7F-\u2D96\u2DA0-\u2DA6\u2DA8-\u2DAE\u2DB0-\u2DB6\u2DB8-\u2DBE\u2DC0-\u2DC6\u2DC8-\u2DCE\u2DD0-\u2DD6\u2DD8-\u2DDE\u2DE0-\u2DFF\u2E2F\u3005-\u3007\u3021-\u302F\u3031-\u3035\u3038-\u303C\u3041-\u3096\u3099\u309A\u309D-\u309F\u30A1-\u30FA\u30FC-\u30FF\u3105-\u312D\u3131-\u318E\u31A0-\u31BA\u31F0-\u31FF\u3400-\u4DB5\u4E00-\u9FCC\uA000-\uA48C\uA4D0-\uA4FD\uA500-\uA60C\uA610-\uA62B\uA640-\uA66F\uA674-\uA67D\uA67F-\uA697\uA69F-\uA6F1\uA717-\uA71F\uA722-\uA788\uA78B-\uA78E\uA790-\uA793\uA7A0-\uA7AA\uA7F8-\uA827\uA840-\uA873\uA880-\uA8C4\uA8D0-\uA8D9\uA8E0-\uA8F7\uA8FB\uA900-\uA92D\uA930-\uA953\uA960-\uA97C\uA980-\uA9C0\uA9CF-\uA9D9\uAA00-\uAA36\uAA40-\uAA4D\uAA50-\uAA59\uAA60-\uAA76\uAA7A\uAA7B\uAA80-\uAAC2\uAADB-\uAADD\uAAE0-\uAAEF\uAAF2-\uAAF6\uAB01-\uAB06\uAB09-\uAB0E\uAB11-\uAB16\uAB20-\uAB26\uAB28-\uAB2E\uABC0-\uABEA\uABEC\uABED\uABF0-\uABF9\uAC00-\uD7A3\uD7B0-\uD7C6\uD7CB-\uD7FB\uF900-\uFA6D\uFA70-\uFAD9\uFB00-\uFB06\uFB13-\uFB17\uFB1D-\uFB28\uFB2A-\uFB36\uFB38-\uFB3C\uFB3E\uFB40\uFB41\uFB43\uFB44\uFB46-\uFBB1\uFBD3-\uFD3D\uFD50-\uFD8F\uFD92-\uFDC7\uFDF0-\uFDFB\uFE00-\uFE0F\uFE20-\uFE26\uFE33\uFE34\uFE4D-\uFE4F\uFE70-\uFE74\uFE76-\uFEFC\uFF10-\uFF19\uFF21-\uFF3A\uFF3F\uFF41-\uFF5A\uFF66-\uFFBE\uFFC2-\uFFC7\uFFCA-\uFFCF\uFFD2-\uFFD7\uFFDA-\uFFDC]')
+    };
+
+    function isDecimalDigit(ch) {
+        return (ch >= 48 && ch <= 57);   // 0..9
+    }
+
+    function isHexDigit(ch) {
+        return isDecimalDigit(ch) || (97 <= ch && ch <= 102) || (65 <= ch && ch <= 70);
+    }
+
+    function isOctalDigit(ch) {
+        return (ch >= 48 && ch <= 55);   // 0..7
+    }
+
+    // 7.2 White Space
+
+    function isWhiteSpace(ch) {
+        return (ch === 0x20) || (ch === 0x09) || (ch === 0x0B) || (ch === 0x0C) || (ch === 0xA0) ||
+            (ch >= 0x1680 && [0x1680, 0x180E, 0x2000, 0x2001, 0x2002, 0x2003, 0x2004, 0x2005, 0x2006, 0x2007, 0x2008, 0x2009, 0x200A, 0x202F, 0x205F, 0x3000, 0xFEFF].indexOf(ch) >= 0);
+    }
+
+    // 7.3 Line Terminators
+
+    function isLineTerminator(ch) {
+        return (ch === 0x0A) || (ch === 0x0D) || (ch === 0x2028) || (ch === 0x2029);
+    }
+
+    // 7.6 Identifier Names and Identifiers
+
+    function isIdentifierStart(ch) {
+        return (ch === 36) || (ch === 95) ||  // $ (dollar) and _ (underscore)
+            (ch >= 65 && ch <= 90) ||         // A..Z
+            (ch >= 97 && ch <= 122) ||        // a..z
+            (ch === 92) ||                    // \ (backslash)
+            ((ch >= 0x80) && Regex.NonAsciiIdentifierStart.test(String.fromCharCode(ch)));
+    }
+
+    function isIdentifierPart(ch) {
+        return (ch === 36) || (ch === 95) ||  // $ (dollar) and _ (underscore)
+            (ch >= 65 && ch <= 90) ||         // A..Z
+            (ch >= 97 && ch <= 122) ||        // a..z
+            (ch >= 48 && ch <= 57) ||         // 0..9
+            (ch === 92) ||                    // \ (backslash)
+            ((ch >= 0x80) && Regex.NonAsciiIdentifierPart.test(String.fromCharCode(ch)));
+    }
+
+    module.exports = {
+        isDecimalDigit: isDecimalDigit,
+        isHexDigit: isHexDigit,
+        isOctalDigit: isOctalDigit,
+        isWhiteSpace: isWhiteSpace,
+        isLineTerminator: isLineTerminator,
+        isIdentifierStart: isIdentifierStart,
+        isIdentifierPart: isIdentifierPart
+    };
+}());
+/* vim: set sw=4 ts=4 et tw=80 : */
+
+},{}],31:[function(require,module,exports){
+/*
+  Copyright (C) 2013 Yusuke Suzuki <utatane.tea@gmail.com>
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+(function () {
+    'use strict';
+
+    var code = require('./code');
+
+    function isStrictModeReservedWordES6(id) {
+        switch (id) {
+        case 'implements':
+        case 'interface':
+        case 'package':
+        case 'private':
+        case 'protected':
+        case 'public':
+        case 'static':
+        case 'let':
+            return true;
+        default:
+            return false;
+        }
+    }
+
+    function isKeywordES5(id, strict) {
+        // yield should not be treated as keyword under non-strict mode.
+        if (!strict && id === 'yield') {
+            return false;
+        }
+        return isKeywordES6(id, strict);
+    }
+
+    function isKeywordES6(id, strict) {
+        if (strict && isStrictModeReservedWordES6(id)) {
+            return true;
+        }
+
+        switch (id.length) {
+        case 2:
+            return (id === 'if') || (id === 'in') || (id === 'do');
+        case 3:
+            return (id === 'var') || (id === 'for') || (id === 'new') || (id === 'try');
+        case 4:
+            return (id === 'this') || (id === 'else') || (id === 'case') ||
+                (id === 'void') || (id === 'with') || (id === 'enum');
+        case 5:
+            return (id === 'while') || (id === 'break') || (id === 'catch') ||
+                (id === 'throw') || (id === 'const') || (id === 'yield') ||
+                (id === 'class') || (id === 'super');
+        case 6:
+            return (id === 'return') || (id === 'typeof') || (id === 'delete') ||
+                (id === 'switch') || (id === 'export') || (id === 'import');
+        case 7:
+            return (id === 'default') || (id === 'finally') || (id === 'extends');
+        case 8:
+            return (id === 'function') || (id === 'continue') || (id === 'debugger');
+        case 10:
+            return (id === 'instanceof');
+        default:
+            return false;
+        }
+    }
+
+    function isRestrictedWord(id) {
+        return id === 'eval' || id === 'arguments';
+    }
+
+    function isIdentifierName(id) {
+        var i, iz, ch;
+
+        if (id.length === 0) {
+            return false;
+        }
+
+        ch = id.charCodeAt(0);
+        if (!code.isIdentifierStart(ch) || ch === 92) {  // \ (backslash)
+            return false;
+        }
+
+        for (i = 1, iz = id.length; i < iz; ++i) {
+            ch = id.charCodeAt(i);
+            if (!code.isIdentifierPart(ch) || ch === 92) {  // \ (backslash)
+                return false;
+            }
+        }
+        return true;
+    }
+
+    module.exports = {
+        isKeywordES5: isKeywordES5,
+        isKeywordES6: isKeywordES6,
+        isRestrictedWord: isRestrictedWord,
+        isIdentifierName: isIdentifierName
+    };
+}());
+/* vim: set sw=4 ts=4 et tw=80 : */
+
+},{"./code":30}],32:[function(require,module,exports){
+/*
+  Copyright (C) 2013 Yusuke Suzuki <utatane.tea@gmail.com>
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+
+(function () {
+    'use strict';
+
+    exports.code = require('./code');
+    exports.keyword = require('./keyword');
+}());
+/* vim: set sw=4 ts=4 et tw=80 : */
+
+},{"./code":30,"./keyword":31}],33:[function(require,module,exports){
 module.exports={
   "name": "escodegen",
   "description": "ECMAScript code generator",
-  "homepage": "http://github.com/Constellation/escodegen.html",
+  "homepage": "http://github.com/Constellation/escodegen",
   "main": "escodegen.js",
   "bin": {
     "esgenerate": "./bin/esgenerate.js",
     "escodegen": "./bin/escodegen.js"
   },
-  "version": "0.0.28",
+  "version": "1.1.0",
   "engines": {
     "node": ">=0.4.0"
   },
@@ -32429,12 +32726,13 @@ module.exports={
     "url": "http://github.com/Constellation/escodegen.git"
   },
   "dependencies": {
-    "esprima": "~1.0.2",
-    "estraverse": "~1.3.0",
-    "source-map": ">= 0.1.2"
+    "esprima": "~1.0.4",
+    "estraverse": "~1.5.0",
+    "esutils": "~1.0.0",
+    "source-map": "~0.1.30"
   },
   "optionalDependencies": {
-    "source-map": ">= 0.1.2"
+    "source-map": "~0.1.30"
   },
   "devDependencies": {
     "esprima-moz": "*",
@@ -32467,11 +32765,15 @@ module.exports={
   "bugs": {
     "url": "https://github.com/Constellation/escodegen/issues"
   },
-  "_id": "escodegen@0.0.28",
-  "_from": "escodegen@0.0.28"
+  "_id": "escodegen@1.1.0",
+  "_from": "escodegen@1.1.0",
+  "dist": {
+    "shasum": "44e435dc5a1e2af7b2e27918b934feb8542f204a"
+  },
+  "_resolved": "https://registry.npmjs.org/escodegen/-/escodegen-1.1.0.tgz"
 }
 
-},{}],31:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 /*
   Copyright (C) 2013 Ariya Hidayat <ariya.hidayat@gmail.com>
   Copyright (C) 2013 Thaddee Tyl <thaddee.tyl@gmail.com>
@@ -37987,7 +38289,7 @@ parseYieldExpression: true
 }));
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{}],32:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 var identifierStartTable = [];
 
 for (var i = 0; i < 128; i++) {
@@ -38011,7 +38313,7 @@ module.exports = {
 	asciiIdentifierPartTable: identifierPartTable
 };
 
-},{}],33:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 module.exports = [
 	768,
 	769,
@@ -39583,7 +39885,7 @@ module.exports = [
 	65343
 ];
 
-},{}],34:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 module.exports = [
 	170,
 	181,
@@ -88062,7 +88364,7 @@ module.exports = [
 	65500
 ];
 
-},{}],35:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {};/*global window, global*/
 var util = require("util")
 var assert = require("assert")
@@ -88149,7 +88451,7 @@ function assert(expression) {
     }
 }
 
-},{"assert":23,"util":26}],36:[function(require,module,exports){
+},{"assert":23,"util":26}],39:[function(require,module,exports){
 //     Underscore.js 1.4.4
 //     http://underscorejs.org
 //     (c) 2009-2013 Jeremy Ashkenas, DocumentCloud Inc.
@@ -89377,7 +89679,7 @@ function assert(expression) {
 
 }).call(this);
 
-},{}],37:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 /*!
  * JSHint, by JSHint Community.
  *
@@ -94381,7 +94683,7 @@ if (typeof exports === "object" && exports) {
 	exports.JSHINT = JSHINT;
 }
 
-},{"./lex.js":38,"./messages.js":39,"./reg.js":40,"./state.js":41,"./style.js":42,"./vars.js":43,"console-browserify":35,"events":24,"underscore":36}],38:[function(require,module,exports){
+},{"./lex.js":41,"./messages.js":42,"./reg.js":43,"./state.js":44,"./style.js":45,"./vars.js":46,"console-browserify":38,"events":24,"underscore":39}],41:[function(require,module,exports){
 /*
  * Lexical analysis and token construction.
  */
@@ -95959,7 +96261,7 @@ Lexer.prototype = {
 
 exports.Lexer = Lexer;
 
-},{"../data/ascii-identifier-data.js":32,"../data/non-ascii-identifier-part-only.js":33,"../data/non-ascii-identifier-start.js":34,"./reg.js":40,"./state.js":41,"events":24,"underscore":36}],39:[function(require,module,exports){
+},{"../data/ascii-identifier-data.js":35,"../data/non-ascii-identifier-part-only.js":36,"../data/non-ascii-identifier-start.js":37,"./reg.js":43,"./state.js":44,"events":24,"underscore":39}],42:[function(require,module,exports){
 "use strict";
 
 var _ = require("underscore");
@@ -96181,7 +96483,7 @@ _.each(info, function (desc, code) {
 	exports.info[code] = { code: code, desc: desc };
 });
 
-},{"underscore":36}],40:[function(require,module,exports){
+},{"underscore":39}],43:[function(require,module,exports){
 /*
  * Regular expressions. Some of these are stupidly long.
  */
@@ -96217,7 +96519,7 @@ exports.javascriptURL = /^(?:javascript|jscript|ecmascript|vbscript|mocha|livesc
 // Catches /* falls through */ comments (ft)
 exports.fallsThrough = /^\s*\/\*\s*falls?\sthrough\s*\*\/\s*$/;
 
-},{}],41:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 "use strict";
 
 var state = {
@@ -96245,7 +96547,7 @@ var state = {
 
 exports.state = state;
 
-},{}],42:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 "use strict";
 
 exports.register = function (linter) {
@@ -96417,7 +96719,7 @@ exports.register = function (linter) {
 		}
 	});
 };
-},{}],43:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 // jshint -W001
 
 "use strict";
@@ -97008,7 +97310,7 @@ exports.yui = {
 };
 
 
-},{}],44:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 /*
  * Copyright 2009-2011 Mozilla Foundation and contributors
  * Licensed under the New BSD license. See LICENSE.txt or:
@@ -97018,7 +97320,7 @@ exports.SourceMapGenerator = require('./source-map/source-map-generator').Source
 exports.SourceMapConsumer = require('./source-map/source-map-consumer').SourceMapConsumer;
 exports.SourceNode = require('./source-map/source-node').SourceNode;
 
-},{"./source-map/source-map-consumer":49,"./source-map/source-map-generator":50,"./source-map/source-node":51}],45:[function(require,module,exports){
+},{"./source-map/source-map-consumer":52,"./source-map/source-map-generator":53,"./source-map/source-node":54}],48:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -97117,7 +97419,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./util":52,"amdefine":53}],46:[function(require,module,exports){
+},{"./util":55,"amdefine":56}],49:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -97263,7 +97565,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./base64":47,"amdefine":53}],47:[function(require,module,exports){
+},{"./base64":50,"amdefine":56}],50:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -97307,7 +97609,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"amdefine":53}],48:[function(require,module,exports){
+},{"amdefine":56}],51:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -97390,7 +97692,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"amdefine":53}],49:[function(require,module,exports){
+},{"amdefine":56}],52:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -97869,7 +98171,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./array-set":45,"./base64-vlq":46,"./binary-search":48,"./util":52,"amdefine":53}],50:[function(require,module,exports){
+},{"./array-set":48,"./base64-vlq":49,"./binary-search":51,"./util":55,"amdefine":56}],53:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -98251,7 +98553,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./array-set":45,"./base64-vlq":46,"./util":52,"amdefine":53}],51:[function(require,module,exports){
+},{"./array-set":48,"./base64-vlq":49,"./util":55,"amdefine":56}],54:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -98624,7 +98926,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./source-map-generator":50,"./util":52,"amdefine":53}],52:[function(require,module,exports){
+},{"./source-map-generator":53,"./util":55,"amdefine":56}],55:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -98831,7 +99133,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"amdefine":53}],53:[function(require,module,exports){
+},{"amdefine":56}],56:[function(require,module,exports){
 var process=require("__browserify_process"),__filename="/../node_modules/source-map/node_modules/amdefine/amdefine.js";/** vim: et:ts=4:sw=4:sts=4
  * @license amdefine 0.1.0 Copyright (c) 2011, The Dojo Foundation All Rights Reserved.
  * Available via the MIT or new BSD license.
@@ -99132,7 +99434,7 @@ function amdefine(module, requireFn) {
 
 module.exports = amdefine;
 
-},{"__browserify_process":27,"path":25}],54:[function(require,module,exports){
+},{"__browserify_process":27,"path":25}],57:[function(require,module,exports){
 /*
 Author: Geraint Luff and others
 Year: 2013

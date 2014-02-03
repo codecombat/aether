@@ -11,7 +11,7 @@ You can use the [GitHub issues](https://github.com/codecombat/aether/issues), th
 ## What is it?
 It's a JavaScript library (written in CoffeeScript) that takes user code as input; does computer-sciencey transpilation things to it with the help of [JSHint](http://jshint.com/), [Esprima](http://esprima.org/), [JS_WALA](https://github.com/wala/JS_WALA), [escodegen](https://github.com/Constellation/escodegen), and [traceur](https://github.com/google/traceur-compiler); and gives you linting, transformation, sandboxing, instrumentation, time-travel debugging, style analysis, autocompletion, and more.
 
-## Devour [aetherjs.com](http://aetherjs.com] for docs, demos, and developer discourse
+## Devour [aetherjs.com](http://aetherjs.com) for docs, demos, and developer discourse
 
 ## License
 [The MIT License (MIT)](https://github.com/codecombat/aether/blob/master/LICENSE)
