@@ -12,7 +12,7 @@ module.exports = (grunt) ->
         dest: 'build/<%= pkg.name %>.min.js'
 
     coffeelint:
-        app: ['src/*.coffee', 'test/*.coffee']
+        app: ['src/*.coffee', 'test/*.coffee', 'dev/*.coffee']
         options:
           no_trailing_whitespace:
             level: 'ignore'  # PyCharm can't just autostrip for .coffee, needed for .jade
@@ -23,10 +23,13 @@ module.exports = (grunt) ->
             level: "error"
 
     watch:
-      files: ['src/**/*', 'test/**/*.coffee']
-      tasks: ['coffeelint', 'coffee', 'browserify', 'concat', 'jasmine_node']  #, 'uglify']
+      files: ['src/**/*', 'test/**/*.coffee', 'dev/**/*.coffee']
+      tasks: ['coffeelint', 'coffee', 'browserify', 'concat', 'jasmine_node']
       options:
-        spawn: false
+        spawn: true
+        interrupt: true
+        atBegin: true
+        livereload: true
 
     #jasmine:
     #  aetherTests:
@@ -56,6 +59,9 @@ module.exports = (grunt) ->
             dest: 'lib/test/'    # Destination path prefix.
             ext: '.js'           # Dest filepaths will have this extension.
           ]
+      dev:
+        files:
+          'build/dev/index.js': 'dev/index.coffee'
 
     browserify:
       src:
@@ -73,6 +79,38 @@ module.exports = (grunt) ->
         src: ['node_modules/traceur/bin/traceur.js', 'build/<%= pkg.name %>.js']
         dest: 'build/<%= pkg.name %>.js'
 
+    "gh-pages":
+      options:
+        base: 'build'
+        src: ['**/*']
+
+    push:
+      options:
+        files: ['package.json', 'bower.json']
+        updateConfigs: ['pkg']
+        commitMessage: 'Release %VERSION%'
+        commitFiles: ['-a']
+        tagName: '%VERSION%'
+        npm: true
+
+    jade:
+      dev:
+        options:
+          pretty: true
+          data: '<%= pkg %>'
+        files:
+          'build/index.html': ['dev/index.jade']
+
+    sass:
+      dev:
+        options:
+          trace: true
+          #sourcemap: true  # no need to depend on sass gem 3.3.0 before it's out
+          unixNewlines: true
+          noCache: true
+        files:
+          'build/dev/index.css': ['dev/index.sass']
+
   # Load the plugin that provides the "uglify" task.
   grunt.loadNpmTasks 'grunt-contrib-uglify'
   #grunt.loadNpmTasks 'grunt-contrib-jasmine'
@@ -83,8 +121,12 @@ module.exports = (grunt) ->
   grunt.loadNpmTasks 'grunt-browserify'
   grunt.loadNpmTasks 'grunt-contrib-concat'
   grunt.loadNpmTasks 'grunt-notify'
+  grunt.loadNpmTasks 'grunt-gh-pages'
+  grunt.loadNpmTasks 'grunt-push-release'
+  grunt.loadNpmTasks 'grunt-contrib-jade'
+  grunt.loadNpmTasks 'grunt-contrib-sass'
 
   # Default task(s).
-  grunt.registerTask 'default', ['coffeelint', 'coffee', 'browserify', 'concat', 'jasmine_node', 'uglify']
+  grunt.registerTask 'default', ['coffeelint', 'coffee', 'browserify', 'concat', 'jasmine_node', 'jade', 'sass', 'uglify']
   grunt.registerTask 'travis', ['coffeelint', 'coffee', 'browserify', 'concat', 'jasmine_node']
-  grunt.registerTask 'build', ['coffeelint', 'coffee', 'browserify', 'concat', 'uglify']
+  grunt.registerTask 'build', ['coffeelint', 'coffee', 'browserify', 'concat', 'jade', 'sass', 'uglify']

@@ -4,6 +4,8 @@
 # More: https://github.com/mdevils/node-jscs/blob/master/lib/checker.js
 # More: https://github.com/nzakas/eslint/tree/master/lib/rules
 
+ranges = require './ranges'
+
 # Base class for UserCodeProblems
 module.exports.UserCodeProblem = class UserCodeProblem
   constructor: (aether, reporter='unknown', kind="Unknown") ->
@@ -19,7 +21,7 @@ module.exports.UserCodeProblem = class UserCodeProblem
       o[key] = value
     o
 
-# {ranges: [[[15, 15], [15, 22]]], id: 'aether_MissingThis', message: 'Missing `this.` keyword; should be `this.getEnemies`.' hint: 'There is no function `getEnemys`, but `this` has a method `getEnemies`.', level: "warning"}
+# {ranges: [[{ofs: 305, row: 15, col: 15}, {ofs: 312, row: 15, col: 22}]], id: 'aether_MissingThis', message: 'Missing `this.` keyword; should be `this.getEnemies`.' hint: 'There is no function `getEnemys`, but `this` has a method `getEnemies`.', level: "warning"}
 module.exports.TranspileProblem = class TranspileProblem extends UserCodeProblem
   constructor: (aether, reporter, kind, error, @userInfo, code='', codePrefix="function wrapped() {\n\"use strict\";\n") ->
     #console.log "Converting", error, "to a UserCodeProblem"
@@ -41,14 +43,20 @@ module.exports.TranspileProblem = class TranspileProblem extends UserCodeProblem
             endCol = startCol + error.evidence.length
           else
             [startCol, endCol] = [0, originalLines[line].length - 1]
-          @ranges = [[[line, startCol], [line, endCol]]]
+          # TODO: no way this works; what am I doing with code prefixes?
+          @ranges = [[ranges.rowColToPos(line, startCol, code, codePrefix),
+                      ranges.rowColToPos(line, endCol, code, codePrefix)]]
         else
           # TODO: if we type an unmatched {, for example, then it thinks that line -2's function wrapped() { is unmatched...
-          @ranges = [[[0, 0], [originalLines.length - 1, originalLines[originalLines.length - 1].length - 1]]]
+          # TODO: no way this works; what am I doing with code prefixes?
+          @ranges = [[ranges.offsetToPos(0, code, codePrefix),
+                      ranges.offsetToPos(code.length - 1, code, codePrefix)]]
       when 'esprima'
         @message = error.message
         # TODO: column range should extend to whole token. Mod Esprima, or extend to end of line?
-        @ranges = [[[error.lineNumber - 1 - lineOffset, error.column - 1], [error.lineNumber - 1 - lineOffset, error.column]]]
+        # TODO: no way this works; what am I doing with code prefixes?
+        @ranges = [[ranges.rowColToPos(error.lineNumber - 1 - lineOffset, error.column - 1, code, codePrefix),
+                    ranges.rowColToPos(error.lineNumber - 1 - lineOffset, error.column, code, codePrefix)]]
       when 'aether'
         @message = error.message if error.message
         # TODO: figure out how to do ranges here
@@ -56,7 +64,7 @@ module.exports.TranspileProblem = class TranspileProblem extends UserCodeProblem
         console.log "Unhandled UserCodeProblem reporter", reporter
         @message = error.message if error.message
 
-# {ranges: [[[22, 1], [22, 13]], [[15, 1], [15, 18]], [[18, 1], [18, 14]]], id: 'ArgumentError', message: '`getNearestEnemy()` should return a `Thang` or `null`, not a string (`"Goreball"`).', hint: 'You returned `nearestEnemy`, which had value `"Goreball"`. Check lines 15 and 18 for mistakes setting `nearestEnemy`.', level: "error", callNumber: 118, statementNumber: 25, userInfo: {frameNumber: 25} }
+# {ranges: [[{ofs: 301, row: 22, col: 1}, {ofs: 313, row: 22, col: 13}], [{ofs: 201, row: 15, col: 1}, {ofs: 218, row: 15, col: 18}], [{ofs: 251, row: 18, col: 1}, {ofs: 264, row: 18, col: 14}]], id: 'ArgumentError', message: '`getNearestEnemy()` should return a `Thang` or `null`, not a string (`"Goreball"`).', hint: 'You returned `nearestEnemy`, which had value `"Goreball"`. Check lines 15 and 18 for mistakes setting `nearestEnemy`.', level: "error", callNumber: 118, statementNumber: 25, userInfo: {frameNumber: 25} }
 module.exports.RuntimeProblem = class RuntimeProblem extends UserCodeProblem
   constructor: (aether, error, @userInfo) ->
     kind = error.name  # Will this pick up: [Error, EvalError, RangeError, ReferenceError, SyntaxError, TypeError, URIError, DOMException] ?
@@ -64,34 +72,15 @@ module.exports.RuntimeProblem = class RuntimeProblem extends UserCodeProblem
     @type = 'runtime'
     @userInfo ?= {}
     @message = RuntimeProblem.explainErrorMessage error  # TODO: this should be done with configurable rules
-    @ranges = RuntimeProblem.getAnonymousErrorRanges error  # later this will go away because we'll instrument all the statements
+    if range = aether.lastStatementRange
+      @ranges = [range]
     if @ranges?.length
-      console.log "Runtime problem got ranges:", @ranges
-      lineNumber = @ranges[0][0][0]
+      #console.log "Runtime problem got ranges:", @ranges
+      lineNumber = @ranges[0][0].row + 1
       if @message.search(/^Line \d+/) != -1
         @message = @message.replace /^Line \d+/, (match, n) -> "Line #{lineNumber}"
       else
         @message = "Line #{lineNumber}: #{@message}"
-
-  @getAnonymousErrorRanges: (error) ->
-    # Cross-browser stack trace libs like TraceKit throw away the eval line number, as it's inline with another line number. And only Chrome gives the anonymous line number. So we don't actually need a cross-browser solution.
-    return [[[error.lineNumber, error.column], [error.lineNumber, error.column + 1]]] if error.lineNumber  # useful?
-    stack = error.stack
-    return null unless stack
-    lines = stack.split('\n')
-    for line, i in lines
-      continue unless line.indexOf("Object.eval") != -1
-      lineNumber = line.match(/<anonymous>:(\d+):/)?[1]
-      column = line.match(/<anonymous>:\d+:(\d+)/)?[1]
-      lineNumber = parseInt lineNumber if lineNumber?
-      column = parseInt column if column?
-      chromeVersion = parseInt navigator?.appVersion?.match(/Chrome\/(\d+)\./)[1] or "28", 10
-      if chromeVersion >= 28
-        lineNumber -= 1  # Apparently the indexing has changed in version 28
-      #console.log "Parsed", lineNumber, column, "from stack", stack
-      return [[[lineNumber, column], [lineNumber, column + 1]]]
-    #console.log "Couldn't parse stack:", stack
-    return null
 
   @explainErrorMessage: (error) ->
     m = error.toString()  # or maybe error.message?
@@ -192,10 +181,11 @@ module.exports.problems = problems =
   aether_MissingVarKeyword: {message: 'MissingVarKeyword', level: 'error'}
   aether_UndefinedVariable: {message: 'UndefinedVariable', level: 'error'}
   aether_MissingThis: {message: 'Missing `this.` keyword.', level: 'error'}
+  aether_IncompleteThis: {message: 'this.what?', level: 'error'}
   # ... many more errors ...
 
   # Warnings: things that we think might cause runtime errors or bugs, but aren't sure (statements that don't do anything, variables which are defined and not used, weird operator precedence issues, etc.)
-  aether_NoEffect: {message: 'NoEffect', level: 'warning'}
+  aether_NoEffect: {message: 'Statement has no effect.', level: 'warning'}
   aether_FalseBlockIndentation: {message: 'FalseBlockIndentation', level: 'warning'}
   aether_UndefinedProperty: {message: 'UndefinedProperty', level: 'warning'}
   # ... many more warnings ...

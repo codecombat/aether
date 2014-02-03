@@ -14,11 +14,12 @@ morph = require './morph'
 transforms = require './transforms'
 protectAPI = require './protectAPI'
 protectBuiltins = require './protectBuiltins'
+instrumentation = require './instrumentation'
 
 optionsValidator = require './validators/options'
 
 module.exports = class Aether
-  #various declarations
+  # various declarations
   @defaults: defaults
   @problems: problems
   @execution: execution
@@ -26,43 +27,42 @@ module.exports = class Aether
   # Current call depth
   depth: 0
 
-  #MODIFIES: @options
-  #EFFECTS: Initialize the Aether object by modifying @options by combining the default options with the options parameter
-  #         and doing validation.
+  # MODIFIES: @options
+  # EFFECTS: Initialize the Aether object by modifying @options by combining the default options with the options parameter
+  #          and doing validation.
   constructor: (options) ->
 
-    #do a deep copy of the options (using lodash, not underscore)
+    # do a deep copy of the options (using lodash, not underscore)
     @originalOptions = _.cloneDeep options
 
-    #if options and options.problems do not exist, create them as empty objects
+    # if options and options.problems do not exist, create them as empty objects
     options ?= {}
     options.problems ?= {}
-    #unless the user has specified to exclude the default options, merge the given options with the default options
+    # unless the user has specified to exclude the default options, merge the given options with the default options
     unless options.excludeDefaultProblems
       options.problems = _.merge _.cloneDeep(Aether.problems.problems), options.problems
 
-    #validate the options
+    # validate the options
     optionsValidation = optionsValidator options
     throw new Error("Options array is not valid: " + JSON.stringify(optionsValidation.errors, null, 4)) if not optionsValidation.valid
 
-    #merge the given options with the default
+    # merge the given options with the default
     @options = _.merge _.cloneDeep(Aether.defaults), options
 
-    #reset the state of the Aether object
+    # reset the state of the Aether object
     @reset()
 
-  #EFFECTS: Performs quick heuristics to determine whether the code will run or produce compilation errors.
-  #         If the bool thorough is specified, it will perform detailed linting. Returns true if raw will run, and false if it won't.
-  #NOTES:   First check inspired by ACE: https://github.com/ajaxorg/ace/blob/master/lib/ace/mode/javascript_worker.js
+  # EFFECTS: Performs quick heuristics to determine whether the code will run or produce compilation errors.
+  #          If the bool thorough is specified, it will perform detailed linting. Returns true if raw will run, and false if it won't.
+  # NOTES:   First check inspired by ACE: https://github.com/ajaxorg/ace/blob/master/lib/ace/mode/javascript_worker.js
   canTranspile: (raw, thorough=false) ->
 
-    return true if not raw #blank code should compile, but bypass the other steps
+    return true if not raw # blank code should compile, but bypass the other steps
     try
       eval "'use strict;'\nthrow 0;" + raw  # evaluated code can only create variables in this function
     catch e
       return false if e isnt 0
     return true unless thorough
-    #lint the code and return errors
     lintProblems = @lint raw
     return lintProblems.errors.length is 0
 
@@ -117,7 +117,7 @@ module.exports = class Aether
     bLintProblems = [p.id, p.message, p.hint] for p in @getAllProblems @lint b
     return not _.isEqual aLintProblems, bLintProblems
 
-  #EFFECTS: Resets the state of Aether.
+  # EFFECTS: Resets the state of Aether.
   reset: ->
     @problems = errors: [], warnings: [], infos: []
     @style = {}
@@ -168,61 +168,10 @@ module.exports = class Aether
 
     lintProblems
 
-  createSandboxedFunction: ->
-    globals = [
-        # Other
-        # 'eval',
-
-        # Math related
-        'NaN', 'Infinity', 'undefined', 'parseInt', 'parseFloat', 'isNaN', 'isFinite',
-
-        # URI related
-        'decodeURI', 'decodeURIComponent', 'encodeURI', 'encodeURIComponent',
-
-        # Built-in objects
-        'Object', 'Function', 'Array', 'String', 'Boolean', 'Number', 'Date', 'RegExp', 'Math', 'JSON',
-
-        # Error Objects
-        'Error', 'EvalError', 'RangeError', 'ReferenceError', 'SyntaxError', 'TypeError', 'URIError'
-    ]
-    dummyContext = {}
-    globalRef = global ? window
-    dummyContext[name] = globalRef[name] for name in globals
-
-    dummyFunction = protectBuiltins.raiseDisabledFunctionConstructor
-    protectBuiltins.copyBuiltin Function, dummyFunction
-    dummyContext.Function = dummyFunction
-
-    wrapper = new Function ['_aether'], @pure
-    wrapper.call dummyContext, @
-    dummyContext[@options.functionName or 'foo']
-
   createFunction: ->
     # Return a ready-to-execute, instrumented function from the purified code
-    # Because JS_WALA normalizes it to define a wrapper function on this, we need to run the wrapper to get our real function out.
-    fn = @createSandboxedFunction()
-
-    ## Wrapper function
-    @wrapWithSandbox fn
-
-  wrapWithSandbox: (fn)->
-    # Wrap calls to aether function in a sandbox
-    #  This is NOT safe with functions parsed outside of aether
-    self = @
-
-    ->
-      Function::constructor = protectBuiltins.raiseDisabledFunctionConstructor
-      try
-        self.depth++
-        result = fn.apply @, arguments
-      finally
-        self.depth--
-        if self.depth <= 0
-          # Shouldn't ever be less than 0
-          #  Should we throw an exception if it is?
-          protectBuiltins.restoreBuiltins()
-
-      result
+    fn = protectBuiltins.createSandboxedFunction @options.functionName or 'foo', @pure, @
+    protectBuiltins.wrapWithSandbox @, fn
 
   createMethod: (thisValue) ->
     # Like createFunction, but binds method to thisValue if specified
@@ -233,7 +182,7 @@ module.exports = class Aether
   sandboxGenerator: (fn) ->
     # If you want to sandbox a generator each time it's called, then call result of createFunction and hand to this.
     oldNext = fn.next
-    fn.next = @wrapWithSandbox ->
+    fn.next = protectBuiltins.wrapWithSandbox @, ->
       oldNext.apply fn, arguments
     fn
 
@@ -241,9 +190,9 @@ module.exports = class Aether
     # Convenience wrapper for running the compiled function with default error handling
     try
       fn ?= @createMethod()
-      fn(args...)
+      fn args...
     catch error
-      @addProblem new Aether.problems.RuntimeProblem @, error, {}
+      @addProblem new problems.RuntimeProblem @, error, {}
 
   getAllProblems: (problems) ->
     _.flatten _.values (problems ? @problems)
@@ -308,7 +257,7 @@ module.exports = class Aether
     varNames = {}
     varNames[parameter] = true for parameter in @options.functionParameters
     preNormalizationTransforms = [
-      transforms.makeGatherNodeRanges originalNodeRanges, @wrappedCodePrefix
+      transforms.makeGatherNodeRanges originalNodeRanges, wrappedCode, @wrappedCodePrefix
       transforms.makeCheckThisKeywords @options.global, varNames
       transforms.checkIncompleteMembers
     ]
@@ -341,7 +290,7 @@ module.exports = class Aether
     else if @options.includeMetrics
       postNormalizationTransforms.unshift transforms.makeInstrumentStatements()
     postNormalizationTransforms.unshift transforms.makeInstrumentCalls() if @options.includeMetrics or @options.includeFlow
-    postNormalizationTransforms.unshift transforms.makeFindOriginalNodes originalNodeRanges, @wrappedCodePrefix, wrappedCode, normalizedSourceMap, normalizedNodeIndex
+    postNormalizationTransforms.unshift transforms.makeFindOriginalNodes originalNodeRanges, @wrappedCodePrefix, normalizedSourceMap, normalizedNodeIndex
     postNormalizationTransforms.unshift transforms.makeProtectAPI @options.functionParameters if @options.protectAPI
     postNormalizationTransforms.unshift transforms.interceptThis
     instrumentedCode = @transform normalizedCode, postNormalizationTransforms
@@ -363,22 +312,11 @@ module.exports = class Aether
       console.log "---NORMALIZED--: #{normalizedCode.split('\n').length}\n", {code: normalizedCode}
       console.log "---INSTRUMENTED: #{instrumentedCode.split('\n').length}\n", {code: "return " + instrumentedCode}
       console.log "---PURIFIED----: #{purifiedCode.split('\n').length}\n", {code: purifiedCode}
-    if false and @options.protectAPI
-      console.log "---PURIFIED----: #{purifiedCode}\n"
     purifiedCode
-
-  getLineNumberForPlannedMethod: (plannedMethod, numMethodsSeen) ->
-    n = 0
-    for methods, lineNumber in [] # @methodLineNumbers
-      for method, j in methods
-        if n++ < numMethodsSeen then continue
-        if method is plannedMethod
-          return lineNumber - 1
-    null
 
   checkCommonMistakes: (code) ->
     # Stop this.\n from failing on the next weird line
-    code = code.replace /this.\s*?\n/g, "this.IncompleteThisReference;"
+    code = code.replace /this\.\s*?\n/g, "this.IncompleteThisReference;"
     # If we wanted to do it just when it would hit the ending } but allow multiline this refs:
     #code = code.replace /this.(\s+})$/, "this.IncompleteThisReference;$1"
     code
@@ -392,82 +330,14 @@ module.exports = class Aether
     indent = if lines.length then lines[0].length - lines[0].replace(/^ +/, '').length else 0
     (line.slice indent for line in lines).join '\n'
 
-  ### Flow/metrics -- put somewhere else? ###
-  serializeVariableValue: (value, depth=0) ->
-    return value unless value
-    return "<Function>" if _.isFunction value
-    value = value.__aetherAPIValue if value.__aetherAPIValue
-    return value.serializeForAether() if not depth and value.serializeForAether
-    isArray = _.isArray(value)
-    if isArray or _.isPlainObject(value)
-      # TODO: this string-based approach doesn't let us get into any nested properties.
-      brackets = if isArray then ["[", "]"] else ["{", "}"]
-      size = _.size value
-      return brackets.join "" unless size
-      return "#{brackets[0]}... #{size} items ...#{brackets[1]}" if depth > 0
-      max = 5
-      values = []
-      if isArray
-        values = ("" + @serializeVariableValue(v, depth + 1) for v in value[0 ... max])
-      else
-        for key, v of value
-          break if values.length > max
-          values.push key + ": " + @serializeVariableValue(v, depth + 1)
-      values.push "(... #{size - max} more)" if size > max
-      return "#{brackets[0]}\n  #{values.join '\n  '}\n#{brackets[1]}"
-    else if value.toString
-      return value.toString()
-    value
-
-  logStatement: (start, end, source, userInfo) ->
-    range = [start, end]
-    if @options.includeMetrics
-      m = (@metrics.statements ?= {})[range] ?= {source: source}
-      m.executions ?= 0
-      ++m.executions
-      @metrics.statementsExecuted ?= 0
-      @metrics.statementsExecuted += 1
-    if flopt = @options.includeFlow
-      call = _.last @callStack
-      ++call.statementsExecuted
-      capture = true
-      capture = false if flopt.callIndex? and flopt.callIndex isnt @flow.states.length - 1
-      capture = false if flopt.statementIndex? and flopt.statementIndex isnt call.statementsExecuted
-      variables = {}
-      for name, value of @vars when capture or name in (flopt.timelessVariables ? [])
-        # TODO: We should probably only store changes, not full copies every time.
-        variables[name] = @serializeVariableValue value
-      if capture or not _.isEmpty variables
-        state =
-          range: [start, end]
-          source: source
-          variables: variables
-          userInfo: _.cloneDeep userInfo
-        call.statements.push state
-
-    #console.log "Logged statement", range, "'#{source}'", "with userInfo", userInfo#, "and now have metrics", @metrics
-
-  logCallStart: (userInfo) ->
-    @vars ?= {}
-    call = {statementsExecuted: 0, statements: [], userInfo: _.cloneDeep userInfo}
-    (@callStack ?= []).push call
-    if @options.includeMetrics
-      @metrics.callsExecuted ?= 0
-      ++@metrics.callsExecuted
-      @metrics.maxDepth = Math.max(@metrics.maxDepth or 0, @callStack.length)
-    if @options.includeFlow
-      if @callStack.length is 1
-        ((@flow ?= {}).states ?= []).push call
-      else
-        3
-        # TODO: Nest the current call into the parent call? Otherwise it's just thrown away.
-    #console.log "Logged call to", @options.functionName, @metrics, @flow
-
-  logCallEnd: ->
-    @callStack.pop()
+  logStatementStart: instrumentation.logStatementStart
+  logStatement: instrumentation.logStatement
+  logCallStart: instrumentation.logCallStart
+  logCallEnd: instrumentation.logCallEnd
 
   createAPIClone: protectAPI.createAPIClone
   restoreAPIClone: protectAPI.restoreAPIClone
+
   restoreBuiltins: protectBuiltins.restoreBuiltins
 
 self.Aether = Aether if self?

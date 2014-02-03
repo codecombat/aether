@@ -1,0 +1,127 @@
+p.lead
+  strong Aether
+  |  aims to make it easy for people to learn and write JavaScript and CoffeeScript by helping them catch and fix bugs,
+  | letting them see and more easily understand the execution of their program 
+  a(href='http://youtu.be/PUv66718DII?t=17m25s') (like Brett Victor commanded!)
+  | , and giving them tips on how they can improve their code. 
+  a(href='http://codecombat.com/') CodeCombat
+  |  is behind it.
+hr
+h2
+  a.anchor(name='get-in-touch', href='#get-in-touch')
+  | Get in touch
+p
+  | You can use the 
+  a(href='https://github.com/codecombat/aether/issues') GitHub issues
+  | , the 
+  a(href='http://discourse.codecombat.com/') Discourse forum
+  | , the 
+  a(href='https://groups.google.com/forum/#!forum/aether-dev') Google Group
+  | , the 
+  a(href='http://www.hipchat.com/g3plnOKqa') HipChat
+  | , or 
+  a(href='mailto:nick@codecombat.com') email
+  |  
+  a(href='http://www.nickwinter.net/') Nick
+  | .
+h2
+  a.anchor(name='what-is-it', href='#what-is-it')
+  | What is it?
+p
+  | It's a JavaScript library (written in CoffeeScript) that takes user code as input; does computer-sciencey transpilation things to it with the help of 
+  a(href='http://jshint.com/') JSHint
+  | , 
+  a(href='http://esprima.org/') Esprima
+  | , 
+  a(href='https://github.com/wala/JS_WALA') JS_WALA
+  | , 
+  a(href='https://github.com/Constellation/escodegen') escodegen
+  | , and 
+  a(href='https://github.com/google/traceur-compiler') traceur
+  | ; and gives you:
+ol
+  li
+    p
+      em incomplete
+      |  
+      strong Linting
+      |  with totally configurable error/warning/info messages. Instead of 
+      code "Warning: Line 2: Missing semicolon."
+      | , you could make Aether say, 
+      code "Error: Put a semicolon here on line 2 after 'this.explode()' to end the statement."
+      | , or 
+      code "fyi: might want a ; here amiga"
+      | , or nothing at all. Aether does spellchecking based on what properties should exist, too: 
+      code Should be 'destroy', not 'destory'.
+  li
+    p
+      strong Transformation 
+      | like with 
+      a(href='https://github.com/substack/node-falafel') node-falafel
+      | , but even easier, because your source transformation plugins can run either before or after the 
+      a(href='http://en.wikipedia.org/wiki/Abstract_syntax_tree') AST
+      |  is normalized with 
+      a(href='https://github.com/wala/JS_WALA') JS_WALA
+      | .
+  li
+    p
+      em incomplete
+      | 
+      strong Sandboxing
+      |  so that you can actually run user code in the browser without worrying if the world will end. Well, not actually. 
+      a(href='http://www.adsafe.org/') That
+      |  is 
+      a(href='http://seclab.stanford.edu/websec/jsPapers/w2sp.pdf') hard
+      | ; one should at least use a web worker. But good enough to foil most hacking attempts.
+  li
+    p
+      strong Instrumentation
+      |  so that when the code is run, you'll know everything that happened. Count statements executed, step through the flow of execution, retrieve past variable states, and even pause and resume execution whenever you want. Pause after every statement? Sure!
+  li
+    p
+      em incomplete
+      |  
+      strong
+        a(href='https://github.com/codecombat/aether/issues/2') Time-travel debugging
+      |  to combine and surpass the best parts of both stepping debugging and logging.
+  li
+    p
+      em planned
+      |  
+      strong Style analysis
+      | : metrics on things like what kind of indentation and bracket style the code uses, whether it uses recursion or regular expressions, etc.
+  li
+    p
+      em planned
+      |  
+      strong Autocompletion
+      |  suggestions based on unfinished code.
+  li
+    p
+      em planned
+      |  
+      strong Other goodies
+      | ! You can let your users code in 
+      a(href='http://www.slideshare.net/domenicdenicola/es6-the-awesome-parts') ES6
+      |  now and hopefully 
+      a(href='https://github.com/michaelficarra/CoffeeScriptRedux') CoffeeScript
+      |  soon.
+h3
+  a.anchor(name='development-status', href='#development-status')
+  | Development Status
+p
+  | Alpha–watch out! 
+  a(href='http://codecombat.com/') CodeCombat
+  |  is using it right now, but there are many bugs and missing pieces. If you'd be interested in Aether were it solid and finished, 
+  em please
+  |  tell us so we can get an idea of where else it might be useful and how it should work.
+
+h3 License
+
+p.strong
+  a(href="https://github.com/codecombat/aether/blob/master/LICENSE") The MIT License (MIT)
+
+p 
+  | If you'd like to contribute, please 
+  a(href="http://codecombat.com/cla") sign the CodeCombat contributor license agreement
+  |  so we can accept your pull requests. It is easy.

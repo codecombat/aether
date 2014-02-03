@@ -1,0 +1,45 @@
+p.lead Want to hack on Aether? Awesome!
+h3 Setting Up Your Environment
+p
+  | The 
+  a(href='https://github.com/codecombat/aether') GitHub Repository
+  |  has 
+  strong everything
+  |  you need to work on Aether. You'll need 
+  a(href='http://www.joyent.com/blog/installing-node-and-npm') Node, NPM
+  |  and 
+  a(href='http://git-scm.com/') Git
+  |  installed.
+ol
+  li
+    strong Clone the repository
+    | :
+    pre.
+      git clone https://github.com/codecombat/aether.git
+  li
+    | Go to the directory and 
+    strong npm install
+    | :
+    pre.
+      cd aether
+      npm install
+h3 Running The Environment
+p
+  | From the aether directory, run:
+pre.
+  grunt  # or grunt watch, to recompile on any changes
+p
+  | Then you can navigate to 
+  code file://localhost/some/path/to/aether/build/index.html
+  |  and see it in action.
+h3 Things to keep in mind
+ul
+  li
+    | Edit the CoffeeScript source in /src and /test, not the transpiled JavaScript in aether/lib.
+  li Remember to create tests in the /test folder.
+h3 What to work on?
+p.strong TODO
+p
+  | You could always also add more tests or handle 
+  a(href='https://github.com/codecombat/aether/issues') reported issues
+  | .

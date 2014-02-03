@@ -156,7 +156,6 @@ describe "API Protection Test Suite", ->
     expect(points[0].equals(originalPoints[0])).toBe true
     expect(points[1].equals(originalPoints[0])).toBe true
     expect(points[2].equals(originalPoints[0])).toBe true
-    # These two don't pass because I haven't yet figured out how to get this.move() to update the non-writable this.pos
     expect(points[3].equals(originalPoints[1])).toBe true
     expect(points[4].equals(originalPoints[2])).toBe true
 

@@ -1,0 +1,40 @@
+p.lead
+  | Aether runs in node and the browser using 
+  a(href='http://addyosmani.com/writing-modular-js/') node-style CommonJS requires
+  | .
+p
+  | In the browser, grab 
+  a(href='https://github.com/codecombat/aether/blob/master/build/aether.js') build/aether.js
+  |  or 
+  a(href='https://github.com/codecombat/aether/blob/master/build/aether.min.js') build/aether.min.js
+  | . Or in node, run
+  code npm install aether --save
+  | , which should add an entry like 
+  code "aether": "~0.1.0"
+  |  to your 
+  code dependencies
+  |  in 
+  code package.json
+  | . Then, in your code:
+pre.prettyprint.
+  var Aether = require('aether');
+  var aether = new Aether();
+  aether.lint(someGnarlyUserCode);
+  aether.problems.warnings;
+  [{ranges: [[[15, 15], [15, 22]]],
+    id: 'aether_MissingThis',
+    message: 'Missing `this.` keyword; should be `this.getEnemies`.',
+    hint: 'There is no function `getEnemys`, but `this` has a method `getEnemies`.',
+    level: "warning"}]
+  aether.transpile(someGnarlyUserCode);
+  var gnarlyFunc = aether.createFunction();
+  gnarlyFunc();
+  // At any point, you can check aether.problems, aether.style, aether.flow, aether.metrics, etc.
+  // See more examples in the tests: https://github.com/codecombat/aether/tree/master/test
+
+p
+  | In the browser, it currently depends on 
+  a(href='http://lodash.com/') lodash
+  |  or 
+  a(href='http://underscorejs.org/') underscore
+  | . We test in Chrome and node, and it will probably work in other modern browsers.

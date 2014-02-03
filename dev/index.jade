@@ -1,0 +1,49 @@
+doctype html
+html(lang="en")
+  head
+    title Aether
+    meta(charset='utf-8')
+    script(src='http://cdnjs.cloudflare.com/ajax/libs/lodash.js/2.4.1/lodash.min.js')
+    script(src='http://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js')
+    script(src='http://cdnjs.cloudflare.com/ajax/libs/ace/1.1.01/ace.js')
+    script(src='http://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.1.0/js/bootstrap.min.js')
+    script(src='http://codecombat.github.io/treema/js/vendor/tv4.js')
+    script(src="http://google-code-prettify.googlecode.com/svn/loader/run_prettify.js?langs=js")
+    script(src='dev/treema.js')
+    script(src='aether.js')
+    script(src='dev/index.js')
+    script(src="http://localhost:35729/livereload.js")
+    link(rel='stylesheet', href='http://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css')
+    link(rel='stylesheet', href='http://netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap.min.css')
+    link(rel='stylesheet', href='dev/treema.css')
+    link(rel='stylesheet', href='dev/index.css')
+
+  body
+    #content
+      a(href='https://github.com/codecombat/aether')
+        img(style='position: absolute; top: 0; right: 0; border: 0;', src='https://s3.amazonaws.com/github/ribbons/forkme_right_orange_ff7600.png', alt='Fork me on GitHub')
+      h1 Aether - Purify Your Users' JavaScript
+      ul.nav.nav-pills.navbar.navbar-default
+        li.active
+          a(href='#overview', data-toggle='tab') Overview
+        li
+          a(href='#demo', data-toggle='tab') Demo
+        li
+          a(href='#usage', data-toggle='tab') Usage
+        li
+          a(href='#develop', data-toggle='tab') Dev
+        li#github-link
+          a(href='https://github.com/codecombat/aether') Aether on GitHub
+      hr
+      .tab-content
+        #overview.tab-pane.fade.in.active
+          include overview
+        #demo.tab-pane.fade
+          include demo
+        #usage.tab-pane.fade
+          include usage
+        #develop.tab-pane.fade
+          include develop
+      footer
+        div
+        div

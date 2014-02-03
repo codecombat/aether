@@ -1,0 +1,128 @@
+$bgcolor: rgba(33, 192, 251, 1)
+
+body
+  background: $bgcolor url('http://i.imgur.com/uf36eRD.jpg') no-repeat center center fixed
+  background-size: contain
+
+.nav-pills>li.active>a, .nav-pills>li.active>a:hover, .nav-pills>li.active>a:focus
+  background-color: $bgcolor
+
+#content
+  box-shadow: 0 0 6px
+  margin: 0 auto
+  width: 800px
+  background: rgba(255, 255, 255, 0.95)
+  padding: 20px
+
+h1
+  border-radius: 3px
+  padding: 15px 10px
+  background: $bgcolor
+  color: white
+  text-shadow: 1px 1px 1px black
+  margin-bottom: 0px
+
+.nav
+  padding: 0 5px
+  margin-top: 5px
+
+#github-link
+  float: right
+  background-color: rgba(0, 0, 0, 0.1)
+  border: 1px solid rgba(0, 0, 0, 0.2)
+  border-radius: 2px
+
+#demo h3
+  margin-top: 40px
+
+h4
+  margin: 20px 0
+
+li
+  margin: 4px 0
+
+// Demos
+
+.tab-pane
+  padding: 10px
+  margin-bottom: 20px
+  border-left: 1px solid lightgray
+  border-right: 1px solid lightgray
+  box-shadow: 0 0 10px #aaa
+
+.nav-tabs li
+  z-index: 1
+
+pre
+  &.tab-pane
+    border: 0
+  margin-bottom: 20px
+
+// Musical double bar footer
+
+footer
+  margin-top: 50px
+  text-align: center
+  clear: both
+  div
+    background-color: #666
+  .bar
+    margin-top: 10px
+    width: 100%
+  div
+    &:first-child
+      height: 5px
+    &:last-child
+      height: 20px
+      margin-top: 10px
+
+pre
+  font-size: 12px
+
+#demo
+  background: white
+  position: absolute
+  left: 20px
+  right: 20px
+  top: 180px
+  .ace-editor-wrapper
+    position: absolute
+    top: 35px
+    right: 20px
+    bottom: 0
+    left: 20px
+    height: 380px
+
+#aether-problems, #aether-console, #aether-metrics, #aether-flow
+  overflow: scroll
+  max-height: 380px
+
+#demo
+  #aether-metrics
+    height: 200px
+  #aether-console
+    height: 100px
+
+.ace_editor .executed
+  background-color: rgba(216, 88, 44, 0.125)
+  position: absolute
+
+.demo-row
+  height: 430px
+
+.dev-section
+  background-color: #fafafa
+
+#worst-problem-wrapper
+  position: absolute
+  z-index: 100
+  top: 445px
+  left: 60px
+  font-size: 20px
+  background-color: rgba(240, 240, 255, 0.8)
+  &.error
+    color: red
+  &.warning
+    color: orange
+  &.info
+    color: green

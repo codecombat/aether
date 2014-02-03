@@ -1,5 +1,6 @@
 _ = window?._ ? self?._ ? global?._ ? require 'lodash'  # rely on lodash existing, since it busts CodeCombat to browserify it--TODO
 problems = require './problems'
+ranges = require './ranges'
 esprima = require 'esprima'
 SourceMap = require 'source-map'
 S = esprima.Syntax
@@ -18,19 +19,6 @@ getParentsOfType = (node, type) ->
 getFunctionNestingLevel = (node) ->
   getParentsOfType(node, S.FunctionExpression).length
 
-getLineNumberForNode = (node) ->
-  # We ignore the first two wrapper lines -- TODO: how do we know there are two lines?
-  parent = node
-  while parent.type isnt S.Program
-    parent = parent.parent
-  fullSource = parent.source()
-  line = -2
-  for i in [0 ... node.range[0]]
-    if fullSource[i] is '\n'
-      ++line
-  #console.log "getLineNumberFor", node, "of", fullSource, "is", line
-  line
-
 ########## Before JS_WALA Normalization ##########
 
 # Original node range preservation.
@@ -38,8 +26,8 @@ getLineNumberForNode = (node) ->
 # 2. When we generate the normalizedCode, we can also create a source map.
 # 3. A postNormalizationTransform can then get the original ranges for each node by going through the source map to our normalized mapping to our original node ranges.
 # 4. Instrumentation can then include the original ranges and node source in the saved flow state.
-module.exports.makeGatherNodeRanges = makeGatherNodeRanges = (nodeRanges, codePrefix) -> (node) ->
-  node.originalRange = start: node.range[0] - codePrefix.length, end: node.range[1] - codePrefix.length
+module.exports.makeGatherNodeRanges = makeGatherNodeRanges = (nodeRanges, code, codePrefix) -> (node) ->
+  node.originalRange = ranges.offsetsToRange node.range[0], node.range[1], code, codePrefix
   node.originalSource = node.source()
   nodeRanges.push node
 
@@ -57,9 +45,10 @@ module.exports.makeCheckThisKeywords = makeCheckThisKeywords = (global, varNames
         for p in getParentsOfType node, S.FunctionDeclaration
           varNames[p.id.name] = true
           return if p.id.name is v
-        problem = new problems.TranspileProblem @, 'aether', 'MissingThis', {}, '', ''  # TODO: last args
+        problem = new problems.TranspileProblem @, 'aether', 'MissingThis', {}, null, '', ''  # TODO: last args
         problem.message = "Missing `this.` keyword; should be `this.#{v}`."
         problem.hint = "There is no function `#{v}`, but `this` has a method `#{v}`."
+        problem.ranges = [[node.originalRange.start, node.originalRange.end]]
         @addProblem problem
         if not @options.requiresThis
           node.update "this.#{node.source()}"
@@ -73,32 +62,33 @@ module.exports.validateReturns = validateReturns = (node) ->
     node.update "this.validateReturn('#{@options.functionName}', (#{node.source()}))"
 
 module.exports.checkIncompleteMembers = checkIncompleteMembers = (node) ->
+  #console.log 'check incomplete members', node, node.source() if node.source().search('this.') isnt -1
   if node.type is 'ExpressionStatement'
-    lineNumber = getLineNumberForNode node
     exp = node.expression
     if exp.type is 'MemberExpression'
       # Handle missing parentheses, like in:  this.moveUp;
       if exp.property.name is "IncompleteThisReference"
+        problem = new problems.TranspileProblem @, 'aether', 'IncompleteThis', {}, null, '', ''  # TODO: last args
         m = "this.what? (Check available spells below.)"
       else
+        problem = new problems.TranspileProblem @, 'aether', 'NoEffect', {}, null, '', ''  # TODO: last args
         m = "#{exp.source()} has no effect."
         if exp.property.name in problems.commonMethods
-          m += " It needs parentheses: #{exp.property.name}()"
-      # Should become a UserCodeProblem like in makeCheckThisKeywords
-      error = new Error m
-      error.lineNumber = lineNumber + 2  # Reapply wrapper function offset
-      #if $? then console.log node, node.source(), "going to error out!"
-      #throw error
-
+          m += " It needs parentheses: #{exp.source()}()"
+        else
+          problem.hint = "Is it a method? Those need parentheses: #{exp.source()}()"
+      problem.message = m
+      problem.ranges = [[node.originalRange.start, node.originalRange.end]]
+      @addProblem problem
 
 ########## After JS_WALA Normalization ##########
 
 # Restoration of original nodes after normalization
-module.exports.makeFindOriginalNodes = makeFindOriginalNodes = (originalNodes, codePrefix, wrappedCode, normalizedSourceMap, normalizedNodeIndex) ->
+module.exports.makeFindOriginalNodes = makeFindOriginalNodes = (originalNodes, codePrefix, normalizedSourceMap, normalizedNodeIndex) ->
   normalizedPosToOriginalNode = (pos) ->
     start = pos.start_offset - codePrefix.length
     end = pos.end_offset - codePrefix.length
-    return node for node in originalNodes when start is node.originalRange.start and end is node.originalRange.end
+    return node for node in originalNodes when start is node.originalRange.start.ofs and end is node.originalRange.end.ofs
     return null
   smc = new SourceMap.SourceMapConsumer normalizedSourceMap.toString()
   #console.log "Got smc", smc, "from map", normalizedSourceMap, "string", normalizedSourceMap.toString()
@@ -106,7 +96,7 @@ module.exports.makeFindOriginalNodes = makeFindOriginalNodes = (originalNodes, c
     return unless mapped = smc.originalPositionFor line: node.loc.start.line, column: node.loc.start.column
     #console.log "Got normalized position", mapped, "for node", node, node.source()
     return unless normalizedNode = normalizedNodeIndex[mapped.column]
-    #nconsole.log "  Got normalized node", normalizedNode
+    #console.log "  Got normalized node", normalizedNode
     node.originalNode = normalizedPosToOriginalNode normalizedNode.attr.pos
     #console.log "  Got original node", node.originalNode, "from pos", normalizedNode.attr?.pos
 
@@ -146,7 +136,7 @@ module.exports.makeInstrumentStatements = makeInstrumentStatements = (varNames) 
   return (node) ->
     orig = node.originalNode
     #console.log "Should we instrument", orig?.originalSource, node.source(), node, "?", (orig and orig.originalRange.start >= 0), (node.type in statements), orig?.type, getFunctionNestingLevel(node) if node.source().length < 50
-    return unless orig and orig.originalRange.start >= 0
+    return unless orig and orig.originalRange.start.ofs >= 0
     return unless node.type in statements
     return if orig.type in [S.ThisExpression, S.Identifier]  # probably need to add to this to get statements which corresponded to interesting expressions before normalization
     # Only do this in nested functions, not our wrapper
@@ -156,12 +146,12 @@ module.exports.makeInstrumentStatements = makeInstrumentStatements = (varNames) 
     else if orig.parent?.type is S.VariableDeclarator and orig.parent.parent?.type is S.VariableDeclaration
       orig = orig.parent.parent
     # TODO: actually save this into aether.flow, and have it happen before the yield happens
-    range = [orig.originalRange.start, orig.originalRange.end]
-    source = orig.originalSource
-    safeSource = source.replace(/\"/g, '\\"').replace(/\n/g, '\\n')
+    safeRange = ranges.stringifyRange orig.originalRange.start, orig.originalRange.end
+    safeSource = orig.originalSource.replace(/\"/g, '\\"').replace(/\n/g, '\\n')
+    prefix = "_aether.logStatementStart(#{safeRange});"
     loggers = ("_aether.vars['#{varName}'] = typeof #{varName} == 'undefined' ? undefined : #{varName};" for varName of varNames)
-    loggers.push "_aether.logStatement(#{range[0]}, #{range[1]}, \"#{safeSource}\", this._aetherUserInfo);"
-    node.update "#{node.source()} #{loggers.join ' '}"
+    loggers.push "_aether.logStatement(#{safeRange}, \"#{safeSource}\", this._aetherUserInfo);"
+    node.update "#{prefix} #{node.source()} #{loggers.join ' '}"
     #console.log " ... created logger", node.source(), orig
 
 module.exports.interceptThis = interceptThis = (node) ->

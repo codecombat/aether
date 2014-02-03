@@ -1,6 +1,6 @@
 {
   "name": "aether",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "homepage": "https://github.com/codecombat/aether",
   "authors": [
     "CodeCombat <team@codecombat.com>"
@@ -22,8 +22,9 @@
     "test",
     "src",
     "lib",
-    "dev",
     "build/test",
+    "build/dev",
+    "build/index.html",
     "Gruntfile.coffee",
     "plan.md"
   ]
