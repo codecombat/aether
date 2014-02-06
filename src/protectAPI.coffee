@@ -51,7 +51,7 @@ module.exports.createAPIClone = createAPIClone = (value) ->
 
   # Add the source value to the stack of traversed objects and associate it with its clone.
   # Object.defineProperty defaults to non-configurable, non-enumerable, non-writable.
-  Object.defineProperty value, "__aetherAPIClone", value: result
+  Object.defineProperty value, "__aetherAPIClone", value: result, writable: true, configurable: true
   Object.defineProperty result, "__aetherAPIValue", value: value
 
   # Recursively populate clone (susceptible to call stack limits) with non-configurable, non-writable properties.

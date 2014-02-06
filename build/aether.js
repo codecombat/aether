@@ -23224,7 +23224,9 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
       result = {};
     }
     Object.defineProperty(value, "__aetherAPIClone", {
-      value: result
+      value: result,
+      writable: true,
+      configurable: true
     });
     Object.defineProperty(result, "__aetherAPIValue", {
       value: value
