@@ -30,7 +30,7 @@ module.exports = (options) ->
         type: 'string'
         description: "Input language"
         minLength:1
-        'enum': ['javascript']
+        'enum': ['javascript', 'coffeescript']
         required: false
       languageVersion:
         type: 'string'

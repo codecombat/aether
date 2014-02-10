@@ -27,6 +27,7 @@ getFunctionNestingLevel = (node) ->
 # 3. A postNormalizationTransform can then get the original ranges for each node by going through the source map to our normalized mapping to our original node ranges.
 # 4. Instrumentation can then include the original ranges and node source in the saved flow state.
 module.exports.makeGatherNodeRanges = makeGatherNodeRanges = (nodeRanges, code, codePrefix) -> (node) ->
+  return unless node.range
   node.originalRange = ranges.offsetsToRange node.range[0], node.range[1], code, codePrefix
   node.originalSource = node.source()
   nodeRanges.push node

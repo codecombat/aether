@@ -6,10 +6,12 @@ acorn_loose = require 'acorn/acorn_loose'  # for if Esprima dies. Note it can't 
 jshint = require('jshint').JSHINT
 normalizer = require 'JS_WALA/normalizer/lib/normalizer'
 escodegen = require 'escodegen'
+csredux = require 'coffee-script-redux'
 
 defaults = require './defaults'
 problems = require './problems'
 execution = require './execution'
+fixLocations = require './fixLocations'
 morph = require './morph'
 transforms = require './transforms'
 protectAPI = require './protectAPI'
@@ -129,7 +131,8 @@ module.exports = class Aether
   transpile: (@raw) ->
     # Transpile it. Even if it can't transpile, it will give syntax errors and warnings and such. Clears any old state.
     @reset()
-    @problems = @lint @raw
+    unless @options.language is 'coffeescript'
+      @problems = @lint @raw
     @pure = @purifyCode @raw
     @pure
 
@@ -147,6 +150,14 @@ module.exports = class Aether
     # Should add \n after? (Not `"use strict";this.moveXY(30, 26);` on one line.)
     # TODO: Try it and make sure our line counts are fine.
     @wrappedCodeSuffix ?= "\n}"
+    @wrappedCodePrefix + rawCode + @wrappedCodeSuffix
+
+  wrapCS: (rawCode) ->
+    @wrappedCodePrefix ?="""
+    #{@options.functionName or 'foo'} = (#{@options.functionParameters.join(', ')}) ->
+    \t
+    """
+    @wrappedCodeSuffix ?= "\n"
     @wrappedCodePrefix + rawCode + @wrappedCodeSuffix
 
   lint: (rawCode) ->
@@ -231,7 +242,7 @@ module.exports = class Aether
     url = "randotron_" + Math.random()
     reporter = new traceur.util.ErrorReporter()
     loaderHooks = new traceur.runtime.InterceptOutputLoaderHooks reporter, url
-    loader = new traceur.modules.InternalLoader loaderHooks
+    loader = new traceur.System.internalLoader_.constructor loaderHooks  # Some day traceur's API will stabilize.
     loader.script code, url
     # Could also do the following, but that wraps in a module
     #loader = new traceur.runtime.Loader loaderHooks
@@ -246,12 +257,21 @@ module.exports = class Aether
     [parse, options] = switch parser
       when "esprima" then [esprima.parse, {loc: true, range: true, raw: true, comment: true, tolerant: true}]
       when "acorn_loose" then [acorn_loose.parse_dammit, {locations: true, tabSize: 4, ecmaVersion: 5}]
-    transformedAST = parse transformedCode, options
+      when "csredux" then [csredux.compile, {bare: true}]
+    if parser is 'csredux'
+      temp = csredux.parse transformedCode, {optimise: false, raw: true}
+      transformedAST = parse temp, options
+      fixLocations transformedAST
+    else
+      transformedAST = parse transformedCode, options
     [transformedCode, transformedAST]
 
   purifyCode: (rawCode) ->
-    preprocessedCode = @checkCommonMistakes rawCode  # TODO: if we could somehow not change the source ranges here, that would be awesome....
-    wrappedCode = @wrap preprocessedCode
+    if @options.language is 'coffeescript'
+      wrappedCode = @wrapCS rawCode
+    else
+      preprocessedCode = @checkCommonMistakes rawCode  # TODO: if we could somehow not change the source ranges here, that would be awesome....
+      wrappedCode = @wrap preprocessedCode
 
     originalNodeRanges = []
     varNames = {}
@@ -261,13 +281,17 @@ module.exports = class Aether
       transforms.makeCheckThisKeywords @options.global, varNames
       transforms.checkIncompleteMembers
     ]
-    try
-      [transformedCode, transformedAST] = @transform wrappedCode, preNormalizationTransforms, "esprima", true
-    catch error
-      problem = new problems.TranspileProblem @, 'esprima', error.id, error, {}, wrappedCode, ''
-      @addProblem problem
-      originalNodeRanges.splice()  # Reset any ranges we did find; we'll try again
-      [transformedCode, transformedAST] = @transform wrappedCode, preNormalizationTransforms, "acorn_loose", true
+
+    if @options.language is 'coffeescript'
+      [transformedCode, transformedAST] = @transform wrappedCode, preNormalizationTransforms, "csredux", true
+    else
+      try
+        [transformedCode, transformedAST] = @transform wrappedCode, preNormalizationTransforms, "esprima", true
+      catch error
+        problem = new problems.TranspileProblem @, 'esprima', error.id, error, {}, wrappedCode, ''
+        @addProblem problem
+        originalNodeRanges.splice()  # Reset any ranges we did find; we'll try again
+        [transformedCode, transformedAST] = @transform wrappedCode, preNormalizationTransforms, "acorn_loose", true
 
     # TODO: need to insert 'use strict' after normalization, since otherwise you get tmp2 = 'use strict'
     normalizedAST = normalizer.normalize transformedAST

@@ -4,12 +4,19 @@ _ = window?._ ? self?._ ? global?._ ? require 'lodash'  # rely on lodash existin
 
 esprima = require 'esprima'  # getting our Esprima Harmony
 acorn_loose = require 'acorn/acorn_loose'  # for if Esprima dies. Note it can't do ES6.
+csredux = require 'coffee-script-redux'
+
+fixLocations = require './fixLocations'
 
 module.exports = morph = (source, transforms, parser="esprima") ->
   chunks = source.split ''
+  locToRange = null
   if parser is 'esprima'
     ast = esprima.parse source, {range: true, loc: true}
-    locToRange = null
+  else if parser is 'csredux'
+    csAST = csredux.parse source, {optimise: false, raw: true}
+    ast = csredux.compile csAST, {bare: true}
+    fixLocations ast
   else if parser is 'acorn_loose'
     ast = acorn_loose.parse_dammit source, {locations: true}
     # Esprima uses "range", but acorn_loose only has "locations"
@@ -23,12 +30,11 @@ module.exports = morph = (source, transforms, parser="esprima") ->
   walk = (node, parent) ->
     insertHelpers node, parent, chunks, locToRange
     for key, child of node
-      continue if key is 'parent'
+      continue if key is 'parent' or key is 'leadingComments'
       if _.isArray child
         for grandchild in child
           walk grandchild, node if _.isString grandchild?.type
       else if _.isString child?.type
-        insertHelpers child, node, chunks, locToRange
         walk child, node
     transform node for transform in transforms
   walk ast, undefined
