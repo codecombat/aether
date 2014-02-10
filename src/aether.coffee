@@ -12,6 +12,7 @@ csredux = require 'coffee-script-redux'
 defaults = require './defaults'
 problems = require './problems'
 execution = require './execution'
+locFixer = require './locFixer'
 morph = require './morph'
 transforms = require './transforms'
 
@@ -286,7 +287,7 @@ module.exports = class Aether
     tree = trees.values()[0]
     opts = showLineNumbers: false
     tree.generatedSource = traceur.outputgeneration.TreeWriter.write(tree, opts)
-    tree.generatedSource
+    tree.generatedSource    
 
   transform: (code, transforms, parser="esprima", withAST=false) ->
     transformedCode = morph code, (_.bind t, @ for t in transforms), parser
@@ -294,8 +295,13 @@ module.exports = class Aether
     [parse, options] = switch parser
       when "esprima" then [esprima.parse, {loc: true, range: true, raw: true, comment: true, tolerant: true}]
       when "acorn_loose" then [acorn_loose.parse_dammit, {locations: true, tabSize: 4, ecmaVersion: 5}]
-      when "csredux" then [csredux.compile, {bare: true}]    
-    transformedAST = parse transformedCode, options
+      when "csredux" then [csredux.compile, {bare: true}]
+    if parser == 'csredux'
+      temp = csredux.parse transformedCode, {optimise: false, raw: true}      
+      transformedAST = parse temp, options
+      new locFixer transformedAST
+    else 
+      transformedAST = parse transformedCode options        
     [transformedCode, transformedAST]
 
   purifyCode: (rawCode) ->
@@ -315,13 +321,14 @@ module.exports = class Aether
 
     if @options.language == 'coffeescript'
       [transformedCode, transformedAST] = @transform wrappedCode, preNormalizationTransforms, "csredux", true
-    try
-      [transformedCode, transformedAST] = @transform wrappedCode, preNormalizationTransforms, "esprima", true
-    catch error
-      problem = new problems.TranspileProblem @, 'esprima', error.id, error, {}, wrappedCode, ''
-      @addProblem problem
-      originalNodeRanges.splice()  # Reset any ranges we did find; we'll try again
-      [transformedCode, transformedAST] = @transform wrappedCode, preNormalizationTransforms, "acorn_loose", true
+    else 
+      try
+        [transformedCode, transformedAST] = @transform wrappedCode, preNormalizationTransforms, "esprima", true
+      catch error
+        problem = new problems.TranspileProblem @, 'esprima', error.id, error, {}, wrappedCode, ''
+        @addProblem problem
+        originalNodeRanges.splice()  # Reset any ranges we did find; we'll try again
+        [transformedCode, transformedAST] = @transform wrappedCode, preNormalizationTransforms, "acorn_loose", true
 
     # TODO: need to insert 'use strict' after normalization, since otherwise you get tmp2 = 'use strict'
     normalizedAST = normalizer.normalize transformedAST
@@ -343,7 +350,7 @@ module.exports = class Aether
     postNormalizationTransforms.unshift transforms.makeInstrumentCalls() if @options.includeMetrics or @options.includeFlow
     postNormalizationTransforms.unshift transforms.makeFindOriginalNodes originalNodeRanges, @wrappedCodePrefix, wrappedCode, normalizedSourceMap, normalizedNodeIndex
     postNormalizationTransforms.unshift transforms.interceptThis()
-    instrumentedCode = "return " + @transform normalizedCode, postNormalizationTransforms
+    instrumentedCode = @transform normalizedCode, postNormalizationTransforms
     if @options.yieldConditionally or @options.yieldAutomatically
       # Unlabel breaks and pray for correct behavior: https://github.com/google/traceur-compiler/issues/605
       instrumentedCode = instrumentedCode.replace /(break|continue) [A-z0-9]+;/g, '$1;'
@@ -361,6 +368,7 @@ module.exports = class Aether
 
     # Inject __interceptThis
     interceptThis = 'var __interceptThis=(function(){var G=this;return function($this,sandbox){if($this==G){return sandbox;}return $this;};})();'
+
 
     return interceptThis + purifiedCode
 
@@ -425,7 +433,7 @@ module.exports = class Aether
     #console.log "Logged call to", @options.functionName, @metrics, @flow
 
   logCallEnd: ->
-    @callStack.pop()
+    @callStack.pop()   
 
 self.Aether = Aether if self?
 window.Aether = Aether if window?

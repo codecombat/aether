@@ -5,7 +5,7 @@ describe "CS test Suite!", ->
     aether = new Aether language: "coffeescript"
     it "Should compile funcitons", ->
       code = """
-        fn = (x) -> x * x
+        return 1000
       """
-      console.log aether.transpile code        
-
+      aether.transpile(code)
+      expect(aether.run()).toEqual 1000
