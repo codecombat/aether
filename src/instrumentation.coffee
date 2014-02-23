@@ -31,7 +31,7 @@ module.exports.logStatementStart = logStatementStart = (@lastStatementRange) ->
 module.exports.logStatement = logStatement = (range, source, userInfo) ->
   @lastStatementRange = null
   if @options.includeMetrics
-    m = (@metrics.statements ?= {})[range] ?= {source: source}
+    m = (@metrics.statements ?= {})[range[0].ofs + "-" + range[1].ofs] ?= {source: source}
     m.executions ?= 0
     ++m.executions
     @metrics.statementsExecuted ?= 0

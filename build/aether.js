@@ -21182,7 +21182,6 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
       options = {
         loc: false,
         range: false,
-        raw: true,
         comment: false,
         tolerant: true
       };
@@ -21289,6 +21288,31 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
       }
       this.pure = this.purifyCode(this.raw);
       return this.pure;
+    };
+
+    Aether.prototype.beautify = function(raw) {
+      var ast, beautified, e;
+      try {
+        ast = esprima.parse(raw, {
+          range: true,
+          tokens: true,
+          comment: true,
+          tolerant: true
+        });
+        ast = escodegen.attachComments(ast, ast.comments, ast.tokens);
+      } catch (_error) {
+        e = _error;
+        console.log('got error beautifying', e);
+        ast = acorn_loose.parse_dammit(raw, {
+          tabSize: 4,
+          ecmaVersion: 5
+        });
+      }
+      beautified = escodegen.generate(ast, {
+        comment: true,
+        parse: esprima.parse
+      });
+      return beautified;
     };
 
     Aether.prototype.addProblem = function(problem, problems) {
@@ -21508,7 +21532,6 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
               esprima.parse, {
                 loc: true,
                 range: true,
-                raw: true,
                 comment: true,
                 tolerant: true
               }
@@ -21621,9 +21644,6 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
       postNormalizationTransforms.unshift(transforms.interceptThis);
       instrumentedCode = this.transform(normalizedCode, postNormalizationTransforms);
       if (this.options.yieldConditionally || this.options.yieldAutomatically) {
-        if (rawCode.search("continue") !== -1) {
-          instrumentedCode = instrumentedCode.replace(/break [A-z0-9]+;/g, 'break;');
-        }
         purifiedCode = this.traceurify(instrumentedCode);
       } else {
         purifiedCode = instrumentedCode;
@@ -22021,10 +22041,10 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
   };
 
   module.exports.logStatement = logStatement = function(range, source, userInfo) {
-    var call, capture, flopt, m, name, state, value, variables, _base, _base1, _base2, _base3, _ref3, _ref4;
+    var call, capture, flopt, m, name, state, value, variables, _base, _base1, _base2, _base3, _name, _ref3, _ref4;
     this.lastStatementRange = null;
     if (this.options.includeMetrics) {
-      m = (_base = ((_base1 = this.metrics).statements != null ? (_base1 = this.metrics).statements : _base1.statements = {}))[range] != null ? (_base = ((_base2 = this.metrics).statements != null ? (_base2 = this.metrics).statements : _base2.statements = {}))[range] : _base[range] = {
+      m = (_base = ((_base1 = this.metrics).statements != null ? (_base1 = this.metrics).statements : _base1.statements = {}))[_name = range[0].ofs + "-" + range[1].ofs] != null ? (_base = ((_base2 = this.metrics).statements != null ? (_base2 = this.metrics).statements : _base2.statements = {}))[_name = range[0].ofs + "-" + range[1].ofs] : _base[_name] = {
         source: source
       };
       if (m.executions == null) {

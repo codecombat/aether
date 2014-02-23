@@ -82,7 +82,7 @@ module.exports = class Aether
     return false if a is b
     return true if careAboutLineNumbers and @hasChangedLineNumbers a, b
     return true if lintAether?.hasChangedLintProblems a, b
-    options = {loc: false, range: false, raw: true, comment: false, tolerant: true}
+    options = {loc: false, range: false, comment: false, tolerant: true}
     [aAST, bAST] = [null, null]
     try aAST = esprima.parse a, options
     try bAST = esprima.parse b, options
@@ -135,6 +135,16 @@ module.exports = class Aether
       @problems = @lint @raw
     @pure = @purifyCode @raw
     @pure
+
+  beautify: (raw) ->
+    try
+      ast = esprima.parse raw, {range: true, tokens: true, comment: true, tolerant: true}
+      ast = escodegen.attachComments ast, ast.comments, ast.tokens
+    catch e
+      console.log 'got error beautifying', e
+      ast = acorn_loose.parse_dammit raw, {tabSize: 4, ecmaVersion: 5}
+    beautified = escodegen.generate ast, {comment: true, parse: esprima.parse}
+    beautified
 
   addProblem: (problem, problems=null) ->
     return if problem.level is "ignore"
@@ -255,7 +265,7 @@ module.exports = class Aether
     transformedCode = morph code, (_.bind t, @ for t in transforms), parser
     return transformedCode unless withAST
     [parse, options] = switch parser
-      when "esprima" then [esprima.parse, {loc: true, range: true, raw: true, comment: true, tolerant: true}]
+      when "esprima" then [esprima.parse, {loc: true, range: true, comment: true, tolerant: true}]
       when "acorn_loose" then [acorn_loose.parse_dammit, {locations: true, tabSize: 4, ecmaVersion: 5}]
       when "csredux" then [csredux.compile, {bare: true}]
     if parser is 'csredux'
@@ -319,10 +329,6 @@ module.exports = class Aether
     postNormalizationTransforms.unshift transforms.interceptThis
     instrumentedCode = @transform normalizedCode, postNormalizationTransforms
     if @options.yieldConditionally or @options.yieldAutomatically
-      if rawCode.search("continue") isnt -1
-        # Unlabel breaks and pray for correct behavior: https://github.com/google/traceur-compiler/issues/605
-        # Seems to turn continues into breaks the way JS_WALA does it.
-        instrumentedCode = instrumentedCode.replace /break [A-z0-9]+;/g, 'break;'
       purifiedCode = @traceurify instrumentedCode
     else
       purifiedCode = instrumentedCode
