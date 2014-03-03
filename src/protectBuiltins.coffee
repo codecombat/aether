@@ -51,6 +51,9 @@ module.exports.createSandboxedFunction = createSandboxedFunction = (functionName
       # Other
       # 'eval',
 
+      # TODO: figure out how to really get these in (CodeCombat-specific, hack)
+      'Vector', '_',
+
       # Math related
       'NaN', 'Infinity', 'undefined', 'parseInt', 'parseFloat', 'isNaN', 'isFinite',
 
@@ -65,7 +68,13 @@ module.exports.createSandboxedFunction = createSandboxedFunction = (functionName
   ]
   dummyContext = {}
   globalRef = global ? window
-  dummyContext[name] = globalRef[name] for name in globals
+  for name in globals
+    dummyContext[name] = globalRef[name]
+    if name is 'Vector'
+      try
+        dummyContext[name] = eval("require('lib/world/vector')")  # haaaaaaaaaaaaaaa.... aaaaaaaaaaaack
+      catch error
+        console.log 'dude, there is no Vector', error
 
   dummyFunction = raiseDisabledFunctionConstructor
   copyBuiltin Function, dummyFunction

@@ -23392,7 +23392,7 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
   reFlags = /\w*$/;
 
   module.exports.createAPIClone = createAPIClone = function(value) {
-    var className, clone, ctor, i, isArr, k, prop, result, v, _fn, _fn1, _i, _j, _k, _len, _len1, _len2, _ref3, _ref4, _ref5;
+    var className, clone, ctor, i, isArr, k, prop, result, v, _fn, _i, _j, _k, _len, _len1, _len2, _ref3, _ref4, _ref5;
     if (!_.isObject(value)) {
       return value;
     }
@@ -23463,19 +23463,20 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
         _fn(prop);
       }
       _ref5 = value.apiProperties;
-      _fn1 = function(prop) {
-        var fn;
-        fn = function() {
-          return createAPIClone(value[prop]);
-        };
-        return Object.defineProperty(result, prop, {
-          get: fn,
-          enumerable: true
-        });
-      };
       for (_k = 0, _len2 = _ref5.length; _k < _len2; _k++) {
         prop = _ref5[_k];
-        _fn1(prop);
+        if (result[prop] == null) {
+          (function(prop) {
+            var fn;
+            fn = function() {
+              return createAPIClone(value[prop]);
+            };
+            return Object.defineProperty(result, prop, {
+              get: fn,
+              enumerable: true
+            });
+          })(prop);
+        }
       }
     } else {
       for (k in value) {
@@ -23606,13 +23607,21 @@ var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? 
   };
 
   module.exports.createSandboxedFunction = createSandboxedFunction = function(functionName, code, aether) {
-    var dummyContext, dummyFunction, globalRef, globals, wrapper, _i, _len;
-    globals = ['NaN', 'Infinity', 'undefined', 'parseInt', 'parseFloat', 'isNaN', 'isFinite', 'decodeURI', 'decodeURIComponent', 'encodeURI', 'encodeURIComponent', 'Object', 'Function', 'Array', 'String', 'Boolean', 'Number', 'Date', 'RegExp', 'Math', 'JSON', 'Error', 'EvalError', 'RangeError', 'ReferenceError', 'SyntaxError', 'TypeError', 'URIError'];
+    var dummyContext, dummyFunction, error, globalRef, globals, wrapper, _i, _len;
+    globals = ['Vector', '_', 'NaN', 'Infinity', 'undefined', 'parseInt', 'parseFloat', 'isNaN', 'isFinite', 'decodeURI', 'decodeURIComponent', 'encodeURI', 'encodeURIComponent', 'Object', 'Function', 'Array', 'String', 'Boolean', 'Number', 'Date', 'RegExp', 'Math', 'JSON', 'Error', 'EvalError', 'RangeError', 'ReferenceError', 'SyntaxError', 'TypeError', 'URIError'];
     dummyContext = {};
     globalRef = global != null ? global : window;
     for (_i = 0, _len = globals.length; _i < _len; _i++) {
       name = globals[_i];
       dummyContext[name] = globalRef[name];
+      if (name === 'Vector') {
+        try {
+          dummyContext[name] = eval("require('lib/world/vector')");
+        } catch (_error) {
+          error = _error;
+          console.log('dude, there is no Vector', error);
+        }
+      }
     }
     dummyFunction = raiseDisabledFunctionConstructor;
     copyBuiltin(Function, dummyFunction);

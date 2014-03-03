@@ -66,7 +66,7 @@ module.exports.createAPIClone = createAPIClone = (value) ->
           throw new Error "Calling #{prop} is not allowed." unless value._aetherAPIMethodsAllowed
           value[prop].apply value, arguments
         Object.defineProperty result, prop, value: fn, enumerable: true
-    for prop in value.apiProperties
+    for prop in value.apiProperties when not result[prop]?  # Don't redefine it if it's already done.
       do (prop) ->
         # Accessing a property on the clone will get the value from the original.
         fn = -> createAPIClone value[prop]
