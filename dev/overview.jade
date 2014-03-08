@@ -116,6 +116,23 @@ p
   em please
   |  tell us so we can get an idea of where else it might be useful and how it should work.
 
+h3 How does it work?
+p Aether uses JSHint, Esprima, Acorn, JS_WALA, escodegen, and traceur together to carry out this process:
+ol
+  li We use JSHint to provide lint warnings and errors.
+  li We wrap the user code in a function declaration, since Aether expects the user code to be the body of a function.
+  li We do a regexp replace step to check for common mistakes. This will probably go away.
+  li We parse it with Esprima to get an AST. If it's invalid, we fall back to parsing with Acorn in loose mode so that we can get a workable AST despite the errors.
+  li We run a bunch of pre-normalization transformations on the AST to grab variable declarations, original statement ranges, and check for several more types of mistakes.
+  li We use JS_WALA to normalize the AST so that there'll be far fewer cases to handle in the next transformation step.
+  li We output that transformed AST to JS again using escodegen, since our transformations need to operate on an AST with matching original source at the same time.
+  li We parse again with Esprima and run a bunch of post-normalization transformations on that AST to do things like inserting instrumentation, protecting external objects, and adding yield statements.
+  li We use traceur to convert our ES6 yield statements to giant ES5 state machines to simulate generators, if we added any yields.
+  li
+    | We add one more function to intercept references to 
+    code this
+    |  for security.
+
 h3 License
 
 p.strong
