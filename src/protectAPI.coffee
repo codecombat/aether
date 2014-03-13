@@ -80,17 +80,18 @@ module.exports.createAPIClone = createAPIClone = (value) ->
 
 # Hmm; this will make it so that if we are, say, passing an array or object around, even if it doesn't have an API,
 # then modifications to the contents will be ignored after clone restoration. Is this bad?
-module.exports.restoreAPIClone = restoreAPIClone = (value) ->
+module.exports.restoreAPIClone = restoreAPIClone = (value, depth=0) ->
   return value unless _.isObject value
   className = Object::toString.call value
   return value unless cloneableClasses[className]
   return value if className in [boolClass, dateClass, numberClass, stringClass, regexpClass]
   return source if source = value.__aetherAPIValue
+  return value if depth > 1  # hack, but I don't understand right now
 
   # We now have a new array/object that may contain some clones, so let's recurse to find them.
   if isArr = _.isArray value
-    result = (restoreAPIClone v for v in value)
+    result = (restoreAPIClone v, depth + 1 for v in value)
   else
     result = {}
-    result[k] = restoreAPIClone v for k, v of value
+    result[k] = restoreAPIClone v, depth + 1 for k, v of value
   result
