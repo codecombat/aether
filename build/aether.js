@@ -23466,7 +23466,7 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
   };
 
   module.exports.restoreAPIClone = restoreAPIClone = function(value, depth) {
-    var className, isArr, k, result, source, v;
+    var className, isArr, k, result, source, v, _ref3;
     if (depth == null) {
       depth = 0;
     }
@@ -23481,6 +23481,9 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
       return value;
     }
     if (source = value.__aetherAPIValue) {
+      return source;
+    }
+    if (source = (_ref3 = value.__aetherAPIClone) != null ? _ref3.__aetherAPIValue : void 0) {
       return source;
     }
     if (depth > 1) {

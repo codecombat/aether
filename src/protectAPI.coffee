@@ -86,7 +86,8 @@ module.exports.restoreAPIClone = restoreAPIClone = (value, depth=0) ->
   return value unless cloneableClasses[className]
   return value if className in [boolClass, dateClass, numberClass, stringClass, regexpClass]
   return source if source = value.__aetherAPIValue
-  return value if depth > 1  # hack, but I don't understand right now
+  return source if source = value.__aetherAPIClone?.__aetherAPIValue  # hack, but this helped in one case, not sure why
+  return value if depth > 1  # hack, but I don't understand right now--when do we stop? can't recurse forever
 
   # We now have a new array/object that may contain some clones, so let's recurse to find them.
   if isArr = _.isArray value
