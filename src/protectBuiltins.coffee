@@ -1,3 +1,5 @@
+problems = require './problems'
+
 getOwnPropertyNames = Object.getOwnPropertyNames
 
 copy = (source, target) ->
@@ -74,17 +76,23 @@ module.exports.createSandboxedFunction = createSandboxedFunction = (functionName
       try
         dummyContext[name] = eval("require('lib/world/vector')")  # haaaaaaaaaaaaaaa.... aaaaaaaaaaaack
       catch error
-        console.log 'dude, there is no Vector', error
+        #console.log 'dude, there is no Vector', error
+        null
 
   dummyFunction = raiseDisabledFunctionConstructor
   copyBuiltin Function, dummyFunction
   dummyContext.Function = dummyFunction
 
   # Because JS_WALA normalizes it to define a wrapper function on `this`, we need to run the wrapper to get our real function out.
-  wrapper = new Function ['_aether'], code
-  wrapper.call dummyContext, aether
-  dummyContext[functionName]
+  try
+    wrapper = new Function ['_aether'], code
+    wrapper.call dummyContext, aether
+  catch e
+    console.warn "Error creating function, so returning empty function instead. Error: #{e}\nCode:", code
+    aether.addProblem new problems.TranspileProblem aether, 'aether', problems.problems.aether_Untranspilable, e, {}, code, ''
+    return ->
 
+  dummyContext[functionName]
 
 module.exports.wrapWithSandbox = wrapWithSandbox = (self, fn) ->
   # Wrap calls to aether function in a sandbox

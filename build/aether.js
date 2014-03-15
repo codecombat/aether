@@ -22612,6 +22612,10 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
       message: 'this.what?',
       level: 'error'
     },
+    aether_Untranspilable: {
+      message: 'Code could not be compiled. Check syntax.',
+      level: 'error'
+    },
     aether_NoEffect: {
       message: 'Statement has no effect.',
       level: 'warning'
@@ -23513,7 +23517,9 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"lodash":22}],9:[function(require,module,exports){
 (function() {
-  var builtinClones, builtinNames, builtinReal, cloneBuiltin, copy, copyBuiltin, createSandboxedFunction, getOwnPropertyNames, global, name, raiseDisabledFunctionConstructor, restoreBuiltins, wrapWithSandbox;
+  var builtinClones, builtinNames, builtinReal, cloneBuiltin, copy, copyBuiltin, createSandboxedFunction, getOwnPropertyNames, global, name, problems, raiseDisabledFunctionConstructor, restoreBuiltins, wrapWithSandbox;
+
+  problems = require('./problems');
 
   getOwnPropertyNames = Object.getOwnPropertyNames;
 
@@ -23590,7 +23596,7 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
   };
 
   module.exports.createSandboxedFunction = createSandboxedFunction = function(functionName, code, aether) {
-    var dummyContext, dummyFunction, error, globalRef, globals, wrapper, _i, _len;
+    var dummyContext, dummyFunction, e, error, globalRef, globals, wrapper, _i, _len;
     globals = ['Vector', '_', 'NaN', 'Infinity', 'undefined', 'parseInt', 'parseFloat', 'isNaN', 'isFinite', 'decodeURI', 'decodeURIComponent', 'encodeURI', 'encodeURIComponent', 'Object', 'Function', 'Array', 'String', 'Boolean', 'Number', 'Date', 'RegExp', 'Math', 'JSON', 'Error', 'EvalError', 'RangeError', 'ReferenceError', 'SyntaxError', 'TypeError', 'URIError'];
     dummyContext = {};
     globalRef = global != null ? global : window;
@@ -23602,15 +23608,22 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
           dummyContext[name] = eval("require('lib/world/vector')");
         } catch (_error) {
           error = _error;
-          console.log('dude, there is no Vector', error);
+          null;
         }
       }
     }
     dummyFunction = raiseDisabledFunctionConstructor;
     copyBuiltin(Function, dummyFunction);
     dummyContext.Function = dummyFunction;
-    wrapper = new Function(['_aether'], code);
-    wrapper.call(dummyContext, aether);
+    try {
+      wrapper = new Function(['_aether'], code);
+      wrapper.call(dummyContext, aether);
+    } catch (_error) {
+      e = _error;
+      console.warn("Error creating function, so returning empty function instead. Error: " + e + "\nCode:", code);
+      aether.addProblem(new problems.TranspileProblem(aether, 'aether', problems.problems.aether_Untranspilable, e, {}, code, ''));
+      return function() {};
+    }
     return dummyContext[functionName];
   };
 
@@ -23633,7 +23646,7 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
 
 }).call(this);
 
-},{}],10:[function(require,module,exports){
+},{"./problems":7}],10:[function(require,module,exports){
 (function() {
   var buildRowOffsets, lastRowOffsets, lastRowOffsetsPrefix, lastRowOffsetsSource, offsetToPos, offsetToRow, offsetsToRange, rowColToPos, rowColsToRange, stringifyPos, stringifyRange;
 

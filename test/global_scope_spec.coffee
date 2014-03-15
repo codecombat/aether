@@ -61,10 +61,24 @@ describe "Global Scope Exploit Suite", ->
 
     aether.transpile code
     func = aether.sandboxGenerator aether.createFunction()()
-    
+
     try
       while true
         func.next()
     catch e
       # If we change the error message or whatever make sure we change it here too
       expect(e.message).toEqual '[Sandbox] Function::constructor is disabled. If you are a developer, please make sure you have a reference to your builtins.'
+
+  xit 'should not break on invalid code', ->
+    # Why doesn't this work? It should be catching the error. Works in production...
+    code = '''
+      if (friend.health < 5) {
+          this.castRegen(friend);
+          this.say("Healing " + friend.id + ".");
+      }
+      if (this.health < 50) {
+    '''
+    aether = new Aether()
+    aether.transpile code
+    fn = aether.createFunction()
+    fn()

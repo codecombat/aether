@@ -182,6 +182,7 @@ module.exports.problems = problems =
   aether_UndefinedVariable: {message: 'UndefinedVariable', level: 'error'}
   aether_MissingThis: {message: 'Missing `this.` keyword.', level: 'error'}
   aether_IncompleteThis: {message: 'this.what?', level: 'error'}
+  aether_Untranspilable: {message: 'Code could not be compiled. Check syntax.', level: 'error'}
   # ... many more errors ...
 
   # Warnings: things that we think might cause runtime errors or bugs, but aren't sure (statements that don't do anything, variables which are defined and not used, weird operator precedence issues, etc.)
