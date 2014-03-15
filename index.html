@@ -67,6 +67,20 @@
           </ol>
           <h3><a name="development-status" href="#development-status" class="anchor"></a>Development Status</h3>
           <p>Alpha–watch out! <a href="http://codecombat.com/">CodeCombat</a> is using it right now, but there are many bugs and missing pieces. If you'd be interested in Aether were it solid and finished, <em>please</em> tell us so we can get an idea of where else it might be useful and how it should work.</p>
+          <h3>How does it work?</h3>
+          <p>Aether uses JSHint, Esprima, Acorn, JS_WALA, escodegen, and traceur together to carry out this process:</p>
+          <ol>
+            <li>We use JSHint to provide lint warnings and errors.</li>
+            <li>We wrap the user code in a function declaration, since Aether expects the user code to be the body of a function.</li>
+            <li>We do a regexp replace step to check for common mistakes. This will probably go away.</li>
+            <li>We parse it with Esprima to get an AST. If it's invalid, we fall back to parsing with Acorn in loose mode so that we can get a workable AST despite the errors.</li>
+            <li>We run a bunch of pre-normalization transformations on the AST to grab variable declarations, original statement ranges, and check for several more types of mistakes.</li>
+            <li>We use JS_WALA to normalize the AST so that there'll be far fewer cases to handle in the next transformation step.</li>
+            <li>We output that transformed AST to JS again using escodegen, since our transformations need to operate on an AST with matching original source at the same time.</li>
+            <li>We parse again with Esprima and run a bunch of post-normalization transformations on that AST to do things like inserting instrumentation, protecting external objects, and adding yield statements.</li>
+            <li>We use traceur to convert our ES6 yield statements to giant ES5 state machines to simulate generators, if we added any yields.</li>
+            <li>We add one more function to intercept references to <code>this</code> for security.</li>
+          </ol>
           <h3>License</h3>
           <p class="strong"><a href="https://github.com/codecombat/aether/blob/master/LICENSE">The MIT License (MIT)</a></p>
           <p>If you'd like to contribute, please <a href="http://codecombat.com/cla">sign the CodeCombat contributor license agreement</a> so we can accept your pull requests. It is easy.</p>
