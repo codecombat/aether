@@ -360,6 +360,14 @@ module.exports = class Aether
     indent = if lines.length then lines[0].length - lines[0].replace(/^ +/, '').length else 0
     (line.slice indent for line in lines).join '\n'
 
+  setLanguage: (lang) ->
+    return unless @options.language isnt lang
+    optionsValidation = optionsValidator (language: lang)
+    throw new Error("Options array is not valid: " + JSON.stringify(optionsValidation.errors, null, 4)) if not optionsValidation.valid
+    @options.language = lang
+    @reset()
+    return lang
+
   logStatementStart: instrumentation.logStatementStart
   logStatement: instrumentation.logStatement
   logCallStart: instrumentation.logCallStart
