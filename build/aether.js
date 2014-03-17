@@ -23840,6 +23840,8 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
       var p, param, problem, v, _i, _j, _k, _len, _len1, _len2, _ref3, _ref4, _ref5, _results;
       if (node.type === S.VariableDeclarator) {
         return varNames[node.id.name] = true;
+      } else if (node.type === S.AssignmentExpression) {
+        return varNames[node.left.name] = true;
       } else if (node.type === S.FunctionDeclaration || node.type === S.FunctionExpression) {
         if (node.id != null) {
           varNames[node.id.name] = true;

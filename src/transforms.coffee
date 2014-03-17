@@ -37,12 +37,13 @@ module.exports.makeCheckThisKeywords = makeCheckThisKeywords = (global, varNames
   return (node) ->
     if node.type is S.VariableDeclarator
       varNames[node.id.name] = true
+    else if node.type is S.AssignmentExpression
+      varNames[node.left.name] = true
     else if node.type is S.FunctionDeclaration or node.type is S.FunctionExpression# and node.parent.type isnt S.Program
       varNames[node.id.name] = true if node.id?
       varNames[param.name] = true for param in node.params
     else if node.type is S.CallExpression
       v = node.callee.name
-      # console.log v,varNames,varNames[v],varNames['x'],varNames['test']
       if v and not varNames[v] and not global[v]
         # Probably MissingThis, but let's check if we're recursively calling an inner function from itself first.
         for p in getParentsOfTypes node, [S.FunctionDeclaration, S.FunctionExpression, S.VariableDeclarator, S.AssignmentExpression]
