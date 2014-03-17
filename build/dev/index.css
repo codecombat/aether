@@ -42,8 +42,8 @@ li {
 .tab-pane {
   padding: 10px;
   margin-bottom: 20px;
-  border-left: 1px solid lightgray;
-  border-right: 1px solid lightgray;
+  border-left: 1px solid lightgrey;
+  border-right: 1px solid lightgrey;
   box-shadow: 0 0 10px #aaaaaa; }
 
 .nav-tabs li {
