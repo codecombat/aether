@@ -13,11 +13,11 @@ getParents = (node) ->
     parents.push node = node.parent
   parents
 
-getParentsOfType = (node, type) ->
-  _.filter getParents(node), {type: type}
+getParentsOfTypes = (node, types) ->
+  _.filter getParents(node), (elem) -> elem.type in types
 
 getFunctionNestingLevel = (node) ->
-  getParentsOfType(node, S.FunctionExpression).length
+  getParentsOfTypes(node, [S.FunctionExpression]).length
 
 ########## Before JS_WALA Normalization ##########
 
@@ -37,15 +37,18 @@ module.exports.makeCheckThisKeywords = makeCheckThisKeywords = (global, varNames
   return (node) ->
     if node.type is S.VariableDeclarator
       varNames[node.id.name] = true
-    else if node.type is S.FunctionDeclaration# and node.parent.type isnt S.Program
-      varNames[node.id.name] = true
+    else if node.type is S.FunctionDeclaration or node.type is S.FunctionExpression# and node.parent.type isnt S.Program
+      varNames[node.id.name] = true if node.id?
+      varNames[param.name] = true for param in node.params
     else if node.type is S.CallExpression
       v = node.callee.name
+      # console.log v,varNames,varNames[v],varNames['x'],varNames['test']
       if v and not varNames[v] and not global[v]
         # Probably MissingThis, but let's check if we're recursively calling an inner function from itself first.
-        for p in getParentsOfType node, S.FunctionDeclaration
-          varNames[p.id.name] = true
-          return if p.id.name is v
+        for p in getParentsOfTypes node, [S.FunctionDeclaration, S.FunctionExpression]
+          varNames[p.id.name] = true if p.id?
+          varNames[param.name] = true for param in p.params
+          return if varNames[v] is true
         problem = new problems.TranspileProblem @, 'aether', 'MissingThis', {}, null, '', ''  # TODO: last args
         problem.message = "Missing `this.` keyword; should be `this.#{v}`."
         problem.hint = "There is no function `#{v}`, but `this` has a method `#{v}`."
