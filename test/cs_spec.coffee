@@ -15,7 +15,7 @@ describe "CS test Suite!", ->
     it "Should compile funcitons", ->
       code = """
         return 2000 if false
-\treturn 1000
+        \treturn 1000
       """
       aether.setLanguage "coffeescript"
       aether.transpile(code)
