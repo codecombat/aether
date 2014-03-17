@@ -45,9 +45,10 @@ module.exports.makeCheckThisKeywords = makeCheckThisKeywords = (global, varNames
       # console.log v,varNames,varNames[v],varNames['x'],varNames['test']
       if v and not varNames[v] and not global[v]
         # Probably MissingThis, but let's check if we're recursively calling an inner function from itself first.
-        for p in getParentsOfTypes node, [S.FunctionDeclaration, S.FunctionExpression]
+        for p in getParentsOfTypes node, [S.FunctionDeclaration, S.FunctionExpression, S.VariableDeclarator, S.AssignmentExpression]
           varNames[p.id.name] = true if p.id?
-          varNames[param.name] = true for param in p.params
+          varNames[p.left.name] = true if p.left?
+          varNames[param.name] = true for param in p.params if p.params?
           return if varNames[v] is true
         problem = new problems.TranspileProblem @, 'aether', 'MissingThis', {}, null, '', ''  # TODO: last args
         problem.message = "Missing `this.` keyword; should be `this.#{v}`."
