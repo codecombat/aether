@@ -165,10 +165,14 @@ module.exports = class Aether
   wrapCS: (rawCode) ->
     @wrappedCodePrefix ?="""
     #{@options.functionName or 'foo'} = (#{@options.functionParameters.join(', ')}) ->
-    \t
-    """
+    \n"""
     @wrappedCodeSuffix ?= "\n"
-    @wrappedCodePrefix + rawCode + @wrappedCodeSuffix
+
+    lines = rawCode.split "\n"
+    lines[i] = "  " + lines[i] for i in [0...lines.length] # add indentation of 2 spaces to every line
+    indentedCode = lines.join "\n"
+
+    @wrappedCodePrefix + indentedCode + @wrappedCodeSuffix
 
   lint: (rawCode) ->
     wrappedCode = @wrap rawCode
