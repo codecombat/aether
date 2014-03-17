@@ -36,3 +36,11 @@ describe "Aether", ->
       fn()
       fn()
       fn()
+
+  describe "Changing Language", ->
+    aether = new Aether()
+    it "should change the language if valid", ->
+      expect(aether.setLanguage "coffeescript").toEqual "coffeescript"
+
+    it "should not allow non-supported languages", ->
+      expect(aether.setLanguage.bind null, "Brainfuck").toThrow()

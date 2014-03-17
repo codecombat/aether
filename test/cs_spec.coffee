@@ -9,3 +9,14 @@ describe "CS test Suite!", ->
       """
       aether.transpile(code)
       expect(aether.run()).toEqual 1000
+
+  describe "CS compilation with lang set after contruction", ->
+    aether = new Aether()
+    it "Should compile funcitons", ->
+      code = """
+      return 2000 if false
+      return 1000
+      """
+      aether.setLanguage "coffeescript"
+      aether.transpile(code)
+      expect(aether.run()).toEqual 1000

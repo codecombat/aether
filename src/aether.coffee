@@ -165,10 +165,14 @@ module.exports = class Aether
   wrapCS: (rawCode) ->
     @wrappedCodePrefix ?="""
     #{@options.functionName or 'foo'} = (#{@options.functionParameters.join(', ')}) ->
-    \t
-    """
+    \n"""
     @wrappedCodeSuffix ?= "\n"
-    @wrappedCodePrefix + rawCode + @wrappedCodeSuffix
+
+    lines = rawCode.split "\n"
+    lines[i] = "  " + lines[i] for i in [0...lines.length] # add indentation of 2 spaces to every line
+    indentedCode = lines.join "\n"
+
+    @wrappedCodePrefix + indentedCode + @wrappedCodeSuffix
 
   lint: (rawCode) ->
     wrappedCode = @wrap rawCode
@@ -359,6 +363,14 @@ module.exports = class Aether
     lines = source.split /\r?\n/
     indent = if lines.length then lines[0].length - lines[0].replace(/^ +/, '').length else 0
     (line.slice indent for line in lines).join '\n'
+
+  setLanguage: (lang) ->
+    return unless @options.language isnt lang
+    optionsValidation = optionsValidator (language: lang)
+    throw new Error("Options array is not valid: " + JSON.stringify(optionsValidation.errors, null, 4)) if not optionsValidation.valid
+    @options.language = lang
+    @reset()
+    return lang
 
   logStatementStart: instrumentation.logStatementStart
   logStatement: instrumentation.logStatement
