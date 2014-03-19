@@ -2,7 +2,7 @@
 
 ## Purpose
 Aether aims to make it easy for people to learn and write JavaScript and CoffeeScript by helping them catch and fix bugs, 
-letting them see and more easily understand the execution of their program [(like Brett Victor commanded!)](http://youtu.be/PUv66718DII?t=17m25s), 
+letting them see and more easily understand the execution of their program [(like Bret Victor commanded!)](http://youtu.be/PUv66718DII?t=17m25s), 
 and giving them tips on how they can improve their code. [CodeCombat](http://codecombat.com/) is behind it.
 
 ## Get in touch
