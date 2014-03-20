@@ -21693,6 +21693,8 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
         throw new Error("Options array is not valid: " + JSON.stringify(optionsValidation.errors, null, 4));
       }
       this.options.language = lang;
+      this.wrappedCodePrefix = null;
+      this.wrappedCodeSuffix = null;
       this.reset();
       return lang;
     };
@@ -23392,7 +23394,7 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
   reFlags = /\w*$/;
 
   module.exports.createAPIClone = createAPIClone = function(value) {
-    var className, clone, ctor, i, isArr, k, prop, result, v, _fn, _i, _j, _k, _len, _len1, _len2, _ref3, _ref4, _ref5;
+    var className, clone, ctor, i, isArr, k, prop, result, v, _fn, _i, _j, _k, _l, _len, _len1, _len2, _len3, _ref3, _ref4, _ref5, _ref6, _ref7;
     if (!_.isObject(value)) {
       return value;
     }
@@ -23476,6 +23478,13 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
               enumerable: true
             });
           })(prop);
+        }
+      }
+      _ref7 = (_ref6 = value.apiUserProperties) != null ? _ref6 : [];
+      for (_l = 0, _len3 = _ref7.length; _l < _len3; _l++) {
+        prop = _ref7[_l];
+        if (result[prop] == null) {
+          result[prop] = createAPIClone(value[prop]);
         }
       }
     } else {
