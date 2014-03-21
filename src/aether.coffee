@@ -369,6 +369,8 @@ module.exports = class Aether
     optionsValidation = optionsValidator (language: lang)
     throw new Error("Options array is not valid: " + JSON.stringify(optionsValidation.errors, null, 4)) if not optionsValidation.valid
     @options.language = lang
+    @wrappedCodePrefix = null
+    @wrappedCodeSuffix = null
     @reset()
     return lang
 

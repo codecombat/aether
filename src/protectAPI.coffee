@@ -71,6 +71,8 @@ module.exports.createAPIClone = createAPIClone = (value) ->
         # Accessing a property on the clone will get the value from the original.
         fn = -> createAPIClone value[prop]
         Object.defineProperty result, prop, get: fn, enumerable: true
+    for prop in value.apiUserProperties ? [] when not result[prop]?  # Don't redefine it if it's already done.
+      result[prop] = createAPIClone value[prop]  # Maybe we don't need to clone this?
   else
     # Hmm, should we protect normal objects?
     #result[k] = createAPIClone(v) for own k, v of value
