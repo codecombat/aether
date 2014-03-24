@@ -21697,6 +21697,8 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
         throw new Error("Options array is not valid: " + JSON.stringify(optionsValidation.errors, null, 4));
       }
       this.options.language = lang;
+      this.wrappedCodePrefix = null;
+      this.wrappedCodeSuffix = null;
       this.reset();
       return lang;
     };
@@ -23396,7 +23398,7 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
   reFlags = /\w*$/;
 
   module.exports.createAPIClone = createAPIClone = function(value) {
-    var className, clone, ctor, i, isArr, k, prop, result, v, _fn, _i, _j, _k, _len, _len1, _len2, _ref3, _ref4, _ref5;
+    var className, clone, ctor, i, isArr, k, prop, result, v, _fn, _i, _j, _k, _l, _len, _len1, _len2, _len3, _ref3, _ref4, _ref5, _ref6, _ref7;
     if (!_.isObject(value)) {
       return value;
     }
@@ -23480,6 +23482,13 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
               enumerable: true
             });
           })(prop);
+        }
+      }
+      _ref7 = (_ref6 = value.apiUserProperties) != null ? _ref6 : [];
+      for (_l = 0, _len3 = _ref7.length; _l < _len3; _l++) {
+        prop = _ref7[_l];
+        if (result[prop] == null) {
+          result[prop] = createAPIClone(value[prop]);
         }
       }
     } else {
@@ -23841,9 +23850,11 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
 
   module.exports.makeCheckThisKeywords = makeCheckThisKeywords = function(global, varNames) {
     return function(node) {
-      var p, param, problem, v, _i, _j, _k, _len, _len1, _len2, _ref3, _ref4, _ref5, _results;
+      var p, param, problem, v, _i, _j, _k, _len, _len1, _len2, _ref3, _ref4, _ref5, _ref6, _results;
       if (node.type === S.VariableDeclarator) {
         return varNames[node.id.name] = true;
+      } else if (node.type === S.AssignmentExpression) {
+        return varNames[node.left.name] = true;
       } else if (node.type === S.FunctionDeclaration || node.type === S.FunctionExpression) {
         if (node.id != null) {
           varNames[node.id.name] = true;
@@ -23856,11 +23867,15 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
         }
         return _results;
       } else if (node.type === S.CallExpression) {
-        v = node.callee.name;
+        v = node;
+        while ((_ref4 = v.type) === S.CallExpression || _ref4 === S.MemberExpression) {
+          v = v.object != null ? v.object : v.callee;
+        }
+        v = v.name;
         if (v && !varNames[v] && !global[v]) {
-          _ref4 = getParentsOfTypes(node, [S.FunctionDeclaration, S.FunctionExpression, S.VariableDeclarator, S.AssignmentExpression]);
-          for (_j = 0, _len1 = _ref4.length; _j < _len1; _j++) {
-            p = _ref4[_j];
+          _ref5 = getParentsOfTypes(node, [S.FunctionDeclaration, S.FunctionExpression, S.VariableDeclarator, S.AssignmentExpression]);
+          for (_j = 0, _len1 = _ref5.length; _j < _len1; _j++) {
+            p = _ref5[_j];
             if (p.id != null) {
               varNames[p.id.name] = true;
             }
@@ -23868,9 +23883,9 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
               varNames[p.left.name] = true;
             }
             if (p.params != null) {
-              _ref5 = p.params;
-              for (_k = 0, _len2 = _ref5.length; _k < _len2; _k++) {
-                param = _ref5[_k];
+              _ref6 = p.params;
+              for (_k = 0, _len2 = _ref6.length; _k < _len2; _k++) {
+                param = _ref6[_k];
                 varNames[param.name] = true;
               }
             }

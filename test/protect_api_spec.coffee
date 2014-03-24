@@ -184,3 +184,38 @@ describe "API Protection Test Suite", ->
     result = aether.run null, hero
     expect(aether.problems.errors.length).toEqual 0
     expect(result).toBe hero
+
+  it 'should not interfere with user-defined properties', ->
+    code = """
+      if(typeof this.infants === 'undefined') {
+        this.infants = 0;
+        this.namesLeft = ['Max', 'Jax', 'Dax'];
+        this.namesUsed = [];
+        this.petShouldEat = [];
+        this.hackThePets = this.pets;
+      }
+      this.namesUsed.push(this.namesLeft.shift());
+      this.petShouldEat[0] = this.namesUsed[this.namesUsed.length - 1];
+      this.hackThePets.push(this.petShouldEat[0]);
+      this.pets.push(this.petShouldEat[0]);
+      return ++this.infants;
+    """
+    mama = id: "Mama", pets: ['dog'], apiProperties: ['pets']
+    aether = new Aether protectAPI: true
+    aether.transpile code
+    method = aether.createMethod mama
+    for i in [0 ... 3]
+      mama._aetherAPIMethodsAllowed = true
+      expect(method()).toEqual i + 1
+      mama._aetherAPIMethodsAllowed = false
+      for prop of mama.__aetherAPIClone when typeof mama[prop] is 'undefined' and not (prop in (mama.apiUserProperties ? []))
+        mama.apiUserProperties ?= []
+        mama.apiUserProperties.push prop
+      for prop in (mama.apiUserProperties ? [])
+        mama[prop] = mama.__aetherAPIClone[prop]
+      delete mama.__aetherAPIClone
+      expect(mama.infants).toEqual i + 1
+      expect(mama.namesUsed.length).toEqual i + 1
+      expect(mama.namesLeft.length).toEqual 2 - i
+      expect(mama.petShouldEat[0]).toEqual mama.namesUsed[mama.namesUsed.length - 1]
+      expect(mama.pets.length).toEqual 1
