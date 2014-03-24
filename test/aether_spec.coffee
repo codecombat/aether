@@ -27,15 +27,14 @@ describe "Aether", ->
       code = """
         function fib(n) {
           return n < 2 ? n : fib(n - 1) + fib(n - 2);
-        var chupacabra = fib(5)
-        //console.log("I want", chupacabra, "gold.");
+        }
+
+        var chupacabra = fib(6)
         return chupacabra;
       """
       aether.transpile(code)
       fn = aether.createFunction()
-      fn()
-      fn()
-      fn()
+      expect(fn()).toEqual 8
 
   describe "Changing Language", ->
     aether = new Aether()
@@ -44,3 +43,5 @@ describe "Aether", ->
 
     it "should not allow non-supported languages", ->
       expect(aether.setLanguage.bind null, "Brainfuck").toThrow()
+
+
