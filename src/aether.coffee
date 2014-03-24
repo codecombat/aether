@@ -58,10 +58,11 @@ module.exports = class Aether
   #          If the bool thorough is specified, it will perform detailed linting. Returns true if raw will run, and false if it won't.
   # NOTES:   First check inspired by ACE: https://github.com/ajaxorg/ace/blob/master/lib/ace/mode/javascript_worker.js
   canTranspile: (raw, thorough=false) ->
-
     return true if not raw # blank code should compile, but bypass the other steps
     try
-      eval "'use strict;'\nthrow 0;" + raw  # evaluated code can only create variables in this function
+      if @options.language is "javascript"
+        eval "'use strict;'\nthrow 0;" + raw  # evaluated code can only create variables in this function
+      else true  
     catch e
       return false if e isnt 0
     return true unless thorough
