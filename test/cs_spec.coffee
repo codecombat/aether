@@ -19,7 +19,7 @@ describe "CS test Suite!", ->
       """
       aether.setLanguage "coffeescript"
       aether.transpile(code)
-      
+
       expect(aether.canTranspile(code)).toEqual true
 
   describe "CS Test Spec #1", ->
@@ -37,10 +37,9 @@ describe "CS test Suite!", ->
       code = """
       fib = (n) ->
         (if n < 2 then n else fib(n - 1) + fib(n - 2))
-        chupacabra = fib(6)
+      chupacabra = fib(6)
       """
       aether.transpile(code)
       fn = aether.createFunction()
       expect(aether.canTranspile(code)).toEqual true
       expect(aether.run()).toEqual 8 # fail
-

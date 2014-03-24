@@ -150,9 +150,9 @@ module.exports.makeInstrumentStatements = makeInstrumentStatements = (varNames) 
     return if orig.type in [S.ThisExpression, S.Identifier]  # probably need to add to this to get statements which corresponded to interesting expressions before normalization
     # Only do this in nested functions, not our wrapper
     return unless getFunctionNestingLevel(node) > 1
-    if orig.parent?.type is S.AssignmentExpression and orig.parent.parent?.type is S.ExpressionStatement
+    if orig.parent?.type is S.AssignmentExpression and orig.parent.parent?.type is S.ExpressionStatement and orig.parent.parent.originalRange
       orig = orig.parent.parent
-    else if orig.parent?.type is S.VariableDeclarator and orig.parent.parent?.type is S.VariableDeclaration
+    else if orig.parent?.type is S.VariableDeclarator and orig.parent.parent?.type is S.VariableDeclaration and orig.parent.parent.originalRange
       orig = orig.parent.parent
     # TODO: actually save this into aether.flow, and have it happen before the yield happens
     safeRange = ranges.stringifyRange orig.originalRange.start, orig.originalRange.end
