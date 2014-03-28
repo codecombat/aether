@@ -67,4 +67,4 @@ module.exports = fixLocations = (program) ->
           else
             start: {line: 0, column: 0}
             end: {line: 0, column: 0}
-      return      
+      return

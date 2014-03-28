@@ -57,6 +57,10 @@ module.exports.TranspileProblem = class TranspileProblem extends UserCodeProblem
         # TODO: no way this works; what am I doing with code prefixes?
         @ranges = [[ranges.rowColToPos(error.lineNumber - 1 - lineOffset, error.column - 1, code, codePrefix),
                     ranges.rowColToPos(error.lineNumber - 1 - lineOffset, error.column, code, codePrefix)]]
+      when 'csredux'
+        @message = error.message
+        @ranges = [[ranges.rowColToPos(error.lineNumber - 1 - lineOffset, error.column - 1, code, codePrefix),
+                    ranges.rowColToPos(error.lineNumber - 1 - lineOffset, error.column, code, codePrefix)]]
       when 'aether'
         @message = error.message if error.message
         # TODO: figure out how to do ranges here

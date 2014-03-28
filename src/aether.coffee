@@ -62,7 +62,7 @@ module.exports = class Aether
     try
       if @options.language is "javascript"
         eval "'use strict;'\nthrow 0;" + raw  # evaluated code can only create variables in this function
-      else true  
+      else true
     catch e
       return false if e isnt 0
     return true unless thorough
@@ -224,6 +224,7 @@ module.exports = class Aether
     _.flatten _.values (problems ? @problems)
 
   serialize: ->
+    console.log 'flow', @flow
     # Convert to JSON so we can pass it across web workers and HTTP requests and store it in databases and such
     serialized = originalOptions: @originalOptions, raw: @raw, pure: @pure, problems: @problems
     serialized.flow = @flow if @options.includeFlow
@@ -297,19 +298,23 @@ module.exports = class Aether
       transforms.checkIncompleteMembers
     ]
 
-    if @options.language is 'coffeescript'
-      [transformedCode, transformedAST] = @transform wrappedCode, preNormalizationTransforms, "csredux", true
-    else
-      try
+    try
+      if @options.language is 'coffeescript'
+        [transformedCode, transformedAST] = @transform wrappedCode, preNormalizationTransforms, "csredux", true
+      else
         [transformedCode, transformedAST] = @transform wrappedCode, preNormalizationTransforms, "esprima", true
-      catch error
+    catch error
+      if @options.language is 'coffeescript'
+        problem = new problems.TranspileProblem @, 'csredux', error.index, error, {}, wrappedCode, ''
+      else
         problem = new problems.TranspileProblem @, 'esprima', error.id, error, {}, wrappedCode, ''
-        @addProblem problem
-        originalNodeRanges.splice()  # Reset any ranges we did find; we'll try again
-        [transformedCode, transformedAST] = @transform wrappedCode, preNormalizationTransforms, "acorn_loose", true
+      @addProblem problem
+      return '' if @options.language is 'coffeescript'
+      originalNodeRanges.splice()  # Reset any ranges we did find; we'll try again
+      [transformedCode, transformedAST] = @transform wrappedCode, preNormalizationTransforms, "acorn_loose", true
 
     # TODO: need to insert 'use strict' after normalization, since otherwise you get tmp2 = 'use strict'
-    normalizedAST = normalizer.normalize transformedAST
+    normalizedAST = normalizer.normalize transformedAST, {}
     normalizedNodeIndex = []
     @walk normalizedAST, (node) ->
       return unless pos = node?.attr?.pos
