@@ -21422,7 +21422,6 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
 
     Aether.prototype.serialize = function() {
       var serialized;
-      console.log('flow', this.flow);
       serialized = {
         originalOptions: this.originalOptions,
         raw: this.raw,
