@@ -224,7 +224,6 @@ module.exports = class Aether
     _.flatten _.values (problems ? @problems)
 
   serialize: ->
-    console.log 'flow', @flow
     # Convert to JSON so we can pass it across web workers and HTTP requests and store it in databases and such
     serialized = originalOptions: @originalOptions, raw: @raw, pure: @pure, problems: @problems
     serialized.flow = @flow if @options.includeFlow
