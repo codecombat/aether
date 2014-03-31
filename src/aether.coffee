@@ -170,7 +170,7 @@ module.exports = class Aether
     @wrappedCodeSuffix ?= "\n"
 
     lines = rawCode.split "\n"
-    lines[i] = "  " + lines[i] for i in [0...lines.length] # add indentation of 2 spaces to every line
+    lines[i] = "    " + lines[i] for i in [0...lines.length] # add indentation of 4 spaces to every line
     indentedCode = lines.join "\n"
 
     @wrappedCodePrefix + indentedCode + @wrappedCodeSuffix

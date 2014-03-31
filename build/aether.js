@@ -21324,7 +21324,7 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
       }
       lines = rawCode.split("\n");
       for (i = _i = 0, _ref6 = lines.length; 0 <= _ref6 ? _i < _ref6 : _i > _ref6; i = 0 <= _ref6 ? ++_i : --_i) {
-        lines[i] = "  " + lines[i];
+        lines[i] = "    " + lines[i];
       }
       indentedCode = lines.join("\n");
       return this.wrappedCodePrefix + indentedCode + this.wrappedCodeSuffix;
@@ -21865,20 +21865,23 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
 
   StructuredCode = (function() {
     function StructuredCode(code) {
-      this.cursors = this.generateOffsets(code);
+      var _ref3;
+      _ref3 = this.generateOffsets(code), this.cursors = _ref3[0], this.indentations = _ref3[1];
       this.length = this.cursors.length;
     }
 
     StructuredCode.prototype.generateOffsets = function(code) {
-      var cursor, reg, res, result;
+      var cursor, indentations, reg, res, result, _ref3, _ref4;
       reg = /(?:\r\n|[\r\n\u2028\u2029])/g;
       result = [0];
+      indentations = [0];
       while (res = reg.exec(code)) {
         cursor = res.index + res[0].length;
         reg.lastIndex = cursor;
         result.push(cursor);
+        indentations.push((_ref3 = code.substr(cursor).match(/^\s+/)) != null ? (_ref4 = _ref3[0]) != null ? _ref4.length : void 0 : void 0);
       }
-      return result;
+      return [result, indentations];
     };
 
     StructuredCode.prototype.column = function(offset) {
@@ -21889,6 +21892,14 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
       return this.loc(offset).line;
     };
 
+    StructuredCode.prototype.fixRange = function(range, loc) {
+      var fix;
+      fix = Math.floor(this.indentations[loc.start.line - 1] + 5 / 4);
+      range[0] -= fix;
+      range[1] -= fix;
+      return range;
+    };
+
     StructuredCode.prototype.loc = function(offset) {
       var column, index, line;
       index = _.sortedIndex(this.cursors, offset);
@@ -21896,7 +21907,7 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
         column = 0;
         line = index + 1;
       } else {
-        column = offset - this.cursors[index - 1];
+        column = offset - 4 - this.cursors[index - 1];
         line = index;
       }
       return {
@@ -21926,6 +21937,7 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
             loc.start = structured.loc(node.range[0]);
           }
           node.loc = loc;
+          node.range = structured.fixRange(node.range, loc);
         } else {
           node.loc = (function() {
             var _ref3;

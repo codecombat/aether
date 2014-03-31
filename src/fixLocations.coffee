@@ -4,17 +4,19 @@ estraverse = require 'estraverse'
 
 class StructuredCode
   constructor: (code) ->
-    @cursors = @generateOffsets code
+    [@cursors, @indentations] = @generateOffsets code
     @length = @cursors.length
 
   generateOffsets: (code) ->
     reg = /(?:\r\n|[\r\n\u2028\u2029])/g
     result = [ 0 ]
+    indentations = [ 0 ]
     while res = reg.exec(code)
       cursor = res.index + res[0].length
       reg.lastIndex = cursor
       result.push cursor
-    result
+      indentations.push code.substr(cursor).match(/^\s+/)?[0]?.length
+    [result, indentations]
 
   column: (offset) ->
     @loc(offset).column
@@ -22,13 +24,19 @@ class StructuredCode
   line: (offset) ->
     @loc(offset).line
 
+  fixRange: (range, loc) ->
+    fix = Math.floor(@indentations[loc.start.line-1]+5/4)
+    range[0] -= fix
+    range[1] -= fix
+    range
+
   loc: (offset) ->
     index = _.sortedIndex @cursors, offset
     if @cursors.length > index and @cursors[index] is offset
       column = 0
       line = index + 1
     else
-      column = offset - @cursors[index - 1]
+      column = offset - 4 - @cursors[index - 1]
       line = index
     { column, line }
 
@@ -46,6 +54,7 @@ module.exports = fixLocations = (program) ->
         else
           loc.start = structured.loc(node.range[0])
         node.loc = loc
+        node.range = structured.fixRange(node.range, loc)
       else
         node.loc = switch node.type
           when 'BlockStatement'
