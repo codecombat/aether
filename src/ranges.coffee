@@ -32,7 +32,7 @@ buildRowOffsets = (source, prefix='') ->
   rowOffsets = [0]
   for c, offset in source.substr prefix.length
     if c is '\n'
-      rowOffsets.push offset + 1
+      rowOffsets.push offset+1
   lastRowOffsets = rowOffsets
   lastRowOffsetsSource = source
   lastRowOffsetsPrefix = prefix
