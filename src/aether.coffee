@@ -336,7 +336,11 @@ module.exports = class Aether
     postNormalizationTransforms.unshift transforms.makeFindOriginalNodes originalNodeRanges, @wrappedCodePrefix, normalizedSourceMap, normalizedNodeIndex
     postNormalizationTransforms.unshift transforms.makeProtectAPI @options.functionParameters if @options.protectAPI
     postNormalizationTransforms.unshift transforms.interceptThis
-    instrumentedCode = @transform normalizedCode, postNormalizationTransforms
+    try
+      instrumentedCode = @transform normalizedCode, postNormalizationTransforms
+    catch error
+      @addProblem new problems.TranspileProblem @, 'esprima', error.id, error, {}, normalizedCode, ''
+      instrumentedCode = @transform normalizedCode, postNormalizationTransforms, "acorn_loose"
     if @options.yieldConditionally or @options.yieldAutomatically
       purifiedCode = @traceurify instrumentedCode
     else

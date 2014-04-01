@@ -2,12 +2,12 @@ Aether = require '../aether'
 
 describe "Problem Test Suite", ->
   describe "Runtime problems", ->
-    # 0123456789012345678901234567
-    code = """
-      var methodName = 'explode';
-      this[methodName]();
-    """
     it "Should capture runtime problems", ->
+      # 0123456789012345678901234567
+      code = """
+        var methodName = 'explode';
+        this[methodName]();
+      """
       options =
         thisValue: {}
         problems: {jshint_W040: {level: "ignore"}}
@@ -28,3 +28,16 @@ describe "Problem Test Suite", ->
       expect(end.row).toEqual 1
       expect(end.col).toEqual 18
       expect(problem.message).toMatch /Line 2/
+
+    it "Shouldn't die on invalid crazy code", ->
+      code = """
+        if (true >== true){
+          true;}
+      """
+      aether = new Aether {}
+      aether.transpile(code)
+      aether.run()
+      expect(aether.problems.errors.length).toBeGreaterThan 0
+      problem = aether.problems.errors[0]
+      expect(problem.type).toEqual 'transpile'
+      expect(problem.level).toEqual 'error'
