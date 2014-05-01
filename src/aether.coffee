@@ -35,7 +35,7 @@ module.exports = class Aether
   constructor: (options) ->
 
     # do a deep copy of the options (using lodash, not underscore)
-    @originalOptions = _.cloneDeep options
+    @originalOptions = _.extend {}, options
 
     # if options and options.problems do not exist, create them as empty objects
     options ?= {}
@@ -148,6 +148,7 @@ module.exports = class Aether
     beautified
 
   addProblem: (problem, problems=null) ->
+    #console.log "ignoring", problem if problem.level is "ignore"
     return if problem.level is "ignore"
     #console.log "found problem:", problem.serialize()
     (problems ? @problems)[problem.level + "s"].push problem
@@ -185,6 +186,10 @@ module.exports = class Aether
     jshintOptions = browser: false, couch: false, devel: false, dojo: false, jquery: false, mootools: false, node: false, nonstandard: false, phantom: false, prototypejs: false, rhino: false, worker: false, wsh: false, yui: false
     jshintGlobals = _.keys(@options.global)
     jshintGlobals = _.zipObject jshintGlobals, (false for g in jshintGlobals)  # JSHint expects {key: writable} globals
+    # Doesn't work; can't find a way to skip warnings from JSHint programmatic options instead of in code comments.
+    #for problemID, problem of @originalOptions.problems when problem.level is 'ignore' and /jshint/.test problemID
+    #  console.log 'gotta ignore', problem, '-' + problemID.replace('jshint_', '')
+    #  jshintOptions['-' + problemID.replace('jshint_', '')] = true
     try
       jshintSuccess = jshint(wrappedCode, jshintOptions, jshintGlobals)
     catch e

@@ -21078,7 +21078,7 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
 
     function Aether(options) {
       var optionsValidation;
-      this.originalOptions = _.cloneDeep(options);
+      this.originalOptions = _.extend({}, options);
       if (options == null) {
         options = {};
       }
@@ -21757,10 +21757,19 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
 }).call(this);
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"./defaults":2,"./execution":3,"./fixLocations":4,"./instrumentation":5,"./morph":6,"./problems":7,"./protectAPI":8,"./protectBuiltins":9,"./transforms":11,"./validators/options":12,"JS_WALA/normalizer/lib/normalizer":17,"acorn/acorn_loose":21,"coffee-script-redux":36,"escodegen":59,"esprima":64,"jshint":71,"lodash":22,"traceur":22}],2:[function(require,module,exports){
-(function() {
-  var defaults, execution;
+(function (global){(function() {
+  var Vector, defaults, error, execution, _, _ref, _ref1, _ref2;
 
   execution = require('./execution');
+
+  _ = (_ref = (_ref1 = (_ref2 = typeof window !== "undefined" && window !== null ? window._ : void 0) != null ? _ref2 : typeof self !== "undefined" && self !== null ? self._ : void 0) != null ? _ref1 : typeof global !== "undefined" && global !== null ? global._ : void 0) != null ? _ref : require('lodash');
+
+  try {
+    Vector = eval("require('lib/world/vector')");
+  } catch (_error) {
+    error = _error;
+    Vector = {};
+  }
 
   module.exports = defaults = {
     thisValue: null,
@@ -21771,7 +21780,9 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
       "eval": eval,
       isNaN: isNaN,
       escape: escape,
-      unescape: unescape
+      unescape: unescape,
+      _: _,
+      Vector: Vector
     },
     language: "javascript",
     languageVersion: "ES5",
@@ -21789,8 +21800,8 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
   };
 
 }).call(this);
-
-},{"./execution":3}],3:[function(require,module,exports){
+}).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./execution":3,"lodash":22}],3:[function(require,module,exports){
 (function() {
   var execution;
 
