@@ -60,6 +60,9 @@ module.exports = (options) ->
               items:
                 type: 'string'
         ]
+      noSerializationInFlow:
+        type: 'boolean'
+        default: false
       includeMetrics:
         type: 'boolean'
         default: true

@@ -45,7 +45,10 @@ module.exports.logStatement = logStatement = (range, source, userInfo) ->
     variables = {}
     for name, value of @vars when capture or name in (flopt.timelessVariables ? [])
       # TODO: We should probably only store changes, not full copies every time.
-      variables[name] = serializeVariableValue value
+      if @options.noSerializationInFlow
+        variables[name] = value
+      else
+        variables[name] = serializeVariableValue value
     if capture or not _.isEmpty variables
       state =
         range: range
