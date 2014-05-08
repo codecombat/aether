@@ -123,7 +123,7 @@ module.exports = (grunt) ->
       tests:
         expand: true
         flatten: true
-        src: "lib/test/*"
+        src: "lib/test/**/*"
         dest: "lib/coverage/instrument/lib/test/"
 
     storeCoverage:
@@ -155,8 +155,8 @@ module.exports = (grunt) ->
   grunt.loadNpmTasks('grunt-contrib-copy')
 
   # Default task(s).
-  grunt.registerTask 'default', ['coffeelint', 'coffee', 'browserify', 'concat', 'jasmine_node', 'jade', 'sass', 'uglify']
-  grunt.registerTask 'travis', ['coffeelint', 'coffee', 'jasmine_node']
-  grunt.registerTask 'test', ['coffee', 'jasmine_node']
+  grunt.registerTask 'default', ['coffeelint', 'coffee', 'browserify', 'concat', 'jasmine_node:run', 'jade', 'sass', 'uglify']
+  grunt.registerTask 'travis', ['coffeelint', 'coffee', 'jasmine_node:run']
+  grunt.registerTask 'test', ['coffee', 'jasmine_node:run']
   grunt.registerTask 'coverage', ['coffee', 'instrument', 'copy:tests', 'jasmine_node:runCoverage', 'storeCoverage', 'makeReport']
   grunt.registerTask 'build', ['coffeelint', 'coffee', 'browserify', 'concat', 'jade', 'sass', 'uglify']

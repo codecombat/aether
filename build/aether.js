@@ -21505,7 +21505,7 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
 
 }).call(this);
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./defaults":2,"./execution":3,"./instrumentation":5,"./languages/languages":10,"./problems":12,"./protectAPI":13,"./protectBuiltins":14,"./transforms":16,"./traversal":17,"./validators/options":18,"JS_WALA/normalizer/lib/normalizer":23,"escodegen":65,"esprima":70,"lodash":28,"traceur":28}],2:[function(require,module,exports){
+},{"./defaults":2,"./execution":3,"./instrumentation":4,"./languages/languages":9,"./problems":11,"./protectAPI":12,"./protectBuiltins":13,"./transforms":15,"./traversal":16,"./validators/options":17,"JS_WALA/normalizer/lib/normalizer":22,"escodegen":64,"esprima":69,"lodash":27,"traceur":27}],2:[function(require,module,exports){
 (function (global){(function() {
   var defaults, execution, _, _ref, _ref1, _ref2;
 
@@ -21532,7 +21532,7 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
 
 }).call(this);
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./execution":3,"lodash":28}],3:[function(require,module,exports){
+},{"./execution":3,"lodash":27}],3:[function(require,module,exports){
 (function() {
   var execution;
 
@@ -21604,142 +21604,6 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
 }).call(this);
 
 },{}],4:[function(require,module,exports){
-(function (global){(function() {
-  var StructuredCode, estraverse, fixLocations, _, _ref, _ref1, _ref2;
-
-  _ = (_ref = (_ref1 = (_ref2 = typeof window !== "undefined" && window !== null ? window._ : void 0) != null ? _ref2 : typeof self !== "undefined" && self !== null ? self._ : void 0) != null ? _ref1 : typeof global !== "undefined" && global !== null ? global._ : void 0) != null ? _ref : require('lodash');
-
-  estraverse = require('estraverse');
-
-  StructuredCode = (function() {
-    function StructuredCode(code) {
-      var _ref3;
-      _ref3 = this.generateOffsets(code), this.cursors = _ref3[0], this.indentations = _ref3[1];
-      this.length = this.cursors.length;
-    }
-
-    StructuredCode.prototype.generateOffsets = function(code) {
-      var cursor, indentations, reg, res, result, _ref3, _ref4;
-      reg = /(?:\r\n|[\r\n\u2028\u2029])/g;
-      result = [0];
-      indentations = [0];
-      while (res = reg.exec(code)) {
-        cursor = res.index + res[0].length;
-        reg.lastIndex = cursor;
-        result.push(cursor);
-        indentations.push((_ref3 = code.substr(cursor).match(/^\s+/)) != null ? (_ref4 = _ref3[0]) != null ? _ref4.length : void 0 : void 0);
-      }
-      return [result, indentations];
-    };
-
-    StructuredCode.prototype.column = function(offset) {
-      return this.loc(offset).column;
-    };
-
-    StructuredCode.prototype.line = function(offset) {
-      return this.loc(offset).line;
-    };
-
-    StructuredCode.prototype.fixRange = function(range, loc) {
-      var fix;
-      fix = Math.floor(this.indentations[loc.start.line - 1] + 5 / 4);
-      range[0] -= fix;
-      range[1] -= fix;
-      return range;
-    };
-
-    StructuredCode.prototype.loc = function(offset) {
-      var column, index, line;
-      index = _.sortedIndex(this.cursors, offset);
-      if (this.cursors.length > index && this.cursors[index] === offset) {
-        column = 0;
-        line = index + 1;
-      } else {
-        column = offset - 4 - this.cursors[index - 1];
-        line = index;
-      }
-      return {
-        column: column,
-        line: line
-      };
-    };
-
-    return StructuredCode;
-
-  })();
-
-  module.exports = fixLocations = function(program) {
-    var structured;
-    structured = new StructuredCode(program.raw);
-    return estraverse.traverse(program, {
-      leave: function(node, parent) {
-        var loc;
-        if (node.range != null) {
-          loc = {
-            start: null,
-            end: structured.loc(node.range[1])
-          };
-          if (node.loc != null) {
-            loc.start = node.loc.start;
-          } else {
-            loc.start = structured.loc(node.range[0]);
-          }
-          node.loc = loc;
-          node.range = structured.fixRange(node.range, loc);
-        } else {
-          node.loc = (function() {
-            var _ref3;
-            switch (node.type) {
-              case 'BlockStatement':
-                return {
-                  start: node.body[0].loc.start,
-                  end: node.body[node.body.length - 1].loc.end
-                };
-              case 'VariableDeclarator':
-                if ((node != null ? (_ref3 = node.init) != null ? _ref3.loc : void 0 : void 0) != null) {
-                  return {
-                    start: node.id.loc.start,
-                    end: node.init.loc.end
-                  };
-                } else {
-                  return node.id.loc;
-                }
-                break;
-              case 'ExpressionStatement':
-                return node.expression.loc;
-              case 'ReturnStatement':
-                if (node.argument != null) {
-                  return node.argument.loc;
-                } else {
-                  return node.loc;
-                }
-                break;
-              case 'VariableDeclaration':
-                return {
-                  start: node.declarations[0].loc.start,
-                  end: node.declarations[node.declarations.length - 1].loc.end
-                };
-              default:
-                return {
-                  start: {
-                    line: 0,
-                    column: 0
-                  },
-                  end: {
-                    line: 0,
-                    column: 0
-                  }
-                };
-            }
-          })();
-        }
-      }
-    });
-  };
-
-}).call(this);
-}).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"estraverse":71,"lodash":28}],5:[function(require,module,exports){
 (function (global){(function() {
   var logCallEnd, logCallStart, logStatement, logStatementStart, serializeVariableValue, _, _ref, _ref1, _ref2,
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
@@ -21892,7 +21756,7 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
 
 }).call(this);
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"lodash":28}],6:[function(require,module,exports){
+},{"lodash":27}],5:[function(require,module,exports){
 (function() {
   var Clojure, Language, _ref,
     __hasProp = {}.hasOwnProperty,
@@ -21918,7 +21782,7 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
 
 }).call(this);
 
-},{"./language":9}],7:[function(require,module,exports){
+},{"./language":8}],6:[function(require,module,exports){
 (function (global){(function() {
   var CoffeeScript, Language, StructuredCode, csredux, estraverse, fixLocations, _, _ref, _ref1, _ref2, _ref3,
     __hasProp = {}.hasOwnProperty,
@@ -22110,7 +21974,7 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
 
 }).call(this);
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./language":9,"coffee-script-redux":42,"estraverse":71,"lodash":28}],8:[function(require,module,exports){
+},{"./language":8,"coffee-script-redux":41,"estraverse":70,"lodash":27}],7:[function(require,module,exports){
 (function (global){(function() {
   var JavaScript, Language, acorn_loose, esprima, jshint, traversal, _, _ref, _ref1, _ref2, _ref3,
     __hasProp = {}.hasOwnProperty,
@@ -22321,7 +22185,7 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
 
 }).call(this);
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../traversal":17,"./language":9,"acorn/acorn_loose":27,"esprima":70,"jshint":77,"lodash":28}],9:[function(require,module,exports){
+},{"../traversal":16,"./language":8,"acorn/acorn_loose":26,"esprima":69,"jshint":76,"lodash":27}],8:[function(require,module,exports){
 (function (global){(function() {
   var Language, _, _ref, _ref1, _ref2;
 
@@ -22387,7 +22251,7 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
 
 }).call(this);
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"lodash":28}],10:[function(require,module,exports){
+},{"lodash":27}],9:[function(require,module,exports){
 (function() {
   module.exports = {
     javascript: require('./javascript'),
@@ -22398,7 +22262,7 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
 
 }).call(this);
 
-},{"./clojure":6,"./coffeescript":7,"./javascript":8,"./lua":11}],11:[function(require,module,exports){
+},{"./clojure":5,"./coffeescript":6,"./javascript":7,"./lua":10}],10:[function(require,module,exports){
 (function() {
   var Language, Lua, _ref,
     __hasProp = {}.hasOwnProperty,
@@ -22424,7 +22288,7 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
 
 }).call(this);
 
-},{"./language":9}],12:[function(require,module,exports){
+},{"./language":8}],11:[function(require,module,exports){
 (function() {
   var commonMethods, explainErrorMessage, extractRuntimeErrorDetails, extractTranspileErrorDetails, ranges;
 
@@ -22576,7 +22440,7 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
 
 }).call(this);
 
-},{"./ranges":15}],13:[function(require,module,exports){
+},{"./ranges":14}],12:[function(require,module,exports){
 (function (global){(function() {
   var argsClass, arrayClass, boolClass, cloneableClasses, createAPIClone, ctorByClass, dateClass, errorClass, funcClass, numberClass, objectClass, reFlags, regexpClass, restoreAPIClone, stringClass, _, _ref, _ref1, _ref2,
     __hasProp = {}.hasOwnProperty;
@@ -22766,7 +22630,7 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
 
 }).call(this);
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"lodash":28}],14:[function(require,module,exports){
+},{"lodash":27}],13:[function(require,module,exports){
 (function() {
   var addGlobal, addedGlobals, builtinClones, builtinNames, builtinObjectNames, builtinReal, cloneBuiltin, copy, copyBuiltin, createSandboxedFunction, getOwnPropertyNames, global, name, problems, raiseDisabledFunctionConstructor, restoreBuiltins, wrapWithSandbox, _i, _len;
 
@@ -22900,7 +22764,7 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
 
 }).call(this);
 
-},{"./problems":12}],15:[function(require,module,exports){
+},{"./problems":11}],14:[function(require,module,exports){
 (function() {
   var buildRowOffsets, lastRowOffsets, lastRowOffsetsPrefix, lastRowOffsetsSource, offsetToPos, offsetToRow, offsetsToRange, rowColToPos, rowColsToRange, stringifyPos, stringifyRange;
 
@@ -23017,7 +22881,7 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
 
 }).call(this);
 
-},{}],16:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 (function (global){(function() {
   var S, SourceMap, checkIncompleteMembers, commonMethods, getFunctionNestingLevel, getParents, getParentsOfTypes, interceptThis, makeCheckThisKeywords, makeFindOriginalNodes, makeGatherNodeRanges, makeInstrumentCalls, makeInstrumentStatements, makeProtectAPI, possiblyGeneratorifyAncestorFunction, ranges, statements, validateReturns, yieldAutomatically, yieldConditionally, _, _ref, _ref1, _ref2,
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
@@ -23340,9 +23204,9 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
 
 }).call(this);
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./problems":12,"./ranges":15,"esprima":70,"lodash":28,"source-map":84}],17:[function(require,module,exports){
+},{"./problems":11,"./ranges":14,"esprima":69,"lodash":27,"source-map":83}],16:[function(require,module,exports){
 (function (global){(function() {
-  var acorn_loose, csredux, esprima, fixLocations, insertHelpers, morphAST, walkAST, _, _ref, _ref1, _ref2;
+  var acorn_loose, csredux, esprima, insertHelpers, morphAST, walkAST, _, _ref, _ref1, _ref2;
 
   _ = (_ref = (_ref1 = (_ref2 = typeof window !== "undefined" && window !== null ? window._ : void 0) != null ? _ref2 : typeof self !== "undefined" && self !== null ? self._ : void 0) != null ? _ref1 : typeof global !== "undefined" && global !== null ? global._ : void 0) != null ? _ref : require('lodash');
 
@@ -23351,8 +23215,6 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
   acorn_loose = require('acorn/acorn_loose');
 
   csredux = require('coffee-script-redux');
-
-  fixLocations = require('./fixLocations');
 
   module.exports.walkAST = walkAST = function(node, fn) {
     var child, grandchild, key, _i, _len, _results;
@@ -23434,7 +23296,7 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
 
 }).call(this);
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./fixLocations":4,"acorn/acorn_loose":27,"coffee-script-redux":42,"esprima":70,"lodash":28}],18:[function(require,module,exports){
+},{"acorn/acorn_loose":26,"coffee-script-redux":41,"esprima":69,"lodash":27}],17:[function(require,module,exports){
 (function() {
   var tv4;
 
@@ -23544,7 +23406,7 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
 
 }).call(this);
 
-},{"tv4":94}],19:[function(require,module,exports){
+},{"tv4":93}],18:[function(require,module,exports){
 /*******************************************************************************
  * Copyright (c) 2012 IBM Corporation.
  * All rights reserved. This program and the accompanying materials
@@ -23726,7 +23588,7 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
     defconstructor(p, signatures[p]);
 //});
 
-},{"./position":20}],20:[function(require,module,exports){
+},{"./position":19}],19:[function(require,module,exports){
 /*******************************************************************************
  * Copyright (c) 2012 IBM Corporation.
  * All rights reserved. This program and the accompanying materials
@@ -23788,7 +23650,7 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
   exports.DUMMY_POS = DUMMY_POS;
 //});
 
-},{}],21:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 /*******************************************************************************
  * Copyright (c) 2012 IBM Corporation.
  * All rights reserved. This program and the accompanying materials
@@ -23831,7 +23693,7 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
   };
 //});
 
-},{}],22:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 /*******************************************************************************
  * Copyright (c) 2012 IBM Corporation.
  * All rights reserved. This program and the accompanying materials
@@ -23879,7 +23741,7 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
   exports.getDeclName = getDeclName;
 //});
 
-},{"../../common/lib/ast":19}],23:[function(require,module,exports){
+},{"../../common/lib/ast":18}],22:[function(require,module,exports){
 /*******************************************************************************
  * Copyright (c) 2012 IBM Corporation.
  * All rights reserved. This program and the accompanying materials
@@ -24921,7 +24783,7 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
   exports.normalize = normalize;
 //});
 
-},{"../../common/lib/ast":19,"../../common/lib/position":20,"./cflow":21,"./decls":22,"./scope":24,"./util":25}],24:[function(require,module,exports){
+},{"../../common/lib/ast":18,"../../common/lib/position":19,"./cflow":20,"./decls":21,"./scope":23,"./util":24}],23:[function(require,module,exports){
 /*******************************************************************************
  * Copyright (c) 2012 IBM Corporation.
  * All rights reserved. This program and the accompanying materials
@@ -25050,7 +24912,7 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
   exports.WithScope = WithScope;
 //});
 
-},{"./decls":22}],25:[function(require,module,exports){
+},{"./decls":21}],24:[function(require,module,exports){
 /*******************************************************************************
  * Copyright (c) 2012 IBM Corporation.
  * All rights reserved. This program and the accompanying materials
@@ -25088,7 +24950,7 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
     Array.prototype.flatmap = flatmap;
 //});
 
-},{}],26:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 // Acorn is a tiny, fast JavaScript parser written in JavaScript.
 //
 // Acorn was written by Marijn Haverbeke and released under an MIT
@@ -26809,7 +26671,7 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
 
 });
 
-},{}],27:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 // Acorn: Loose parser
 //
 // This module provides an alternative parser (`parse_dammit`) that
@@ -27585,9 +27447,9 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
   }
 });
 
-},{"./acorn":26}],28:[function(require,module,exports){
+},{"./acorn":25}],27:[function(require,module,exports){
 
-},{}],29:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 // http://wiki.commonjs.org/wiki/Unit_Testing/1.0
 //
 // THIS IS NOT TESTED NOR LIKELY TO WORK OUTSIDE V8!
@@ -27949,14 +27811,14 @@ var objectKeys = Object.keys || function (obj) {
   return keys;
 };
 
-},{"util/":31}],30:[function(require,module,exports){
+},{"util/":30}],29:[function(require,module,exports){
 module.exports = function isBuffer(arg) {
   return arg && typeof arg === 'object'
     && typeof arg.copy === 'function'
     && typeof arg.fill === 'function'
     && typeof arg.readUInt8 === 'function';
 }
-},{}],31:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 (function (process,global){// Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -28544,7 +28406,7 @@ function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 }).call(this,require("/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":30,"/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":34,"inherits":33}],32:[function(require,module,exports){
+},{"./support/isBuffer":29,"/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":33,"inherits":32}],31:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -28846,7 +28708,7 @@ function isUndefined(arg) {
   return arg === void 0;
 }
 
-},{}],33:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -28871,7 +28733,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],34:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -28926,7 +28788,7 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
-},{}],35:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 (function (process){// Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -29152,11 +29014,11 @@ var substr = 'ab'.substr(-1) === 'b'
     }
 ;
 }).call(this,require("/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"))
-},{"/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":34}],36:[function(require,module,exports){
+},{"/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":33}],35:[function(require,module,exports){
+module.exports=require(29)
+},{}],36:[function(require,module,exports){
 module.exports=require(30)
-},{}],37:[function(require,module,exports){
-module.exports=require(31)
-},{"./support/isBuffer":36,"/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":34,"inherits":33}],38:[function(require,module,exports){
+},{"./support/isBuffer":35,"/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":33,"inherits":32}],37:[function(require,module,exports){
 // Generated by CoffeeScript 2.0.0-beta8
 var any, assignment, beingDeclared, collectIdentifiers, concat, concatMap, CS, declarationsNeeded, declarationsNeededRecursive, defaultRules, difference, divMod, dynamicMemberAccess, enabledHelpers, envEnrichments, exports, expr, fn, fn, foldl1, forceBlock, generateMutatingWalker, generateSoak, genSym, h, h, hasSoak, helperNames, helpers, inlineHelpers, intersect, isIdentifierName, JS, jsReserved, makeReturn, makeVarDeclaration, map, memberAccess, needsCaching, nub, owns, partition, span, stmt, union, usedAsExpression, variableDeclarations;
 cache$ = require('./functional-helpers');
@@ -31554,7 +31416,7 @@ function isOwn$(o, p) {
   return {}.hasOwnProperty.call(o, p);
 }
 
-},{"./../package.json":64,"./functional-helpers":39,"./helpers":40,"./js-nodes":41,"./nodes":43}],39:[function(require,module,exports){
+},{"./../package.json":63,"./functional-helpers":38,"./helpers":39,"./js-nodes":40,"./nodes":42}],38:[function(require,module,exports){
 // Generated by CoffeeScript 2.0.0-beta8
 var concat, foldl, map, nub, span;
 this.any = function (list, fn) {
@@ -31711,7 +31573,7 @@ function in$(member, list) {
   return false;
 }
 
-},{}],40:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 // Generated by CoffeeScript 2.0.0-beta8
 var beingDeclared, cleanMarkers, concat, concatMap, CS, difference, envEnrichments, envEnrichments_, foldl, humanReadable, map, nub, numberLines, pointToErrorLocation, usedAsExpression, usedAsExpression_;
 cache$ = require('./functional-helpers');
@@ -31890,7 +31752,7 @@ function in$(member, list) {
   return false;
 }
 
-},{"./functional-helpers":39,"./nodes":43}],41:[function(require,module,exports){
+},{"./functional-helpers":38,"./nodes":42}],40:[function(require,module,exports){
 // Generated by CoffeeScript 2.0.0-beta8
 var ArrayExpression, AssignmentExpression, BinaryExpression, BlockStatement, CallExpression, createNode, ctor, difference, exports, FunctionDeclaration, FunctionExpression, GenSym, handleLists, handlePrimitives, Identifier, isStatement, Literal, LogicalExpression, MemberExpression, NewExpression, node, nodeData, Nodes, ObjectExpression, params, Program, SequenceExpression, SwitchCase, SwitchStatement, TryStatement, UnaryExpression, UpdateExpression, VariableDeclaration, VariableDeclaration;
 difference = require('./functional-helpers').difference;
@@ -32367,7 +32229,7 @@ function in$(member, list) {
   return false;
 }
 
-},{"./functional-helpers":39}],42:[function(require,module,exports){
+},{"./functional-helpers":38}],41:[function(require,module,exports){
 // Generated by CoffeeScript 2.0.0-beta8
 var CoffeeScript, Compiler, cscodegen, escodegen, escodegenFormat, formatParserError, Nodes, Optimiser, Parser, pkg, Preprocessor;
 formatParserError = require('./helpers').formatParserError;
@@ -32480,7 +32342,7 @@ if (null != (null != require.extensions ? require.extensions['.node'] : void 0))
     return require('./register');
   };
 
-},{"./../package.json":64,"./compiler":38,"./helpers":40,"./nodes":43,"./optimiser":44,"./parser":45,"./preprocessor":46,"./register":47,"cscodegen":50,"escodegen":51}],43:[function(require,module,exports){
+},{"./../package.json":63,"./compiler":37,"./helpers":39,"./nodes":42,"./optimiser":43,"./parser":44,"./preprocessor":45,"./register":46,"cscodegen":49,"escodegen":50}],42:[function(require,module,exports){
 // Generated by CoffeeScript 2.0.0-beta8
 var ArrayInitialiser, Block, Bool, Class, CompoundAssignOp, concat, concatMap, Conditional, createNodes, difference, exports, ForOf, FunctionApplications, Functions, GenSym, handleLists, handlePrimitives, HeregExp, Identifier, Identifiers, map, NegatedConditional, NewOp, Nodes, nub, ObjectInitialiser, Primitives, Range, RegExp, RegExps, Slice, StaticMemberAccessOps, Super, Switch, SwitchCase, union, While;
 cache$ = require('./functional-helpers');
@@ -33064,7 +32926,7 @@ function in$(member, list) {
   return false;
 }
 
-},{"./functional-helpers":39}],44:[function(require,module,exports){
+},{"./functional-helpers":38}],43:[function(require,module,exports){
 (function (global){// Generated by CoffeeScript 2.0.0-beta8
 var all, any, beingDeclared, concat, concatMap, CS, declarationsFor, defaultRules, difference, envEnrichments, exports, foldl, foldl1, isFalsey, isTruthy, makeDispatcher, mayHaveSideEffects, union, usedAsExpression;
 cache$ = require('./functional-helpers');
@@ -33879,7 +33741,7 @@ function in$(member, list) {
   return false;
 }
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./functional-helpers":39,"./helpers":40,"./nodes":43}],45:[function(require,module,exports){
+},{"./functional-helpers":38,"./helpers":39,"./nodes":42}],44:[function(require,module,exports){
 module.exports = (function(){
   /*
    * Generated by PEG.js 0.7.0.
@@ -53683,7 +53545,7 @@ module.exports = (function(){
   return result;
 })();
 
-},{"../package.json":64,"./nodes":43}],46:[function(require,module,exports){
+},{"../package.json":63,"./nodes":42}],45:[function(require,module,exports){
 // Generated by CoffeeScript 2.0.0-beta8
 var DEDENT, INDENT, pointToErrorLocation, Preprocessor, StringScanner, TERM, ws;
 pointToErrorLocation = require('./helpers').pointToErrorLocation;
@@ -54013,7 +53875,7 @@ this.Preprocessor = Preprocessor = function () {
   return Preprocessor;
 }();
 
-},{"./helpers":40,"StringScanner":49}],47:[function(require,module,exports){
+},{"./helpers":39,"StringScanner":48}],46:[function(require,module,exports){
 // Generated by CoffeeScript 2.0.0-beta8
 var child_process, coffeeBinary, CoffeeScript, fork, fs, path, runModule;
 child_process = require('child_process');
@@ -54076,7 +53938,7 @@ function in$(member, list) {
   return false;
 }
 
-},{"./module":42,"./run":48,"child_process":28,"fs":28,"path":35}],48:[function(require,module,exports){
+},{"./module":41,"./run":47,"child_process":27,"fs":27,"path":34}],47:[function(require,module,exports){
 (function (process){// Generated by CoffeeScript 2.0.0-beta8
 var CoffeeScript, formatSourcePosition, Module, patched, patchStackTrace, path, runMain, runModule, SourceMapConsumer;
 path = require('path');
@@ -54183,7 +54045,7 @@ module.exports = {
   runModule: runModule
 };
 }).call(this,require("/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"))
-},{"./module":42,"/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":34,"module":28,"path":35,"source-map":54}],49:[function(require,module,exports){
+},{"./module":41,"/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":33,"module":27,"path":34,"source-map":53}],48:[function(require,module,exports){
 (function() {
   var StringScanner;
   StringScanner = (function() {
@@ -54351,7 +54213,7 @@ module.exports = {
   module.exports = StringScanner;
 }).call(this);
 
-},{}],50:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 // Generated by CoffeeScript 1.3.3
 (function() {
   var __hasProp = {}.hasOwnProperty,
@@ -54973,7 +54835,7 @@ module.exports = {
 
 }).call(this);
 
-},{}],51:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 (function (global){/*
   Copyright (C) 2012-2013 Yusuke Suzuki <utatane.tea@gmail.com>
   Copyright (C) 2012-2013 Michael Ficarra <escodegen.copyright@michael.ficarra.me>
@@ -57094,7 +56956,7 @@ module.exports = {
 }());
 /* vim: set sw=4 ts=4 et tw=80 : */
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./package.json":53,"estraverse":52,"source-map":54}],52:[function(require,module,exports){
+},{"./package.json":52,"estraverse":51,"source-map":53}],51:[function(require,module,exports){
 /*
   Copyright (C) 2012-2013 Yusuke Suzuki <utatane.tea@gmail.com>
   Copyright (C) 2012 Ariya Hidayat <ariya.hidayat@gmail.com>
@@ -57780,7 +57642,7 @@ module.exports = {
 }));
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{}],53:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 module.exports={
   "name": "escodegen",
   "description": "ECMAScript code generator",
@@ -57845,14 +57707,10 @@ module.exports={
     "url": "https://github.com/Constellation/escodegen/issues"
   },
   "_id": "escodegen@0.0.28",
-  "dist": {
-    "shasum": "0e4ff1715f328775d6cab51ac44a406cd7abffd3"
-  },
-  "_from": "escodegen@0.0.28",
-  "_resolved": "https://registry.npmjs.org/escodegen/-/escodegen-0.0.28.tgz"
+  "_from": "escodegen@0.0.28"
 }
 
-},{}],54:[function(require,module,exports){
+},{}],53:[function(require,module,exports){
 /*
  * Copyright 2009-2011 Mozilla Foundation and contributors
  * Licensed under the New BSD license. See LICENSE.txt or:
@@ -57862,7 +57720,7 @@ exports.SourceMapGenerator = require('./source-map/source-map-generator').Source
 exports.SourceMapConsumer = require('./source-map/source-map-consumer').SourceMapConsumer;
 exports.SourceNode = require('./source-map/source-node').SourceNode;
 
-},{"./source-map/source-map-consumer":59,"./source-map/source-map-generator":60,"./source-map/source-node":61}],55:[function(require,module,exports){
+},{"./source-map/source-map-consumer":58,"./source-map/source-map-generator":59,"./source-map/source-node":60}],54:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -57960,7 +57818,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./util":62,"amdefine":63}],56:[function(require,module,exports){
+},{"./util":61,"amdefine":62}],55:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -58106,7 +57964,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./base64":57,"amdefine":63}],57:[function(require,module,exports){
+},{"./base64":56,"amdefine":62}],56:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -58150,7 +58008,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"amdefine":63}],58:[function(require,module,exports){
+},{"amdefine":62}],57:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -58233,7 +58091,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"amdefine":63}],59:[function(require,module,exports){
+},{"amdefine":62}],58:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -58643,7 +58501,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./array-set":55,"./base64-vlq":56,"./binary-search":58,"./util":62,"amdefine":63}],60:[function(require,module,exports){
+},{"./array-set":54,"./base64-vlq":55,"./binary-search":57,"./util":61,"amdefine":62}],59:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -58878,7 +58736,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./array-set":55,"./base64-vlq":56,"./util":62,"amdefine":63}],61:[function(require,module,exports){
+},{"./array-set":54,"./base64-vlq":55,"./util":61,"amdefine":62}],60:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -59085,7 +58943,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./source-map-generator":60,"amdefine":63}],62:[function(require,module,exports){
+},{"./source-map-generator":59,"amdefine":62}],61:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -59148,7 +59006,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"amdefine":63}],63:[function(require,module,exports){
+},{"amdefine":62}],62:[function(require,module,exports){
 (function (process,__filename){/** vim: et:ts=4:sw=4:sts=4
  * @license amdefine 0.1.0 Copyright (c) 2011, The Dojo Foundation All Rights Reserved.
  * Available via the MIT or new BSD license.
@@ -59449,7 +59307,7 @@ function amdefine(module, requireFn) {
 
 module.exports = amdefine;
 }).call(this,require("/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),"/../node_modules/coffee-script-redux/node_modules/source-map/node_modules/amdefine/amdefine.js")
-},{"/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":34,"path":35}],64:[function(require,module,exports){
+},{"/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":33,"path":34}],63:[function(require,module,exports){
 module.exports={
   "name": "coffee-script-redux",
   "author": {
@@ -59516,7 +59374,7 @@ module.exports={
   "_from": "coffee-script-redux@~2.0.0-beta8"
 }
 
-},{}],65:[function(require,module,exports){
+},{}],64:[function(require,module,exports){
 (function (global){/*
   Copyright (C) 2012-2013 Yusuke Suzuki <utatane.tea@gmail.com>
   Copyright (C) 2012-2013 Michael Ficarra <escodegen.copyright@michael.ficarra.me>
@@ -59722,6 +59580,7 @@ module.exports={
             sourceMapRoot: null,
             sourceMapWithCode: false,
             directive: false,
+            raw: true,
             verbatim: null
         };
     }
@@ -60162,7 +60021,7 @@ module.exports={
         return '/*' + comment.value + '*/';
     }
 
-    function addCommentsToStatement(stmt, result) {
+    function addComments(stmt, result) {
         var i, len, comment, save, tailingToStatement, specialBase, fragment;
 
         if (stmt.leadingComments && stmt.leadingComments.length > 0) {
@@ -60348,7 +60207,7 @@ module.exports={
     }
 
     function generateIterationForStatement(operator, stmt, semicolonIsNotNeeded) {
-        var result = ['f' + 'or' + space + '('];
+        var result = ['for' + space + '('];
         withIndent(function () {
             if (stmt.left.type === Syntax.VariableDeclaration) {
                 withIndent(function () {
@@ -60913,7 +60772,7 @@ module.exports={
             break;
 
         case Syntax.Literal:
-            if (expr.hasOwnProperty('raw') && parse) {
+            if (expr.hasOwnProperty('raw') && parse && extra.raw) {
                 try {
                     raw = parse(expr.raw).body[0].expression;
                     if (raw.type === Syntax.Literal) {
@@ -61035,9 +60894,9 @@ module.exports={
             }));
 
             if (extra.moz.parenthesizedComprehensionBlock) {
-                result = [ 'f' + 'or' + space + '(', fragment, ')' ];
+                result = [ 'for' + space + '(', fragment, ')' ];
             } else {
-                result = join('f' + 'or' + space, fragment);
+                result = join('for' + space, fragment);
             }
             break;
 
@@ -61045,6 +60904,9 @@ module.exports={
             throw new Error('Unknown expression type: ' + expr.type);
         }
 
+        if (extra.comment) {
+            result = addComments(expr,result);
+        }
         return toSourceNodeWhenNeeded(result, expr);
     }
 
@@ -61110,7 +60972,7 @@ module.exports={
             break;
 
         case Syntax.DirectiveStatement:
-            if (stmt.raw) {
+            if (extra.raw && stmt.raw) {
                 result = stmt.raw + semicolon;
             } else {
                 result = escapeDirective(stmt.directive) + semicolon;
@@ -61386,7 +61248,7 @@ module.exports={
         case Syntax.IfStatement:
             withIndent(function () {
                 result = [
-                    'i' + 'f' + space + '(',
+                    'if' + space + '(',
                     generateExpression(stmt.test, {
                         precedence: Precedence.Sequence,
                         allowIn: true,
@@ -61410,7 +61272,7 @@ module.exports={
 
         case Syntax.ForStatement:
             withIndent(function () {
-                result = ['f' + 'or' + space + '('];
+                result = ['for' + space + '('];
                 if (stmt.init) {
                     if (stmt.init.type === Syntax.VariableDeclaration) {
                         result.push(generateStatement(stmt.init, {allowIn: false}));
@@ -61545,7 +61407,7 @@ module.exports={
         // Attach comments
 
         if (extra.comment) {
-            result = addCommentsToStatement(stmt, result);
+            result = addComments(stmt, result);
         }
 
         fragment = toSourceNodeWhenNeeded(result).toString();
@@ -61721,7 +61583,7 @@ module.exports={
 }());
 /* vim: set sw=4 ts=4 et tw=80 : */
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./package.json":69,"estraverse":71,"esutils":68,"source-map":84}],66:[function(require,module,exports){
+},{"./package.json":68,"estraverse":70,"esutils":67,"source-map":83}],65:[function(require,module,exports){
 /*
   Copyright (C) 2013 Yusuke Suzuki <utatane.tea@gmail.com>
 
@@ -61813,7 +61675,7 @@ module.exports={
 }());
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{}],67:[function(require,module,exports){
+},{}],66:[function(require,module,exports){
 /*
   Copyright (C) 2013 Yusuke Suzuki <utatane.tea@gmail.com>
 
@@ -61932,7 +61794,7 @@ module.exports={
 }());
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{"./code":66}],68:[function(require,module,exports){
+},{"./code":65}],67:[function(require,module,exports){
 /*
   Copyright (C) 2013 Yusuke Suzuki <utatane.tea@gmail.com>
 
@@ -61966,7 +61828,7 @@ module.exports={
 }());
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{"./code":66,"./keyword":67}],69:[function(require,module,exports){
+},{"./code":65,"./keyword":66}],68:[function(require,module,exports){
 module.exports={
   "name": "escodegen",
   "description": "ECMAScript code generator",
@@ -61976,7 +61838,7 @@ module.exports={
     "esgenerate": "./bin/esgenerate.js",
     "escodegen": "./bin/escodegen.js"
   },
-  "version": "1.3.0",
+  "version": "1.3.2",
   "engines": {
     "node": ">=0.4.0"
   },
@@ -61992,18 +61854,16 @@ module.exports={
     "url": "http://github.com/Constellation/escodegen.git"
   },
   "dependencies": {
-    "esprima": "~1.0.4",
-    "estraverse": "~1.5.0",
     "esutils": "~1.0.0",
-    "source-map": "~0.1.30"
+    "estraverse": "~1.5.0",
+    "esprima": "~1.1.1",
+    "source-map": "~0.1.33"
   },
   "optionalDependencies": {
-    "source-map": "~0.1.30"
+    "source-map": "~0.1.33"
   },
   "devDependencies": {
     "esprima-moz": "*",
-    "q": "*",
-    "bower": "*",
     "semver": "*",
     "chai": "~1.7.2",
     "gulp": "~3.5.0",
@@ -62011,7 +61871,9 @@ module.exports={
     "gulp-eslint": "~0.1.2",
     "jshint-stylish": "~0.1.5",
     "gulp-jshint": "~1.4.0",
-    "commonjs-everywhere": "~0.9.6"
+    "commonjs-everywhere": "~0.9.6",
+    "bluebird": "~1.2.0",
+    "bower-registry-client": "~0.2.0"
   },
   "licenses": [
     {
@@ -62027,20 +61889,16 @@ module.exports={
     "build-min": "cjsify -ma path: tools/entry-point.js > escodegen.browser.min.js",
     "build": "cjsify -a path: tools/entry-point.js > escodegen.browser.js"
   },
-  "readme": "\n### Escodegen [![Build Status](https://secure.travis-ci.org/Constellation/escodegen.png)](http://travis-ci.org/Constellation/escodegen) [![Build Status](https://drone.io/github.com/Constellation/escodegen/status.png)](https://drone.io/github.com/Constellation/escodegen/latest)\n\nEscodegen ([escodegen](http://github.com/Constellation/escodegen)) is\n[ECMAScript](http://www.ecma-international.org/publications/standards/Ecma-262.htm)\n(also popularly known as [JavaScript](http://en.wikipedia.org/wiki/JavaScript>JavaScript))\ncode generator from [Parser API](https://developer.mozilla.org/en/SpiderMonkey/Parser_API) AST.\nSee [online generator demo](http://constellation.github.com/escodegen/demo/index.html).\n\n\n### Install\n\nEscodegen can be used in a web browser:\n\n    <script src=\"escodegen.browser.js\"></script>\n\nescodegen.browser.js is found in tagged-revision. See Tags on GitHub.\n\nOr in a Node.js application via the package manager:\n\n    npm install escodegen\n\n### Usage\n\nA simple example: the program\n\n    escodegen.generate({\n        type: 'BinaryExpression',\n        operator: '+',\n        left: { type: 'Literal', value: 40 },\n        right: { type: 'Literal', value: 2 }\n    });\n\nproduces the string `'40 + 2'`\n\nSee the [API page](https://github.com/Constellation/escodegen/wiki/API) for\noptions. To run the tests, execute `npm test` in the root directory.\n\n### Building browser bundle / minified browser bundle\n\nAt first, executing `npm install` to install the all dev dependencies.\nAfter that,\n\n    npm run-script build\n\nwill generate `escodegen.browser.js`, it is used on the browser environment.\n\nAnd,\n\n    npm run-script build-min\n\nwill generate minified `escodegen.browser.min.js`.\n\n### License\n\n#### Escodegen\n\nCopyright (C) 2012 [Yusuke Suzuki](http://github.com/Constellation)\n (twitter: [@Constellation](http://twitter.com/Constellation)) and other contributors.\n\nRedistribution and use in source and binary forms, with or without\nmodification, are permitted provided that the following conditions are met:\n\n  * Redistributions of source code must retain the above copyright\n    notice, this list of conditions and the following disclaimer.\n\n  * Redistributions in binary form must reproduce the above copyright\n    notice, this list of conditions and the following disclaimer in the\n    documentation and/or other materials provided with the distribution.\n\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\"\nAND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE\nIMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE\nARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY\nDIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES\n(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;\nLOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND\nON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT\n(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF\nTHIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n\n#### source-map\n\nSourceNodeMocks has a limited interface of mozilla/source-map SourceNode implementations.\n\nCopyright (c) 2009-2011, Mozilla Foundation and contributors\nAll rights reserved.\n\nRedistribution and use in source and binary forms, with or without\nmodification, are permitted provided that the following conditions are met:\n\n* Redistributions of source code must retain the above copyright notice, this\n  list of conditions and the following disclaimer.\n\n* Redistributions in binary form must reproduce the above copyright notice,\n  this list of conditions and the following disclaimer in the documentation\n  and/or other materials provided with the distribution.\n\n* Neither the names of the Mozilla Foundation nor the names of project\n  contributors may be used to endorse or promote products derived from this\n  software without specific prior written permission.\n\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AND\nANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED\nWARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE\nDISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE\nFOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL\nDAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR\nSERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER\nCAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,\nOR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE\nOF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n",
+  "readme": "### Escodegen [![Build Status](https://secure.travis-ci.org/Constellation/escodegen.svg)](http://travis-ci.org/Constellation/escodegen) [![Build Status](https://drone.io/github.com/Constellation/escodegen/status.png)](https://drone.io/github.com/Constellation/escodegen/latest)\n\nEscodegen ([escodegen](http://github.com/Constellation/escodegen)) is\n[ECMAScript](http://www.ecma-international.org/publications/standards/Ecma-262.htm)\n(also popularly known as [JavaScript](http://en.wikipedia.org/wiki/JavaScript>JavaScript))\ncode generator from [Parser API](https://developer.mozilla.org/en/SpiderMonkey/Parser_API) AST.\nSee [online generator demo](http://constellation.github.com/escodegen/demo/index.html).\n\n\n### Install\n\nEscodegen can be used in a web browser:\n\n    <script src=\"escodegen.browser.js\"></script>\n\nescodegen.browser.js is found in tagged-revision. See Tags on GitHub.\n\nOr in a Node.js application via the package manager:\n\n    npm install escodegen\n\n### Usage\n\nA simple example: the program\n\n    escodegen.generate({\n        type: 'BinaryExpression',\n        operator: '+',\n        left: { type: 'Literal', value: 40 },\n        right: { type: 'Literal', value: 2 }\n    });\n\nproduces the string `'40 + 2'`\n\nSee the [API page](https://github.com/Constellation/escodegen/wiki/API) for\noptions. To run the tests, execute `npm test` in the root directory.\n\n### Building browser bundle / minified browser bundle\n\nAt first, executing `npm install` to install the all dev dependencies.\nAfter that,\n\n    npm run-script build\n\nwill generate `escodegen.browser.js`, it is used on the browser environment.\n\nAnd,\n\n    npm run-script build-min\n\nwill generate minified `escodegen.browser.min.js`.\n\n### License\n\n#### Escodegen\n\nCopyright (C) 2012 [Yusuke Suzuki](http://github.com/Constellation)\n (twitter: [@Constellation](http://twitter.com/Constellation)) and other contributors.\n\nRedistribution and use in source and binary forms, with or without\nmodification, are permitted provided that the following conditions are met:\n\n  * Redistributions of source code must retain the above copyright\n    notice, this list of conditions and the following disclaimer.\n\n  * Redistributions in binary form must reproduce the above copyright\n    notice, this list of conditions and the following disclaimer in the\n    documentation and/or other materials provided with the distribution.\n\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\"\nAND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE\nIMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE\nARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY\nDIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES\n(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;\nLOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND\nON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT\n(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF\nTHIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n\n#### source-map\n\nSourceNodeMocks has a limited interface of mozilla/source-map SourceNode implementations.\n\nCopyright (c) 2009-2011, Mozilla Foundation and contributors\nAll rights reserved.\n\nRedistribution and use in source and binary forms, with or without\nmodification, are permitted provided that the following conditions are met:\n\n* Redistributions of source code must retain the above copyright notice, this\n  list of conditions and the following disclaimer.\n\n* Redistributions in binary form must reproduce the above copyright notice,\n  this list of conditions and the following disclaimer in the documentation\n  and/or other materials provided with the distribution.\n\n* Neither the names of the Mozilla Foundation nor the names of project\n  contributors may be used to endorse or promote products derived from this\n  software without specific prior written permission.\n\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AND\nANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED\nWARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE\nDISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE\nFOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL\nDAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR\nSERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER\nCAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,\nOR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE\nOF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n",
   "readmeFilename": "README.md",
   "bugs": {
     "url": "https://github.com/Constellation/escodegen/issues"
   },
-  "_id": "escodegen@1.3.0",
-  "dist": {
-    "shasum": "97face2dd233d4a614c550be273651dd90e394bf"
-  },
-  "_from": "escodegen@1.3.0",
-  "_resolved": "https://registry.npmjs.org/escodegen/-/escodegen-1.3.0.tgz"
+  "_id": "escodegen@1.3.2",
+  "_from": "escodegen@1.3.2"
 }
 
-},{}],70:[function(require,module,exports){
+},{}],69:[function(require,module,exports){
 /*
   Copyright (C) 2013 Ariya Hidayat <ariya.hidayat@gmail.com>
   Copyright (C) 2013 Thaddee Tyl <thaddee.tyl@gmail.com>
@@ -62171,7 +62029,6 @@ parseYieldExpression: true
         ClassBody: 'ClassBody',
         ClassDeclaration: 'ClassDeclaration',
         ClassExpression: 'ClassExpression',
-        ClassHeritage: 'ClassHeritage',
         ComprehensionBlock: 'ComprehensionBlock',
         ComprehensionExpression: 'ComprehensionExpression',
         ConditionalExpression: 'ConditionalExpression',
@@ -63899,7 +63756,8 @@ parseYieldExpression: true
             return {
                 type: Syntax.UnaryExpression,
                 operator: operator,
-                argument: argument
+                argument: argument,
+                prefix: true
             };
         },
 
@@ -67237,7 +67095,7 @@ parseYieldExpression: true
 }));
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{}],71:[function(require,module,exports){
+},{}],70:[function(require,module,exports){
 /*
   Copyright (C) 2012-2013 Yusuke Suzuki <utatane.tea@gmail.com>
   Copyright (C) 2012 Ariya Hidayat <ariya.hidayat@gmail.com>
@@ -67927,7 +67785,7 @@ parseYieldExpression: true
 }));
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{}],72:[function(require,module,exports){
+},{}],71:[function(require,module,exports){
 var identifierStartTable = [];
 
 for (var i = 0; i < 128; i++) {
@@ -67951,7 +67809,7 @@ module.exports = {
 	asciiIdentifierPartTable: identifierPartTable
 };
 
-},{}],73:[function(require,module,exports){
+},{}],72:[function(require,module,exports){
 module.exports = [
 	768,
 	769,
@@ -69523,7 +69381,7 @@ module.exports = [
 	65343
 ];
 
-},{}],74:[function(require,module,exports){
+},{}],73:[function(require,module,exports){
 module.exports = [
 	170,
 	181,
@@ -118002,7 +117860,7 @@ module.exports = [
 	65500
 ];
 
-},{}],75:[function(require,module,exports){
+},{}],74:[function(require,module,exports){
 (function (global){/*global window, global*/
 var util = require("util")
 var assert = require("assert")
@@ -118089,7 +117947,7 @@ function assert(expression) {
     }
 }
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"assert":29,"util":37}],76:[function(require,module,exports){
+},{"assert":28,"util":36}],75:[function(require,module,exports){
 //     Underscore.js 1.4.4
 //     http://underscorejs.org
 //     (c) 2009-2013 Jeremy Ashkenas, DocumentCloud Inc.
@@ -119317,7 +119175,7 @@ function assert(expression) {
 
 }).call(this);
 
-},{}],77:[function(require,module,exports){
+},{}],76:[function(require,module,exports){
 /*!
  * JSHint, by JSHint Community.
  *
@@ -124321,7 +124179,7 @@ if (typeof exports === "object" && exports) {
 	exports.JSHINT = JSHINT;
 }
 
-},{"./lex.js":78,"./messages.js":79,"./reg.js":80,"./state.js":81,"./style.js":82,"./vars.js":83,"console-browserify":75,"events":32,"underscore":76}],78:[function(require,module,exports){
+},{"./lex.js":77,"./messages.js":78,"./reg.js":79,"./state.js":80,"./style.js":81,"./vars.js":82,"console-browserify":74,"events":31,"underscore":75}],77:[function(require,module,exports){
 /*
  * Lexical analysis and token construction.
  */
@@ -125899,7 +125757,7 @@ Lexer.prototype = {
 
 exports.Lexer = Lexer;
 
-},{"../data/ascii-identifier-data.js":72,"../data/non-ascii-identifier-part-only.js":73,"../data/non-ascii-identifier-start.js":74,"./reg.js":80,"./state.js":81,"events":32,"underscore":76}],79:[function(require,module,exports){
+},{"../data/ascii-identifier-data.js":71,"../data/non-ascii-identifier-part-only.js":72,"../data/non-ascii-identifier-start.js":73,"./reg.js":79,"./state.js":80,"events":31,"underscore":75}],78:[function(require,module,exports){
 "use strict";
 
 var _ = require("underscore");
@@ -126121,7 +125979,7 @@ _.each(info, function (desc, code) {
 	exports.info[code] = { code: code, desc: desc };
 });
 
-},{"underscore":76}],80:[function(require,module,exports){
+},{"underscore":75}],79:[function(require,module,exports){
 /*
  * Regular expressions. Some of these are stupidly long.
  */
@@ -126157,7 +126015,7 @@ exports.javascriptURL = /^(?:javascript|jscript|ecmascript|vbscript|mocha|livesc
 // Catches /* falls through */ comments (ft)
 exports.fallsThrough = /^\s*\/\*\s*falls?\sthrough\s*\*\/\s*$/;
 
-},{}],81:[function(require,module,exports){
+},{}],80:[function(require,module,exports){
 "use strict";
 
 var state = {
@@ -126185,7 +126043,7 @@ var state = {
 
 exports.state = state;
 
-},{}],82:[function(require,module,exports){
+},{}],81:[function(require,module,exports){
 "use strict";
 
 exports.register = function (linter) {
@@ -126357,7 +126215,7 @@ exports.register = function (linter) {
 		}
 	});
 };
-},{}],83:[function(require,module,exports){
+},{}],82:[function(require,module,exports){
 // jshint -W001
 
 "use strict";
@@ -126948,9 +126806,9 @@ exports.yui = {
 };
 
 
-},{}],84:[function(require,module,exports){
-arguments[4][54][0].apply(exports,arguments)
-},{"./source-map/source-map-consumer":89,"./source-map/source-map-generator":90,"./source-map/source-node":91}],85:[function(require,module,exports){
+},{}],83:[function(require,module,exports){
+arguments[4][53][0].apply(exports,arguments)
+},{"./source-map/source-map-consumer":88,"./source-map/source-map-generator":89,"./source-map/source-node":90}],84:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -127049,7 +126907,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./util":92,"amdefine":93}],86:[function(require,module,exports){
+},{"./util":91,"amdefine":92}],85:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -127195,7 +127053,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./base64":87,"amdefine":93}],87:[function(require,module,exports){
+},{"./base64":86,"amdefine":92}],86:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -127239,7 +127097,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"amdefine":93}],88:[function(require,module,exports){
+},{"amdefine":92}],87:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -127322,7 +127180,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"amdefine":93}],89:[function(require,module,exports){
+},{"amdefine":92}],88:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -127802,7 +127660,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./array-set":85,"./base64-vlq":86,"./binary-search":88,"./util":92,"amdefine":93}],90:[function(require,module,exports){
+},{"./array-set":84,"./base64-vlq":85,"./binary-search":87,"./util":91,"amdefine":92}],89:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -128201,7 +128059,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./array-set":85,"./base64-vlq":86,"./util":92,"amdefine":93}],91:[function(require,module,exports){
+},{"./array-set":84,"./base64-vlq":85,"./util":91,"amdefine":92}],90:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -128590,7 +128448,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./source-map-generator":90,"./util":92,"amdefine":93}],92:[function(require,module,exports){
+},{"./source-map-generator":89,"./util":91,"amdefine":92}],91:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -128894,7 +128752,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"amdefine":93}],93:[function(require,module,exports){
+},{"amdefine":92}],92:[function(require,module,exports){
 (function (process,__filename){/** vim: et:ts=4:sw=4:sts=4
  * @license amdefine 0.1.0 Copyright (c) 2011, The Dojo Foundation All Rights Reserved.
  * Available via the MIT or new BSD license.
@@ -129195,7 +129053,7 @@ function amdefine(module, requireFn) {
 
 module.exports = amdefine;
 }).call(this,require("/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),"/../node_modules/source-map/node_modules/amdefine/amdefine.js")
-},{"/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":34,"path":35}],94:[function(require,module,exports){
+},{"/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":33,"path":34}],93:[function(require,module,exports){
 /*
 Author: Geraint Luff and others
 Year: 2013
@@ -129204,8 +129062,18 @@ This code is released into the "public domain" by its author(s).  Anybody may us
 
 If you find a bug or make an improvement, it would be courteous to let the author know, but it is not compulsory.
 */
-(function (global) {
-'use strict';
+(function (global, factory) {
+  if (typeof define === 'function' && define.amd) {
+    // AMD. Register as an anonymous module.
+    define([], factory);
+  } else if (typeof module !== 'undefined' && module.exports){
+    // CommonJS. Define export.
+    module.exports = factory();
+  } else {
+    // Browser globals
+    global.tv4 = factory();
+  }
+}(this, function () {
 
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/keys?redirectlocale=en-US&redirectslug=JavaScript%2FReference%2FGlobal_Objects%2FObject%2Fkeys
 if (!Object.keys) {
@@ -129340,6 +129208,16 @@ var ValidatorContext = function ValidatorContext(parent, collectMultiple, errorM
 		this.unknownPropertyPaths = {};
 	}
 	this.errorMessages = errorMessages;
+	this.definedKeywords = {};
+	if (parent) {
+		for (var key in parent.definedKeywords) {
+			this.definedKeywords[key] = parent.definedKeywords[key].slice(0);
+		}
+	}
+};
+ValidatorContext.prototype.defineKeyword = function (keyword, keywordFunction) {
+	this.definedKeywords[keyword] = this.definedKeywords[keyword] || [];
+	this.definedKeywords[keyword].push(keywordFunction);
 };
 ValidatorContext.prototype.createError = function (code, messageParams, dataPath, schemaPath, subErrors) {
 	var messageTemplate = this.errorMessages[code] || ErrorMessagesDefault[code];
@@ -129592,6 +129470,7 @@ ValidatorContext.prototype.validateAll = function (data, schema, dataPathParts, 
 		|| this.validateObject(data, schema, dataPointerPath)
 		|| this.validateCombinations(data, schema, dataPointerPath)
 		|| this.validateFormat(data, schema, dataPointerPath)
+		|| this.validateDefinedKeywords(data, schema, dataPointerPath)
 		|| null;
 
 	if (topLevel) {
@@ -129631,6 +129510,33 @@ ValidatorContext.prototype.validateFormat = function (data, schema) {
 		return this.createError(ErrorCodes.FORMAT_CUSTOM, {message: errorMessage}).prefixWith(null, "format");
 	} else if (errorMessage && typeof errorMessage === 'object') {
 		return this.createError(ErrorCodes.FORMAT_CUSTOM, {message: errorMessage.message || "?"}, errorMessage.dataPath || null, errorMessage.schemaPath || "/format");
+	}
+	return null;
+};
+ValidatorContext.prototype.validateDefinedKeywords = function (data, schema) {
+	for (var key in this.definedKeywords) {
+		if (typeof schema[key] === 'undefined') {
+			continue;
+		}
+		var validationFunctions = this.definedKeywords[key];
+		for (var i = 0; i < validationFunctions.length; i++) {
+			var func = validationFunctions[i];
+			var result = func(data, schema[key], schema);
+			if (typeof result === 'string' || typeof result === 'number') {
+				return this.createError(ErrorCodes.KEYWORD_CUSTOM, {key: key, message: result}).prefixWith(null, "format");
+			} else if (result && typeof result === 'object') {
+				var code = result.code || ErrorCodes.KEYWORD_CUSTOM;
+				if (typeof code === 'string') {
+					if (!ErrorCodes[code]) {
+						throw new Error('Undefined error code (use defineError): ' + code);
+					}
+					code = ErrorCodes[code];
+				}
+				var messageParams = (typeof result.message === 'object') ? result.message : {key: key, message: result.message || "?"};
+				var schemaPath = result.schemaPath ||( "/" + key.replace(/~/g, '~0').replace(/\//g, '~1'));
+				return this.createError(code, messageParams, result.dataPath || null, schemaPath);
+			}
+		}
 	}
 	return null;
 };
@@ -130234,9 +130140,10 @@ function normSchema(schema, baseUri) {
 			for (var i = 0; i < schema.length; i++) {
 				normSchema(schema[i], baseUri);
 			}
-		} else if (typeof schema['$ref'] === "string") {
-			schema['$ref'] = resolveUrl(baseUri, schema['$ref']);
 		} else {
+			if (typeof schema['$ref'] === "string") {
+				schema['$ref'] = resolveUrl(baseUri, schema['$ref']);
+			}
 			for (var key in schema) {
 				if (key !== "enum") {
 					normSchema(schema[key], baseUri);
@@ -130274,13 +130181,18 @@ var ErrorCodes = {
 	ARRAY_LENGTH_LONG: 401,
 	ARRAY_UNIQUE: 402,
 	ARRAY_ADDITIONAL_ITEMS: 403,
-	// Format errors
+	// Custom/user-defined errors
 	FORMAT_CUSTOM: 500,
+	KEYWORD_CUSTOM: 501,
 	// Schema structure
 	CIRCULAR_REFERENCE: 600,
 	// Non-standard validation options
 	UNKNOWN_PROPERTY: 1000
 };
+var ErrorCodeLookup = {};
+for (var key in ErrorCodes) {
+	ErrorCodeLookup[ErrorCodes[key]] = key;
+}
 var ErrorMessagesDefault = {
 	INVALID_TYPE: "invalid type: {type} (expected {expected})",
 	ENUM_MISMATCH: "No enum match for: {value}",
@@ -130311,6 +130223,7 @@ var ErrorMessagesDefault = {
 	ARRAY_ADDITIONAL_ITEMS: "Additional items not allowed",
 	// Format errors
 	FORMAT_CUSTOM: "Format validation failed ({message})",
+	KEYWORD_CUSTOM: "Keyword failed: {key} ({message})",
 	// Schema structure
 	CIRCULAR_REFERENCE: "Circular $refs: {urls}",
 	// Non-standard validation options
@@ -130476,6 +130389,32 @@ function createApi(language) {
 		dropSchemas: function () {
 			globalContext.dropSchemas.apply(globalContext, arguments);
 		},
+		defineKeyword: function () {
+			globalContext.defineKeyword.apply(globalContext, arguments);
+		},
+		defineError: function (codeName, codeNumber, defaultMessage) {
+			if (typeof codeName !== 'string' || !/^[A-Z]+(_[A-Z]+)*$/.test(codeName)) {
+				throw new Error('Code name must be a string in UPPER_CASE_WITH_UNDERSCORES');
+			}
+			if (typeof codeNumber !== 'number' || codeNumber%1 !== 0 || codeNumber < 10000) {
+				throw new Error('Code number must be an integer > 10000');
+			}
+			if (typeof ErrorCodes[codeName] !== 'undefined') {
+				throw new Error('Error already defined: ' + codeName + ' as ' + ErrorCodes[codeName]);
+			}
+			if (typeof ErrorCodeLookup[codeNumber] !== 'undefined') {
+				throw new Error('Error code already used: ' + ErrorCodeLookup[codeNumber] + ' as ' + codeNumber);
+			}
+			ErrorCodes[codeName] = codeNumber;
+			ErrorCodeLookup[codeNumber] = codeName;
+			ErrorMessagesDefault[codeName] = ErrorMessagesDefault[codeNumber] = defaultMessage;
+			for (var langCode in languages) {
+				var language = languages[langCode];
+				if (language[codeName]) {
+					language[codeNumber] = language[codeNumber] || language[codeName];
+				}
+			}
+		},
 		reset: function () {
 			globalContext.reset();
 			this.error = null;
@@ -130499,13 +130438,7 @@ tv4.addLanguage('en-gb', ErrorMessagesDefault);
 //legacy property
 tv4.tv4 = tv4;
 
-if (typeof module !== 'undefined' && module.exports){
-	module.exports = tv4;
-}
-else {
-	global.tv4 = tv4;
-}
+return tv4; // used by _header.js to globalise.
 
-})(this);
-
+}));
 },{}]},{},[1])
