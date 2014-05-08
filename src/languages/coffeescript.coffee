@@ -1,6 +1,33 @@
 _ = window?._ ? self?._ ? global?._ ? require 'lodash'  # rely on lodash existing, since it busts CodeCombat to browserify it--TODO
 
+csredux = require 'coffee-script-redux'
 estraverse = require 'estraverse'
+
+Language = require './language'
+
+module.exports = class CoffeeScript extends Language
+  name: 'CoffeeScript'
+  id: 'coffeescript'
+
+  # Wrap the user code in a function. Store @wrappedCodePrefix and @wrappedCodeSuffix.
+  wrap: (rawCode, aether) ->
+    @wrappedCodePrefix ?="""
+    #{aether.options.functionName or 'foo'} = (#{aether.options.functionParameters.join(', ')}) ->
+    \n"""
+    @wrappedCodeSuffix ?= '\n'
+
+    # Add indentation of 4 spaces to every line
+    indentedCode = ('    ' + line for line in rawCode.split '\n').join '\n'
+
+    @wrappedCodePrefix + indentedCode + @wrappedCodeSuffix
+
+  # Using a third-party parser, produce an AST in the standardized Mozilla format.
+  parse: (code) ->
+    csAST = csredux.parse code, {optimise: false, raw: true}
+    jsAST = csredux.compile csAST, {bare: true}
+    fixLocations jsAST
+    jsAST
+
 
 class StructuredCode
   constructor: (code) ->
@@ -40,7 +67,7 @@ class StructuredCode
       line = index
     { column, line }
 
-module.exports = fixLocations = (program) ->
+fixLocations = (program) ->
   structured = new StructuredCode(program.raw)
   estraverse.traverse program,
     leave: (node, parent) ->

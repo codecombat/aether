@@ -21028,7 +21028,7 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
 
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 (function (global){(function() {
-  var Aether, acorn_loose, csredux, defaults, escodegen, esprima, execution, fixLocations, instrumentation, jshint, morph, normalizer, optionsValidator, problems, protectAPI, protectBuiltins, traceur, transforms, _, _ref, _ref1, _ref2, _ref3, _ref4, _ref5,
+  var Aether, defaults, escodegen, esprima, execution, instrumentation, languages, normalizer, optionsValidator, problems, protectAPI, protectBuiltins, traceur, transforms, traversal, _, _ref, _ref1, _ref2, _ref3, _ref4, _ref5,
     __slice = [].slice;
 
   _ = (_ref = (_ref1 = (_ref2 = typeof window !== "undefined" && window !== null ? window._ : void 0) != null ? _ref2 : typeof self !== "undefined" && self !== null ? self._ : void 0) != null ? _ref1 : typeof global !== "undefined" && global !== null ? global._ : void 0) != null ? _ref : require('lodash');
@@ -21037,15 +21037,9 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
 
   esprima = require('esprima');
 
-  acorn_loose = require('acorn/acorn_loose');
-
-  jshint = require('jshint').JSHINT;
-
   normalizer = require('JS_WALA/normalizer/lib/normalizer');
 
   escodegen = require('escodegen');
-
-  csredux = require('coffee-script-redux');
 
   defaults = require('./defaults');
 
@@ -21053,9 +21047,7 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
 
   execution = require('./execution');
 
-  fixLocations = require('./fixLocations');
-
-  morph = require('./morph');
+  traversal = require('./traversal');
 
   transforms = require('./transforms');
 
@@ -21067,83 +21059,103 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
 
   optionsValidator = require('./validators/options');
 
+  languages = require('./languages/languages');
+
   module.exports = Aether = (function() {
-    Aether.defaults = defaults;
-
-    Aether.problems = problems;
-
     Aether.execution = execution;
+
+    Aether.addGlobal = protectBuiltins.addGlobal;
 
     Aether.prototype.depth = 0;
 
     function Aether(options) {
-      var optionsValidation;
-      this.originalOptions = _.extend({}, options);
+      var defaultsCopy, validationResults;
       if (options == null) {
         options = {};
       }
-      if (options.problems == null) {
-        options.problems = {};
+      validationResults = optionsValidator(options);
+      if (!validationResults.valid) {
+        throw new Error("Aether options are invalid: " + JSON.stringify(validationResults.errors, null, 4));
       }
-      if (!options.excludeDefaultProblems) {
-        options.problems = _.merge(_.cloneDeep(Aether.problems.problems), options.problems);
-      }
-      optionsValidation = optionsValidator(options);
-      if (!optionsValidation.valid) {
-        throw new Error("Options array is not valid: " + JSON.stringify(optionsValidation.errors, null, 4));
-      }
-      this.options = _.merge(_.cloneDeep(Aether.defaults), options);
-      this.reset();
+      this.originalOptions = _.cloneDeep(options);
+      defaultsCopy = _.extend({}, defaults);
+      this.options = _.merge(defaultsCopy, options);
+      this.allGlobals = this.options.globals.concat(protectBuiltins.builtinNames);
+      this.setLanguage(this.options.language, this.options.languageVersion);
     }
 
-    Aether.prototype.canTranspile = function(raw, thorough) {
-      var e, lintProblems;
+    Aether.prototype.setLanguage = function(language, languageVersion) {
+      var validationResults;
+      if (this.language && this.language.id === language && this.language.version === languageVersion) {
+        return;
+      }
+      validationResults = optionsValidator({
+        language: language,
+        languageVersion: languageVersion
+      });
+      if (!validationResults.valid) {
+        throw new Error("New language is invalid: " + JSON.stringify(validationResults.errors, null, 4));
+      }
+      this.originalOptions.language = this.options.language = language;
+      this.originalOptions.languageVersion = this.options.languageVersion = languageVersion;
+      this.language = new languages[language](languageVersion);
+      if (this.languageJS == null) {
+        this.languageJS = language === 'javascript' ? this.language : new languages.javascript('ES5');
+      }
+      this.reset();
+      return language;
+    };
+
+    Aether.prototype.reset = function() {
+      this.problems = {
+        errors: [],
+        warnings: [],
+        infos: []
+      };
+      this.style = {};
+      this.flow = {};
+      this.metrics = {};
+      return this.pure = null;
+    };
+
+    Aether.prototype.serialize = function() {
+      return _.pick(this, ['originalOptions', 'raw', 'pure', 'problems', 'flow', 'metrics', 'style']);
+    };
+
+    Aether.deserialize = function(serialized) {
+      var aether, prop, val;
+      aether = new Aether(serialized.originalOptions);
+      for (prop in serialized) {
+        val = serialized[prop];
+        if (prop !== "originalOptions") {
+          aether[prop] = val;
+        }
+      }
+      return aether;
+    };
+
+    Aether.prototype.canTranspile = function(rawCode, thorough) {
       if (thorough == null) {
         thorough = false;
       }
-      if (!raw) {
+      if (!rawCode) {
         return true;
       }
-      try {
-        if (this.options.language === "javascript") {
-          eval("'use strict;'\nthrow 0;" + raw);
-        } else {
-          true;
-        }
-      } catch (_error) {
-        e = _error;
-        if (e !== 0) {
-          return false;
-        }
+      if (this.language.obviouslyCannotTranspile(rawCode)) {
+        return false;
       }
       if (!thorough) {
         return true;
       }
-      lintProblems = this.lint(raw);
-      return lintProblems.errors.length === 0;
+      return this.lint(rawCode).errors.length === 0;
     };
 
     Aether.prototype.hasChangedSignificantly = function(a, b, careAboutLineNumbers, careAboutLint) {
-      var lintAether;
       if (careAboutLineNumbers == null) {
         careAboutLineNumbers = false;
       }
       if (careAboutLint == null) {
         careAboutLint = false;
-      }
-      if (careAboutLint) {
-        lintAether = this;
-      }
-      return Aether.hasChangedSignificantly(a, b, careAboutLineNumbers, lintAether);
-    };
-
-    Aether.hasChangedSignificantly = function(a, b, careAboutLineNumbers, lintAether) {
-      var aAST, bAST, options, walk, _ref6, _ref7, _ref8;
-      if (careAboutLineNumbers == null) {
-        careAboutLineNumbers = false;
-      }
-      if (lintAether == null) {
-        lintAether = null;
       }
       if (!((a != null) && (b != null))) {
         return true;
@@ -21151,83 +21163,13 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
       if (a === b) {
         return false;
       }
-      if (careAboutLineNumbers && this.hasChangedLineNumbers(a, b)) {
+      if (careAboutLineNumbers && this.language.hasChangedLineNumbers(a, b)) {
         return true;
       }
-      if (lintAether != null ? lintAether.hasChangedLintProblems(a, b) : void 0) {
+      if (careAboutLint && this.hasChangedLintProblems(a, b)) {
         return true;
       }
-      options = {
-        loc: false,
-        range: false,
-        comment: false,
-        tolerant: true
-      };
-      _ref6 = [null, null], aAST = _ref6[0], bAST = _ref6[1];
-      try {
-        aAST = esprima.parse(a, options);
-      } catch (_error) {}
-      try {
-        bAST = esprima.parse(b, options);
-      } catch (_error) {}
-      if ((!aAST || !bAST) && (aAST || bAST)) {
-        return true;
-      }
-      if (aAST && bAST) {
-        if (((_ref7 = aAST.errors) != null ? _ref7 : []).length !== ((_ref8 = bAST.errors) != null ? _ref8 : []).length) {
-          return true;
-        }
-        return !_.isEqual(aAST.body, bAST.body);
-      }
-      options = {
-        locations: false,
-        tabSize: 4,
-        ecmaVersion: 5
-      };
-      aAST = acorn_loose.parse_dammit(a, options);
-      bAST = acorn_loose.parse_dammit(b, options);
-      walk = function(node) {
-        var child, grandchild, key, _results;
-        node.start = node.end = null;
-        _results = [];
-        for (key in node) {
-          child = node[key];
-          if (_.isArray(child)) {
-            _results.push((function() {
-              var _i, _len, _results1;
-              _results1 = [];
-              for (_i = 0, _len = child.length; _i < _len; _i++) {
-                grandchild = child[_i];
-                if (_.isString(grandchild != null ? grandchild.type : void 0)) {
-                  _results1.push(walk(grandchild));
-                } else {
-                  _results1.push(void 0);
-                }
-              }
-              return _results1;
-            })());
-          } else if (_.isString(child != null ? child.type : void 0)) {
-            _results.push(walk(child));
-          } else {
-            _results.push(void 0);
-          }
-        }
-        return _results;
-      };
-      walk(aAST);
-      walk(bAST);
-      return !_.isEqual(aAST, bAST);
-    };
-
-    Aether.hasChangedLineNumbers = function(a, b) {
-      if (!String.prototype.trimRight) {
-        String.prototype.trimRight = function() {
-          return String(this).replace(/\s\s*$/, '');
-        };
-      }
-      a = a.replace(/^[ \t]+\/\/.*/g, '').trimRight();
-      b = b.replace(/^[ \t]+\/\/.*/g, '').trimRight();
-      return a.split('\n').length !== b.split('\n').length;
+      return this.language.hasChangedASTs(a, b);
     };
 
     Aether.prototype.hasChangedLintProblems = function(a, b) {
@@ -21245,135 +21187,29 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
       return !_.isEqual(aLintProblems, bLintProblems);
     };
 
-    Aether.prototype.reset = function() {
-      this.problems = {
-        errors: [],
-        warnings: [],
-        infos: []
-      };
-      this.style = {};
-      this.flow = {};
-      this.metrics = {};
-      this.visualization = {};
-      return this.pure = null;
+    Aether.prototype.beautify = function(rawCode) {
+      return this.language.beautify(rawCode);
     };
 
     Aether.prototype.transpile = function(raw) {
       this.raw = raw;
       this.reset();
-      if (this.options.language !== 'coffeescript') {
-        this.problems = this.lint(this.raw);
-      }
+      this.problems = this.lint(this.raw);
       this.pure = this.purifyCode(this.raw);
       return this.pure;
     };
 
-    Aether.prototype.beautify = function(raw) {
-      var ast, beautified, e;
-      try {
-        ast = esprima.parse(raw, {
-          range: true,
-          tokens: true,
-          comment: true,
-          tolerant: true
-        });
-        ast = escodegen.attachComments(ast, ast.comments, ast.tokens);
-      } catch (_error) {
-        e = _error;
-        console.log('got error beautifying', e);
-        ast = acorn_loose.parse_dammit(raw, {
-          tabSize: 4,
-          ecmaVersion: 5
-        });
-      }
-      beautified = escodegen.generate(ast, {
-        comment: true,
-        parse: esprima.parse
-      });
-      return beautified;
-    };
-
-    Aether.prototype.addProblem = function(problem, problems) {
-      if (problems == null) {
-        problems = null;
-      }
-      if (problem.level === "ignore") {
-        return;
-      }
-      (problems != null ? problems : this.problems)[problem.level + "s"].push(problem);
-      return problem;
-    };
-
-    Aether.prototype.wrap = function(rawCode) {
-      if (this.wrappedCodePrefix == null) {
-        this.wrappedCodePrefix = "function " + (this.options.functionName || 'foo') + "(" + (this.options.functionParameters.join(', ')) + ") {\n\"use strict\";";
-      }
-      if (this.wrappedCodeSuffix == null) {
-        this.wrappedCodeSuffix = "\n}";
-      }
-      return this.wrappedCodePrefix + rawCode + this.wrappedCodeSuffix;
-    };
-
-    Aether.prototype.wrapCS = function(rawCode) {
-      var i, indentedCode, lines, _i, _ref6;
-      if (this.wrappedCodePrefix == null) {
-        this.wrappedCodePrefix = "" + (this.options.functionName || 'foo') + " = (" + (this.options.functionParameters.join(', ')) + ") ->\n\n";
-      }
-      if (this.wrappedCodeSuffix == null) {
-        this.wrappedCodeSuffix = "\n";
-      }
-      lines = rawCode.split("\n");
-      for (i = _i = 0, _ref6 = lines.length; 0 <= _ref6 ? _i < _ref6 : _i > _ref6; i = 0 <= _ref6 ? ++_i : --_i) {
-        lines[i] = "    " + lines[i];
-      }
-      indentedCode = lines.join("\n");
-      return this.wrappedCodePrefix + indentedCode + this.wrappedCodeSuffix;
-    };
-
     Aether.prototype.lint = function(rawCode) {
-      var e, error, g, jshintGlobals, jshintOptions, jshintSuccess, lintProblems, wrappedCode, _i, _len, _ref6;
-      wrappedCode = this.wrap(rawCode);
+      var lintProblems, problem, _i, _len, _ref6;
       lintProblems = {
         errors: [],
         warnings: [],
         infos: []
       };
-      jshintOptions = {
-        browser: false,
-        couch: false,
-        devel: false,
-        dojo: false,
-        jquery: false,
-        mootools: false,
-        node: false,
-        nonstandard: false,
-        phantom: false,
-        prototypejs: false,
-        rhino: false,
-        worker: false,
-        wsh: false,
-        yui: false
-      };
-      jshintGlobals = _.keys(this.options.global);
-      jshintGlobals = _.zipObject(jshintGlobals, (function() {
-        var _i, _len, _results;
-        _results = [];
-        for (_i = 0, _len = jshintGlobals.length; _i < _len; _i++) {
-          g = jshintGlobals[_i];
-          _results.push(false);
-        }
-        return _results;
-      })());
-      try {
-        jshintSuccess = jshint(wrappedCode, jshintOptions, jshintGlobals);
-      } catch (_error) {
-        e = _error;
-        console.warn("JSHint died with error", e);
-      }
-      _ref6 = jshint.errors;
+      _ref6 = this.language.lint(rawCode, this);
       for (_i = 0, _len = _ref6.length; _i < _len; _i++) {
-        error = _ref6[_i];
-        this.addProblem(new problems.TranspileProblem(this, 'jshint', error != null ? error.code : void 0, error, {}, wrappedCode, this.wrappedCodePrefix), lintProblems);
+        problem = _ref6[_i];
+        this.addProblem(problem, lintProblems);
       }
       return lintProblems;
     };
@@ -21385,12 +21221,7 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
     };
 
     Aether.prototype.createMethod = function(thisValue) {
-      var fn;
-      fn = this.createFunction();
-      if (thisValue || this.options.thisValue) {
-        fn = _.bind(fn, thisValue || this.options.thisValue);
-      }
-      return fn;
+      return _.bind(this.createFunction(), thisValue);
     };
 
     Aether.prototype.sandboxGenerator = function(fn) {
@@ -21403,160 +21234,58 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
     };
 
     Aether.prototype.run = function() {
-      var args, error, fn;
+      var args, error, fn, problem;
       fn = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
       try {
         if (fn == null) {
-          fn = this.createMethod();
+          fn = this.createFunction();
         }
+      } catch (_error) {
+        error = _error;
+        problem = this.createUserCodeProblem({
+          error: error,
+          code: this.raw,
+          type: 'transpile',
+          reporter: 'aether'
+        });
+        this.addProblem(problem);
+        return;
+      }
+      try {
         return fn.apply(null, args);
       } catch (_error) {
         error = _error;
-        return this.addProblem(new problems.RuntimeProblem(this, error, {}));
+        problem = this.createUserCodeProblem({
+          error: error,
+          code: this.raw,
+          type: 'runtime',
+          reporter: 'aether'
+        });
+        return this.addProblem(problem);
       }
+    };
+
+    Aether.prototype.createUserCodeProblem = problems.createUserCodeProblem;
+
+    Aether.prototype.addProblem = function(problem, problems) {
+      if (problems == null) {
+        problems = null;
+      }
+      if (problem.level === "ignore") {
+        return;
+      }
+      (problems != null ? problems : this.problems)[problem.level + "s"].push(problem);
+      return problem;
     };
 
     Aether.prototype.getAllProblems = function(problems) {
       return _.flatten(_.values(problems != null ? problems : this.problems));
     };
 
-    Aether.prototype.serialize = function() {
-      var serialized;
-      serialized = {
-        originalOptions: this.originalOptions,
-        raw: this.raw,
-        pure: this.pure,
-        problems: this.problems
-      };
-      if (this.options.includeFlow) {
-        serialized.flow = this.flow;
-      }
-      if (this.options.includeMetrics) {
-        serialized.metrics = this.metrics;
-      }
-      if (this.options.includeStyle) {
-        serialized.style = this.style;
-      }
-      if (this.options.includeVisualization) {
-        serialized.visualization = this.visualization;
-      }
-      serialized.originalOptions.thisValue = null;
-      return serialized;
-    };
-
-    Aether.deserialize = function(serialized) {
-      var aether, prop, val;
-      aether = new Aether(serialized.originalOptions);
-      for (prop in serialized) {
-        val = serialized[prop];
-        if (prop !== "originalOptions") {
-          aether[prop] = val;
-        }
-      }
-      return aether;
-    };
-
-    Aether.prototype.walk = function(node, fn) {
-      var child, grandchild, key, _i, _len, _results;
-      _results = [];
-      for (key in node) {
-        child = node[key];
-        if (_.isArray(child)) {
-          for (_i = 0, _len = child.length; _i < _len; _i++) {
-            grandchild = child[_i];
-            if (_.isString(grandchild != null ? grandchild.type : void 0)) {
-              this.walk(grandchild, fn);
-            }
-          }
-        } else if (_.isString(child != null ? child.type : void 0)) {
-          this.walk(child, fn);
-        }
-        _results.push(fn(child));
-      }
-      return _results;
-    };
-
-    Aether.prototype.traceurify = function(code) {
-      var loader, loaderHooks, reporter, url;
-      url = "randotron_" + Math.random();
-      reporter = new traceur.util.ErrorReporter();
-      loaderHooks = new traceur.runtime.InterceptOutputLoaderHooks(reporter, url);
-      loader = new traceur.System.internalLoader_.constructor(loaderHooks);
-      loader.script(code, url);
-      if (reporter.hadError()) {
-        console.warn("traceur had error trying to compile");
-      }
-      return loaderHooks.transcoded;
-    };
-
-    Aether.prototype.transform = function(code, transforms, parser, withAST) {
-      var options, parse, t, temp, transformedAST, transformedCode, _ref6;
-      if (parser == null) {
-        parser = "esprima";
-      }
-      if (withAST == null) {
-        withAST = false;
-      }
-      transformedCode = morph(code, (function() {
-        var _i, _len, _results;
-        _results = [];
-        for (_i = 0, _len = transforms.length; _i < _len; _i++) {
-          t = transforms[_i];
-          _results.push(_.bind(t, this));
-        }
-        return _results;
-      }).call(this), parser);
-      if (!withAST) {
-        return transformedCode;
-      }
-      _ref6 = (function() {
-        switch (parser) {
-          case "esprima":
-            return [
-              esprima.parse, {
-                loc: true,
-                range: true,
-                comment: true,
-                tolerant: true
-              }
-            ];
-          case "acorn_loose":
-            return [
-              acorn_loose.parse_dammit, {
-                locations: true,
-                tabSize: 4,
-                ecmaVersion: 5
-              }
-            ];
-          case "csredux":
-            return [
-              csredux.compile, {
-                bare: true
-              }
-            ];
-        }
-      })(), parse = _ref6[0], options = _ref6[1];
-      if (parser === 'csredux') {
-        temp = csredux.parse(transformedCode, {
-          optimise: false,
-          raw: true
-        });
-        transformedAST = parse(temp, options);
-        fixLocations(transformedAST);
-      } else {
-        transformedAST = parse(transformedCode, options);
-      }
-      return [transformedCode, transformedAST];
-    };
-
     Aether.prototype.purifyCode = function(rawCode) {
-      var error, instrumentedCode, interceptThis, normalized, normalizedAST, normalizedCode, normalizedNodeIndex, normalizedSourceMap, originalNodeRanges, parameter, postNormalizationTransforms, preNormalizationTransforms, preprocessedCode, problem, purifiedCode, transformedAST, transformedCode, varNames, wrappedCode, _i, _len, _ref10, _ref6, _ref7, _ref8, _ref9;
-      if (this.options.language === 'coffeescript') {
-        wrappedCode = this.wrapCS(rawCode);
-      } else {
-        preprocessedCode = this.checkCommonMistakes(rawCode);
-        wrappedCode = this.wrap(preprocessedCode);
-      }
+      var error, instrumentedCode, interceptThis, normalized, normalizedAST, normalizedCode, normalizedNodeIndex, normalizedSourceMap, originalNodeRanges, parameter, postNormalizationTransforms, preNormalizationTransforms, preprocessedCode, problemOptions, purifiedCode, reporter, transformedAST, transformedCode, varNames, wrappedCode, _i, _len, _ref6, _ref7, _ref8, _ref9;
+      preprocessedCode = this.language.hackCommonMistakes(rawCode);
+      wrappedCode = this.language.wrap(preprocessedCode, this);
       originalNodeRanges = [];
       varNames = {};
       _ref6 = this.options.functionParameters;
@@ -21564,32 +21293,34 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
         parameter = _ref6[_i];
         varNames[parameter] = true;
       }
-      preNormalizationTransforms = [transforms.makeGatherNodeRanges(originalNodeRanges, wrappedCode, this.wrappedCodePrefix), transforms.makeCheckThisKeywords(this.options.global, varNames), transforms.checkIncompleteMembers];
+      preNormalizationTransforms = [transforms.makeGatherNodeRanges(originalNodeRanges, wrappedCode, this.language.wrappedCodePrefix), transforms.makeCheckThisKeywords(this.allGlobals, varNames), transforms.checkIncompleteMembers];
       try {
-        if (this.options.language === 'coffeescript') {
-          _ref7 = this.transform(wrappedCode, preNormalizationTransforms, "csredux", true), transformedCode = _ref7[0], transformedAST = _ref7[1];
-        } else {
-          _ref8 = this.transform(wrappedCode, preNormalizationTransforms, "esprima", true), transformedCode = _ref8[0], transformedAST = _ref8[1];
-        }
+        _ref7 = this.transform(wrappedCode, preNormalizationTransforms, this.language.parse, true), transformedCode = _ref7[0], transformedAST = _ref7[1];
       } catch (_error) {
         error = _error;
-        if (this.options.language === 'coffeescript') {
-          problem = new problems.TranspileProblem(this, 'csredux', error.index, error, {}, wrappedCode, '');
-        } else {
-          problem = new problems.TranspileProblem(this, 'esprima', error.id, error, {}, wrappedCode, '');
-        }
-        this.addProblem(problem);
-        if (this.options.language === 'coffeescript') {
+        reporter = {
+          coffeescript: 'csredux',
+          javascript: 'esprima'
+        }[this.language.id];
+        problemOptions = {
+          error: error,
+          code: wrappedCode,
+          codePrefix: '',
+          reporter: reporter,
+          kind: error.index || error.id
+        };
+        this.addProblem(this.createUserCodeProblem(problemOptions));
+        if (!this.language.parseDammit) {
           return '';
         }
         originalNodeRanges.splice();
-        _ref9 = this.transform(wrappedCode, preNormalizationTransforms, "acorn_loose", true), transformedCode = _ref9[0], transformedAST = _ref9[1];
+        _ref8 = this.transform(wrappedCode, preNormalizationTransforms, this.language.parseDammit, true), transformedCode = _ref8[0], transformedAST = _ref8[1];
       }
       normalizedAST = normalizer.normalize(transformedAST, {});
       normalizedNodeIndex = [];
-      this.walk(normalizedAST, function(node) {
-        var pos, _ref10;
-        if (!(pos = node != null ? (_ref10 = node.attr) != null ? _ref10.pos : void 0 : void 0)) {
+      traversal.walkAST(normalizedAST, function(node) {
+        var pos, _ref9;
+        if (!(pos = node != null ? (_ref9 = node.attr) != null ? _ref9.pos : void 0 : void 0)) {
           return;
         }
         node.loc = {
@@ -21611,7 +21342,7 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
       normalizedCode = normalized.code;
       normalizedSourceMap = normalized.map;
       postNormalizationTransforms = [];
-      if ((_ref10 = this.options.thisValue) != null ? _ref10.validateReturn : void 0) {
+      if ((_ref9 = this.options.thisValue) != null ? _ref9.validateReturn : void 0) {
         postNormalizationTransforms.unshift(transforms.validateReturns);
       }
       if (this.options.yieldConditionally) {
@@ -21628,17 +21359,24 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
       if (this.options.includeMetrics || this.options.includeFlow) {
         postNormalizationTransforms.unshift(transforms.makeInstrumentCalls());
       }
-      postNormalizationTransforms.unshift(transforms.makeFindOriginalNodes(originalNodeRanges, this.wrappedCodePrefix, normalizedSourceMap, normalizedNodeIndex));
+      postNormalizationTransforms.unshift(transforms.makeFindOriginalNodes(originalNodeRanges, this.language.wrappedCodePrefix, normalizedSourceMap, normalizedNodeIndex));
       if (this.options.protectAPI) {
         postNormalizationTransforms.unshift(transforms.makeProtectAPI(this.options.functionParameters));
       }
       postNormalizationTransforms.unshift(transforms.interceptThis);
       try {
-        instrumentedCode = this.transform(normalizedCode, postNormalizationTransforms);
+        instrumentedCode = this.transform(normalizedCode, postNormalizationTransforms, this.languageJS.parse);
       } catch (_error) {
         error = _error;
-        this.addProblem(new problems.TranspileProblem(this, 'esprima', error.id, error, {}, normalizedCode, ''));
-        instrumentedCode = this.transform(normalizedCode, postNormalizationTransforms, "acorn_loose");
+        problemOptions = {
+          error: error,
+          code: normalizedCode,
+          codePrefix: '',
+          reporter: 'esprima',
+          kind: error.id
+        };
+        this.addProblem(this.createUserCodeProblem(problemOptions));
+        instrumentedCode = this.transform(normalizedCode, postNormalizationTransforms, this.languageJS.parseDammit);
       }
       if (this.options.yieldConditionally || this.options.yieldAutomatically) {
         purifiedCode = this.traceurify(instrumentedCode);
@@ -21673,9 +21411,38 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
       return purifiedCode;
     };
 
-    Aether.prototype.checkCommonMistakes = function(code) {
-      code = code.replace(/this\.\s*?\n/g, "this.IncompleteThisReference;");
-      return code;
+    Aether.prototype.transform = function(code, transforms, parseFn, withAST) {
+      var t, transformedAST, transformedCode;
+      if (withAST == null) {
+        withAST = false;
+      }
+      transformedCode = traversal.morphAST(code, (function() {
+        var _i, _len, _results;
+        _results = [];
+        for (_i = 0, _len = transforms.length; _i < _len; _i++) {
+          t = transforms[_i];
+          _results.push(_.bind(t, this));
+        }
+        return _results;
+      }).call(this), parseFn);
+      if (!withAST) {
+        return transformedCode;
+      }
+      transformedAST = parseFn(transformedCode);
+      return [transformedCode, transformedAST];
+    };
+
+    Aether.prototype.traceurify = function(code) {
+      var loader, loaderHooks, reporter, url;
+      url = "randotron_" + Math.random();
+      reporter = new traceur.util.ErrorReporter();
+      loaderHooks = new traceur.runtime.InterceptOutputLoaderHooks(reporter, url);
+      loader = new traceur.System.internalLoader_.constructor(loaderHooks);
+      loader.script(code, url);
+      if (reporter.hadError()) {
+        console.warn("traceur had error trying to compile");
+      }
+      return loaderHooks.transcoded;
     };
 
     Aether.getFunctionBody = function(func) {
@@ -21696,24 +21463,6 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
         }
         return _results;
       })()).join('\n');
-    };
-
-    Aether.prototype.setLanguage = function(lang) {
-      var optionsValidation;
-      if (this.options.language === lang) {
-        return;
-      }
-      optionsValidation = optionsValidator({
-        language: lang
-      });
-      if (!optionsValidation.valid) {
-        throw new Error("Options array is not valid: " + JSON.stringify(optionsValidation.errors, null, 4));
-      }
-      this.options.language = lang;
-      this.wrappedCodePrefix = null;
-      this.wrappedCodeSuffix = null;
-      this.reset();
-      return lang;
     };
 
     Aether.prototype.logStatementStart = instrumentation.logStatementStart;
@@ -21756,52 +21505,34 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
 
 }).call(this);
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./defaults":2,"./execution":3,"./fixLocations":4,"./instrumentation":5,"./morph":6,"./problems":7,"./protectAPI":8,"./protectBuiltins":9,"./transforms":11,"./validators/options":12,"JS_WALA/normalizer/lib/normalizer":17,"acorn/acorn_loose":21,"coffee-script-redux":36,"escodegen":59,"esprima":64,"jshint":71,"lodash":22,"traceur":22}],2:[function(require,module,exports){
+},{"./defaults":2,"./execution":3,"./instrumentation":5,"./languages/languages":10,"./problems":12,"./protectAPI":13,"./protectBuiltins":14,"./transforms":16,"./traversal":17,"./validators/options":18,"JS_WALA/normalizer/lib/normalizer":23,"escodegen":65,"esprima":70,"lodash":28,"traceur":28}],2:[function(require,module,exports){
 (function (global){(function() {
-  var Vector, defaults, error, execution, _, _ref, _ref1, _ref2;
+  var defaults, execution, _, _ref, _ref1, _ref2;
 
   execution = require('./execution');
 
   _ = (_ref = (_ref1 = (_ref2 = typeof window !== "undefined" && window !== null ? window._ : void 0) != null ? _ref2 : typeof self !== "undefined" && self !== null ? self._ : void 0) != null ? _ref1 : typeof global !== "undefined" && global !== null ? global._ : void 0) != null ? _ref : require('lodash');
 
-  try {
-    Vector = eval("require('lib/world/vector')");
-  } catch (_error) {
-    error = _error;
-    Vector = {};
-  }
-
   module.exports = defaults = {
     thisValue: null,
-    global: {
-      Math: Math,
-      parseInt: parseInt,
-      parseFloat: parseFloat,
-      "eval": eval,
-      isNaN: isNaN,
-      escape: escape,
-      unescape: unescape,
-      _: _,
-      Vector: Vector
-    },
+    globals: [],
     language: "javascript",
     languageVersion: "ES5",
     functionName: null,
     functionParameters: [],
     yieldAutomatically: false,
     yieldConditionally: false,
-    requiresThis: true,
     executionCosts: execution,
+    noSerializationInFlow: false,
     includeFlow: true,
     includeMetrics: true,
     includeStyle: true,
-    includeVisualization: false,
     protectAPI: false
   };
 
 }).call(this);
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./execution":3,"lodash":22}],3:[function(require,module,exports){
+},{"./execution":3,"lodash":28}],3:[function(require,module,exports){
 (function() {
   var execution;
 
@@ -22008,7 +21739,7 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
 
 }).call(this);
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"estraverse":65,"lodash":22}],5:[function(require,module,exports){
+},{"estraverse":71,"lodash":28}],5:[function(require,module,exports){
 (function (global){(function() {
   var logCallEnd, logCallStart, logStatement, logStatementStart, serializeVariableValue, _, _ref, _ref1, _ref2,
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
@@ -22109,7 +21840,11 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
       for (name in _ref3) {
         value = _ref3[name];
         if (capture || __indexOf.call((_ref4 = flopt.timelessVariables) != null ? _ref4 : [], name) >= 0) {
-          variables[name] = serializeVariableValue(value);
+          if (this.options.noSerializationInFlow) {
+            variables[name] = value;
+          } else {
+            variables[name] = serializeVariableValue(value);
+          }
         }
       }
       if (capture || !_.isEmpty(variables)) {
@@ -22157,46 +21892,412 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
 
 }).call(this);
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"lodash":22}],6:[function(require,module,exports){
+},{"lodash":28}],6:[function(require,module,exports){
+(function() {
+  var Clojure, Language, _ref,
+    __hasProp = {}.hasOwnProperty,
+    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+  Language = require('./language');
+
+  module.exports = Clojure = (function(_super) {
+    __extends(Clojure, _super);
+
+    function Clojure() {
+      _ref = Clojure.__super__.constructor.apply(this, arguments);
+      return _ref;
+    }
+
+    Clojure.prototype.name = 'Clojure';
+
+    Clojure.prototype.id = 'clojure';
+
+    return Clojure;
+
+  })(Language);
+
+}).call(this);
+
+},{"./language":9}],7:[function(require,module,exports){
 (function (global){(function() {
-  var acorn_loose, csredux, esprima, fixLocations, insertHelpers, morph, _, _ref, _ref1, _ref2;
+  var CoffeeScript, Language, StructuredCode, csredux, estraverse, fixLocations, _, _ref, _ref1, _ref2, _ref3,
+    __hasProp = {}.hasOwnProperty,
+    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   _ = (_ref = (_ref1 = (_ref2 = typeof window !== "undefined" && window !== null ? window._ : void 0) != null ? _ref2 : typeof self !== "undefined" && self !== null ? self._ : void 0) != null ? _ref1 : typeof global !== "undefined" && global !== null ? global._ : void 0) != null ? _ref : require('lodash');
+
+  csredux = require('coffee-script-redux');
+
+  estraverse = require('estraverse');
+
+  Language = require('./language');
+
+  module.exports = CoffeeScript = (function(_super) {
+    __extends(CoffeeScript, _super);
+
+    function CoffeeScript() {
+      _ref3 = CoffeeScript.__super__.constructor.apply(this, arguments);
+      return _ref3;
+    }
+
+    CoffeeScript.prototype.name = 'CoffeeScript';
+
+    CoffeeScript.prototype.id = 'coffeescript';
+
+    CoffeeScript.prototype.wrap = function(rawCode, aether) {
+      var indentedCode, line;
+      if (this.wrappedCodePrefix == null) {
+        this.wrappedCodePrefix = "" + (aether.options.functionName || 'foo') + " = (" + (aether.options.functionParameters.join(', ')) + ") ->\n\n";
+      }
+      if (this.wrappedCodeSuffix == null) {
+        this.wrappedCodeSuffix = '\n';
+      }
+      indentedCode = ((function() {
+        var _i, _len, _ref4, _results;
+        _ref4 = rawCode.split('\n');
+        _results = [];
+        for (_i = 0, _len = _ref4.length; _i < _len; _i++) {
+          line = _ref4[_i];
+          _results.push('    ' + line);
+        }
+        return _results;
+      })()).join('\n');
+      return this.wrappedCodePrefix + indentedCode + this.wrappedCodeSuffix;
+    };
+
+    CoffeeScript.prototype.parse = function(code) {
+      var csAST, jsAST;
+      csAST = csredux.parse(code, {
+        optimise: false,
+        raw: true
+      });
+      jsAST = csredux.compile(csAST, {
+        bare: true
+      });
+      fixLocations(jsAST);
+      return jsAST;
+    };
+
+    return CoffeeScript;
+
+  })(Language);
+
+  StructuredCode = (function() {
+    function StructuredCode(code) {
+      var _ref4;
+      _ref4 = this.generateOffsets(code), this.cursors = _ref4[0], this.indentations = _ref4[1];
+      this.length = this.cursors.length;
+    }
+
+    StructuredCode.prototype.generateOffsets = function(code) {
+      var cursor, indentations, reg, res, result, _ref4, _ref5;
+      reg = /(?:\r\n|[\r\n\u2028\u2029])/g;
+      result = [0];
+      indentations = [0];
+      while (res = reg.exec(code)) {
+        cursor = res.index + res[0].length;
+        reg.lastIndex = cursor;
+        result.push(cursor);
+        indentations.push((_ref4 = code.substr(cursor).match(/^\s+/)) != null ? (_ref5 = _ref4[0]) != null ? _ref5.length : void 0 : void 0);
+      }
+      return [result, indentations];
+    };
+
+    StructuredCode.prototype.column = function(offset) {
+      return this.loc(offset).column;
+    };
+
+    StructuredCode.prototype.line = function(offset) {
+      return this.loc(offset).line;
+    };
+
+    StructuredCode.prototype.fixRange = function(range, loc) {
+      var fix;
+      fix = Math.floor(this.indentations[loc.start.line - 1] + 5 / 4);
+      range[0] -= fix;
+      range[1] -= fix;
+      return range;
+    };
+
+    StructuredCode.prototype.loc = function(offset) {
+      var column, index, line;
+      index = _.sortedIndex(this.cursors, offset);
+      if (this.cursors.length > index && this.cursors[index] === offset) {
+        column = 0;
+        line = index + 1;
+      } else {
+        column = offset - 4 - this.cursors[index - 1];
+        line = index;
+      }
+      return {
+        column: column,
+        line: line
+      };
+    };
+
+    return StructuredCode;
+
+  })();
+
+  fixLocations = function(program) {
+    var structured;
+    structured = new StructuredCode(program.raw);
+    return estraverse.traverse(program, {
+      leave: function(node, parent) {
+        var loc;
+        if (node.range != null) {
+          loc = {
+            start: null,
+            end: structured.loc(node.range[1])
+          };
+          if (node.loc != null) {
+            loc.start = node.loc.start;
+          } else {
+            loc.start = structured.loc(node.range[0]);
+          }
+          node.loc = loc;
+          node.range = structured.fixRange(node.range, loc);
+        } else {
+          node.loc = (function() {
+            var _ref4;
+            switch (node.type) {
+              case 'BlockStatement':
+                return {
+                  start: node.body[0].loc.start,
+                  end: node.body[node.body.length - 1].loc.end
+                };
+              case 'VariableDeclarator':
+                if ((node != null ? (_ref4 = node.init) != null ? _ref4.loc : void 0 : void 0) != null) {
+                  return {
+                    start: node.id.loc.start,
+                    end: node.init.loc.end
+                  };
+                } else {
+                  return node.id.loc;
+                }
+                break;
+              case 'ExpressionStatement':
+                return node.expression.loc;
+              case 'ReturnStatement':
+                if (node.argument != null) {
+                  return node.argument.loc;
+                } else {
+                  return node.loc;
+                }
+                break;
+              case 'VariableDeclaration':
+                return {
+                  start: node.declarations[0].loc.start,
+                  end: node.declarations[node.declarations.length - 1].loc.end
+                };
+              default:
+                return {
+                  start: {
+                    line: 0,
+                    column: 0
+                  },
+                  end: {
+                    line: 0,
+                    column: 0
+                  }
+                };
+            }
+          })();
+        }
+      }
+    });
+  };
+
+}).call(this);
+}).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./language":9,"coffee-script-redux":42,"estraverse":71,"lodash":28}],8:[function(require,module,exports){
+(function (global){(function() {
+  var JavaScript, Language, acorn_loose, esprima, jshint, traversal, _, _ref, _ref1, _ref2, _ref3,
+    __hasProp = {}.hasOwnProperty,
+    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+  _ = (_ref = (_ref1 = (_ref2 = typeof window !== "undefined" && window !== null ? window._ : void 0) != null ? _ref2 : typeof self !== "undefined" && self !== null ? self._ : void 0) != null ? _ref1 : typeof global !== "undefined" && global !== null ? global._ : void 0) != null ? _ref : require('lodash');
+
+  jshint = require('jshint').JSHINT;
 
   esprima = require('esprima');
 
   acorn_loose = require('acorn/acorn_loose');
 
-  csredux = require('coffee-script-redux');
+  Language = require('./language');
 
-  fixLocations = require('./fixLocations');
+  traversal = require('../traversal');
 
-  module.exports = morph = function(source, transforms, parser) {
-    var ast, chunks, csAST, lines, locToRange, posToOffset, walk;
-    if (parser == null) {
-      parser = "esprima";
+  module.exports = JavaScript = (function(_super) {
+    __extends(JavaScript, _super);
+
+    function JavaScript() {
+      _ref3 = JavaScript.__super__.constructor.apply(this, arguments);
+      return _ref3;
     }
-    chunks = source.split('');
-    locToRange = null;
-    if (parser === 'esprima') {
-      ast = esprima.parse(source, {
+
+    JavaScript.prototype.name = 'JavaScript';
+
+    JavaScript.prototype.id = 'javascript';
+
+    JavaScript.prototype.obviouslyCannotTranspile = function(rawCode) {
+      var e;
+      try {
+        eval("'use strict;'\nthrow 0;" + rawCode);
+      } catch (_error) {
+        e = _error;
+        if (e !== 0) {
+          return true;
+        }
+      }
+      return false;
+    };
+
+    JavaScript.prototype.hasChangedASTs = function(a, b) {
+      var aAST, bAST, options, removeLocations, _ref4, _ref5, _ref6;
+      options = {
+        loc: false,
+        range: false,
+        comment: false,
+        tolerant: true
+      };
+      _ref4 = [null, null], aAST = _ref4[0], bAST = _ref4[1];
+      try {
+        aAST = esprima.parse(a, options);
+      } catch (_error) {}
+      try {
+        bAST = esprima.parse(b, options);
+      } catch (_error) {}
+      if ((!aAST || !bAST) && (aAST || bAST)) {
+        return true;
+      }
+      if (aAST && bAST) {
+        if (((_ref5 = aAST.errors) != null ? _ref5 : []).length !== ((_ref6 = bAST.errors) != null ? _ref6 : []).length) {
+          return true;
+        }
+        return !_.isEqual(aAST.body, bAST.body);
+      }
+      options = {
+        locations: false,
+        tabSize: 4,
+        ecmaVersion: 5
+      };
+      aAST = acorn_loose.parse_dammit(a, options);
+      bAST = acorn_loose.parse_dammit(b, options);
+      removeLocations = function(node) {
+        return node.start = node.end = null;
+      };
+      traversal.walkAST(aAST, removeLocations);
+      traversal.walkAST(bAST, removeLocations);
+      return !_.isEqual(aAST, bAST);
+    };
+
+    JavaScript.prototype.lint = function(rawCode, aether) {
+      var e, error, g, jshintGlobals, jshintOptions, jshintSuccess, lintProblems, wrappedCode, _i, _len, _ref4;
+      lintProblems = [];
+      wrappedCode = this.wrap(rawCode, aether);
+      jshintOptions = {
+        browser: false,
+        couch: false,
+        devel: false,
+        dojo: false,
+        jquery: false,
+        mootools: false,
+        node: false,
+        nonstandard: false,
+        phantom: false,
+        prototypejs: false,
+        rhino: false,
+        worker: false,
+        wsh: false,
+        yui: false
+      };
+      jshintGlobals = _.zipObject(jshintGlobals, (function() {
+        var _i, _len, _ref4, _results;
+        _ref4 = aether.allGlobals;
+        _results = [];
+        for (_i = 0, _len = _ref4.length; _i < _len; _i++) {
+          g = _ref4[_i];
+          _results.push(false);
+        }
+        return _results;
+      })());
+      try {
+        jshintSuccess = jshint(wrappedCode, jshintOptions, jshintGlobals);
+      } catch (_error) {
+        e = _error;
+        console.warn("JSHint died with error", e);
+      }
+      _ref4 = jshint.errors;
+      for (_i = 0, _len = _ref4.length; _i < _len; _i++) {
+        error = _ref4[_i];
+        lintProblems.push(aether.createUserCodeProblem({
+          type: 'transpile',
+          reporter: 'jshint',
+          error: error,
+          code: wrappedCode,
+          codePrefix: aether.wrappedCodePrefix
+        }));
+      }
+      return lintProblems;
+    };
+
+    JavaScript.prototype.beautify = function(rawCode) {
+      var ast, beautified, e;
+      try {
+        ast = esprima.parse(rawCode, {
+          range: true,
+          tokens: true,
+          comment: true,
+          tolerant: true
+        });
+        ast = escodegen.attachComments(ast, ast.comments, ast.tokens);
+      } catch (_error) {
+        e = _error;
+        console.log('got error beautifying', e);
+        ast = acorn_loose.parse_dammit(rawCode, {
+          tabSize: 4,
+          ecmaVersion: 5
+        });
+      }
+      beautified = escodegen.generate(ast, {
+        comment: true,
+        parse: esprima.parse
+      });
+      return beautified;
+    };
+
+    JavaScript.prototype.wrap = function(rawCode, aether) {
+      if (this.wrappedCodePrefix == null) {
+        this.wrappedCodePrefix = "function " + (aether.options.functionName || 'foo') + "(" + (aether.options.functionParameters.join(', ')) + ") {\n\"use strict\";";
+      }
+      if (this.wrappedCodeSuffix == null) {
+        this.wrappedCodeSuffix = "\n}";
+      }
+      return this.wrappedCodePrefix + rawCode + this.wrappedCodeSuffix;
+    };
+
+    JavaScript.prototype.hackCommonMistakes = function(code) {
+      code = code.replace(/this\.\s*?\n/g, "this.IncompleteThisReference;");
+      return code;
+    };
+
+    JavaScript.prototype.parse = function(code) {
+      var ast;
+      return ast = esprima.parse(code, {
         range: true,
         loc: true
       });
-    } else if (parser === 'csredux') {
-      csAST = csredux.parse(source, {
-        optimise: false,
-        raw: true
+    };
+
+    JavaScript.prototype.parseDammit = function(code) {
+      var ast, fixNodeRange, lines, locToRange, posToOffset;
+      ast = acorn_loose.parse_dammit(code, {
+        locations: true,
+        tabSize: 4,
+        ecmaVersion: 5
       });
-      ast = csredux.compile(csAST, {
-        bare: true
-      });
-      fixLocations(ast);
-    } else if (parser === 'acorn_loose') {
-      ast = acorn_loose.parse_dammit(source, {
-        locations: true
-      });
-      lines = source.replace(/\n/g, '\n空').split('空');
+      lines = code.replace(/\n/g, '\n空').split('空');
       posToOffset = function(pos) {
         return _.reduce(lines.slice(0, pos.line - 1), (function(sum, line) {
           return sum + line.length;
@@ -22205,1202 +22306,277 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
       locToRange = function(loc) {
         return [posToOffset(loc.start), posToOffset(loc.end)];
       };
-    }
-    walk = function(node, parent) {
-      var child, grandchild, key, transform, _i, _j, _len, _len1, _results;
-      insertHelpers(node, parent, chunks, locToRange);
-      for (key in node) {
-        child = node[key];
-        if (key === 'parent' || key === 'leadingComments') {
-          continue;
+      fixNodeRange = function(node) {
+        if (node && node.loc) {
+          return node.range = locToRange(node.loc);
         }
-        if (_.isArray(child)) {
-          for (_i = 0, _len = child.length; _i < _len; _i++) {
-            grandchild = child[_i];
-            if (_.isString(grandchild != null ? grandchild.type : void 0)) {
-              walk(grandchild, node);
-            }
-          }
-        } else if (_.isString(child != null ? child.type : void 0)) {
-          walk(child, node);
-        }
-      }
-      _results = [];
-      for (_j = 0, _len1 = transforms.length; _j < _len1; _j++) {
-        transform = transforms[_j];
-        _results.push(transform(node));
-      }
-      return _results;
+      };
+      traversal.walkAST(ast, fixNodeRange);
+      return ast;
     };
-    walk(ast, void 0);
-    return chunks.join('');
-  };
 
-  insertHelpers = function(node, parent, chunks, locToRange) {
-    var update;
-    if (node.loc && locToRange) {
-      node.range = locToRange(node.loc);
-    }
-    if (!node.range) {
-      return;
-    }
-    node.parent = parent;
-    node.source = function() {
-      return chunks.slice(node.range[0], node.range[1]).join('');
-    };
-    update = function(s) {
-      var i, _i, _ref3, _ref4, _results;
-      chunks[node.range[0]] = s;
-      _results = [];
-      for (i = _i = _ref3 = node.range[0] + 1, _ref4 = node.range[1]; _ref3 <= _ref4 ? _i < _ref4 : _i > _ref4; i = _ref3 <= _ref4 ? ++_i : --_i) {
-        _results.push(chunks[i] = '');
-      }
-      return _results;
-    };
-    if (_.isObject(node.update)) {
-      _.extend(update, node.update);
-    }
-    return node.update = update;
-  };
+    return JavaScript;
+
+  })(Language);
 
 }).call(this);
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./fixLocations":4,"acorn/acorn_loose":21,"coffee-script-redux":36,"esprima":64,"lodash":22}],7:[function(require,module,exports){
-(function() {
-  var RuntimeProblem, TranspileProblem, UserCodeProblem, commonMethods, problems, ranges,
-    __hasProp = {}.hasOwnProperty,
-    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+},{"../traversal":17,"./language":9,"acorn/acorn_loose":27,"esprima":70,"jshint":77,"lodash":28}],9:[function(require,module,exports){
+(function (global){(function() {
+  var Language, _, _ref, _ref1, _ref2;
 
-  ranges = require('./ranges');
+  _ = (_ref = (_ref1 = (_ref2 = typeof window !== "undefined" && window !== null ? window._ : void 0) != null ? _ref2 : typeof self !== "undefined" && self !== null ? self._ : void 0) != null ? _ref1 : typeof global !== "undefined" && global !== null ? global._ : void 0) != null ? _ref : require('lodash');
 
-  module.exports.UserCodeProblem = UserCodeProblem = (function() {
-    function UserCodeProblem(aether, reporter, kind) {
-      var config, _ref;
-      if (reporter == null) {
-        reporter = 'unknown';
-      }
-      if (kind == null) {
-        kind = "Unknown";
-      }
-      this.id = reporter + "_" + kind;
-      config = (_ref = aether.options.problems[this.id]) != null ? _ref : {
-        message: "Unknown problem",
-        level: "error"
-      };
-      this.message = config.message;
-      this.hint = config.hint;
-      this.level = config.level;
+  module.exports = Language = (function() {
+    Language.prototype.name = 'Abstract Language';
+
+    Language.prototype.id = 'abstract-language';
+
+    function Language(version) {
+      this.version = version;
     }
 
-    UserCodeProblem.prototype.serialize = function() {
-      var key, o, value;
-      o = {};
-      for (key in this) {
-        if (!__hasProp.call(this, key)) continue;
-        value = this[key];
-        o[key] = value;
-      }
-      return o;
+    Language.prototype.obviouslyCannotTranspile = function(rawCode) {
+      return false;
     };
 
-    return UserCodeProblem;
+    Language.prototype.hasChangedASTs = function(a, b) {
+      return true;
+    };
+
+    Language.prototype.hasChangedLineNumbers = function(a, b) {
+      if (!String.prototype.trimRight) {
+        String.prototype.trimRight = function() {
+          return String(this).replace(/\s\s*$/, '');
+        };
+      }
+      a = a.replace(/^[ \t]+\/\/.*/g, '').trimRight();
+      b = b.replace(/^[ \t]+\/\/.*/g, '').trimRight();
+      return a.split('\n').length !== b.split('\n').length;
+    };
+
+    Language.prototype.lint = function(rawCode, aether) {
+      return [];
+    };
+
+    Language.prototype.beautify = function(rawCode) {
+      return rawCode;
+    };
+
+    Language.prototype.wrap = function(rawCode, aether) {
+      if (this.wrappedCodePrefix == null) {
+        this.wrappedCodePrefix = '';
+      }
+      if (this.wrappedCodeSuffix == null) {
+        this.wrappedCodeSuffix = '';
+      }
+      return this.wrappedCodePrefix + rawCode + this.wrappedCodeSuffix;
+    };
+
+    Language.prototype.hackCommonMistakes = function(rawCode) {
+      return rawCode;
+    };
+
+    Language.prototype.parse = function(code) {
+      throw new Error("parse() not implemented for " + this.id + ".");
+    };
+
+    return Language;
 
   })();
 
-  module.exports.TranspileProblem = TranspileProblem = (function(_super) {
-    __extends(TranspileProblem, _super);
-
-    function TranspileProblem(aether, reporter, kind, error, userInfo, code, codePrefix) {
-      var endCol, line, lineOffset, originalLines, startCol, _ref, _ref1;
-      this.userInfo = userInfo;
-      if (code == null) {
-        code = '';
-      }
-      if (codePrefix == null) {
-        codePrefix = "function wrapped() {\n\"use strict\";\n";
-      }
-      TranspileProblem.__super__.constructor.call(this, aether, reporter, kind);
-      this.type = 'transpile';
-      if (this.userInfo == null) {
-        this.userInfo = {};
-      }
-      if (code == null) {
-        code = this.raw;
-      }
-      originalLines = code.slice(codePrefix.length).split('\n');
-      lineOffset = codePrefix.split('\n').length - 1;
-      switch (reporter) {
-        case 'jshint':
-          if (error == null) {
-            error = {
-              reason: "Unknown problem"
-            };
-          }
-          this.message = error.reason;
-          line = error.line - codePrefix.split('\n').length;
-          if (line >= 0) {
-            if ((_ref = error.evidence) != null ? _ref.length : void 0) {
-              startCol = originalLines[line].indexOf(error.evidence);
-              endCol = startCol + error.evidence.length;
-            } else {
-              _ref1 = [0, originalLines[line].length - 1], startCol = _ref1[0], endCol = _ref1[1];
-            }
-            this.ranges = [[ranges.rowColToPos(line, startCol, code, codePrefix), ranges.rowColToPos(line, endCol, code, codePrefix)]];
-          } else {
-            this.ranges = [[ranges.offsetToPos(0, code, codePrefix), ranges.offsetToPos(code.length - 1, code, codePrefix)]];
-          }
-          break;
-        case 'esprima':
-          this.message = error.message;
-          this.ranges = [[ranges.rowColToPos(error.lineNumber - 1 - lineOffset, error.column - 1, code, codePrefix), ranges.rowColToPos(error.lineNumber - 1 - lineOffset, error.column, code, codePrefix)]];
-          break;
-        case 'csredux':
-          this.message = error.message;
-          this.ranges = [[ranges.rowColToPos(error.lineNumber - 1 - lineOffset, error.column - 1, code, codePrefix), ranges.rowColToPos(error.lineNumber - 1 - lineOffset, error.column, code, codePrefix)]];
-          break;
-        case 'aether':
-          if (error.message) {
-            this.message = error.message;
-          }
-          break;
-        default:
-          console.log("Unhandled UserCodeProblem reporter", reporter);
-          if (error.message) {
-            this.message = error.message;
-          }
-      }
-    }
-
-    return TranspileProblem;
-
-  })(UserCodeProblem);
-
-  module.exports.RuntimeProblem = RuntimeProblem = (function(_super) {
-    __extends(RuntimeProblem, _super);
-
-    function RuntimeProblem(aether, error, userInfo) {
-      var kind, lineNumber, range, _ref;
-      this.userInfo = userInfo;
-      kind = error.name;
-      RuntimeProblem.__super__.constructor.call(this, aether, 'runtime', kind);
-      this.type = 'runtime';
-      if (this.userInfo == null) {
-        this.userInfo = {};
-      }
-      this.message = RuntimeProblem.explainErrorMessage(error);
-      if (range = aether.lastStatementRange) {
-        this.ranges = [range];
-      }
-      if ((_ref = this.ranges) != null ? _ref.length : void 0) {
-        lineNumber = this.ranges[0][0].row + 1;
-        if (this.message.search(/^Line \d+/) !== -1) {
-          this.message = this.message.replace(/^Line \d+/, function(match, n) {
-            return "Line " + lineNumber;
-          });
-        } else {
-          this.message = "Line " + lineNumber + ": " + this.message;
-        }
-      }
-    }
-
-    RuntimeProblem.explainErrorMessage = function(error) {
-      var closestMatch, closestMatchScore, commonMethod, explained, m, matchScore, method, missingMethodMatch, _i, _len, _ref, _ref1;
-      m = error.toString();
-      if (m === "RangeError: Maximum call stack size exceeded") {
-        m += ". (Did you use call a function recursively?)";
-      }
-      missingMethodMatch = m.match(/has no method '(.*?)'/);
-      if (missingMethodMatch) {
-        method = missingMethodMatch[1];
-        _ref = ['Murgatroyd Kerfluffle', 0], closestMatch = _ref[0], closestMatchScore = _ref[1];
-        explained = false;
-        for (_i = 0, _len = commonMethods.length; _i < _len; _i++) {
-          commonMethod = commonMethods[_i];
-          if (method === commonMethod) {
-            m += ". (" + missingMethodMatch[1] + " not available in this challenge.)";
-            explained = true;
-            break;
-          } else if (method.toLowerCase() === commonMethod.toLowerCase()) {
-            m = "" + method + " should be " + commonMethod + " because JavaScript is case-sensitive.";
-            explained = true;
-            break;
-          } else {
-            matchScore = typeof string_score !== "undefined" && string_score !== null ? string_score.score(commonMethod, method, 0.5) : void 0;
-            if (matchScore > closestMatchScore) {
-              _ref1 = [commonMethod, matchScore], closestMatch = _ref1[0], closestMatchScore = _ref1[1];
-            }
-          }
-        }
-        if (!explained) {
-          if (closestMatchScore > 0.25) {
-            m += ". (Did you mean " + closestMatch + "?)";
-          }
-        }
-        m = m.replace('TypeError:', 'Error:');
-      }
-      return m;
-    };
-
-    return RuntimeProblem;
-
-  })(UserCodeProblem);
-
-  module.exports.commonMethods = commonMethods = ['moveRight', 'moveLeft', 'moveUp', 'moveDown', 'attackNearbyEnemy', 'say', 'move', 'attackNearestEnemy', 'shootAt', 'rotateTo', 'shoot', 'distance', 'getNearestEnemy', 'getEnemies', 'attack', 'setAction', 'setTarget', 'getFriends', 'patrol'];
-
-  module.exports.problems = problems = {
-    unknown_Unknown: {
-      message: "Unknown problem.",
-      level: "error"
-    },
-    esprima_UnexpectedToken: {
-      message: 'Unexpected token %0',
-      level: "error"
-    },
-    esprima_UnexpectedNumber: {
-      message: 'Unexpected number',
-      level: "error"
-    },
-    esprima_UnexpectedString: {
-      message: 'Unexpected string',
-      level: "error"
-    },
-    esprima_UnexpectedIdentifier: {
-      message: 'Unexpected identifier',
-      level: "error"
-    },
-    esprima_UnexpectedReserved: {
-      message: 'Unexpected reserved word',
-      level: "error"
-    },
-    esprima_UnexpectedTemplate: {
-      message: 'Unexpected quasi %0',
-      level: "error"
-    },
-    esprima_UnexpectedEOS: {
-      message: 'Unexpected end of input',
-      level: "error"
-    },
-    esprima_NewlineAfterThrow: {
-      message: 'Illegal newline after throw',
-      level: "error"
-    },
-    esprima_InvalidRegExp: {
-      message: 'Invalid regular expression',
-      level: "error"
-    },
-    esprima_UnterminatedRegExp: {
-      message: 'Invalid regular expression: missing /',
-      level: "error"
-    },
-    esprima_InvalidLHSInAssignment: {
-      message: 'Invalid left-hand side in assignment',
-      level: "error"
-    },
-    esprima_InvalidLHSInFormalsList: {
-      message: 'Invalid left-hand side in formals list',
-      level: "error"
-    },
-    esprima_InvalidLHSInForIn: {
-      message: 'Invalid left-hand side in for-in',
-      level: "error"
-    },
-    esprima_MultipleDefaultsInSwitch: {
-      message: 'More than one default clause in switch statement',
-      level: "error"
-    },
-    esprima_NoCatchOrFinally: {
-      message: 'Missing catch or finally after try',
-      level: "error"
-    },
-    esprima_UnknownLabel: {
-      message: 'Undefined label \'%0\'',
-      level: "error"
-    },
-    esprima_Redeclaration: {
-      message: '%0 \'%1\' has already been declared',
-      level: "error"
-    },
-    esprima_IllegalContinue: {
-      message: 'Illegal continue statement',
-      level: "error"
-    },
-    esprima_IllegalBreak: {
-      message: 'Illegal break statement',
-      level: "error"
-    },
-    esprima_IllegalDuplicateClassProperty: {
-      message: 'Illegal duplicate property in class definition',
-      level: "error"
-    },
-    esprima_IllegalReturn: {
-      message: 'Illegal return statement',
-      level: "error"
-    },
-    esprima_IllegalYield: {
-      message: 'Illegal yield expression',
-      level: "error"
-    },
-    esprima_IllegalSpread: {
-      message: 'Illegal spread element',
-      level: "error"
-    },
-    esprima_StrictModeWith: {
-      message: 'Strict mode code may not include a with statement',
-      level: "error"
-    },
-    esprima_StrictCatchVariable: {
-      message: 'Catch variable may not be eval or arguments in strict mode',
-      level: "error"
-    },
-    esprima_StrictVarName: {
-      message: 'Variable name may not be eval or arguments in strict mode',
-      level: "error"
-    },
-    esprima_StrictParamName: {
-      message: 'Parameter name eval or arguments is not allowed in strict mode',
-      level: "error"
-    },
-    esprima_StrictParamDupe: {
-      message: 'Strict mode function may not have duplicate parameter names',
-      level: "error"
-    },
-    esprima_ParameterAfterRestParameter: {
-      message: 'Rest parameter must be final parameter of an argument list',
-      level: "error"
-    },
-    esprima_DefaultRestParameter: {
-      message: 'Rest parameter can not have a default value',
-      level: "error"
-    },
-    esprima_ElementAfterSpreadElement: {
-      message: 'Spread must be the final element of an element list',
-      level: "error"
-    },
-    esprima_ObjectPatternAsRestParameter: {
-      message: 'Invalid rest parameter',
-      level: "error"
-    },
-    esprima_ObjectPatternAsSpread: {
-      message: 'Invalid spread argument',
-      level: "error"
-    },
-    esprima_StrictFunctionName: {
-      message: 'Function name may not be eval or arguments in strict mode',
-      level: "error"
-    },
-    esprima_StrictOctalLiteral: {
-      message: 'Octal literals are not allowed in strict mode.',
-      level: "error"
-    },
-    esprima_StrictDelete: {
-      message: 'Delete of an unqualified identifier in strict mode.',
-      level: "error"
-    },
-    esprima_StrictDuplicateProperty: {
-      message: 'Duplicate data property in object literal not allowed in strict mode',
-      level: "error"
-    },
-    esprima_AccessorDataProperty: {
-      message: 'Object literal may not have data and accessor property with the same name',
-      level: "error"
-    },
-    esprima_AccessorGetSet: {
-      message: 'Object literal may not have multiple get/set accessors with the same name',
-      level: "error"
-    },
-    esprima_StrictLHSAssignment: {
-      message: 'Assignment to eval or arguments is not allowed in strict mode',
-      level: "error"
-    },
-    esprima_StrictLHSPostfix: {
-      message: 'Postfix increment/decrement may not have eval or arguments operand in strict mode',
-      level: "error"
-    },
-    esprima_StrictLHSPrefix: {
-      message: 'Prefix increment/decrement may not have eval or arguments operand in strict mode',
-      level: "error"
-    },
-    esprima_StrictReservedWord: {
-      message: 'Use of future reserved word in strict mode',
-      level: "error"
-    },
-    esprima_NewlineAfterModule: {
-      message: 'Illegal newline after module',
-      level: "error"
-    },
-    esprima_NoFromAfterImport: {
-      message: 'Missing from after import',
-      level: "error"
-    },
-    esprima_InvalidModuleSpecifier: {
-      message: 'Invalid module specifier',
-      level: "error"
-    },
-    esprima_NestedModule: {
-      message: 'Module declaration can not be nested',
-      level: "error"
-    },
-    esprima_NoYieldInGenerator: {
-      message: 'Missing yield in generator',
-      level: "error"
-    },
-    esprima_NoUnintializedConst: {
-      message: 'Const must be initialized',
-      level: "error"
-    },
-    esprima_ComprehensionRequiresBlock: {
-      message: 'Comprehension must have at least one block',
-      level: "error"
-    },
-    esprima_ComprehensionError: {
-      message: 'Comprehension Error',
-      level: "error"
-    },
-    esprima_EachNotAllowed: {
-      message: 'Each is not supported',
-      level: "error"
-    },
-    aether_UnexpectedIdentifier: {
-      message: 'UnexpectedIdentifier',
-      level: 'error'
-    },
-    aether_MissingVarKeyword: {
-      message: 'MissingVarKeyword',
-      level: 'error'
-    },
-    aether_UndefinedVariable: {
-      message: 'UndefinedVariable',
-      level: 'error'
-    },
-    aether_MissingThis: {
-      message: 'Missing `this.` keyword.',
-      level: 'error'
-    },
-    aether_IncompleteThis: {
-      message: 'this.what?',
-      level: 'error'
-    },
-    aether_Untranspilable: {
-      message: 'Code could not be compiled. Check syntax.',
-      level: 'error'
-    },
-    aether_NoEffect: {
-      message: 'Statement has no effect.',
-      level: 'warning'
-    },
-    aether_FalseBlockIndentation: {
-      message: 'FalseBlockIndentation',
-      level: 'warning'
-    },
-    aether_UndefinedProperty: {
-      message: 'UndefinedProperty',
-      level: 'warning'
-    },
-    aether_InconsistentIndentation: {
-      message: 'InconsistentIndentation',
-      level: 'info'
-    },
-    aether_SnakeCase: {
-      message: 'SnakeCase',
-      level: 'info'
-    },
-    aether_SingleQuotes: {
-      message: 'SingleQuotes',
-      level: "ignore"
-    },
-    aether_DoubleQuotes: {
-      message: 'DoubleQuotes',
-      level: "ignore"
-    },
-    aether_CamelCase: {
-      message: 'CamelCase',
-      level: 'ignore'
-    },
-    jshint_E001: {
-      message: "Bad option: '{a}'.",
-      level: "error"
-    },
-    jshint_E002: {
-      message: "Bad option value.",
-      level: "error"
-    },
-    jshint_E003: {
-      message: "Expected a JSON value.",
-      level: "error"
-    },
-    jshint_E004: {
-      message: "Input is neither a string nor an array of strings.",
-      level: "error"
-    },
-    jshint_E005: {
-      message: "Input is empty.",
-      level: "error"
-    },
-    jshint_E006: {
-      message: "Unexpected early end of program.",
-      level: "error"
-    },
-    jshint_E007: {
-      message: "Missing \"use strict\" statement.",
-      level: "error"
-    },
-    jshint_E008: {
-      message: "Strict violation.",
-      level: "error"
-    },
-    jshint_E009: {
-      message: "Option 'validthis' can't be used in a global scope.",
-      level: "error"
-    },
-    jshint_E010: {
-      message: "'with' is not allowed in strict mode.",
-      level: "error"
-    },
-    jshint_E011: {
-      message: "const '{a}' has already been declared.",
-      level: "error"
-    },
-    jshint_E012: {
-      message: "const '{a}' is initialized to 'undefined'.",
-      level: "error"
-    },
-    jshint_E013: {
-      message: "Attempting to override '{a}' which is a constant.",
-      level: "error"
-    },
-    jshint_E014: {
-      message: "A regular expression literal can be confused with '/='.",
-      level: "error"
-    },
-    jshint_E015: {
-      message: "Unclosed regular expression.",
-      level: "error"
-    },
-    jshint_E016: {
-      message: "Invalid regular expression.",
-      level: "error"
-    },
-    jshint_E017: {
-      message: "Unclosed comment.",
-      level: "error"
-    },
-    jshint_E018: {
-      message: "Unbegun comment.",
-      level: "error"
-    },
-    jshint_E019: {
-      message: "Unmatched '{a}'.",
-      level: "error"
-    },
-    jshint_E020: {
-      message: "Expected '{a}' to match '{b}' from line {c} and instead saw '{d}'.",
-      level: "error"
-    },
-    jshint_E021: {
-      message: "Expected '{a}' and instead saw '{b}'.",
-      level: "error"
-    },
-    jshint_E022: {
-      message: "Line breaking error '{a}'.",
-      level: "error"
-    },
-    jshint_E023: {
-      message: "Missing '{a}'.",
-      level: "error"
-    },
-    jshint_E024: {
-      message: "Unexpected '{a}'.",
-      level: "error"
-    },
-    jshint_E025: {
-      message: "Missing ':' on a case clause.",
-      level: "error"
-    },
-    jshint_E026: {
-      message: "Missing '}' to match '{' from line {a}.",
-      level: "error"
-    },
-    jshint_E027: {
-      message: "Missing ']' to match '[' form line {a}.",
-      level: "error"
-    },
-    jshint_E028: {
-      message: "Illegal comma.",
-      level: "error"
-    },
-    jshint_E029: {
-      message: "Unclosed string.",
-      level: "error"
-    },
-    jshint_E030: {
-      message: "Expected an identifier and instead saw '{a}'.",
-      level: "error"
-    },
-    jshint_E031: {
-      message: "Bad assignment.",
-      level: "error"
-    },
-    jshint_E032: {
-      message: "Expected a small integer or 'false' and instead saw '{a}'.",
-      level: "error"
-    },
-    jshint_E033: {
-      message: "Expected an operator and instead saw '{a}'.",
-      level: "error"
-    },
-    jshint_E034: {
-      message: "get/set are ES5 features.",
-      level: "error"
-    },
-    jshint_E035: {
-      message: "Missing property name.",
-      level: "error"
-    },
-    jshint_E036: {
-      message: "Expected to see a statement and instead saw a block.",
-      level: "error"
-    },
-    jshint_E039: {
-      message: "Function declarations are not invocable. Wrap the whole function invocation in parens.",
-      level: "error"
-    },
-    jshint_E040: {
-      message: "Each value should have its own case label.",
-      level: "error"
-    },
-    jshint_E041: {
-      message: "Unrecoverable syntax error.",
-      level: "error"
-    },
-    jshint_E042: {
-      message: "Stopping.",
-      level: "error"
-    },
-    jshint_E043: {
-      message: "Too many errors.",
-      level: "error"
-    },
-    jshint_E044: {
-      message: "'{a}' is already defined and can't be redefined.",
-      level: "error"
-    },
-    jshint_E045: {
-      message: "Invalid for each loop.",
-      level: "error"
-    },
-    jshint_E046: {
-      message: "A yield statement shall be within a generator function (with syntax: `function*`)",
-      level: "error"
-    },
-    jshint_E047: {
-      message: "A generator function shall contain a yield statement.",
-      level: "error"
-    },
-    jshint_E048: {
-      message: "Let declaration not directly within block.",
-      level: "error"
-    },
-    jshint_E049: {
-      message: "A {a} cannot be named '{b}'.",
-      level: "error"
-    },
-    jshint_E050: {
-      message: "Mozilla requires the yield expression to be parenthesized here.",
-      level: "error"
-    },
-    jshint_E051: {
-      message: "Regular parameters cannot come after default parameters.",
-      level: "error"
-    },
-    jshint_W001: {
-      message: "'hasOwnProperty' is a really bad name.",
-      level: "warning"
-    },
-    jshint_W002: {
-      message: "Value of '{a}' may be overwritten in IE 8 and earlier.",
-      level: "warning"
-    },
-    jshint_W003: {
-      message: "'{a}' was used before it was defined.",
-      level: "warning"
-    },
-    jshint_W004: {
-      message: "'{a}' is already defined.",
-      level: "warning"
-    },
-    jshint_W005: {
-      message: "A dot following a number can be confused with a decimal point.",
-      level: "warning"
-    },
-    jshint_W006: {
-      message: "Confusing minuses.",
-      level: "warning"
-    },
-    jshint_W007: {
-      message: "Confusing pluses.",
-      level: "warning"
-    },
-    jshint_W008: {
-      message: "A leading decimal point can be confused with a dot: '{a}'.",
-      level: "warning"
-    },
-    jshint_W009: {
-      message: "The array literal notation [] is preferrable.",
-      level: "warning"
-    },
-    jshint_W010: {
-      message: "The object literal notation {} is preferrable.",
-      level: "warning"
-    },
-    jshint_W011: {
-      message: "Unexpected space after '{a}'.",
-      level: "warning"
-    },
-    jshint_W012: {
-      message: "Unexpected space before '{a}'.",
-      level: "warning"
-    },
-    jshint_W013: {
-      message: "Missing space after '{a}'.",
-      level: "warning"
-    },
-    jshint_W014: {
-      message: "Bad line breaking before '{a}'.",
-      level: "warning"
-    },
-    jshint_W015: {
-      message: "Expected '{a}' to have an indentation at {b} instead at {c}.",
-      level: "warning"
-    },
-    jshint_W016: {
-      message: "Unexpected use of '{a}'.",
-      level: "warning"
-    },
-    jshint_W017: {
-      message: "Bad operand.",
-      level: "warning"
-    },
-    jshint_W018: {
-      message: "Confusing use of '{a}'.",
-      level: "warning"
-    },
-    jshint_W019: {
-      message: "Use the isNaN function to compare with NaN.",
-      level: "warning"
-    },
-    jshint_W020: {
-      message: "Read only.",
-      level: "warning"
-    },
-    jshint_W021: {
-      message: "'{a}' is a function.",
-      level: "warning"
-    },
-    jshint_W022: {
-      message: "Do not assign to the exception parameter.",
-      level: "warning"
-    },
-    jshint_W023: {
-      message: "Expected an identifier in an assignment and instead saw a function invocation.",
-      level: "warning"
-    },
-    jshint_W024: {
-      message: "Expected an identifier and instead saw '{a}' (a reserved word).",
-      level: "warning"
-    },
-    jshint_W025: {
-      message: "Missing name in function declaration.",
-      level: "warning"
-    },
-    jshint_W026: {
-      message: "Inner functions should be listed at the top of the outer function.",
-      level: "warning"
-    },
-    jshint_W027: {
-      message: "Unreachable '{a}' after '{b}'.",
-      level: "warning"
-    },
-    jshint_W028: {
-      message: "Label '{a}' on {b} statement.",
-      level: "warning"
-    },
-    jshint_W030: {
-      message: "Expected an assignment or function call and instead saw an expression.",
-      level: "warning"
-    },
-    jshint_W031: {
-      message: "Do not use 'new' for side effects.",
-      level: "warning"
-    },
-    jshint_W032: {
-      message: "Unnecessary semicolon.",
-      level: "warning"
-    },
-    jshint_W033: {
-      message: "Missing semicolon.",
-      level: "warning"
-    },
-    jshint_W034: {
-      message: "Unnecessary directive \"{a}\".",
-      level: "warning"
-    },
-    jshint_W035: {
-      message: "Empty block.",
-      level: "warning"
-    },
-    jshint_W036: {
-      message: "Unexpected /*member '{a}'.",
-      level: "warning"
-    },
-    jshint_W037: {
-      message: "'{a}' is a statement label.",
-      level: "warning"
-    },
-    jshint_W038: {
-      message: "'{a}' used out of scope.",
-      level: "warning"
-    },
-    jshint_W039: {
-      message: "'{a}' is not allowed.",
-      level: "warning"
-    },
-    jshint_W040: {
-      message: "Possible strict violation.",
-      level: "warning"
-    },
-    jshint_W041: {
-      message: "Use '{a}' to compare with '{b}'.",
-      level: "warning"
-    },
-    jshint_W042: {
-      message: "Avoid EOL escaping.",
-      level: "warning"
-    },
-    jshint_W043: {
-      message: "Bad escaping of EOL. Use option multistr if needed.",
-      level: "warning"
-    },
-    jshint_W044: {
-      message: "Bad or unnecessary escaping.",
-      level: "warning"
-    },
-    jshint_W045: {
-      message: "Bad number '{a}'.",
-      level: "warning"
-    },
-    jshint_W046: {
-      message: "Don't use extra leading zeros '{a}'.",
-      level: "warning"
-    },
-    jshint_W047: {
-      message: "A trailing decimal point can be confused with a dot: '{a}'.",
-      level: "warning"
-    },
-    jshint_W048: {
-      message: "Unexpected control character in regular expression.",
-      level: "warning"
-    },
-    jshint_W049: {
-      message: "Unexpected escaped character '{a}' in regular expression.",
-      level: "warning"
-    },
-    jshint_W050: {
-      message: "JavaScript URL.",
-      level: "warning"
-    },
-    jshint_W051: {
-      message: "Variables should not be deleted.",
-      level: "warning"
-    },
-    jshint_W052: {
-      message: "Unexpected '{a}'.",
-      level: "warning"
-    },
-    jshint_W053: {
-      message: "Do not use {a} as a constructor.",
-      level: "warning"
-    },
-    jshint_W054: {
-      message: "The Function constructor is a form of eval.",
-      level: "warning"
-    },
-    jshint_W055: {
-      message: "A constructor name should start with an uppercase letter.",
-      level: "warning"
-    },
-    jshint_W056: {
-      message: "Bad constructor.",
-      level: "warning"
-    },
-    jshint_W057: {
-      message: "Weird construction. Is 'new' unnecessary?",
-      level: "warning"
-    },
-    jshint_W058: {
-      message: "Missing '()' invoking a constructor.",
-      level: "warning"
-    },
-    jshint_W059: {
-      message: "Avoid arguments.{a}.",
-      level: "warning"
-    },
-    jshint_W060: {
-      message: "document.write can be a form of eval.",
-      level: "warning"
-    },
-    jshint_W061: {
-      message: "eval can be harmful.",
-      level: "warning"
-    },
-    jshint_W062: {
-      message: "Wrap an immediate function invocation in parens to assist the reader in understanding that the expression is the result of a function, and not the function itself.",
-      level: "warning"
-    },
-    jshint_W063: {
-      message: "Math is not a function.",
-      level: "warning"
-    },
-    jshint_W064: {
-      message: "Missing 'new' prefix when invoking a constructor.",
-      level: "warning"
-    },
-    jshint_W065: {
-      message: "Missing radix parameter.",
-      level: "warning"
-    },
-    jshint_W066: {
-      message: "Implied eval. Consider passing a function instead of a string.",
-      level: "warning"
-    },
-    jshint_W067: {
-      message: "Bad invocation.",
-      level: "warning"
-    },
-    jshint_W068: {
-      message: "Wrapping non-IIFE function literals in parens is unnecessary.",
-      level: "warning"
-    },
-    jshint_W069: {
-      message: "['{a}'] is better written in dot notation.",
-      level: "warning"
-    },
-    jshint_W070: {
-      message: "Extra comma. (it breaks older versions of IE)",
-      level: "warning"
-    },
-    jshint_W071: {
-      message: "This function has too many statements. ({a})",
-      level: "warning"
-    },
-    jshint_W072: {
-      message: "This function has too many parameters. ({a})",
-      level: "warning"
-    },
-    jshint_W073: {
-      message: "Blocks are nested too deeply. ({a})",
-      level: "warning"
-    },
-    jshint_W074: {
-      message: "This function's cyclomatic complexity is too high. ({a})",
-      level: "warning"
-    },
-    jshint_W075: {
-      message: "Duplicate key '{a}'.",
-      level: "warning"
-    },
-    jshint_W076: {
-      message: "Unexpected parameter '{a}' in get {b} function.",
-      level: "warning"
-    },
-    jshint_W077: {
-      message: "Expected a single parameter in set {a} function.",
-      level: "warning"
-    },
-    jshint_W078: {
-      message: "Setter is defined without getter.",
-      level: "warning"
-    },
-    jshint_W079: {
-      message: "Redefinition of '{a}'.",
-      level: "warning"
-    },
-    jshint_W080: {
-      message: "It's not necessary to initialize '{a}' to 'undefined'.",
-      level: "warning"
-    },
-    jshint_W081: {
-      message: "Too many var statements.",
-      level: "warning"
-    },
-    jshint_W082: {
-      message: "Function declarations should not be placed in blocks. Use a function expression or move the statement to the top of the outer function.",
-      level: "warning"
-    },
-    jshint_W083: {
-      message: "Don't make functions within a loop.",
-      level: "warning"
-    },
-    jshint_W084: {
-      message: "Expected a conditional expression and instead saw an assignment.",
-      level: "warning"
-    },
-    jshint_W085: {
-      message: "Don't use 'with'.",
-      level: "warning"
-    },
-    jshint_W086: {
-      message: "Expected a 'break' statement before '{a}'.",
-      level: "warning"
-    },
-    jshint_W087: {
-      message: "Forgotten 'debugger' statement?",
-      level: "warning"
-    },
-    jshint_W088: {
-      message: "Creating global 'for' variable. Should be 'for (var {a} ...'.",
-      level: "warning"
-    },
-    jshint_W089: {
-      message: "The body of a for in should be wrapped in an if statement to filter unwanted properties from the prototype.",
-      level: "warning"
-    },
-    jshint_W090: {
-      message: "'{a}' is not a statement label.",
-      level: "warning"
-    },
-    jshint_W091: {
-      message: "'{a}' is out of scope.",
-      level: "warning"
-    },
-    jshint_W092: {
-      message: "Wrap the /regexp/ literal in parens to disambiguate the slash operator.",
-      level: "warning"
-    },
-    jshint_W093: {
-      message: "Did you mean to return a conditional instead of an assignment?",
-      level: "warning"
-    },
-    jshint_W094: {
-      message: "Unexpected comma.",
-      level: "warning"
-    },
-    jshint_W095: {
-      message: "Expected a string and instead saw {a}.",
-      level: "warning"
-    },
-    jshint_W096: {
-      message: "The '{a}' key may produce unexpected results.",
-      level: "warning"
-    },
-    jshint_W097: {
-      message: "Use the function form of \"use strict\".",
-      level: "warning"
-    },
-    jshint_W098: {
-      message: "'{a}' is defined but never used.",
-      level: "warning"
-    },
-    jshint_W099: {
-      message: "Mixed spaces and tabs.",
-      level: "warning"
-    },
-    jshint_W100: {
-      message: "This character may get silently deleted by one or more browsers.",
-      level: "warning"
-    },
-    jshint_W101: {
-      message: "Line is too long.",
-      level: "warning"
-    },
-    jshint_W102: {
-      message: "Trailing whitespace.",
-      level: "warning"
-    },
-    jshint_W103: {
-      message: "The '{a}' property is deprecated.",
-      level: "warning"
-    },
-    jshint_W104: {
-      message: "'{a}' is only available in JavaScript 1.7.",
-      level: "warning"
-    },
-    jshint_W105: {
-      message: "Unexpected {a} in '{b}'.",
-      level: "warning"
-    },
-    jshint_W106: {
-      message: "Identifier '{a}' is not in camel case.",
-      level: "warning"
-    },
-    jshint_W107: {
-      message: "Script URL.",
-      level: "warning"
-    },
-    jshint_W108: {
-      message: "Strings must use doublequote.",
-      level: "warning"
-    },
-    jshint_W109: {
-      message: "Strings must use singlequote.",
-      level: "warning"
-    },
-    jshint_W110: {
-      message: "Mixed double and single quotes.",
-      level: "warning"
-    },
-    jshint_W112: {
-      message: "Unclosed string.",
-      level: "warning"
-    },
-    jshint_W113: {
-      message: "Control character in string: {a}.",
-      level: "warning"
-    },
-    jshint_W114: {
-      message: "Avoid {a}.",
-      level: "warning"
-    },
-    jshint_W115: {
-      message: "Octal literals are not allowed in strict mode.",
-      level: "warning"
-    },
-    jshint_W116: {
-      message: "Expected '{a}' and instead saw '{b}'.",
-      level: "warning"
-    },
-    jshint_W117: {
-      message: "'{a}' is not defined.",
-      level: "warning"
-    },
-    jshint_W118: {
-      message: "'{a}' is only available in Mozilla JavaScript extensions (use moz option).",
-      level: "warning"
-    },
-    jshint_W119: {
-      message: "'{a}' is only available in ES6 (use esnext option).",
-      level: "warning"
-    },
-    jshint_W120: {
-      message: "You might be leaking a variable ({a}) here.",
-      level: "warning"
-    },
-    jshint_I001: {
-      message: "Comma warnings can be turned off with 'laxcomma'.",
-      level: "ignore"
-    },
-    jshint_I002: {
-      message: "Reserved words as properties can be used under the 'es5' option.",
-      level: "ignore"
-    },
-    jshint_I003: {
-      message: "ES5 option is now set per default",
-      level: "ignore"
-    }
+}).call(this);
+}).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"lodash":28}],10:[function(require,module,exports){
+(function() {
+  module.exports = {
+    javascript: require('./javascript'),
+    coffeescript: require('./coffeescript'),
+    clojure: require('./clojure'),
+    lua: require('./lua')
   };
 
 }).call(this);
 
-},{"./ranges":10}],8:[function(require,module,exports){
+},{"./clojure":6,"./coffeescript":7,"./javascript":8,"./lua":11}],11:[function(require,module,exports){
+(function() {
+  var Language, Lua, _ref,
+    __hasProp = {}.hasOwnProperty,
+    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+  Language = require('./language');
+
+  module.exports = Lua = (function(_super) {
+    __extends(Lua, _super);
+
+    function Lua() {
+      _ref = Lua.__super__.constructor.apply(this, arguments);
+      return _ref;
+    }
+
+    Lua.prototype.name = 'Lua';
+
+    Lua.prototype.id = 'lua';
+
+    return Lua;
+
+  })(Language);
+
+}).call(this);
+
+},{"./language":9}],12:[function(require,module,exports){
+(function() {
+  var commonMethods, explainErrorMessage, extractRuntimeErrorDetails, extractTranspileErrorDetails, ranges;
+
+  ranges = require('./ranges');
+
+  module.exports.createUserCodeProblem = function(options) {
+    var config, id, kind, p, reporter, _ref, _ref1, _ref2, _ref3;
+    if (options == null) {
+      options = {};
+    }
+    if (options.aether == null) {
+      options.aether = this;
+    }
+    if (options.type === 'transpile' && options.error) {
+      extractTranspileErrorDetails(options);
+    }
+    if (options.type === 'runtime') {
+      extractRuntimeErrorDetails(options);
+    }
+    reporter = options.reporter || 'unknown';
+    kind = options.kind || 'Unknown';
+    id = reporter + '_' + kind;
+    config = ((_ref = options.aether) != null ? (_ref1 = _ref.options) != null ? (_ref2 = _ref1.problems) != null ? _ref2[id] : void 0 : void 0 : void 0) || {};
+    p = {
+      isUserCodeProblem: true
+    };
+    p.id = id;
+    p.level = config.level || options.level || 'error';
+    p.type = options.type || 'generic';
+    p.message = config.message || options.message || ("Unknown " + p.type + " " + p.level);
+    p.hint = config.hint || options.hint || '';
+    p.range = options.range;
+    p.userInfo = (_ref3 = options.userInfo) != null ? _ref3 : {};
+    return p;
+  };
+
+  extractTranspileErrorDetails = function(options) {
+    var code, codePrefix, endCol, error, line, lineOffset, originalLines, startCol, _ref, _ref1;
+    code = options.code || '';
+    codePrefix = options.codePrefix || 'function wrapped() {\n"use strict";\n';
+    error = options.error;
+    options.message = error.message;
+    originalLines = code.slice(codePrefix.length).split('\n');
+    lineOffset = codePrefix.split('\n').length - 1;
+    switch (options.reporter) {
+      case 'jshint':
+        if (options.message == null) {
+          options.message = error.reason;
+        }
+        if (options.kind == null) {
+          options.kind = error.code;
+        }
+        if (!options.level) {
+          options.level = {
+            E: 'error',
+            W: 'warning',
+            I: 'info'
+          }[error.code[0]];
+        }
+        line = error.line - codePrefix.split('\n').length;
+        if (line >= 0) {
+          if ((_ref = error.evidence) != null ? _ref.length : void 0) {
+            startCol = originalLines[line].indexOf(error.evidence);
+            endCol = startCol + error.evidence.length;
+          } else {
+            _ref1 = [0, originalLines[line].length - 1], startCol = _ref1[0], endCol = _ref1[1];
+          }
+          options.range = [ranges.rowColToPos(line, startCol, code, codePrefix), ranges.rowColToPos(line, endCol, code, codePrefix)];
+        } else {
+          options.range = [ranges.offsetToPos(0, code, codePrefix), ranges.offsetToPos(code.length - 1, code, codePrefix)];
+        }
+        break;
+      case 'esprima':
+        options.range = [ranges.rowColToPos(error.lineNumber - 1 - lineOffset, error.column - 1, code, codePrefix), ranges.rowColToPos(error.lineNumber - 1 - lineOffset, error.column, code, codePrefix)];
+        break;
+      case 'csredux':
+        options.range = [ranges.rowColToPos(error.lineNumber - 1 - lineOffset, error.column - 1, code, codePrefix), ranges.rowColToPos(error.lineNumber - 1 - lineOffset, error.column, code, codePrefix)];
+        break;
+      case 'aether':
+        null;
+        break;
+      default:
+        console.warn("Unhandled UserCodeProblem reporter", options.reporter);
+    }
+    return options;
+  };
+
+  extractRuntimeErrorDetails = function(options) {
+    var error, lineNumber, _ref;
+    if (error = options.error) {
+      if (options.kind == null) {
+        options.kind = error.name;
+      }
+      options.message = explainErrorMessage(error.message || error.toString());
+    }
+    if (options.range == null) {
+      options.range = (_ref = options.aether) != null ? _ref.lastStatementRange : void 0;
+    }
+    if (options.range) {
+      lineNumber = options.range[0].row + 1;
+      if (options.message.search(/^Line \d+/) !== -1) {
+        return options.message = options.message.replace(/^Line \d+/, function(match, n) {
+          return "Line " + lineNumber;
+        });
+      } else {
+        return options.message = "Line " + lineNumber + ": " + options.message;
+      }
+    }
+  };
+
+  module.exports.commonMethods = commonMethods = ['moveRight', 'moveLeft', 'moveUp', 'moveDown', 'attackNearbyEnemy', 'say', 'move', 'attackNearestEnemy', 'shootAt', 'rotateTo', 'shoot', 'distance', 'getNearestEnemy', 'getEnemies', 'attack', 'setAction', 'setTarget', 'getFriends', 'patrol'];
+
+  explainErrorMessage = function(m) {
+    var closestMatch, closestMatchScore, commonMethod, explained, matchScore, method, missingMethodMatch, _i, _len, _ref, _ref1;
+    if (m === "RangeError: Maximum call stack size exceeded") {
+      m += ". (Did you use call a function recursively?)";
+    }
+    missingMethodMatch = m.match(/has no method '(.*?)'/);
+    if (missingMethodMatch) {
+      method = missingMethodMatch[1];
+      _ref = ['Murgatroyd Kerfluffle', 0], closestMatch = _ref[0], closestMatchScore = _ref[1];
+      explained = false;
+      for (_i = 0, _len = commonMethods.length; _i < _len; _i++) {
+        commonMethod = commonMethods[_i];
+        if (method === commonMethod) {
+          m += ". (" + missingMethodMatch[1] + " not available in this challenge.)";
+          explained = true;
+          break;
+        } else if (method.toLowerCase() === commonMethod.toLowerCase()) {
+          m = "" + method + " should be " + commonMethod + " because JavaScript is case-sensitive.";
+          explained = true;
+          break;
+        } else {
+          matchScore = typeof string_score !== "undefined" && string_score !== null ? string_score.score(commonMethod, method, 0.5) : void 0;
+          if (matchScore > closestMatchScore) {
+            _ref1 = [commonMethod, matchScore], closestMatch = _ref1[0], closestMatchScore = _ref1[1];
+          }
+        }
+      }
+      if (!explained) {
+        if (closestMatchScore > 0.25) {
+          m += ". (Did you mean " + closestMatch + "?)";
+        }
+      }
+      m = m.replace('TypeError:', 'Error:');
+    }
+    return m;
+  };
+
+}).call(this);
+
+},{"./ranges":15}],13:[function(require,module,exports){
 (function (global){(function() {
   var argsClass, arrayClass, boolClass, cloneableClasses, createAPIClone, ctorByClass, dateClass, errorClass, funcClass, numberClass, objectClass, reFlags, regexpClass, restoreAPIClone, stringClass, _, _ref, _ref1, _ref2,
     __hasProp = {}.hasOwnProperty;
@@ -23590,9 +22766,9 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
 
 }).call(this);
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"lodash":22}],9:[function(require,module,exports){
+},{"lodash":28}],14:[function(require,module,exports){
 (function() {
-  var builtinClones, builtinNames, builtinReal, cloneBuiltin, copy, copyBuiltin, createSandboxedFunction, getOwnPropertyNames, global, name, problems, raiseDisabledFunctionConstructor, restoreBuiltins, wrapWithSandbox;
+  var addGlobal, addedGlobals, builtinClones, builtinNames, builtinObjectNames, builtinReal, cloneBuiltin, copy, copyBuiltin, createSandboxedFunction, getOwnPropertyNames, global, name, problems, raiseDisabledFunctionConstructor, restoreBuiltins, wrapWithSandbox, _i, _len;
 
   problems = require('./problems');
 
@@ -23629,36 +22805,38 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
     }
   };
 
+  module.exports.builtinObjectNames = builtinObjectNames = ['Object', 'Function', 'Array', 'String', 'Boolean', 'Number', 'Date', 'RegExp', 'Math', 'JSON', 'Error', 'EvalError', 'RangeError', 'ReferenceError', 'SyntaxError', 'TypeError', 'URIError'];
+
+  module.exports.builtinNames = builtinNames = builtinObjectNames.concat(['NaN', 'Infinity', 'undefined', 'parseInt', 'parseFloat', 'isNaN', 'isFinite', 'decodeURI', 'decodeURIComponent', 'encodeURI', 'encodeURIComponent']);
+
   global = (function() {
     return this;
   })();
 
-  builtinNames = ['Object', 'Function', 'Array', 'String', 'Boolean', 'Number', 'Date', 'RegExp', 'Error', 'EvalError', 'RangeError', 'ReferenceError', 'SyntaxError', 'TypeError', 'URIError'];
+  builtinClones = [];
 
-  builtinClones = (function() {
-    var _i, _len, _results;
-    _results = [];
-    for (_i = 0, _len = builtinNames.length; _i < _len; _i++) {
-      name = builtinNames[_i];
-      _results.push(cloneBuiltin(global[name], name));
-    }
-    return _results;
-  })();
+  builtinReal = [];
 
-  builtinReal = (function() {
-    var _i, _len, _results;
-    _results = [];
-    for (_i = 0, _len = builtinNames.length; _i < _len; _i++) {
-      name = builtinNames[_i];
-      _results.push(global[name]);
+  addedGlobals = {};
+
+  module.exports.addGlobal = addGlobal = function(name, value) {
+    if (value == null) {
+      value = global[name];
     }
-    return _results;
-  })();
+    builtinClones.push(cloneBuiltin(value, name));
+    builtinReal.push(value);
+    return addedGlobals[name] = value;
+  };
+
+  for (_i = 0, _len = builtinObjectNames.length; _i < _len; _i++) {
+    name = builtinObjectNames[_i];
+    addGlobal(name);
+  }
 
   module.exports.restoreBuiltins = restoreBuiltins = function(globals) {
-    var cloned, offset, real, _i, _len;
-    for (offset = _i = 0, _len = builtinNames.length; _i < _len; offset = ++_i) {
-      name = builtinNames[offset];
+    var cloned, offset, real, _j, _len1;
+    for (offset = _j = 0, _len1 = builtinObjectNames.length; _j < _len1; offset = ++_j) {
+      name = builtinObjectNames[offset];
       real = builtinReal[offset];
       cloned = builtinClones[offset];
       copyBuiltin(cloned, real);
@@ -23671,21 +22849,13 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
   };
 
   module.exports.createSandboxedFunction = createSandboxedFunction = function(functionName, code, aether) {
-    var dummyContext, dummyFunction, e, error, globalRef, globals, wrapper, _i, _len;
-    globals = ['Vector', '_', 'NaN', 'Infinity', 'undefined', 'parseInt', 'parseFloat', 'isNaN', 'isFinite', 'decodeURI', 'decodeURIComponent', 'encodeURI', 'encodeURIComponent', 'Object', 'Function', 'Array', 'String', 'Boolean', 'Number', 'Date', 'RegExp', 'Math', 'JSON', 'Error', 'EvalError', 'RangeError', 'ReferenceError', 'SyntaxError', 'TypeError', 'URIError'];
+    var dummyContext, dummyFunction, e, globalRef, problem, wrapper, _j, _len1, _ref, _ref1;
     dummyContext = {};
     globalRef = global != null ? global : window;
-    for (_i = 0, _len = globals.length; _i < _len; _i++) {
-      name = globals[_i];
-      dummyContext[name] = globalRef[name];
-      if (name === 'Vector') {
-        try {
-          dummyContext[name] = eval("require('lib/world/vector')");
-        } catch (_error) {
-          error = _error;
-          null;
-        }
-      }
+    _ref = builtinNames.concat(aether.options.globals);
+    for (_j = 0, _len1 = _ref.length; _j < _len1; _j++) {
+      name = _ref[_j];
+      dummyContext[name] = (_ref1 = addedGlobals[name]) != null ? _ref1 : globalRef[name];
     }
     dummyFunction = raiseDisabledFunctionConstructor;
     copyBuiltin(Function, dummyFunction);
@@ -23696,7 +22866,16 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
     } catch (_error) {
       e = _error;
       console.warn("Error creating function, so returning empty function instead. Error: " + e + "\nCode:", code);
-      aether.addProblem(new problems.TranspileProblem(aether, 'aether', problems.problems.aether_Untranspilable, e, {}, code, ''));
+      problem = aether.createUserCodeProblem({
+        reporter: 'aether',
+        type: 'transpile',
+        kind: 'Untranspilable',
+        message: 'Code could not be compiled. Check syntax.',
+        error: e,
+        code: code,
+        codePrefix: ''
+      });
+      aether.addProblem(problem);
       return function() {};
     }
     return dummyContext[functionName];
@@ -23721,7 +22900,7 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
 
 }).call(this);
 
-},{"./problems":7}],10:[function(require,module,exports){
+},{"./problems":12}],15:[function(require,module,exports){
 (function() {
   var buildRowOffsets, lastRowOffsets, lastRowOffsetsPrefix, lastRowOffsetsSource, offsetToPos, offsetToRow, offsetsToRange, rowColToPos, rowColsToRange, stringifyPos, stringifyRange;
 
@@ -23838,22 +23017,20 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
 
 }).call(this);
 
-},{}],11:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 (function (global){(function() {
-  var S, SourceMap, checkIncompleteMembers, esprima, getFunctionNestingLevel, getParents, getParentsOfTypes, interceptThis, makeCheckThisKeywords, makeFindOriginalNodes, makeGatherNodeRanges, makeInstrumentCalls, makeInstrumentStatements, makeProtectAPI, possiblyGeneratorifyAncestorFunction, problems, ranges, statements, validateReturns, yieldAutomatically, yieldConditionally, _, _ref, _ref1, _ref2,
+  var S, SourceMap, checkIncompleteMembers, commonMethods, getFunctionNestingLevel, getParents, getParentsOfTypes, interceptThis, makeCheckThisKeywords, makeFindOriginalNodes, makeGatherNodeRanges, makeInstrumentCalls, makeInstrumentStatements, makeProtectAPI, possiblyGeneratorifyAncestorFunction, ranges, statements, validateReturns, yieldAutomatically, yieldConditionally, _, _ref, _ref1, _ref2,
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
   _ = (_ref = (_ref1 = (_ref2 = typeof window !== "undefined" && window !== null ? window._ : void 0) != null ? _ref2 : typeof self !== "undefined" && self !== null ? self._ : void 0) != null ? _ref1 : typeof global !== "undefined" && global !== null ? global._ : void 0) != null ? _ref : require('lodash');
 
-  problems = require('./problems');
-
-  ranges = require('./ranges');
-
-  esprima = require('esprima');
+  S = require('esprima').Syntax;
 
   SourceMap = require('source-map');
 
-  S = esprima.Syntax;
+  ranges = require('./ranges');
+
+  commonMethods = require('./problems').commonMethods;
 
   statements = [S.EmptyStatement, S.ExpressionStatement, S.BreakStatement, S.ContinueStatement, S.DebuggerStatement, S.DoWhileStatement, S.ForStatement, S.FunctionDeclaration, S.ClassDeclaration, S.IfStatement, S.ReturnStatement, S.SwitchStatement, S.ThrowStatement, S.TryStatement, S.VariableStatement, S.WhileStatement, S.WithStatement, S.VariableDeclaration];
 
@@ -23888,9 +23065,9 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
     };
   };
 
-  module.exports.makeCheckThisKeywords = makeCheckThisKeywords = function(global, varNames) {
+  module.exports.makeCheckThisKeywords = makeCheckThisKeywords = function(globals, varNames) {
     return function(node) {
-      var p, param, problem, v, _i, _j, _k, _len, _len1, _len2, _ref3, _ref4, _ref5, _ref6, _results;
+      var hint, message, p, param, problem, range, v, _i, _j, _k, _len, _len1, _len2, _ref3, _ref4, _ref5, _ref6, _results;
       if (node.type === S.VariableDeclarator) {
         return varNames[node.id.name] = true;
       } else if (node.type === S.AssignmentExpression) {
@@ -23912,7 +23089,7 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
           v = v.object != null ? v.object : v.callee;
         }
         v = v.name;
-        if (v && !varNames[v] && !global[v]) {
+        if (v && !varNames[v] && !(__indexOf.call(globals, v) >= 0)) {
           _ref5 = getParentsOfTypes(node, [S.FunctionDeclaration, S.FunctionExpression, S.VariableDeclarator, S.AssignmentExpression]);
           for (_j = 0, _len1 = _ref5.length; _j < _len1; _j++) {
             p = _ref5[_j];
@@ -23933,14 +23110,18 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
               return;
             }
           }
-          problem = new problems.TranspileProblem(this, 'aether', 'MissingThis', {}, null, '', '');
-          problem.message = "Missing `this.` keyword; should be `this." + v + "`.";
-          problem.hint = "There is no function `" + v + "`, but `this` has a method `" + v + "`.";
-          problem.ranges = [[node.originalRange.start, node.originalRange.end]];
-          this.addProblem(problem);
-          if (!this.options.requiresThis) {
-            return node.update("this." + (node.source()));
-          }
+          message = "Missing `this.` keyword; should be `this." + v + "`.";
+          hint = "There is no function `" + v + "`, but `this` has a method `" + v + "`.";
+          range = [node.originalRange.start, node.originalRange.end];
+          problem = this.createUserCodeProblem({
+            type: 'transpile',
+            reporter: 'aether',
+            kind: 'MissingThis',
+            message: message,
+            hint: hint,
+            range: range
+          });
+          return this.addProblem(problem);
         }
       }
     };
@@ -23959,24 +23140,31 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
   };
 
   module.exports.checkIncompleteMembers = checkIncompleteMembers = function(node) {
-    var exp, m, problem, _ref3;
+    var exp, hint, kind, m, problem, _ref3;
     if (node.type === 'ExpressionStatement') {
       exp = node.expression;
       if (exp.type === 'MemberExpression') {
         if (exp.property.name === "IncompleteThisReference") {
-          problem = new problems.TranspileProblem(this, 'aether', 'IncompleteThis', {}, null, '', '');
+          kind = 'IncompleteThis';
           m = "this.what? (Check available spells below.)";
+          hint = '';
         } else {
-          problem = new problems.TranspileProblem(this, 'aether', 'NoEffect', {}, null, '', '');
+          kind = 'NoEffect';
           m = "" + (exp.source()) + " has no effect.";
-          if (_ref3 = exp.property.name, __indexOf.call(problems.commonMethods, _ref3) >= 0) {
+          if (_ref3 = exp.property.name, __indexOf.call(commonMethods, _ref3) >= 0) {
             m += " It needs parentheses: " + (exp.source()) + "()";
           } else {
-            problem.hint = "Is it a method? Those need parentheses: " + (exp.source()) + "()";
+            hint = "Is it a method? Those need parentheses: " + (exp.source()) + "()";
           }
         }
-        problem.message = m;
-        problem.ranges = [[node.originalRange.start, node.originalRange.end]];
+        problem = this.createUserCodeProblem({
+          type: 'transpile',
+          reporter: 'aether',
+          message: m,
+          kind: kind,
+          hint: hint,
+          range: node.originalRange ? [node.originalRange.start, node.originalRange.end] : null
+        });
         return this.addProblem(problem);
       }
     }
@@ -24152,7 +23340,101 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
 
 }).call(this);
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./problems":7,"./ranges":10,"esprima":64,"lodash":22,"source-map":78}],12:[function(require,module,exports){
+},{"./problems":12,"./ranges":15,"esprima":70,"lodash":28,"source-map":84}],17:[function(require,module,exports){
+(function (global){(function() {
+  var acorn_loose, csredux, esprima, fixLocations, insertHelpers, morphAST, walkAST, _, _ref, _ref1, _ref2;
+
+  _ = (_ref = (_ref1 = (_ref2 = typeof window !== "undefined" && window !== null ? window._ : void 0) != null ? _ref2 : typeof self !== "undefined" && self !== null ? self._ : void 0) != null ? _ref1 : typeof global !== "undefined" && global !== null ? global._ : void 0) != null ? _ref : require('lodash');
+
+  esprima = require('esprima');
+
+  acorn_loose = require('acorn/acorn_loose');
+
+  csredux = require('coffee-script-redux');
+
+  fixLocations = require('./fixLocations');
+
+  module.exports.walkAST = walkAST = function(node, fn) {
+    var child, grandchild, key, _i, _len, _results;
+    _results = [];
+    for (key in node) {
+      child = node[key];
+      if (_.isArray(child)) {
+        for (_i = 0, _len = child.length; _i < _len; _i++) {
+          grandchild = child[_i];
+          if (_.isString(grandchild != null ? grandchild.type : void 0)) {
+            walkAST(grandchild, fn);
+          }
+        }
+      } else if (_.isString(child != null ? child.type : void 0)) {
+        walkAST(child, fn);
+      }
+      _results.push(fn(child));
+    }
+    return _results;
+  };
+
+  module.exports.morphAST = morphAST = function(source, transforms, parseFn) {
+    var ast, chunks, morphWalk;
+    chunks = source.split('');
+    ast = parseFn(source);
+    morphWalk = function(node, parent) {
+      var child, grandchild, key, transform, _i, _j, _len, _len1, _results;
+      insertHelpers(node, parent, chunks);
+      for (key in node) {
+        child = node[key];
+        if (key === 'parent' || key === 'leadingComments') {
+          continue;
+        }
+        if (_.isArray(child)) {
+          for (_i = 0, _len = child.length; _i < _len; _i++) {
+            grandchild = child[_i];
+            if (_.isString(grandchild != null ? grandchild.type : void 0)) {
+              morphWalk(grandchild, node);
+            }
+          }
+        } else if (_.isString(child != null ? child.type : void 0)) {
+          morphWalk(child, node);
+        }
+      }
+      _results = [];
+      for (_j = 0, _len1 = transforms.length; _j < _len1; _j++) {
+        transform = transforms[_j];
+        _results.push(transform(node));
+      }
+      return _results;
+    };
+    morphWalk(ast, void 0);
+    return chunks.join('');
+  };
+
+  insertHelpers = function(node, parent, chunks) {
+    var update;
+    if (!node.range) {
+      return;
+    }
+    node.parent = parent;
+    node.source = function() {
+      return chunks.slice(node.range[0], node.range[1]).join('');
+    };
+    update = function(s) {
+      var i, _i, _ref3, _ref4, _results;
+      chunks[node.range[0]] = s;
+      _results = [];
+      for (i = _i = _ref3 = node.range[0] + 1, _ref4 = node.range[1]; _ref3 <= _ref4 ? _i < _ref4 : _i > _ref4; i = _ref3 <= _ref4 ? ++_i : --_i) {
+        _results.push(chunks[i] = '');
+      }
+      return _results;
+    };
+    if (_.isObject(node.update)) {
+      _.extend(update, node.update);
+    }
+    return node.update = update;
+  };
+
+}).call(this);
+}).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./fixLocations":4,"acorn/acorn_loose":27,"coffee-script-redux":42,"esprima":70,"lodash":28}],18:[function(require,module,exports){
 (function() {
   var tv4;
 
@@ -24166,7 +23448,7 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
         thisValue: {
           required: false
         },
-        global: {
+        globals: {
           type: 'array',
           required: false
         },
@@ -24184,11 +23466,6 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
           type: 'boolean',
           required: false
         },
-        requiresThis: {
-          type: 'boolean',
-          "default": true,
-          description: 'Whether leaving off "this" is an error, or just a warning which we work around.'
-        },
         executionCosts: {
           required: false
         },
@@ -24196,14 +23473,21 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
           type: 'string',
           description: "Input language",
           minLength: 1,
-          'enum': ['javascript', 'coffeescript'],
+          'enum': ['javascript', 'coffeescript', 'clojure', 'lua'],
           required: false
         },
         languageVersion: {
-          type: 'string',
-          description: "Input language version",
-          minLength: 1,
-          'enum': ["ES5", "ES6"]
+          oneOf: [
+            {
+              type: 'string',
+              description: "Input language version",
+              minLength: 1,
+              'enum': ["ES5", "ES6"]
+            }, {
+              type: ['null', 'undefined'],
+              description: "Input language version"
+            }
+          ]
         },
         problems: {
           required: false
@@ -24237,6 +23521,10 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
             }
           ]
         },
+        noSerializationInFlow: {
+          type: 'boolean',
+          "default": false
+        },
         includeMetrics: {
           type: 'boolean',
           "default": true
@@ -24244,10 +23532,6 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
         includeStyle: {
           type: 'boolean',
           "default": true
-        },
-        includeVisualization: {
-          type: 'boolean',
-          "default": false
         },
         protectAPI: {
           type: 'boolean',
@@ -24260,7 +23544,7 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
 
 }).call(this);
 
-},{"tv4":88}],13:[function(require,module,exports){
+},{"tv4":94}],19:[function(require,module,exports){
 /*******************************************************************************
  * Copyright (c) 2012 IBM Corporation.
  * All rights reserved. This program and the accompanying materials
@@ -24442,7 +23726,7 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
     defconstructor(p, signatures[p]);
 //});
 
-},{"./position":14}],14:[function(require,module,exports){
+},{"./position":20}],20:[function(require,module,exports){
 /*******************************************************************************
  * Copyright (c) 2012 IBM Corporation.
  * All rights reserved. This program and the accompanying materials
@@ -24504,7 +23788,7 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
   exports.DUMMY_POS = DUMMY_POS;
 //});
 
-},{}],15:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 /*******************************************************************************
  * Copyright (c) 2012 IBM Corporation.
  * All rights reserved. This program and the accompanying materials
@@ -24547,7 +23831,7 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
   };
 //});
 
-},{}],16:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 /*******************************************************************************
  * Copyright (c) 2012 IBM Corporation.
  * All rights reserved. This program and the accompanying materials
@@ -24595,7 +23879,7 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
   exports.getDeclName = getDeclName;
 //});
 
-},{"../../common/lib/ast":13}],17:[function(require,module,exports){
+},{"../../common/lib/ast":19}],23:[function(require,module,exports){
 /*******************************************************************************
  * Copyright (c) 2012 IBM Corporation.
  * All rights reserved. This program and the accompanying materials
@@ -25637,7 +24921,7 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
   exports.normalize = normalize;
 //});
 
-},{"../../common/lib/ast":13,"../../common/lib/position":14,"./cflow":15,"./decls":16,"./scope":18,"./util":19}],18:[function(require,module,exports){
+},{"../../common/lib/ast":19,"../../common/lib/position":20,"./cflow":21,"./decls":22,"./scope":24,"./util":25}],24:[function(require,module,exports){
 /*******************************************************************************
  * Copyright (c) 2012 IBM Corporation.
  * All rights reserved. This program and the accompanying materials
@@ -25766,7 +25050,7 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
   exports.WithScope = WithScope;
 //});
 
-},{"./decls":16}],19:[function(require,module,exports){
+},{"./decls":22}],25:[function(require,module,exports){
 /*******************************************************************************
  * Copyright (c) 2012 IBM Corporation.
  * All rights reserved. This program and the accompanying materials
@@ -25804,7 +25088,7 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
     Array.prototype.flatmap = flatmap;
 //});
 
-},{}],20:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 // Acorn is a tiny, fast JavaScript parser written in JavaScript.
 //
 // Acorn was written by Marijn Haverbeke and released under an MIT
@@ -27525,7 +26809,7 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
 
 });
 
-},{}],21:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 // Acorn: Loose parser
 //
 // This module provides an alternative parser (`parse_dammit`) that
@@ -28301,9 +27585,9 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
   }
 });
 
-},{"./acorn":20}],22:[function(require,module,exports){
+},{"./acorn":26}],28:[function(require,module,exports){
 
-},{}],23:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 // http://wiki.commonjs.org/wiki/Unit_Testing/1.0
 //
 // THIS IS NOT TESTED NOR LIKELY TO WORK OUTSIDE V8!
@@ -28665,14 +27949,14 @@ var objectKeys = Object.keys || function (obj) {
   return keys;
 };
 
-},{"util/":25}],24:[function(require,module,exports){
+},{"util/":31}],30:[function(require,module,exports){
 module.exports = function isBuffer(arg) {
   return arg && typeof arg === 'object'
     && typeof arg.copy === 'function'
     && typeof arg.fill === 'function'
     && typeof arg.readUInt8 === 'function';
 }
-},{}],25:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 (function (process,global){// Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -29260,7 +28544,7 @@ function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 }).call(this,require("/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":24,"/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":28,"inherits":27}],26:[function(require,module,exports){
+},{"./support/isBuffer":30,"/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":34,"inherits":33}],32:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -29562,7 +28846,7 @@ function isUndefined(arg) {
   return arg === void 0;
 }
 
-},{}],27:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -29587,7 +28871,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],28:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -29642,7 +28926,7 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
-},{}],29:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 (function (process){// Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -29868,11 +29152,11 @@ var substr = 'ab'.substr(-1) === 'b'
     }
 ;
 }).call(this,require("/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"))
-},{"/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":28}],30:[function(require,module,exports){
-module.exports=require(24)
-},{}],31:[function(require,module,exports){
-module.exports=require(25)
-},{"./support/isBuffer":30,"/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":28,"inherits":27}],32:[function(require,module,exports){
+},{"/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":34}],36:[function(require,module,exports){
+module.exports=require(30)
+},{}],37:[function(require,module,exports){
+module.exports=require(31)
+},{"./support/isBuffer":36,"/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":34,"inherits":33}],38:[function(require,module,exports){
 // Generated by CoffeeScript 2.0.0-beta8
 var any, assignment, beingDeclared, collectIdentifiers, concat, concatMap, CS, declarationsNeeded, declarationsNeededRecursive, defaultRules, difference, divMod, dynamicMemberAccess, enabledHelpers, envEnrichments, exports, expr, fn, fn, foldl1, forceBlock, generateMutatingWalker, generateSoak, genSym, h, h, hasSoak, helperNames, helpers, inlineHelpers, intersect, isIdentifierName, JS, jsReserved, makeReturn, makeVarDeclaration, map, memberAccess, needsCaching, nub, owns, partition, span, stmt, union, usedAsExpression, variableDeclarations;
 cache$ = require('./functional-helpers');
@@ -32270,7 +31554,7 @@ function isOwn$(o, p) {
   return {}.hasOwnProperty.call(o, p);
 }
 
-},{"./../package.json":58,"./functional-helpers":33,"./helpers":34,"./js-nodes":35,"./nodes":37}],33:[function(require,module,exports){
+},{"./../package.json":64,"./functional-helpers":39,"./helpers":40,"./js-nodes":41,"./nodes":43}],39:[function(require,module,exports){
 // Generated by CoffeeScript 2.0.0-beta8
 var concat, foldl, map, nub, span;
 this.any = function (list, fn) {
@@ -32427,7 +31711,7 @@ function in$(member, list) {
   return false;
 }
 
-},{}],34:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 // Generated by CoffeeScript 2.0.0-beta8
 var beingDeclared, cleanMarkers, concat, concatMap, CS, difference, envEnrichments, envEnrichments_, foldl, humanReadable, map, nub, numberLines, pointToErrorLocation, usedAsExpression, usedAsExpression_;
 cache$ = require('./functional-helpers');
@@ -32606,7 +31890,7 @@ function in$(member, list) {
   return false;
 }
 
-},{"./functional-helpers":33,"./nodes":37}],35:[function(require,module,exports){
+},{"./functional-helpers":39,"./nodes":43}],41:[function(require,module,exports){
 // Generated by CoffeeScript 2.0.0-beta8
 var ArrayExpression, AssignmentExpression, BinaryExpression, BlockStatement, CallExpression, createNode, ctor, difference, exports, FunctionDeclaration, FunctionExpression, GenSym, handleLists, handlePrimitives, Identifier, isStatement, Literal, LogicalExpression, MemberExpression, NewExpression, node, nodeData, Nodes, ObjectExpression, params, Program, SequenceExpression, SwitchCase, SwitchStatement, TryStatement, UnaryExpression, UpdateExpression, VariableDeclaration, VariableDeclaration;
 difference = require('./functional-helpers').difference;
@@ -33083,7 +32367,7 @@ function in$(member, list) {
   return false;
 }
 
-},{"./functional-helpers":33}],36:[function(require,module,exports){
+},{"./functional-helpers":39}],42:[function(require,module,exports){
 // Generated by CoffeeScript 2.0.0-beta8
 var CoffeeScript, Compiler, cscodegen, escodegen, escodegenFormat, formatParserError, Nodes, Optimiser, Parser, pkg, Preprocessor;
 formatParserError = require('./helpers').formatParserError;
@@ -33196,7 +32480,7 @@ if (null != (null != require.extensions ? require.extensions['.node'] : void 0))
     return require('./register');
   };
 
-},{"./../package.json":58,"./compiler":32,"./helpers":34,"./nodes":37,"./optimiser":38,"./parser":39,"./preprocessor":40,"./register":41,"cscodegen":44,"escodegen":45}],37:[function(require,module,exports){
+},{"./../package.json":64,"./compiler":38,"./helpers":40,"./nodes":43,"./optimiser":44,"./parser":45,"./preprocessor":46,"./register":47,"cscodegen":50,"escodegen":51}],43:[function(require,module,exports){
 // Generated by CoffeeScript 2.0.0-beta8
 var ArrayInitialiser, Block, Bool, Class, CompoundAssignOp, concat, concatMap, Conditional, createNodes, difference, exports, ForOf, FunctionApplications, Functions, GenSym, handleLists, handlePrimitives, HeregExp, Identifier, Identifiers, map, NegatedConditional, NewOp, Nodes, nub, ObjectInitialiser, Primitives, Range, RegExp, RegExps, Slice, StaticMemberAccessOps, Super, Switch, SwitchCase, union, While;
 cache$ = require('./functional-helpers');
@@ -33780,7 +33064,7 @@ function in$(member, list) {
   return false;
 }
 
-},{"./functional-helpers":33}],38:[function(require,module,exports){
+},{"./functional-helpers":39}],44:[function(require,module,exports){
 (function (global){// Generated by CoffeeScript 2.0.0-beta8
 var all, any, beingDeclared, concat, concatMap, CS, declarationsFor, defaultRules, difference, envEnrichments, exports, foldl, foldl1, isFalsey, isTruthy, makeDispatcher, mayHaveSideEffects, union, usedAsExpression;
 cache$ = require('./functional-helpers');
@@ -34595,7 +33879,7 @@ function in$(member, list) {
   return false;
 }
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./functional-helpers":33,"./helpers":34,"./nodes":37}],39:[function(require,module,exports){
+},{"./functional-helpers":39,"./helpers":40,"./nodes":43}],45:[function(require,module,exports){
 module.exports = (function(){
   /*
    * Generated by PEG.js 0.7.0.
@@ -54399,7 +53683,7 @@ module.exports = (function(){
   return result;
 })();
 
-},{"../package.json":58,"./nodes":37}],40:[function(require,module,exports){
+},{"../package.json":64,"./nodes":43}],46:[function(require,module,exports){
 // Generated by CoffeeScript 2.0.0-beta8
 var DEDENT, INDENT, pointToErrorLocation, Preprocessor, StringScanner, TERM, ws;
 pointToErrorLocation = require('./helpers').pointToErrorLocation;
@@ -54729,7 +54013,7 @@ this.Preprocessor = Preprocessor = function () {
   return Preprocessor;
 }();
 
-},{"./helpers":34,"StringScanner":43}],41:[function(require,module,exports){
+},{"./helpers":40,"StringScanner":49}],47:[function(require,module,exports){
 // Generated by CoffeeScript 2.0.0-beta8
 var child_process, coffeeBinary, CoffeeScript, fork, fs, path, runModule;
 child_process = require('child_process');
@@ -54792,7 +54076,7 @@ function in$(member, list) {
   return false;
 }
 
-},{"./module":36,"./run":42,"child_process":22,"fs":22,"path":29}],42:[function(require,module,exports){
+},{"./module":42,"./run":48,"child_process":28,"fs":28,"path":35}],48:[function(require,module,exports){
 (function (process){// Generated by CoffeeScript 2.0.0-beta8
 var CoffeeScript, formatSourcePosition, Module, patched, patchStackTrace, path, runMain, runModule, SourceMapConsumer;
 path = require('path');
@@ -54899,7 +54183,7 @@ module.exports = {
   runModule: runModule
 };
 }).call(this,require("/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"))
-},{"./module":36,"/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":28,"module":22,"path":29,"source-map":48}],43:[function(require,module,exports){
+},{"./module":42,"/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":34,"module":28,"path":35,"source-map":54}],49:[function(require,module,exports){
 (function() {
   var StringScanner;
   StringScanner = (function() {
@@ -55067,7 +54351,7 @@ module.exports = {
   module.exports = StringScanner;
 }).call(this);
 
-},{}],44:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 // Generated by CoffeeScript 1.3.3
 (function() {
   var __hasProp = {}.hasOwnProperty,
@@ -55689,7 +54973,7 @@ module.exports = {
 
 }).call(this);
 
-},{}],45:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 (function (global){/*
   Copyright (C) 2012-2013 Yusuke Suzuki <utatane.tea@gmail.com>
   Copyright (C) 2012-2013 Michael Ficarra <escodegen.copyright@michael.ficarra.me>
@@ -57810,7 +57094,7 @@ module.exports = {
 }());
 /* vim: set sw=4 ts=4 et tw=80 : */
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./package.json":47,"estraverse":46,"source-map":48}],46:[function(require,module,exports){
+},{"./package.json":53,"estraverse":52,"source-map":54}],52:[function(require,module,exports){
 /*
   Copyright (C) 2012-2013 Yusuke Suzuki <utatane.tea@gmail.com>
   Copyright (C) 2012 Ariya Hidayat <ariya.hidayat@gmail.com>
@@ -58496,7 +57780,7 @@ module.exports = {
 }));
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{}],47:[function(require,module,exports){
+},{}],53:[function(require,module,exports){
 module.exports={
   "name": "escodegen",
   "description": "ECMAScript code generator",
@@ -58568,7 +57852,7 @@ module.exports={
   "_resolved": "https://registry.npmjs.org/escodegen/-/escodegen-0.0.28.tgz"
 }
 
-},{}],48:[function(require,module,exports){
+},{}],54:[function(require,module,exports){
 /*
  * Copyright 2009-2011 Mozilla Foundation and contributors
  * Licensed under the New BSD license. See LICENSE.txt or:
@@ -58578,7 +57862,7 @@ exports.SourceMapGenerator = require('./source-map/source-map-generator').Source
 exports.SourceMapConsumer = require('./source-map/source-map-consumer').SourceMapConsumer;
 exports.SourceNode = require('./source-map/source-node').SourceNode;
 
-},{"./source-map/source-map-consumer":53,"./source-map/source-map-generator":54,"./source-map/source-node":55}],49:[function(require,module,exports){
+},{"./source-map/source-map-consumer":59,"./source-map/source-map-generator":60,"./source-map/source-node":61}],55:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -58676,7 +57960,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./util":56,"amdefine":57}],50:[function(require,module,exports){
+},{"./util":62,"amdefine":63}],56:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -58822,7 +58106,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./base64":51,"amdefine":57}],51:[function(require,module,exports){
+},{"./base64":57,"amdefine":63}],57:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -58866,7 +58150,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"amdefine":57}],52:[function(require,module,exports){
+},{"amdefine":63}],58:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -58949,7 +58233,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"amdefine":57}],53:[function(require,module,exports){
+},{"amdefine":63}],59:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -59359,7 +58643,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./array-set":49,"./base64-vlq":50,"./binary-search":52,"./util":56,"amdefine":57}],54:[function(require,module,exports){
+},{"./array-set":55,"./base64-vlq":56,"./binary-search":58,"./util":62,"amdefine":63}],60:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -59594,7 +58878,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./array-set":49,"./base64-vlq":50,"./util":56,"amdefine":57}],55:[function(require,module,exports){
+},{"./array-set":55,"./base64-vlq":56,"./util":62,"amdefine":63}],61:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -59801,7 +59085,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./source-map-generator":54,"amdefine":57}],56:[function(require,module,exports){
+},{"./source-map-generator":60,"amdefine":63}],62:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -59864,7 +59148,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"amdefine":57}],57:[function(require,module,exports){
+},{"amdefine":63}],63:[function(require,module,exports){
 (function (process,__filename){/** vim: et:ts=4:sw=4:sts=4
  * @license amdefine 0.1.0 Copyright (c) 2011, The Dojo Foundation All Rights Reserved.
  * Available via the MIT or new BSD license.
@@ -60165,7 +59449,7 @@ function amdefine(module, requireFn) {
 
 module.exports = amdefine;
 }).call(this,require("/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),"/../node_modules/coffee-script-redux/node_modules/source-map/node_modules/amdefine/amdefine.js")
-},{"/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":28,"path":29}],58:[function(require,module,exports){
+},{"/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":34,"path":35}],64:[function(require,module,exports){
 module.exports={
   "name": "coffee-script-redux",
   "author": {
@@ -60232,7 +59516,7 @@ module.exports={
   "_from": "coffee-script-redux@~2.0.0-beta8"
 }
 
-},{}],59:[function(require,module,exports){
+},{}],65:[function(require,module,exports){
 (function (global){/*
   Copyright (C) 2012-2013 Yusuke Suzuki <utatane.tea@gmail.com>
   Copyright (C) 2012-2013 Michael Ficarra <escodegen.copyright@michael.ficarra.me>
@@ -62437,7 +61721,7 @@ module.exports={
 }());
 /* vim: set sw=4 ts=4 et tw=80 : */
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./package.json":63,"estraverse":65,"esutils":62,"source-map":78}],60:[function(require,module,exports){
+},{"./package.json":69,"estraverse":71,"esutils":68,"source-map":84}],66:[function(require,module,exports){
 /*
   Copyright (C) 2013 Yusuke Suzuki <utatane.tea@gmail.com>
 
@@ -62529,7 +61813,7 @@ module.exports={
 }());
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{}],61:[function(require,module,exports){
+},{}],67:[function(require,module,exports){
 /*
   Copyright (C) 2013 Yusuke Suzuki <utatane.tea@gmail.com>
 
@@ -62648,7 +61932,7 @@ module.exports={
 }());
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{"./code":60}],62:[function(require,module,exports){
+},{"./code":66}],68:[function(require,module,exports){
 /*
   Copyright (C) 2013 Yusuke Suzuki <utatane.tea@gmail.com>
 
@@ -62682,7 +61966,7 @@ module.exports={
 }());
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{"./code":60,"./keyword":61}],63:[function(require,module,exports){
+},{"./code":66,"./keyword":67}],69:[function(require,module,exports){
 module.exports={
   "name": "escodegen",
   "description": "ECMAScript code generator",
@@ -62756,7 +62040,7 @@ module.exports={
   "_resolved": "https://registry.npmjs.org/escodegen/-/escodegen-1.3.0.tgz"
 }
 
-},{}],64:[function(require,module,exports){
+},{}],70:[function(require,module,exports){
 /*
   Copyright (C) 2013 Ariya Hidayat <ariya.hidayat@gmail.com>
   Copyright (C) 2013 Thaddee Tyl <thaddee.tyl@gmail.com>
@@ -67953,7 +67237,7 @@ parseYieldExpression: true
 }));
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{}],65:[function(require,module,exports){
+},{}],71:[function(require,module,exports){
 /*
   Copyright (C) 2012-2013 Yusuke Suzuki <utatane.tea@gmail.com>
   Copyright (C) 2012 Ariya Hidayat <ariya.hidayat@gmail.com>
@@ -68643,7 +67927,7 @@ parseYieldExpression: true
 }));
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{}],66:[function(require,module,exports){
+},{}],72:[function(require,module,exports){
 var identifierStartTable = [];
 
 for (var i = 0; i < 128; i++) {
@@ -68667,7 +67951,7 @@ module.exports = {
 	asciiIdentifierPartTable: identifierPartTable
 };
 
-},{}],67:[function(require,module,exports){
+},{}],73:[function(require,module,exports){
 module.exports = [
 	768,
 	769,
@@ -70239,7 +69523,7 @@ module.exports = [
 	65343
 ];
 
-},{}],68:[function(require,module,exports){
+},{}],74:[function(require,module,exports){
 module.exports = [
 	170,
 	181,
@@ -118718,7 +118002,7 @@ module.exports = [
 	65500
 ];
 
-},{}],69:[function(require,module,exports){
+},{}],75:[function(require,module,exports){
 (function (global){/*global window, global*/
 var util = require("util")
 var assert = require("assert")
@@ -118805,7 +118089,7 @@ function assert(expression) {
     }
 }
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"assert":23,"util":31}],70:[function(require,module,exports){
+},{"assert":29,"util":37}],76:[function(require,module,exports){
 //     Underscore.js 1.4.4
 //     http://underscorejs.org
 //     (c) 2009-2013 Jeremy Ashkenas, DocumentCloud Inc.
@@ -120033,7 +119317,7 @@ function assert(expression) {
 
 }).call(this);
 
-},{}],71:[function(require,module,exports){
+},{}],77:[function(require,module,exports){
 /*!
  * JSHint, by JSHint Community.
  *
@@ -125037,7 +124321,7 @@ if (typeof exports === "object" && exports) {
 	exports.JSHINT = JSHINT;
 }
 
-},{"./lex.js":72,"./messages.js":73,"./reg.js":74,"./state.js":75,"./style.js":76,"./vars.js":77,"console-browserify":69,"events":26,"underscore":70}],72:[function(require,module,exports){
+},{"./lex.js":78,"./messages.js":79,"./reg.js":80,"./state.js":81,"./style.js":82,"./vars.js":83,"console-browserify":75,"events":32,"underscore":76}],78:[function(require,module,exports){
 /*
  * Lexical analysis and token construction.
  */
@@ -126615,7 +125899,7 @@ Lexer.prototype = {
 
 exports.Lexer = Lexer;
 
-},{"../data/ascii-identifier-data.js":66,"../data/non-ascii-identifier-part-only.js":67,"../data/non-ascii-identifier-start.js":68,"./reg.js":74,"./state.js":75,"events":26,"underscore":70}],73:[function(require,module,exports){
+},{"../data/ascii-identifier-data.js":72,"../data/non-ascii-identifier-part-only.js":73,"../data/non-ascii-identifier-start.js":74,"./reg.js":80,"./state.js":81,"events":32,"underscore":76}],79:[function(require,module,exports){
 "use strict";
 
 var _ = require("underscore");
@@ -126837,7 +126121,7 @@ _.each(info, function (desc, code) {
 	exports.info[code] = { code: code, desc: desc };
 });
 
-},{"underscore":70}],74:[function(require,module,exports){
+},{"underscore":76}],80:[function(require,module,exports){
 /*
  * Regular expressions. Some of these are stupidly long.
  */
@@ -126873,7 +126157,7 @@ exports.javascriptURL = /^(?:javascript|jscript|ecmascript|vbscript|mocha|livesc
 // Catches /* falls through */ comments (ft)
 exports.fallsThrough = /^\s*\/\*\s*falls?\sthrough\s*\*\/\s*$/;
 
-},{}],75:[function(require,module,exports){
+},{}],81:[function(require,module,exports){
 "use strict";
 
 var state = {
@@ -126901,7 +126185,7 @@ var state = {
 
 exports.state = state;
 
-},{}],76:[function(require,module,exports){
+},{}],82:[function(require,module,exports){
 "use strict";
 
 exports.register = function (linter) {
@@ -127073,7 +126357,7 @@ exports.register = function (linter) {
 		}
 	});
 };
-},{}],77:[function(require,module,exports){
+},{}],83:[function(require,module,exports){
 // jshint -W001
 
 "use strict";
@@ -127664,9 +126948,9 @@ exports.yui = {
 };
 
 
-},{}],78:[function(require,module,exports){
-arguments[4][48][0].apply(exports,arguments)
-},{"./source-map/source-map-consumer":83,"./source-map/source-map-generator":84,"./source-map/source-node":85}],79:[function(require,module,exports){
+},{}],84:[function(require,module,exports){
+arguments[4][54][0].apply(exports,arguments)
+},{"./source-map/source-map-consumer":89,"./source-map/source-map-generator":90,"./source-map/source-node":91}],85:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -127765,7 +127049,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./util":86,"amdefine":87}],80:[function(require,module,exports){
+},{"./util":92,"amdefine":93}],86:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -127911,7 +127195,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./base64":81,"amdefine":87}],81:[function(require,module,exports){
+},{"./base64":87,"amdefine":93}],87:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -127955,7 +127239,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"amdefine":87}],82:[function(require,module,exports){
+},{"amdefine":93}],88:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -128038,7 +127322,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"amdefine":87}],83:[function(require,module,exports){
+},{"amdefine":93}],89:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -128518,7 +127802,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./array-set":79,"./base64-vlq":80,"./binary-search":82,"./util":86,"amdefine":87}],84:[function(require,module,exports){
+},{"./array-set":85,"./base64-vlq":86,"./binary-search":88,"./util":92,"amdefine":93}],90:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -128917,7 +128201,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./array-set":79,"./base64-vlq":80,"./util":86,"amdefine":87}],85:[function(require,module,exports){
+},{"./array-set":85,"./base64-vlq":86,"./util":92,"amdefine":93}],91:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -129306,7 +128590,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./source-map-generator":84,"./util":86,"amdefine":87}],86:[function(require,module,exports){
+},{"./source-map-generator":90,"./util":92,"amdefine":93}],92:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -129610,7 +128894,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"amdefine":87}],87:[function(require,module,exports){
+},{"amdefine":93}],93:[function(require,module,exports){
 (function (process,__filename){/** vim: et:ts=4:sw=4:sts=4
  * @license amdefine 0.1.0 Copyright (c) 2011, The Dojo Foundation All Rights Reserved.
  * Available via the MIT or new BSD license.
@@ -129911,7 +129195,7 @@ function amdefine(module, requireFn) {
 
 module.exports = amdefine;
 }).call(this,require("/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),"/../node_modules/source-map/node_modules/amdefine/amdefine.js")
-},{"/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":28,"path":29}],88:[function(require,module,exports){
+},{"/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":34,"path":35}],94:[function(require,module,exports){
 /*
 Author: Geraint Luff and others
 Year: 2013

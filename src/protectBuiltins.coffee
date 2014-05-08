@@ -28,20 +28,49 @@ module.exports.copyBuiltin = copyBuiltin = (source, target) ->
   if source::
     copy source::, target::
 
-global = (-> this)()
-builtinNames = ['Object', 'Function', 'Array', 'String', 'Boolean', 'Number', 'Date', 'RegExp', 'Error', 'EvalError', 'RangeError', 'ReferenceError', 'SyntaxError', 'TypeError', 'URIError']
-builtinClones = (cloneBuiltin global[name],name for name in builtinNames)
-builtinReal = (global[name] for name in builtinNames)
+
+module.exports.builtinObjectNames = builtinObjectNames = [
+  # Built-in objects
+  'Object', 'Function', 'Array', 'String', 'Boolean', 'Number', 'Date', 'RegExp', 'Math', 'JSON',
+
+  # Error Objects
+  'Error', 'EvalError', 'RangeError', 'ReferenceError', 'SyntaxError', 'TypeError', 'URIError'
+]
+
+module.exports.builtinNames = builtinNames = builtinObjectNames.concat [
+  # Math related
+  'NaN', 'Infinity', 'undefined', 'parseInt', 'parseFloat', 'isNaN', 'isFinite',
+
+  # URI related
+  'decodeURI', 'decodeURIComponent', 'encodeURI', 'encodeURIComponent',
+
+  # Nope
+  # 'eval'
+]
+
+global = (-> @)()
+builtinClones = []
+builtinReal = []
+addedGlobals = {}
+
+module.exports.addGlobal = addGlobal = (name, value) ->
+  # Ex.: Aether.addGlobal('Vector', require('lib/world/vector')), before the Aether instance is constructed
+  value ?= global[name]
+  builtinClones.push cloneBuiltin(value, name)
+  builtinReal.push value
+  addedGlobals[name] = value
+
+addGlobal name for name in builtinObjectNames
 
 module.exports.restoreBuiltins = restoreBuiltins = (globals)->
   ## Mask Builtins
-  for name, offset in builtinNames
+  for name, offset in builtinObjectNames
     real = builtinReal[offset]
     cloned = builtinClones[offset]
     copyBuiltin cloned, real
     global[name] = real
-
   return
+
 
 module.exports.raiseDisabledFunctionConstructor = raiseDisabledFunctionConstructor = ->
   # Should we make this a normal Aether UserCodeProblem?
@@ -49,36 +78,10 @@ module.exports.raiseDisabledFunctionConstructor = raiseDisabledFunctionConstruct
 
 
 module.exports.createSandboxedFunction = createSandboxedFunction = (functionName, code, aether) ->
-  globals = [
-      # Other
-      # 'eval',
-
-      # TODO: figure out how to really get these in (CodeCombat-specific, hack)
-      'Vector', '_',
-
-      # Math related
-      'NaN', 'Infinity', 'undefined', 'parseInt', 'parseFloat', 'isNaN', 'isFinite',
-
-      # URI related
-      'decodeURI', 'decodeURIComponent', 'encodeURI', 'encodeURIComponent',
-
-      # Built-in objects
-      'Object', 'Function', 'Array', 'String', 'Boolean', 'Number', 'Date', 'RegExp', 'Math', 'JSON',
-
-      # Error Objects
-      'Error', 'EvalError', 'RangeError', 'ReferenceError', 'SyntaxError', 'TypeError', 'URIError'
-  ]
   dummyContext = {}
   globalRef = global ? window
-  for name in globals
-    dummyContext[name] = globalRef[name]
-    if name is 'Vector'
-      try
-        dummyContext[name] = eval("require('lib/world/vector')")  # haaaaaaaaaaaaaaa.... aaaaaaaaaaaack
-      catch error
-        #console.log 'dude, there is no Vector', error
-        null
-
+  for name in builtinNames.concat aether.options.globals
+    dummyContext[name] = addedGlobals[name] ? globalRef[name]
   dummyFunction = raiseDisabledFunctionConstructor
   copyBuiltin Function, dummyFunction
   dummyContext.Function = dummyFunction
@@ -89,7 +92,8 @@ module.exports.createSandboxedFunction = createSandboxedFunction = (functionName
     wrapper.call dummyContext, aether
   catch e
     console.warn "Error creating function, so returning empty function instead. Error: #{e}\nCode:", code
-    aether.addProblem new problems.TranspileProblem aether, 'aether', problems.problems.aether_Untranspilable, e, {}, code, ''
+    problem = aether.createUserCodeProblem reporter: 'aether', type: 'transpile', kind: 'Untranspilable', message: 'Code could not be compiled. Check syntax.', error: e, code: code, codePrefix: ''
+    aether.addProblem problem
     return ->
 
   dummyContext[functionName]

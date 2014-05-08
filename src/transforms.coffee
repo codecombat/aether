@@ -1,9 +1,10 @@
 _ = window?._ ? self?._ ? global?._ ? require 'lodash'  # rely on lodash existing, since it busts CodeCombat to browserify it--TODO
-problems = require './problems'
-ranges = require './ranges'
-esprima = require 'esprima'
+
+S = require('esprima').Syntax
 SourceMap = require 'source-map'
-S = esprima.Syntax
+
+ranges = require './ranges'
+{commonMethods} = require './problems'
 
 statements = [S.EmptyStatement, S.ExpressionStatement, S.BreakStatement, S.ContinueStatement, S.DebuggerStatement, S.DoWhileStatement, S.ForStatement, S.FunctionDeclaration, S.ClassDeclaration, S.IfStatement, S.ReturnStatement, S.SwitchStatement, S.ThrowStatement, S.TryStatement, S.VariableStatement, S.WhileStatement, S.WithStatement, S.VariableDeclaration]
 
@@ -33,7 +34,7 @@ module.exports.makeGatherNodeRanges = makeGatherNodeRanges = (nodeRanges, code, 
   nodeRanges.push node
 
 # Making
-module.exports.makeCheckThisKeywords = makeCheckThisKeywords = (global, varNames) ->
+module.exports.makeCheckThisKeywords = makeCheckThisKeywords = (globals, varNames) ->
   return (node) ->
     if node.type is S.VariableDeclarator
       varNames[node.id.name] = true
@@ -47,20 +48,19 @@ module.exports.makeCheckThisKeywords = makeCheckThisKeywords = (global, varNames
       while v.type in [S.CallExpression, S.MemberExpression]
         v = if v.object? then v.object else v.callee
       v = v.name
-      if v and not varNames[v] and not global[v]
+      if v and not varNames[v] and not (v in globals)
         # Probably MissingThis, but let's check if we're recursively calling an inner function from itself first.
         for p in getParentsOfTypes node, [S.FunctionDeclaration, S.FunctionExpression, S.VariableDeclarator, S.AssignmentExpression]
           varNames[p.id.name] = true if p.id?
           varNames[p.left.name] = true if p.left?
           varNames[param.name] = true for param in p.params if p.params?
           return if varNames[v] is true
-        problem = new problems.TranspileProblem @, 'aether', 'MissingThis', {}, null, '', ''  # TODO: last args
-        problem.message = "Missing `this.` keyword; should be `this.#{v}`."
-        problem.hint = "There is no function `#{v}`, but `this` has a method `#{v}`."
-        problem.ranges = [[node.originalRange.start, node.originalRange.end]]
+        # TODO: we need to know whether `this` has this method before saying this...
+        message = "Missing `this.` keyword; should be `this.#{v}`."
+        hint = "There is no function `#{v}`, but `this` has a method `#{v}`."
+        range = [node.originalRange.start, node.originalRange.end]
+        problem = @createUserCodeProblem type: 'transpile', reporter: 'aether', kind: 'MissingThis', message: message, hint: hint, range: range  # TODO: code/codePrefix?
         @addProblem problem
-        if not @options.requiresThis
-          node.update "this.#{node.source()}"
 
 module.exports.validateReturns = validateReturns = (node) ->
   # Only on top-level function (inside the wrapper), not inner functions.
@@ -77,17 +77,17 @@ module.exports.checkIncompleteMembers = checkIncompleteMembers = (node) ->
     if exp.type is 'MemberExpression'
       # Handle missing parentheses, like in:  this.moveUp;
       if exp.property.name is "IncompleteThisReference"
-        problem = new problems.TranspileProblem @, 'aether', 'IncompleteThis', {}, null, '', ''  # TODO: last args
+        kind = 'IncompleteThis'
         m = "this.what? (Check available spells below.)"
+        hint = ''
       else
-        problem = new problems.TranspileProblem @, 'aether', 'NoEffect', {}, null, '', ''  # TODO: last args
+        kind = 'NoEffect'
         m = "#{exp.source()} has no effect."
-        if exp.property.name in problems.commonMethods
+        if exp.property.name in commonMethods
           m += " It needs parentheses: #{exp.source()}()"
         else
-          problem.hint = "Is it a method? Those need parentheses: #{exp.source()}()"
-      problem.message = m
-      problem.ranges = [[node.originalRange.start, node.originalRange.end]]
+          hint = "Is it a method? Those need parentheses: #{exp.source()}()"
+      problem = @createUserCodeProblem type: 'transpile', reporter: 'aether', message: m, kind: kind, hint: hint, range: if node.originalRange then [node.originalRange.start, node.originalRange.end] else null  # TODO: code/codePrefix?
       @addProblem problem
 
 ########## After JS_WALA Normalization ##########

@@ -1,0 +1,49 @@
+# Based on https://github.com/substack/node-falafel
+# A similar approach could be seen in https://github.com/ariya/esmorph
+_ = window?._ ? self?._ ? global?._ ? require 'lodash'  # rely on lodash existing, since it busts CodeCombat to browserify it--TODO
+
+esprima = require 'esprima'  # getting our Esprima Harmony
+acorn_loose = require 'acorn/acorn_loose'  # for if Esprima dies. Note it can't do ES6.
+csredux = require 'coffee-script-redux'
+
+fixLocations = require './fixLocations'
+
+# TODO: see about consolidating
+module.exports.walkAST = walkAST = (node, fn) ->
+  for key, child of node
+    if _.isArray child
+      for grandchild in child
+        walkAST grandchild, fn if _.isString grandchild?.type
+    else if _.isString child?.type
+      walkAST child, fn
+    fn child
+
+module.exports.morphAST = morphAST = (source, transforms, parseFn) ->
+  chunks = source.split ''
+  ast = parseFn source
+
+  morphWalk = (node, parent) ->
+    insertHelpers node, parent, chunks
+    for key, child of node
+      continue if key is 'parent' or key is 'leadingComments'
+      if _.isArray child
+        for grandchild in child
+          morphWalk grandchild, node if _.isString grandchild?.type
+      else if _.isString child?.type
+        morphWalk child, node
+    transform node for transform in transforms
+
+  morphWalk ast, undefined
+  chunks.join ''
+
+insertHelpers = (node, parent, chunks) ->
+  return unless node.range
+  node.parent = parent
+  node.source = -> chunks.slice(node.range[0], node.range[1]).join ''
+  update = (s) ->
+    chunks[node.range[0]] = s
+    for i in [node.range[0] + 1 ... node.range[1]]
+      chunks[i] = ''
+  if _.isObject node.update
+    _.extend update, node.update
+  node.update = update

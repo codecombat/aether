@@ -149,7 +149,7 @@ lastAetherInput = ""
 watchForCodeChanges = ->
   aetherInput = editors[1].getValue()
   code = grabDemoCode()
-  return if not Aether.hasChangedSignificantly(code, lastJSInputAether.raw) and aetherInput is lastAetherInput
+  return if not lastJSInputAether.hasChangedSignificantly(code, lastJSInputAether.raw) and aetherInput is lastAetherInput
   clearOutput()
   lastAetherInput = aetherInput
   lastJSInputAether.transpile code
@@ -194,16 +194,17 @@ examples = [
     '''
 
   aether: '''
+    var thisValue = {say: console.log};
     var aetherOptions = {
-      thisValue: {say: console.log},
       problems: {jshint_W040: {level: "ignore"}}
     };
     var aether = new Aether(aetherOptions);
     var code = grabDemoCode();
     aether.transpile(code);
-    aether.run();
-    aether.run();
-    aether.run();
+    var method = aether.createMethod(thisValue);
+    aether.run(method);
+    aether.run(method);
+    aether.run(method);
     demoShowOutput(aether);
     '''
 ,
@@ -247,23 +248,23 @@ examples = [
   '''
 
   aether: '''
+    var thisValue ={
+      getEnemies: function() { return [{id: "Brack", health: 10, pos: {x: 15, y: 20}}, {id: "Goreball", health: 20, pos: {x: 25, y: 30}}]; },
+      say: console.log,
+      explode: function() { this.say("Exploooode!"); }
+    };
     var aetherOptions = {
-      thisValue: {
-        getEnemies: function() { return [{id: "Brack", health: 10, pos: {x: 15, y: 20}}, {id: "Goreball", health: 20, pos: {x: 25, y: 30}}]; },
-        say: console.log,
-        explode: function() { this.say("Exploooode!"); }
-      },
       problems: {
         jshint_W040: {level: "ignore"},
         aether_MissingThis: {level: "warning"}
       },
       functionName: "getNearestEnemy",
-      requiresThis: false
     };
     var aether = new Aether(aetherOptions);
     var code = grabDemoCode();
     aether.transpile(code);
-    aether.run();
+    var method = aether.createMethod(thisValue);
+    aether.run(method);
     demoShowOutput(aether);
     '''
 ,
@@ -280,12 +281,12 @@ examples = [
     '''
 
   aether: '''
+    var thisValue = {
+      charge: function() { this.say("attack!"); return "attack!"; },
+      hesitate: function() { this.say("uhh..."); this._aetherShouldYield = true; },
+      say: console.log
+    };
     var aetherOptions = {
-      thisValue: {
-        charge: function() { this.say("attack!"); return "attack!"; },
-        hesitate: function() { this.say("uhh..."); this._aetherShouldYield = true; },
-        say: console.log
-      },
       problems: {
         jshint_W040: {level: "ignore"},
         aether_MissingThis: {level: "warning"}
@@ -293,12 +294,11 @@ examples = [
       functionName: "planStrategy",
       functionParameters: ["retries"],
       yieldConditionally: true,
-      requiresThis: false
     };
     var aether = new Aether(aetherOptions);
     var code = grabDemoCode();
     aether.transpile(code);
-    var method = aether.createMethod();
+    var method = aether.createMethod(thisValue);
     var generator = method();
     aether.sandboxGenerator(generator);
     var executeSomeMore = function executeSomeMore() {
@@ -318,10 +318,10 @@ examples = [
     '''
 
   aether: '''
+    var thisValue = {
+      print: console.log
+    };
     var aetherOptions = {
-      thisValue: {
-        print: console.log
-      },
       problems: {
         jshint_W040: {level: "ignore"}
       },
@@ -330,7 +330,7 @@ examples = [
     var aether = new Aether(aetherOptions);
     var code = grabDemoCode();
     aether.transpile(code);
-    var method = aether.createMethod();
+    var method = aether.createMethod(thisValue);
     var generator = method();
     aether.sandboxGenerator(generator);
     var executeSomeMore = function executeSomeMore() {
@@ -351,14 +351,15 @@ examples = [
     '''
 
   aether: '''
+    var thisValue = {say: console.log};
     var aetherOptions = {
-      thisValue: {say: console.log},
       problems: {jshint_W040: {level: "ignore"}}
     };
     var aether = new Aether(aetherOptions);
     var code = grabDemoCode();
     aether.transpile(code);
-    aether.run();
+    var method = aether.createMethod(thisValue);
+    aether.run(method);
     demoShowOutput(aether);
     '''
 ,
@@ -451,13 +452,13 @@ examples = [
       [1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     ];
 
+    var thisValue = {
+      getNavGrid: function() { return {grid: _canvas }; },
+      addRect: function() { },
+      say: console.log,
+      wait: function() { }
+    };
     var aetherOptions = {
-      thisValue: {
-        getNavGrid: function() { return {grid: _canvas }; },
-        addRect: function() { },
-        say: console.log,
-        wait: function() { }
-      },
       problems: {
         jshint_W040: {level: "ignore"},
         aether_MissingThis: {level: "warning"}
@@ -465,12 +466,11 @@ examples = [
       functionName: "plan",
       functionParameters: [],
       yieldConditionally: true,
-      requiresThis: true
     };
     var aether = new Aether(aetherOptions);
     var code = grabDemoCode();
     aether.transpile(code);
-    var method = aether.createMethod();
+    var method = aether.createMethod(thisValue);
     var generator = method();
     if(aetherOptions.yieldConditionally) {
       var executeSomeMore = function executeSomeMore() {

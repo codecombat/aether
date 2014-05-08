@@ -3,8 +3,6 @@ Aether = require '../aether'
 describe "Constructor Test Suite", ->
   describe "Default values", ->
     aether = new Aether()
-    it "should initialize thisValue to be null", ->
-      expect(aether.options.thisValue).toBeNull()
     it "should initialize functionName as null", ->
       expect(aether.options.functionName).toBeNull()
     it "should have javascript as the default language", ->
@@ -20,7 +18,7 @@ describe "Constructor Test Suite", ->
     it "should have defined execution costs", ->
       expect(aether.options.executionCosts).toBeDefined()
     it "should have defined globals", ->
-      expect(aether.options.global).toBeDefined()
+      expect(aether.options.globals).toBeDefined()
   describe "Custom option values", ->
     constructAther = (options) ->
       aether = new Aether(options)

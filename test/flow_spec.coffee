@@ -8,14 +8,13 @@ describe "Flow test suite", ->
     """
     nStatements = 4  # If we improved our statement detection, this might go up
     it "should count statements and track vars", ->
+      thisValue = say: ->
       options =
-        thisValue:
-          say: ->
         includeFlow: true
         includeMetrics: true
       aether = new Aether options
       aether.transpile(code)
-      fn = aether.createMethod()
+      fn = aether.createMethod thisValue
       for i in [0 ... 4]
         if i
           expect(aether.flow.states.length).toEqual i
@@ -28,28 +27,26 @@ describe "Flow test suite", ->
       expect(last[last.length - 1].variables.four).toEqual "4"  # could change if we serialize differently
 
     it "should obey includeFlow", ->
+      thisValue = say: ->
       options =
-        thisValue:
-          say: ->
         includeFlow: false
         includeMetrics: true
       aether = new Aether options
       aether.transpile(code)
-      fn = aether.createMethod()
+      fn = aether.createMethod thisValue
       fn()
       expect(aether.flow.states).toBe undefined
       expect(aether.metrics.callsExecuted).toEqual 1
       expect(aether.metrics.statementsExecuted).toEqual nStatements
 
     it "should obey includeMetrics", ->
+      thisValue = say: ->
       options =
-        thisValue:
-          say: ->
         includeFlow: true
         includeMetrics: false
       aether = new Aether options
       aether.transpile(code)
-      fn = aether.createMethod()
+      fn = aether.createMethod thisValue
       fn()
       expect(aether.flow.states.length).toEqual 1
       expect(aether.flow.states[0].statementsExecuted).toEqual nStatements
@@ -57,9 +54,8 @@ describe "Flow test suite", ->
       expect(aether.metrics.statementsExecuted).toBe undefined
 
     it "should not log statements when not needed", ->
+      thisValue = say: ->
       options =
-        thisValue:
-          say: ->
         includeFlow: false
         includeMetrics: false
       aether = new Aether options

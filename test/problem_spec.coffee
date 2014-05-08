@@ -19,8 +19,8 @@ describe "Problem Test Suite", ->
       expect(problem.type).toEqual 'runtime'
       expect(problem.level).toEqual 'error'
       expect(problem.message).toMatch /has no method/
-      expect(problem.ranges?.length).toEqual 1
-      [start, end] = problem.ranges[0]
+      expect(problem.range?.length).toEqual 2
+      [start, end] = problem.range
       expect(start.ofs).toEqual 28
       expect(start.row).toEqual 1
       expect(start.col).toEqual 0

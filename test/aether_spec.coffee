@@ -45,3 +45,14 @@ describe "Aether", ->
       expect(aether.setLanguage.bind null, "Brainfuck").toThrow()
 
 
+###
+var test1 = function test2(test3) {
+    test1();
+    test2();
+    test3();
+}
+test4 = function(test5) {
+    test4();
+    test5();
+}
+###

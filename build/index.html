@@ -128,7 +128,7 @@
 var aether = new Aether();
 aether.lint(someGnarlyUserCode);
 aether.problems.warnings;
-[{ranges: [[[15, 15], [15, 22]]],
+[{range: [{ofs: 15, row: 2, col: 0}, {ofs: 22, row: 2, col: 7}],
   id: 'aether_MissingThis',
   message: 'Missing `this.` keyword; should be `this.getEnemies`.',
   hint: 'There is no function `getEnemys`, but `this` has a method `getEnemies`.',
@@ -139,7 +139,7 @@ gnarlyFunc();
 // At any point, you can check aether.problems, aether.style, aether.flow, aether.metrics, etc.
 // See more examples in the tests: https://github.com/codecombat/aether/tree/master/test
 </pre>
-          <p>In the browser, it currently depends on <a href="http://lodash.com/">lodash</a> or <a href="http://underscorejs.org/">underscore</a>. We test in Chrome and node, and it will probably work in other modern browsers.</p>
+          <p>In the browser, it currently depends on <a href="http://lodash.com/">lodash</a> (not underscore). We test in Chrome and node, and it will probably work in other modern browsers.</p>
         </div>
         <div id="develop" class="tab-pane fade">
           <p class="lead">Want to hack on Aether? Awesome!</p>

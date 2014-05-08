@@ -21,7 +21,7 @@ pre.prettyprint.
   var aether = new Aether();
   aether.lint(someGnarlyUserCode);
   aether.problems.warnings;
-  [{ranges: [[[15, 15], [15, 22]]],
+  [{range: [{ofs: 15, row: 2, col: 0}, {ofs: 22, row: 2, col: 7}],
     id: 'aether_MissingThis',
     message: 'Missing `this.` keyword; should be `this.getEnemies`.',
     hint: 'There is no function `getEnemys`, but `this` has a method `getEnemies`.',
@@ -35,6 +35,4 @@ pre.prettyprint.
 p
   | In the browser, it currently depends on 
   a(href='http://lodash.com/') lodash
-  |  or 
-  a(href='http://underscorejs.org/') underscore
-  | . We test in Chrome and node, and it will probably work in other modern browsers.
+  |  (not underscore). We test in Chrome and node, and it will probably work in other modern browsers.

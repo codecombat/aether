@@ -7,7 +7,7 @@ module.exports = (options) ->
     properties:
       thisValue:
         required: false
-      global:
+      globals:
         type: 'array'
         required: false
       functionName:
@@ -20,23 +20,24 @@ module.exports = (options) ->
       yieldConditionally:
         type: 'boolean'
         required: false
-      requiresThis:
-        type: 'boolean'
-        default: true
-        description: 'Whether leaving off "this" is an error, or just a warning which we work around.'
       executionCosts:
         required: false
       language:
         type: 'string'
         description: "Input language"
         minLength:1
-        'enum': ['javascript', 'coffeescript']
+        'enum': ['javascript', 'coffeescript', 'clojure', 'lua']
         required: false
       languageVersion:
-        type: 'string'
-        description: "Input language version"
-        minLength:1
-        'enum': ["ES5", "ES6"] #change this later
+        oneOf: [
+          type: 'string'
+          description: "Input language version"
+          minLength:1
+          'enum': ["ES5", "ES6"] #change this later
+        ,
+          type: ['null', 'undefined']
+          description: "Input language version"
+        ]
       problems:
         required: false
       includeFlow:
@@ -69,9 +70,6 @@ module.exports = (options) ->
       includeStyle:
         type: 'boolean'
         default: true
-      includeVisualization:
-        type: 'boolean'
-        default: false
       protectAPI:
         type: 'boolean'
         default: false
