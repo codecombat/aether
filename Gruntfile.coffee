@@ -40,6 +40,8 @@ module.exports = (grunt) ->
     "jasmine_node":
       run:
         spec: "lib/test/"
+      runCoverage:
+        spec: "lib/coverage/instrument/lib/test"
       env:
         NODE_PATH: "lib"
       executable: './node_modules/.bin/jasmine_node'
@@ -111,6 +113,30 @@ module.exports = (grunt) ->
         files:
           'build/dev/index.css': ['dev/index.sass']
 
+    instrument:
+      files: ["lib/*.js", "lib/validators/*.js"]
+      options:
+        lazy: true
+        basePath: "lib/coverage/instrument"
+
+    copy:
+      tests:
+        expand: true
+        flatten: true
+        src: "lib/test/*"
+        dest: "lib/coverage/instrument/lib/test/"
+
+    storeCoverage:
+      options:
+        dir: "lib/coverage/reports"
+
+    makeReport:
+      src: "lib/coverage/reports/**/*.json"
+      options:
+        type: "lcov"
+        dir: "lib/coverage/reports"
+        print: "detail"
+
   # Load the plugin that provides the "uglify" task.
   grunt.loadNpmTasks 'grunt-contrib-uglify'
   #grunt.loadNpmTasks 'grunt-contrib-jasmine'
@@ -125,9 +151,12 @@ module.exports = (grunt) ->
   grunt.loadNpmTasks 'grunt-push-release'
   grunt.loadNpmTasks 'grunt-contrib-jade'
   grunt.loadNpmTasks 'grunt-contrib-sass'
+  grunt.loadNpmTasks('grunt-istanbul')
+  grunt.loadNpmTasks('grunt-contrib-copy')
 
   # Default task(s).
   grunt.registerTask 'default', ['coffeelint', 'coffee', 'browserify', 'concat', 'jasmine_node', 'jade', 'sass', 'uglify']
   grunt.registerTask 'travis', ['coffeelint', 'coffee', 'jasmine_node']
   grunt.registerTask 'test', ['coffee', 'jasmine_node']
+  grunt.registerTask 'coverage', ['coffee', 'instrument', 'copy:tests', 'jasmine_node:runCoverage', 'storeCoverage', 'makeReport']
   grunt.registerTask 'build', ['coffeelint', 'coffee', 'browserify', 'concat', 'jade', 'sass', 'uglify']
