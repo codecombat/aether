@@ -114,7 +114,7 @@ module.exports = (grunt) ->
           'build/dev/index.css': ['dev/index.sass']
 
     instrument:
-      files: ["lib/*.js", "lib/validators/*.js"]
+      files: "lib/**/*.js"
       options:
         lazy: true
         basePath: "lib/coverage/instrument"
