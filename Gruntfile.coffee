@@ -41,7 +41,7 @@ module.exports = (grunt) ->
       run:
         spec: "lib/test/"
       runCoverage:
-        spec: "lib/coverage/instrument/lib/test"
+        spec: "coverage/instrument/lib/test"
       env:
         NODE_PATH: "lib"
       executable: './node_modules/.bin/jasmine_node'
@@ -114,27 +114,27 @@ module.exports = (grunt) ->
           'build/dev/index.css': ['dev/index.sass']
 
     instrument:
-      files: ["lib/*.js", "lib/validators/*.js"]
+      files: "lib/**/*.js"
       options:
         lazy: true
-        basePath: "lib/coverage/instrument"
+        basePath: "coverage/instrument"
 
     copy:
       tests:
         expand: true
         flatten: true
         src: "lib/test/**/*"
-        dest: "lib/coverage/instrument/lib/test/"
+        dest: "coverage/instrument/lib/test/"
 
     storeCoverage:
       options:
-        dir: "lib/coverage/reports"
+        dir: "coverage/reports"
 
     makeReport:
-      src: "lib/coverage/reports/**/*.json"
+      src: "coverage/reports/**/*.json"
       options:
         type: "lcov"
-        dir: "lib/coverage/reports"
+        dir: "coverage/reports"
         print: "detail"
 
   # Load the plugin that provides the "uglify" task.

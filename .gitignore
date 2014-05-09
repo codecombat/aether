@@ -58,3 +58,4 @@ Thumbs.db
 nbproject
 
 .grunt
+coverage/
