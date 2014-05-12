@@ -29,7 +29,8 @@
     "acorn": "~0.3.1",
     "source-map": "~0.1.29",
     "coffee-script-redux": "~2.0.0-beta8",
-    "estraverse": "~1.5.0"
+    "estraverse": "~1.5.0",
+    "closer": "https://github.com/vickychijwani/closer.js/tarball/master"
   },
   "devDependencies": {
     "grunt": "~0.4.1",

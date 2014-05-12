@@ -3,6 +3,7 @@ _ = window?._ ? self?._ ? global?._ ? require 'lodash'  # rely on lodash existin
 module.exports = class Language
   name: 'Abstract Language'  # Display name of the programming language
   id: 'abstract-language'  # Snake-case id of the programming language
+  runtimeGlobals: {}  # Like {__lua: require('lua2js').runtime}
 
   constructor: (@version) ->
 
@@ -29,7 +30,7 @@ module.exports = class Language
     []
 
   # Return a beautified representation of the code (cleaning up indentation, etc.)
-  beautify: (rawCode) ->
+  beautify: (rawCode, aether) ->
     rawCode
 
   # Wrap the user code in a function. Store @wrappedCodePrefix and @wrappedCodeSuffix.
@@ -40,14 +41,14 @@ module.exports = class Language
 
   # Hacky McHack step for things we can't easily change via AST transforms (which preserve statement ranges).
   # TODO: Should probably refactor and get rid of this soon.
-  hackCommonMistakes: (rawCode) ->
+  hackCommonMistakes: (rawCode, aether) ->
     rawCode
 
   # Using a third-party parser, produce an AST in the standardized Mozilla format.
-  parse: (code) ->
+  parse: (code, aether) ->
     throw new Error "parse() not implemented for #{@id}."
 
   # Optional: if parseDammit() is implemented, then if parse() throws an error, we'll try again using parseDammit().
   # Useful for parsing incomplete code as it is being written without giving up.
   # This should never throw an error and should always return some sort of AST, even if incomplete or empty.
-  #parseDammit: (code) ->
+  #parseDammit: (code, aether) ->

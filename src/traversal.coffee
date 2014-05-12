@@ -16,7 +16,7 @@ module.exports.walkAST = walkAST = (node, fn) ->
       walkAST child, fn
     fn child
 
-module.exports.morphAST = morphAST = (source, transforms, parseFn) ->
+module.exports.morphAST = morphAST = (source, transforms, parseFn, aether) ->
   chunks = source.split ''
   ast = parseFn source
 
@@ -29,7 +29,7 @@ module.exports.morphAST = morphAST = (source, transforms, parseFn) ->
           morphWalk grandchild, node if _.isString grandchild?.type
       else if _.isString child?.type
         morphWalk child, node
-    transform node for transform in transforms
+    transform node, aether for transform in transforms
 
   morphWalk ast, undefined
   chunks.join ''

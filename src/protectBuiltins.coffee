@@ -55,6 +55,7 @@ addedGlobals = {}
 
 module.exports.addGlobal = addGlobal = (name, value) ->
   # Ex.: Aether.addGlobal('Vector', require('lib/world/vector')), before the Aether instance is constructed
+  return if addedGlobals[name]?
   value ?= global[name]
   builtinClones.push cloneBuiltin(value, name)
   builtinReal.push value

@@ -22,7 +22,7 @@ module.exports = class CoffeeScript extends Language
     @wrappedCodePrefix + indentedCode + @wrappedCodeSuffix
 
   # Using a third-party parser, produce an AST in the standardized Mozilla format.
-  parse: (code) ->
+  parse: (code, aether) ->
     csAST = csredux.parse code, {optimise: false, raw: true}
     jsAST = csredux.compile csAST, {bare: true}
     fixLocations jsAST

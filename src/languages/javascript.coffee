@@ -65,7 +65,7 @@ module.exports = class JavaScript extends Language
     lintProblems
 
   # Return a beautified representation of the code (cleaning up indentation, etc.)
-  beautify: (rawCode) ->
+  beautify: (rawCode, aether) ->
     try
       ast = esprima.parse rawCode, {range: true, tokens: true, comment: true, tolerant: true}
       ast = escodegen.attachComments ast, ast.comments, ast.tokens
@@ -88,7 +88,7 @@ module.exports = class JavaScript extends Language
 
   # Hacky McHack step for things we can't easily change via AST transforms (which preserve statement ranges).
   # TODO: Should probably refactor and get rid of this soon.
-  hackCommonMistakes: (code) ->
+  hackCommonMistakes: (code, aether) ->
     # Stop this.\n from failing on the next weird line
     code = code.replace /this\.\s*?\n/g, "this.IncompleteThisReference;"
     # If we wanted to do it just when it would hit the ending } but allow multiline this refs:
@@ -96,13 +96,13 @@ module.exports = class JavaScript extends Language
     code
 
   # Using a third-party parser, produce an AST in the standardized Mozilla format.
-  parse: (code) ->
+  parse: (code, aether) ->
     ast = esprima.parse code, {range: true, loc: true}
 
   # Optional: if parseDammit() is implemented, then if parse() throws an error, we'll try again using parseDammit().
   # Useful for parsing incomplete code as it is being written without giving up.
   # This should never throw an error and should always return some sort of AST, even if incomplete or empty.
-  parseDammit: (code) ->
+  parseDammit: (code, aether) ->
     ast = acorn_loose.parse_dammit code, {locations: true, tabSize: 4, ecmaVersion: 5}
 
     # Esprima uses "range", but acorn_loose only has "locations"

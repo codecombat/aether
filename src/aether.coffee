@@ -36,9 +36,8 @@ module.exports = class Aether
     defaultsCopy = _.extend({}, defaults)
     @options = _.merge defaultsCopy, options
 
-    @allGlobals = @options.globals.concat protectBuiltins.builtinNames
-
     @setLanguage @options.language, @options.languageVersion
+    @allGlobals = @options.globals.concat protectBuiltins.builtinNames  # After setLanguage, which can add globals.
 
   # Language can be changed after construction. (It will reset Aether's state.)
   setLanguage: (language, languageVersion) ->
@@ -50,6 +49,7 @@ module.exports = class Aether
     @originalOptions.languageVersion = @options.languageVersion = languageVersion
     @language = new languages[language] languageVersion
     @languageJS ?= if language is 'javascript' then @language else new languages.javascript 'ES5'
+    Aether.addGlobal name, global for name, global of @language.runtimeGlobals
     @reset()
     return language
 
@@ -77,7 +77,7 @@ module.exports = class Aether
     return true if not rawCode # blank code should compile, but bypass the other steps
     return false if @language.obviouslyCannotTranspile rawCode
     return true unless thorough
-    @lint(rawCode).errors.length is 0
+    @lint(rawCode, @).errors.length is 0
 
   # Determine whether two strings of code are significantly different.
   # If careAboutLineNumbers, we strip trailing comments and whitespace and compare line count.
@@ -98,7 +98,7 @@ module.exports = class Aether
 
   # Return a beautified representation of the code (cleaning up indentation, etc.)
   beautify: (rawCode) ->
-    @language.beautify rawCode
+    @language.beautify rawCode, @
 
   # Transpile it. Even if it can't transpile, it will give syntax errors and warnings and such. Clears any old state.
   transpile: (@raw) ->
@@ -158,7 +158,7 @@ module.exports = class Aether
 
   # The meat of the transpilation.
   purifyCode: (rawCode) ->
-    preprocessedCode = @language.hackCommonMistakes rawCode  # TODO: if we could somehow not change the source ranges here, that would be awesome.... but we'll probably just need to get rid of this step.
+    preprocessedCode = @language.hackCommonMistakes rawCode, @  # TODO: if we could somehow not change the source ranges here, that would be awesome.... but we'll probably just need to get rid of this step.
     wrappedCode = @language.wrap preprocessedCode, @
 
     originalNodeRanges = []
@@ -230,9 +230,9 @@ module.exports = class Aether
     purifiedCode
 
   transform: (code, transforms, parseFn, withAST=false) ->
-    transformedCode = traversal.morphAST code, (_.bind t, @ for t in transforms), parseFn
+    transformedCode = traversal.morphAST code, (_.bind t, @ for t in transforms), parseFn, @
     return transformedCode unless withAST
-    transformedAST = parseFn transformedCode
+    transformedAST = parseFn transformedCode, @
     [transformedCode, transformedAST]
 
   traceurify: (code) ->
