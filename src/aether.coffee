@@ -178,7 +178,13 @@ module.exports = class Aether
       @addProblem @createUserCodeProblem problemOptions
       return '' unless @language.parseDammit
       originalNodeRanges.splice()  # Reset any ranges we did find; we'll try again.
-      [transformedCode, transformedAST] = @transform wrappedCode, preNormalizationTransforms, @language.parseDammit, true
+      try
+        [transformedCode, transformedAST] = @transform wrappedCode, preNormalizationTransforms, @language.parseDammit, true
+      catch error
+        problemOptions.kind = error.index or error.id
+        problemOptions.reporter = 'acorn_loose' if @language.id is 'javascript'
+        @addProblem @createUserCodeProblem problemOptions
+        return ''
 
     # Now we've shed all the trappings of the original language behind; it's just JavaScript from here on.
 

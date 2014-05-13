@@ -21316,7 +21316,17 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
           return '';
         }
         originalNodeRanges.splice();
-        _ref8 = this.transform(wrappedCode, preNormalizationTransforms, this.language.parseDammit, true), transformedCode = _ref8[0], transformedAST = _ref8[1];
+        try {
+          _ref8 = this.transform(wrappedCode, preNormalizationTransforms, this.language.parseDammit, true), transformedCode = _ref8[0], transformedAST = _ref8[1];
+        } catch (_error) {
+          error = _error;
+          problemOptions.kind = error.index || error.id;
+          if (this.language.id === 'javascript') {
+            problemOptions.reporter = 'acorn_loose';
+          }
+          this.addProblem(this.createUserCodeProblem(problemOptions));
+          return '';
+        }
       }
       normalizedAST = normalizer.normalize(transformedAST, {});
       normalizedNodeIndex = [];
@@ -22539,7 +22549,6 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
     p.hint = config.hint || options.hint || '';
     p.range = options.range;
     p.userInfo = (_ref3 = options.userInfo) != null ? _ref3 : {};
-    console.error("what, error?", p, options);
     return p;
   };
 
@@ -22581,6 +22590,9 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
         break;
       case 'esprima':
         options.range = [ranges.rowColToPos(error.lineNumber - 1 - lineOffset, error.column - 1, code, codePrefix), ranges.rowColToPos(error.lineNumber - 1 - lineOffset, error.column, code, codePrefix)];
+        break;
+      case 'acorn_loose':
+        null;
         break;
       case 'csredux':
         options.range = [ranges.rowColToPos(error.lineNumber - 1 - lineOffset, error.column - 1, code, codePrefix), ranges.rowColToPos(error.lineNumber - 1 - lineOffset, error.column, code, codePrefix)];

@@ -60,6 +60,8 @@ extractTranspileErrorDetails = (options) ->
       # TODO: no way this works; what am I doing with code prefixes?
       options.range = [ranges.rowColToPos(error.lineNumber - 1 - lineOffset, error.column - 1, code, codePrefix),
                        ranges.rowColToPos(error.lineNumber - 1 - lineOffset, error.column, code, codePrefix)]
+    when 'acorn_loose'
+      null
     when 'csredux'
       options.range = [ranges.rowColToPos(error.lineNumber - 1 - lineOffset, error.column - 1, code, codePrefix),
                        ranges.rowColToPos(error.lineNumber - 1 - lineOffset, error.column, code, codePrefix)]
