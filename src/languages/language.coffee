@@ -3,6 +3,7 @@ _ = window?._ ? self?._ ? global?._ ? require 'lodash'  # rely on lodash existin
 module.exports = class Language
   name: 'Abstract Language'  # Display name of the programming language
   id: 'abstract-language'  # Snake-case id of the programming language
+  parserID: 'abstract-parser'
   runtimeGlobals: {}  # Like {__lua: require('lua2js').runtime}
 
   constructor: (@version) ->

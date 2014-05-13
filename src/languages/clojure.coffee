@@ -9,6 +9,7 @@ esprima = require 'esprima'
 module.exports = class Clojure extends Language
   name: 'Clojure'
   id: 'clojure'
+  parserID: 'closer'
   runtimeGlobals:
     core: core
     assertions: assertions

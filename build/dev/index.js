@@ -201,7 +201,9 @@
     return $("#aether-problems").empty();
   };
 
-  lastJSInputAether = new Aether();
+  lastJSInputAether = new Aether({
+    language: 'python'
+  });
 
   lastAetherInput = "";
 

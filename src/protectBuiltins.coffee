@@ -81,7 +81,7 @@ module.exports.raiseDisabledFunctionConstructor = raiseDisabledFunctionConstruct
 module.exports.createSandboxedFunction = createSandboxedFunction = (functionName, code, aether) ->
   dummyContext = {}
   globalRef = global ? window
-  for name in builtinNames.concat aether.options.globals
+  for name in builtinNames.concat aether.options.globals, Object.keys aether.language.runtimeGlobals
     dummyContext[name] = addedGlobals[name] ? globalRef[name]
   dummyFunction = raiseDisabledFunctionConstructor
   copyBuiltin Function, dummyFunction

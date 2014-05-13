@@ -65,6 +65,14 @@ extractTranspileErrorDetails = (options) ->
                        ranges.rowColToPos(error.lineNumber - 1 - lineOffset, error.column, code, codePrefix)]
     when 'aether'
       null
+    when 'closer'
+      null
+    when 'lua2js'
+      null
+    when 'filbert'
+      null
+    when 'iota'
+      null
     else
       console.warn "Unhandled UserCodeProblem reporter", options.reporter
 

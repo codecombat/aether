@@ -18,7 +18,7 @@ module.exports.walkAST = walkAST = (node, fn) ->
 
 module.exports.morphAST = morphAST = (source, transforms, parseFn, aether) ->
   chunks = source.split ''
-  ast = parseFn source
+  ast = parseFn source, aether
 
   morphWalk = (node, parent) ->
     insertHelpers node, parent, chunks

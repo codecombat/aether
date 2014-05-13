@@ -144,7 +144,7 @@ clearOutput = ->
   $("#aether-flows").empty()
   $("#aether-problems").empty()
 
-lastJSInputAether = new Aether()
+lastJSInputAether = new Aether language: 'python'
 lastAetherInput = ""
 watchForCodeChanges = ->
   aetherInput = editors[1].getValue()

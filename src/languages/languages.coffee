@@ -3,3 +3,5 @@ module.exports =
   coffeescript: require './coffeescript'
   clojure: require './clojure'
   lua: require './lua'
+  python: require './python'
+  io: require './io'

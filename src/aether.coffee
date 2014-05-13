@@ -37,7 +37,7 @@ module.exports = class Aether
     @options = _.merge defaultsCopy, options
 
     @setLanguage @options.language, @options.languageVersion
-    @allGlobals = @options.globals.concat protectBuiltins.builtinNames  # After setLanguage, which can add globals.
+    @allGlobals = @options.globals.concat protectBuiltins.builtinNames, Object.keys @language.runtimeGlobals  # After setLanguage, which can add globals.
 
   # Language can be changed after construction. (It will reset Aether's state.)
   setLanguage: (language, languageVersion) ->
@@ -174,8 +174,7 @@ module.exports = class Aether
       [transformedCode, transformedAST] = @transform wrappedCode, preNormalizationTransforms, @language.parse, true
     catch error
       # TODO: test if using @language.wrappedCodePrefix is better here than ''
-      reporter = {coffeescript: 'csredux', javascript: 'esprima'}[@language.id]  # TODO
-      problemOptions = error: error, code: wrappedCode, codePrefix: '', reporter: reporter, kind: error.index or error.id
+      problemOptions = error: error, code: wrappedCode, codePrefix: '', reporter: @language.parserID, kind: error.index or error.id, type: 'transpile'
       @addProblem @createUserCodeProblem problemOptions
       return '' unless @language.parseDammit
       originalNodeRanges.splice()  # Reset any ranges we did find; we'll try again.
@@ -210,7 +209,7 @@ module.exports = class Aether
     try
       instrumentedCode = @transform normalizedCode, postNormalizationTransforms, @languageJS.parse
     catch error
-      problemOptions = error: error, code: normalizedCode, codePrefix: '', reporter: 'esprima', kind: error.id
+      problemOptions = error: error, code: normalizedCode, codePrefix: '', reporter: @languageJS.parserID, kind: error.id, type: 'transpile'
       @addProblem @createUserCodeProblem problemOptions
       instrumentedCode = @transform normalizedCode, postNormalizationTransforms, @languageJS.parseDammit
     if @options.yieldConditionally or @options.yieldAutomatically

@@ -10,6 +10,7 @@ traversal = require '../traversal'
 module.exports = class JavaScript extends Language
   name: 'JavaScript'
   id: 'javascript'
+  parserID: 'esprima'
 
   # Return true if we can very quickly identify a syntax error.
   obviouslyCannotTranspile: (rawCode) ->
@@ -35,6 +36,9 @@ module.exports = class JavaScript extends Language
     options = {locations: false, tabSize: 4, ecmaVersion: 5}
     aAST = acorn_loose.parse_dammit a, options
     bAST = acorn_loose.parse_dammit b, options
+    unless aAST and bAST
+      console.log "Couldn't even loosely parse; are you sure #{a} and #{b} are #{@name}?"
+      return true
     # acorn_loose annoyingly puts start/end in every node; we'll remove before comparing
     removeLocations = (node) -> node.start = node.end = null
     traversal.walkAST aAST, removeLocations
