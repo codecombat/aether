@@ -58,7 +58,13 @@ module.exports.makeCheckThisKeywords = makeCheckThisKeywords = (globals, varName
         # TODO: we need to know whether `this` has this method before saying this...
         message = "Missing `this.` keyword; should be `this.#{v}`."
         hint = "There is no function `#{v}`, but `this` has a method `#{v}`."
-        range = [node.originalRange.start, node.originalRange.end]
+        range = [(
+          row: 0
+          col: 0
+        ), (
+          row: 0
+          col: 0
+        )]
         problem = @createUserCodeProblem type: 'transpile', reporter: 'aether', kind: 'MissingThis', message: message, hint: hint, range: range  # TODO: code/codePrefix?
         @addProblem problem
 
