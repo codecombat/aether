@@ -91,9 +91,6 @@ describe "ES6 Test Suite", ->
 
   describe "Yielding within a while-loop", ->
     aether = new Aether yieldConditionally: true
-    return  # This test doesn't work because Traceur can't handle it
-    # Error: These should be removed before the transform step
-    # at $BreakState.transform (eval at <anonymous> (/Users/winter/Desktop/aether/node_modules/traceur/src/node/traceur.js:24:17), <anonymous>:14360:15)
     it "should handle breaking out of a while loop with yields inside", ->
       dude =
         slay: -> @enemy = "slain!"
@@ -110,6 +107,31 @@ describe "ES6 Test Suite", ->
       aether.transpile code
       f = aether.createFunction()
       gen = f.apply dude
+      expect(gen.next().done).toEqual false
+      expect(gen.next().done).toEqual false
+      expect(gen.next().done).toEqual true
+
+    it "should handle breaking and continuing in a while loop with yields inside", ->
+      dude =
+        slay: -> @enemy = "slain!"
+        hesitate: -> @_aetherShouldYield = true
+      code = """
+        var i = 0;
+        while (true) {
+            if (i < 3) {
+                this.slay()
+                this.hesitate();
+                i++;
+                continue;
+            } else
+                return null;
+            break;
+        }
+      """
+      aether.transpile code
+      f = aether.createFunction()
+      gen = f.apply dude
+      expect(gen.next().done).toEqual false
       expect(gen.next().done).toEqual false
       expect(gen.next().done).toEqual false
       expect(gen.next().done).toEqual true

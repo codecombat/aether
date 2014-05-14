@@ -192,7 +192,8 @@ module.exports = class Aether
     try
       normalizedAST = normalizer.normalize transformedAST, {}
     catch error
-      problemOptions = error: error, message: 'Syntax error.', kind: 'NormalizationError', code: '', codePrefix: '', reporter: 'aether', type: 'transpile'
+      console.log "JS_WALA couldn't handle", normalizedAST, "\ngave error:", error.toString()
+      problemOptions = error: error, message: 'Syntax error.', kind: 'NormalizationError', code: '', codePrefix: '', reporter: 'aether', type: 'transpile', hint: 'Possibly a bug with advanced JavaScript feature parsing.'
       @addProblem @createUserCodeProblem problemOptions
       return ''
     normalizedNodeIndex = []
@@ -224,7 +225,13 @@ module.exports = class Aether
       @addProblem @createUserCodeProblem problemOptions
       instrumentedCode = @transform normalizedCode, postNormalizationTransforms, @languageJS.parseDammit
     if @options.yieldConditionally or @options.yieldAutomatically
-      purifiedCode = @traceurify instrumentedCode
+      try
+        purifiedCode = @traceurify instrumentedCode
+      catch error
+        console.log "Traceur couldn't handle", instrumentedCode, "\ngave error:", error.toString()
+        problemOptions = error: error, code: instrumentedCode, codePrefix: '', reporter: 'aether', kind: 'TraceurError', type: 'transpile', message: 'Syntax error.', hint: 'Possibly a bug with break/continue parsing.'
+        @addProblem @createUserCodeProblem problemOptions
+        return ''
     else
       purifiedCode = instrumentedCode
     interceptThis = 'var __interceptThis=(function(){var G=this;return function($this,sandbox){if($this==G){return sandbox;}return $this;};})();\n'
@@ -246,11 +253,14 @@ module.exports = class Aether
     [transformedCode, transformedAST]
 
   traceurify: (code) ->
-    url = "randotron_" + Math.random()
+    # Latest Traceur version that works with this hacky API is 0.0.25.
+    # Versions 0.0.27 - 0.0.34 complained about System.baseURL being an empty string despite my best attempts to provide it.
+    # Versions 0.0.35 - 0.0.41 complained that the EvalCodeUnit's metadata was undefined and so it couldn't find "tree".
+    url = "http://codecombat.com/randotron_" + Math.random()
     reporter = new traceur.util.ErrorReporter()
     loaderHooks = new traceur.runtime.InterceptOutputLoaderHooks reporter, url
-    loader = new traceur.System.internalLoader_.constructor loaderHooks  # Some day traceur's API will stabilize.
-    loader.script code, url
+    loader = new traceur.System.internalLoader_.constructor loaderHooks, url  # Some day traceur's API will stabilize.
+    loader.script code, url, url, url
     # Could also do the following, but that wraps in a module
     #loader = new traceur.runtime.Loader loaderHooks
     #loader.module code, url
