@@ -21328,7 +21328,22 @@ $traceurRuntime.ModuleStore.set('traceur@', traceur);
           return '';
         }
       }
-      normalizedAST = normalizer.normalize(transformedAST, {});
+      try {
+        normalizedAST = normalizer.normalize(transformedAST, {});
+      } catch (_error) {
+        error = _error;
+        problemOptions = {
+          error: error,
+          message: 'Syntax error.',
+          kind: 'NormalizationError',
+          code: '',
+          codePrefix: '',
+          reporter: 'aether',
+          type: 'transpile'
+        };
+        this.addProblem(this.createUserCodeProblem(problemOptions));
+        return '';
+      }
       normalizedNodeIndex = [];
       traversal.walkAST(normalizedAST, function(node) {
         var pos, _ref9;

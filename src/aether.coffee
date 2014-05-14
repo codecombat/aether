@@ -189,7 +189,12 @@ module.exports = class Aether
     # Now we've shed all the trappings of the original language behind; it's just JavaScript from here on.
 
     # TODO: need to insert 'use strict' after normalization, since otherwise you get tmp2 = 'use strict'
-    normalizedAST = normalizer.normalize transformedAST, {}
+    try
+      normalizedAST = normalizer.normalize transformedAST, {}
+    catch error
+      problemOptions = error: error, message: 'Syntax error.', kind: 'NormalizationError', code: '', codePrefix: '', reporter: 'aether', type: 'transpile'
+      @addProblem @createUserCodeProblem problemOptions
+      return ''
     normalizedNodeIndex = []
     traversal.walkAST normalizedAST, (node) ->
       return unless pos = node?.attr?.pos
