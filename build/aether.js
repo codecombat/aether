@@ -21611,7 +21611,10 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
 
     Clojure.prototype.parse = function(code, aether) {
       var ast;
-      ast = closer.parse(code);
+      ast = closer.parse(code, {
+        loc: true,
+        range: true
+      });
       ast.body[0].declarations[0].init.body.body.splice(0, 1);
       estraverse.replace(ast, {
         leave: function(node) {
@@ -22305,6 +22308,22 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
       ast = parser.parse(code, {
         locations: true,
         ranges: true
+      });
+      ast.body[0].body.body.unshift({
+        "type": "VariableDeclaration",
+        "declarations": [
+          {
+            "type": "VariableDeclarator",
+            "id": {
+              "type": "Identifier",
+              "name": "self"
+            },
+            "init": {
+              "type": "ThisExpression"
+            }
+          }
+        ],
+        "kind": "var"
       });
       return ast;
     };
@@ -28467,8 +28486,8 @@ exports._extend = function(origin, add) {
 function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
-}).call(this,require("/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":31,"/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":35,"inherits":34}],33:[function(require,module,exports){
+}).call(this,require("/mnt/Windows/Users/chijwani/Downloads/Linux/codecombat-clojure/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./support/isBuffer":31,"/mnt/Windows/Users/chijwani/Downloads/Linux/codecombat-clojure/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":35,"inherits":34}],33:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -28616,10 +28635,7 @@ EventEmitter.prototype.addListener = function(type, listener) {
                     'leak detected. %d listeners added. ' +
                     'Use emitter.setMaxListeners() to increase limit.',
                     this._events[type].length);
-      if (typeof console.trace === 'function') {
-        // not supported in IE 10
-        console.trace();
-      }
+      console.trace();
     }
   }
 
@@ -29078,12 +29094,12 @@ var substr = 'ab'.substr(-1) === 'b'
         return str.substr(start, len);
     }
 ;
-}).call(this,require("/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"))
-},{"/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":35}],37:[function(require,module,exports){
+}).call(this,require("/mnt/Windows/Users/chijwani/Downloads/Linux/codecombat-clojure/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"))
+},{"/mnt/Windows/Users/chijwani/Downloads/Linux/codecombat-clojure/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":35}],37:[function(require,module,exports){
 module.exports=require(31)
 },{}],38:[function(require,module,exports){
 module.exports=require(32)
-},{"./support/isBuffer":37,"/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":35,"inherits":34}],39:[function(require,module,exports){
+},{"./support/isBuffer":37,"/mnt/Windows/Users/chijwani/Downloads/Linux/codecombat-clojure/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":35,"inherits":34}],39:[function(require,module,exports){
 (function (global){(function() {
   var ArgTypeError, ArityError, assertions, firstFailure, mori, _, _ref, _ref1, _ref2, _ref3, _ref4, _ref5,
     __hasProp = {}.hasOwnProperty,
@@ -30627,11 +30643,11 @@ case 42:
     
 break;
 case 43:
-        this.$ = yy.Node('IfStatement', $$[$0-2], $$[$0-1], getValueIfUndefined($$[$0], null));
+        this.$ = yy.Node('IfStatement', $$[$0-2], $$[$0-1], getValueIfUndefined($$[$0], null), yy.loc(_$[$0-3]));
     
 break;
 case 44:
-        this.$ = yy.Node('IfStatement', $$[$0-1], $$[$0], null);
+        this.$ = yy.Node('IfStatement', $$[$0-1], $$[$0], null, yy.loc(_$[$0-2]));
     
 break;
 case 45:
@@ -30765,7 +30781,8 @@ case 56:
                         yy.Node('MemberExpression', callee,
                             yy.Node('Identifier', 'length', yy.loc(_$[$0-3])),
                             false, yy.loc(_$[$0-3])),
-                        yy.Node('Literal', 0, yy.loc(_$[$0-3])), yy.loc(_$[$0-3]))),
+                        yy.Node('Literal', 0, yy.loc(_$[$0-3])), yy.loc(_$[$0-3])),
+                    yy.loc(_$[$0-3])),
                 fnCall, callee, yy.loc(_$[$0-3]));
         }
     
@@ -31158,7 +31175,7 @@ function wrapInIIFE(body, yyloc, yy) {
                 yy.Node('UnaryExpression', 'typeof', thisExp, true, yyloc),
                 yy.Node('Literal', 'undefined', yyloc), yyloc),
             thisExp,
-            yy.Node('Literal', null, yyloc))],
+            yy.Node('Literal', null, yyloc), yyloc)],
         yyloc);
 }
 
@@ -31785,8 +31802,8 @@ exports.main = function commonjsMain(args) {
 if (typeof module !== 'undefined' && require.main === module) {
   exports.main(process.argv.slice(1));
 }
-}}).call(this,require("/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"))
-},{"/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":35,"estraverse":44,"fs":29,"path":36}],44:[function(require,module,exports){
+}}).call(this,require("/mnt/Windows/Users/chijwani/Downloads/Linux/codecombat-clojure/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"))
+},{"/mnt/Windows/Users/chijwani/Downloads/Linux/codecombat-clojure/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":35,"estraverse":44,"fs":29,"path":36}],44:[function(require,module,exports){
 /*
   Copyright (C) 2012-2013 Yusuke Suzuki <utatane.tea@gmail.com>
   Copyright (C) 2012 Ariya Hidayat <ariya.hidayat@gmail.com>
@@ -67336,8 +67353,8 @@ module.exports = {
   runMain: runMain,
   runModule: runModule
 };
-}).call(this,require("/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"))
-},{"./module":225,"/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":35,"module":29,"path":36,"source-map":237}],232:[function(require,module,exports){
+}).call(this,require("/mnt/Windows/Users/chijwani/Downloads/Linux/codecombat-clojure/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"))
+},{"./module":225,"/mnt/Windows/Users/chijwani/Downloads/Linux/codecombat-clojure/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":35,"module":29,"path":36,"source-map":237}],232:[function(require,module,exports){
 (function() {
   var StringScanner;
   StringScanner = (function() {
@@ -70999,11 +71016,7 @@ module.exports={
     "url": "https://github.com/Constellation/escodegen/issues"
   },
   "_id": "escodegen@0.0.28",
-  "dist": {
-    "shasum": "0e4ff1715f328775d6cab51ac44a406cd7abffd3"
-  },
-  "_from": "escodegen@0.0.28",
-  "_resolved": "https://registry.npmjs.org/escodegen/-/escodegen-0.0.28.tgz"
+  "_from": "escodegen@0.0.28"
 }
 
 },{}],237:[function(require,module,exports){
@@ -72602,8 +72615,8 @@ function amdefine(module, requireFn) {
 }
 
 module.exports = amdefine;
-}).call(this,require("/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),"/../node_modules/coffee-script-redux/node_modules/source-map/node_modules/amdefine/amdefine.js")
-},{"/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":35,"path":36}],247:[function(require,module,exports){
+}).call(this,require("/mnt/Windows/Users/chijwani/Downloads/Linux/codecombat-clojure/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),"/../node_modules/coffee-script-redux/node_modules/source-map/node_modules/amdefine/amdefine.js")
+},{"/mnt/Windows/Users/chijwani/Downloads/Linux/codecombat-clojure/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":35,"path":36}],247:[function(require,module,exports){
 module.exports={
   "name": "coffee-script-redux",
   "author": {
@@ -72667,7 +72680,11 @@ module.exports={
   "readme": "CoffeeScript II: The Wrath of Khan\n==================================\n\n```\n          {\n       }   }   {\n      {   {  }  }\n       }   }{  {\n      {  }{  }  }             _____       __  __\n     ( }{ }{  { )            / ____|     / _|/ _|\n   .- { { }  { }} -.        | |     ___ | |_| |_ ___  ___\n  (  ( } { } { } }  )       | |    / _ \\|  _|  _/ _ \\/ _ \\\n  |`-..________ ..-'|       | |___| (_) | | | ||  __/  __/\n  |                 |        \\_____\\___/|_| |_| \\___|\\___|       .-''-.\n  |                 ;--.                                       .' .-.  )\n  |                (__  \\     _____           _       _       / .'  / /\n  |                 | )  )   / ____|         (_)     | |     (_/   / /\n  |                 |/  /   | (___   ___ _ __ _ _ __ | |_         / /\n  |                 (  /     \\___ \\ / __| '__| | '_ \\| __|       / /\n  |                 |/       ____) | (__| |  | | |_) | |_       . '\n  |                 |       |_____/ \\___|_|  |_| .__/ \\__|     / /    _.-')\n   `-.._________..-'                           | |           .' '  _.'.-''\n                                               |_|          /  /.-'_.'\n                                                           /    _.'\n                                                          ( _.-'\n```\n\n### Status\n\nComplete enough to use for nearly every project. See the [roadmap to 2.0](https://github.com/michaelficarra/CoffeeScriptRedux/wiki/Roadmap).\n\n### Getting Started\n\n    npm install -g coffee-script-redux\n    coffee --help\n    coffee --js <input.coffee >output.js\n\nBefore transitioning from Jeremy's compiler, see the\n[intentional deviations from jashkenas/coffee-script](https://github.com/michaelficarra/CoffeeScriptRedux/wiki/Intentional-Deviations-From-jashkenas-coffee-script)\nwiki page.\n\n### Development\n\n    git clone git://github.com/michaelficarra/CoffeeScriptRedux.git && cd CoffeeScriptRedux && npm install\n    make clean && git checkout -- lib && make -j build && make test\n\n### Notable Contributors\n\nI'd like to thank the following financial contributors for their large\ndonations to [the Kickstarter project](http://www.kickstarter.com/projects/michaelficarra/make-a-better-coffeescript-compiler)\nthat funded the initial work on this compiler.\nTogether, you donated over $10,000. Without you, I wouldn't have been able to do this.\n\n* [Groupon](http://groupon.com/), who is generously allowing me to work in their offices\n* [Trevor Burnham](http://trevorburnham.com)\n* [Shopify](http://www.shopify.com)\n* [Abakas](http://abakas.com)\n* [37signals](http://37signals.com)\n* [Brightcove](http://www.brightcove.com)\n* [Gaslight](http://gaslight.co)\n* [Pantheon](https://www.getpantheon.com)\n* Benbria\n* Sam Stephenson\n* Bevan Hunt\n* Meryn Stol\n* Rob Tsuk\n* Dion Almaer\n* Andrew Davey\n* Thomas Burleson\n* Michael Kedzierski\n* Jeremy Kemper\n* Kyle Cordes\n* Jason R. Lauman\n* Martin Drenovac (Envizion Systems - Aust)\n* Julian Bilcke\n* Michael Edmondson\n\nAnd of course, thank you [Jeremy](https://github.com/jashkenas) (and all the other\n[contributors](https://github.com/jashkenas/coffee-script/graphs/contributors))\nfor making [the original CoffeeScript compiler](https://github.com/jashkenas/coffee-script).\n",
   "readmeFilename": "README.md",
   "_id": "coffee-script-redux@2.0.0-beta8",
-  "_from": "coffee-script-redux@~2.0.0-beta8"
+  "dist": {
+    "shasum": "addee710279e5e60ce7766468276adf5ddb7613c"
+  },
+  "_from": "coffee-script-redux@~2.0.0-beta8",
+  "_resolved": "https://registry.npmjs.org/coffee-script-redux/-/coffee-script-redux-2.0.0-beta8.tgz"
 }
 
 },{}],248:[function(require,module,exports){
@@ -75191,7 +75208,11 @@ module.exports={
     "url": "https://github.com/Constellation/escodegen/issues"
   },
   "_id": "escodegen@1.3.2",
-  "_from": "escodegen@~1.3.0"
+  "dist": {
+    "shasum": "80fa8b2bb7c7e41e9ae5bdcd6e5391f8551f0d55"
+  },
+  "_from": "escodegen@1.3.2",
+  "_resolved": "https://registry.npmjs.org/escodegen/-/escodegen-1.3.2.tgz"
 }
 
 },{}],253:[function(require,module,exports){
@@ -151118,8 +151139,8 @@ function amdefine(module, requireFn) {
 }
 
 module.exports = amdefine;
-}).call(this,require("/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),"/../node_modules/source-map/node_modules/amdefine/amdefine.js")
-},{"/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":35,"path":36}],281:[function(require,module,exports){
+}).call(this,require("/mnt/Windows/Users/chijwani/Downloads/Linux/codecombat-clojure/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),"/../node_modules/source-map/node_modules/amdefine/amdefine.js")
+},{"/mnt/Windows/Users/chijwani/Downloads/Linux/codecombat-clojure/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":35,"path":36}],281:[function(require,module,exports){
 /*
 Author: Geraint Luff and others
 Year: 2013
