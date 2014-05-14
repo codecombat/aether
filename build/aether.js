@@ -22811,7 +22811,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
 
 },{"./problems":13}],16:[function(require,module,exports){
 (function() {
-  var buildRowOffsets, lastRowOffsets, lastRowOffsetsPrefix, lastRowOffsetsSource, offsetToPos, offsetToRow, offsetsToRange, rowColToPos, rowColsToRange, stringifyPos, stringifyRange;
+  var buildRowOffsets, lastRowOffsets, lastRowOffsetsPrefix, lastRowOffsetsSource, locToPos, locsToRange, offsetToPos, offsetToRow, offsetsToRange, rowColToPos, rowColsToRange, stringifyPos, stringifyRange;
 
   module.exports.offsetToPos = offsetToPos = function(offset, source, prefix) {
     var col, row, rowOffsets;
@@ -22860,6 +22860,23 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
     return {
       start: rowColToPos(start.row, start.col, source, prefix),
       end: rowColToPos(end.row, end.col, source, prefix)
+    };
+  };
+
+  module.exports.locToPos = locToPos = function(loc, source, prefix) {
+    if (prefix == null) {
+      prefix = '';
+    }
+    return rowColToPos(loc.line, loc.column, source, prefix);
+  };
+
+  module.exports.locsToRange = locsToRange = function(start, end, source, prefix) {
+    if (prefix == null) {
+      prefix = '';
+    }
+    return {
+      start: locToPos(start, source, prefix),
+      end: locToPos(end, source, prefix)
     };
   };
 
@@ -23021,15 +23038,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
           }
           message = "Missing `this.` keyword; should be `this." + v + "`.";
           hint = "There is no function `" + v + "`, but `this` has a method `" + v + "`.";
-          range = [
-            {
-              row: 0,
-              col: 0
-            }, {
-              row: 0,
-              col: 0
-            }
-          ];
+          range = [node.originalRange.start, node.originalRange.end];
           problem = this.createUserCodeProblem({
             type: 'transpile',
             reporter: 'aether',
@@ -28458,8 +28467,8 @@ exports._extend = function(origin, add) {
 function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
-}).call(this,require("/mnt/Windows/Users/chijwani/Downloads/Linux/codecombat-clojure/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":31,"/mnt/Windows/Users/chijwani/Downloads/Linux/codecombat-clojure/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":35,"inherits":34}],33:[function(require,module,exports){
+}).call(this,require("/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./support/isBuffer":31,"/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":35,"inherits":34}],33:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -28607,7 +28616,10 @@ EventEmitter.prototype.addListener = function(type, listener) {
                     'leak detected. %d listeners added. ' +
                     'Use emitter.setMaxListeners() to increase limit.',
                     this._events[type].length);
-      console.trace();
+      if (typeof console.trace === 'function') {
+        // not supported in IE 10
+        console.trace();
+      }
     }
   }
 
@@ -29066,12 +29078,12 @@ var substr = 'ab'.substr(-1) === 'b'
         return str.substr(start, len);
     }
 ;
-}).call(this,require("/mnt/Windows/Users/chijwani/Downloads/Linux/codecombat-clojure/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"))
-},{"/mnt/Windows/Users/chijwani/Downloads/Linux/codecombat-clojure/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":35}],37:[function(require,module,exports){
+}).call(this,require("/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"))
+},{"/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":35}],37:[function(require,module,exports){
 module.exports=require(31)
 },{}],38:[function(require,module,exports){
 module.exports=require(32)
-},{"./support/isBuffer":37,"/mnt/Windows/Users/chijwani/Downloads/Linux/codecombat-clojure/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":35,"inherits":34}],39:[function(require,module,exports){
+},{"./support/isBuffer":37,"/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":35,"inherits":34}],39:[function(require,module,exports){
 (function (global){(function() {
   var ArgTypeError, ArityError, assertions, firstFailure, mori, _, _ref, _ref1, _ref2, _ref3, _ref4, _ref5,
     __hasProp = {}.hasOwnProperty,
@@ -30030,18 +30042,18 @@ module.exports=require(32)
   parser.yy.locComb = function(start, end) {
     start.last_line = end.last_line;
     start.last_column = end.last_column;
+    start.range = [start.range[0], end.range[1]];
     return start;
   };
 
   parser.yy.loc = function(loc) {
-    var newLoc;
     if (!this.locations) {
       return null;
     }
     if ('length' in loc) {
       loc = this.locComb(loc[0], loc[1]);
     }
-    newLoc = {
+    return {
       start: {
         line: this.startLine + loc.first_line - 1,
         column: loc.first_column
@@ -30049,10 +30061,12 @@ module.exports=require(32)
       end: {
         line: this.startLine + loc.last_line - 1,
         column: loc.last_column
-      }
+      },
+      range: loc.range
     };
-    return newLoc;
   };
+
+  parser.lexer.options.ranges = true;
 
   oldParse = parser.parse;
 
@@ -30064,9 +30078,12 @@ module.exports=require(32)
 
   Parser = (function() {
     function Parser(options) {
-      nodes.locations = this.yy.locations = options.loc !== false;
+      this.yy.locs = options.loc !== false;
+      this.yy.ranges = options.range === true;
+      this.yy.locations = this.yy.locs || this.yy.ranges;
       this.yy.source = options.source || null;
       this.yy.startLine = options.line || 1;
+      nodes.forceNoLoc = options.forceNoLoc;
     }
 
     return Parser;
@@ -30109,7 +30126,7 @@ module.exports=require(32)
 
 },{"./nodes":42,"./parser":43}],42:[function(require,module,exports){
 (function() {
-  exports.locations = true;
+  exports.forceNoLoc = false;
 
   exports.defineNodes = function(builder) {
     var convertExprToPattern, def, defaultIni, funIni;
@@ -30123,7 +30140,7 @@ module.exports=require(32)
         obj = {};
         obj.type = name;
         ini.call(obj, a, b, c, d, e, f, g, h);
-        if (!exports.locations) {
+        if (exports.forceNoLoc === true) {
           delete obj.loc;
         }
         return obj;
@@ -30439,7 +30456,7 @@ switch (yystate) {
 case 1:
         this.$ = ($$[$0] === 'this')
             ? yy.Node('ThisExpression', yy.loc(_$[$0]))
-            : yy.Node('Identifier', parseIdentifier($$[$0]), yy.loc(_$[$0]));
+            : yy.Node('Identifier', parseIdentifierName($$[$0]), yy.loc(_$[$0]));
     
 break;
 case 2: this.$ = []; 
@@ -30463,25 +30480,25 @@ case 5:
         this.$.anonArgNum = anonArgNum;
     
 break;
-case 6: this.$ = parseNumLiteral('Integer', $$[$0], _$[$0], yy, yytext); 
+case 6: this.$ = parseNumLiteral('Integer', $$[$0], yy.loc(_$[$0]), yy, yytext); 
 break;
-case 7: this.$ = parseNumLiteral('Float', $$[$0], _$[$0], yy, yytext); 
+case 7: this.$ = parseNumLiteral('Float', $$[$0], yy.loc(_$[$0]), yy, yytext); 
 break;
-case 8: this.$ = parseLiteral('String', parseString($$[$0]), _$[$0], yy.raw[yy.raw.length-1], yy); 
+case 8: this.$ = parseLiteral('String', parseString($$[$0]), yy.loc(_$[$0]), yy.raw[yy.raw.length-1], yy); 
 break;
-case 9: this.$ = parseLiteral('Boolean', true, _$[$0], yytext, yy); 
+case 9: this.$ = parseLiteral('Boolean', true, yy.loc(_$[$0]), yytext, yy); 
 break;
-case 10: this.$ = parseLiteral('Boolean', false, _$[$0], yytext, yy); 
+case 10: this.$ = parseLiteral('Boolean', false, yy.loc(_$[$0]), yytext, yy); 
 break;
-case 11: this.$ = parseLiteral('Nil', null, _$[$0], yytext, yy); 
+case 11: this.$ = parseLiteral('Nil', null, yy.loc(_$[$0]), yytext, yy); 
 break;
-case 15: this.$ = parseCollectionLiteral('vector', getValueIfUndefined($$[$0-1], []), this._$, yy); 
+case 15: this.$ = parseCollectionLiteral('vector', getValueIfUndefined($$[$0-1], []), yy.loc(this._$), yy); 
 break;
-case 16: this.$ = parseCollectionLiteral('list', getValueIfUndefined($$[$0-1], []), this._$, yy); 
+case 16: this.$ = parseCollectionLiteral('list', getValueIfUndefined($$[$0-1], []), yy.loc(this._$), yy); 
 break;
-case 17: this.$ = parseCollectionLiteral('hash-map', getValueIfUndefined($$[$0-1], []), this._$, yy); 
+case 17: this.$ = parseCollectionLiteral('hash-map', getValueIfUndefined($$[$0-1], []), yy.loc(this._$), yy); 
 break;
-case 18: this.$ = parseCollectionLiteral('hash-set', getValueIfUndefined($$[$0-1], []), this._$, yy); 
+case 18: this.$ = parseCollectionLiteral('hash-set', getValueIfUndefined($$[$0-1], []), yy.loc(this._$), yy); 
 break;
 case 22: this.$ = $$[$0-1]; 
 break;
@@ -30562,7 +30579,7 @@ case 39:
                     $$[$0], blockLoc)], blockLoc);
         }
 
-        var arityCheck = createArityCheckStmt(ids.length, $$[$0-2].rest, _$[$0-2], yy);
+        var arityCheck = createArityCheckStmt(ids.length, $$[$0-2].rest, yy.loc(_$[$0-2]), yy);
         $$[$0].body.unshift(arityCheck);
 
         this.$ = yy.Node('FunctionExpression', null, ids, null,
@@ -30571,7 +30588,7 @@ case 39:
 break;
 case 40: this.$ = $$[$0]; 
 break;
-case 41: this.$ = parseVarDecl($$[$0-1], $$[$0], _$[$0-2], yy); 
+case 41: this.$ = parseVarDecl($$[$0-1], $$[$0], yy.loc(_$[$0-2]), yy); 
 break;
 case 42:
         var body = $$[$0-1], bodyLoc = _$[$0-1];
@@ -30598,11 +30615,11 @@ case 42:
         createReturnStatementIfPossible(body, yy);
         if (hasRestArg) {
             var restId = yy.Node('Identifier', '__$rest', yy.loc(bodyLoc));
-            var restDecl = createRestArgsDecl(restId, null, maxArgNum, bodyLoc, yy);
+            var restDecl = createRestArgsDecl(restId, null, maxArgNum, yy.loc(bodyLoc), yy);
             body.body.unshift(restDecl);
         }
 
-        var arityCheck = createArityCheckStmt(maxArgNum, hasRestArg, _$[$0-3], yy);
+        var arityCheck = createArityCheckStmt(maxArgNum, hasRestArg, yy.loc(_$[$0-3]), yy);
         body.body.unshift(arityCheck);
 
         this.$ = yy.Node('FunctionExpression', null, args, null, body,
@@ -30619,15 +30636,15 @@ case 44:
 break;
 case 45:
         $$[$0] = getValueIfUndefined($$[$0], [yy.Node('Literal', true, yy.loc(_$[$0-1]))]);
-        this.$ = parseLogicalExpr('&&', $$[$0], _$[$0-1], yy);
+        this.$ = parseLogicalExpr('&&', $$[$0], yy.loc(_$[$0-1]), yy);
     
 break;
 case 46:
         $$[$0] = getValueIfUndefined($$[$0], [yy.Node('Literal', null, yy.loc(_$[$0-1]))]);
-        this.$ = parseLogicalExpr('||', $$[$0], _$[$0-1], yy);
+        this.$ = parseLogicalExpr('||', $$[$0], yy.loc(_$[$0-1]), yy);
     
 break;
-case 47: this.$ = parseVarDecl($$[$0-1], $$[$0], this._$, yy); 
+case 47: this.$ = parseVarDecl($$[$0-1], $$[$0], yy.loc(this._$), yy); 
 break;
 case 48:
         var processed = processDestrucForm({ fixed: [$$[$0-1]], rest: null }, yy);
@@ -30652,7 +30669,7 @@ case 51:
             body = body.concat([letBinding.decl]).concat(letBinding.stmts);
         }
         body = body.concat($$[$0]);
-        this.$ = wrapInIIFE(body, _$[$0-4], yy);
+        this.$ = wrapInIIFE(body, yy.loc(_$[$0-4]), yy);
     
 break;
 case 52:
@@ -30664,7 +30681,7 @@ case 52:
         }
 
         body.push($$[$0]);
-        this.$ = wrapInIIFE(body, _$[$0-4], yy);
+        this.$ = wrapInIIFE(body, yy.loc(_$[$0-4]), yy);
 
         var blockBody = this.$.callee.object.body.body, whileBlock, whileBlockIdx, stmt;
         for (var i = 0, len = blockBody.length; i < len; ++i) {
@@ -30705,15 +30722,17 @@ case 53:
     
 break;
 case 54:
-        var init = parseVarDecl($$[$0-3], parseNumLiteral('Integer', '0', _$[$0-3], yy), _$[$0-3], yy);
+        var init = parseVarDecl($$[$0-3],
+            parseNumLiteral('Integer', '0', yy.loc(_$[$0-3]), yy),
+            yy.loc(_$[$0-3]), yy);
         var maxId = yy.Node('Identifier', '__$max', yy.loc(_$[$0-2]));
-        addVarDecl(init, maxId, $$[$0-2], _$[$0-2], yy);
+        addVarDecl(init, maxId, $$[$0-2], yy.loc(_$[$0-2]), yy);
         var test = yy.Node('BinaryExpression', '<', $$[$0-3], maxId, yy.loc(_$[$0-3]));
         var update = yy.Node('UpdateExpression', '++', $$[$0-3], true, yy.loc(_$[$0-3]));
         var forLoop = yy.Node('ForStatement', init, test, update, $$[$0], yy.loc(_$[$0-5]));
         // wrapping it in an IIFE makes it not work in CodeCombat
         // see https://github.com/codecombat/aether/issues/49
-        // this.$ = wrapInIIFE([forLoop], _$[$0-5], yy);
+        // this.$ = wrapInIIFE([forLoop], yy.loc(_$[$0-5]), yy);
         this.$ = forLoop;
     
 break;
@@ -30721,7 +30740,7 @@ case 55:
         var whileLoop = yy.Node('WhileStatement', $$[$0-1], $$[$0], yy.loc(_$[$0-2]));
         // wrapping it in an IIFE makes it not work in CodeCombat
         // see https://github.com/codecombat/aether/issues/49
-        // this.$ = wrapInIIFE([whileLoop], _$[$0-2], yy);
+        // this.$ = wrapInIIFE([whileLoop], yy.loc(_$[$0-2]), yy);
         this.$ = whileLoop;
     
 break;
@@ -30765,7 +30784,7 @@ case 69:
         this.$ = yy.Node('CallExpression', callee, $$[$0], yy.loc(this._$));
     
 break;
-case 70: this.$ = wrapInIIFE($$[$0], _$[$0-1], yy); 
+case 70: this.$ = wrapInIIFE($$[$0], yy.loc(_$[$0-1]), yy); 
 break;
 case 71: this.$ = $$[$0]; 
 break;
@@ -30795,7 +30814,7 @@ case 80:
 break;
 case 82:
         // do forms evaluate to nil if the body is empty
-        nilNode = parseLiteral('Nil', null, _$[$0], yytext, yy);
+        nilNode = parseLiteral('Nil', null, yy.loc(_$[$0]), yytext, yy);
         this.$ = [yy.Node('ExpressionStatement', nilNode, nilNode.loc)];
     
 break;
@@ -30809,9 +30828,8 @@ case 84:
 break;
 case 85:
         var prog = yy.Node('Program', $$[$0-1], yy.loc(_$[$0-1]));
-//        if (yy.tokens.length) prog.tokens = yy.tokens;
-//        if (prog.loc) prog.range = rangeBlock($$[$0-1]);
         destrucArgIdx = 0;
+        processLocsAndRanges(prog, yy.locs, yy.ranges);
         return prog;
     
 break;
@@ -30819,9 +30837,9 @@ case 86:
         var prog = yy.Node('Program', [], {
             end: { column: 0, line: 0 },
             start: { column: 0, line: 0 },
+            range: [0, 0]
         });
-    //        prog.tokens = yy.tokens;
-    //        prog.range = [0, 0];
+        processLocsAndRanges(prog, yy.locs, yy.ranges);
         return prog;
     
 break;
@@ -30995,12 +31013,10 @@ function processSeqDestrucForm(args, yy) {
     if (rest) {
         if (rest.type && rest.type === 'Identifier') {
             decl = createRestArgsDecl(rest, args.destrucId, fixed.length, rest.loc, yy);
-            if (decl.loc) decl.loc = rest.loc;
             stmts.push(decl);
         } else if (! rest.type) {
             rest.destrucId.name = rest.destrucId.name || '__$destruc' + destrucArgIdx++;
             decl = createRestArgsDecl(rest.destrucId, args.destrucId, fixed.length, rest.destrucId.loc, yy);
-            if (decl.loc) decl.loc = rest.destrucId.loc;
             stmts.push(decl);
             stmts = processChildDestrucForm(rest, stmts, yy);
         }
@@ -31021,7 +31037,6 @@ function processMapDestrucForm(args, yy) {
                 yy.Node('Identifier', 'get', yyloc),
                 [args.destrucId, key], yyloc);
             decl = parseVarDecl(id, init, yyloc, yy);
-            if (decl.loc) decl.loc = yyloc;
             stmts.push(decl);
         } else if (! id.type) {
             id.destrucId.name = id.destrucId.name || '__$destruc' + destrucArgIdx++;
@@ -31052,10 +31067,7 @@ function processChildDestrucForm(arg, stmts, yy) {
             yyloc);
 
         decl = parseVarDecl(processedId, init, processedId.loc, yy);
-        if (decl.loc) decl.loc = processedId.loc;
-
         nilDecl = parseVarDecl(processedId, yy.Node('Literal', null, yyloc), processedId.loc, yy);
-        if (nilDecl.loc) nilDecl.loc = processedId.loc;
 
         errorId = yy.Node('Identifier', '__$error', yyloc);
         catchClause = yy.Node('CatchClause', errorId, null,
@@ -31088,7 +31100,6 @@ function processChildDestrucForm(arg, stmts, yy) {
             yy.Node('Identifier', 'get', yyloc),
             [arg.destrucId, processedKey], yyloc);
         decl = parseVarDecl(processedId, init, yyloc, yy);
-        if (decl.loc) decl.loc = yyloc;
         stmts.push(decl);
     }
     return stmts.concat(processed.stmts);
@@ -31133,8 +31144,7 @@ function processRecurFormIfAny(rootNode, actualArgs, yy) {
 }
 
 // wrap the given array of statements in an IIFE (Immediately-Invoked Function Expression)
-function wrapInIIFE(body, loc, yy) {
-    var yyloc = yy.loc(loc);
+function wrapInIIFE(body, yyloc, yy) {
     var thisExp = yy.Node('ThisExpression', yyloc);
     return yy.Node('CallExpression',
         yy.Node('MemberExpression',
@@ -31159,21 +31169,20 @@ function wrapInExpressionStatement(expr, yy) {
     return expr;
 }
 
-function createArityCheckStmt(minArity, hasRestArgs, loc, yy) {
-    var argsLoc = yy.loc(loc);
-    var arityCheckArgs = [yy.Node('Literal', minArity, argsLoc)];
+function createArityCheckStmt(minArity, hasRestArgs, yyloc, yy) {
+    var arityCheckArgs = [yy.Node('Literal', minArity, yyloc)];
     if (hasRestArgs) {
-        arityCheckArgs.push(yy.Node('Identifier', 'Infinity', argsLoc));
+        arityCheckArgs.push(yy.Node('Identifier', 'Infinity', yyloc));
     }
     arityCheckArgs.push(yy.Node('MemberExpression',
-        yy.Node('Identifier', 'arguments', argsLoc),
-        yy.Node('Identifier', 'length', argsLoc), false, argsLoc));
+        yy.Node('Identifier', 'arguments', yyloc),
+        yy.Node('Identifier', 'length', yyloc), false, yyloc));
     var arityCheck = yy.Node('CallExpression',
         yy.Node('MemberExpression',
-            yy.Node('Identifier', 'assertions', argsLoc),
-            yy.Node('Identifier', 'arity', argsLoc),
-            false, argsLoc),
-        arityCheckArgs, argsLoc);
+            yy.Node('Identifier', 'assertions', yyloc),
+            yy.Node('Identifier', 'arity', yyloc),
+            false, yyloc),
+        arityCheckArgs, yyloc);
     return wrapInExpressionStatement(arityCheck, yy);
 }
 
@@ -31206,8 +31215,8 @@ function createReturnStatementIfPossible(stmt, yy) {
     return stmt;
 }
 
-function createRestArgsDecl(id, argsId, offset, loc, yy) {
-    var yyloc = yy.loc(loc), restInit;
+function createRestArgsDecl(id, argsId, offset, yyloc, yy) {
+    var restInit;
     if (! argsId) {
         restInit = yy.Node('CallExpression', yy.Node('Identifier', 'seq', yyloc),
             [yy.Node('CallExpression',
@@ -31228,45 +31237,42 @@ function createRestArgsDecl(id, argsId, offset, loc, yy) {
     return parseVarDecl(id, restInit, yyloc, yy);
 }
 
-function parseLogicalExpr(op, exprs, exprLoc, yy) {
-    var logicalExpr = exprs[0], yyExprLoc = yy.loc(exprLoc);
+function parseLogicalExpr(op, exprs, yyloc, yy) {
+    var logicalExpr = exprs[0];
     for (var i = 1, len = exprs.length; i < len; ++i) {
-        logicalExpr = yy.Node('LogicalExpression', op, logicalExpr, exprs[i], yyExprLoc);
+        logicalExpr = yy.Node('LogicalExpression', op, logicalExpr, exprs[i], yyloc);
     }
     return logicalExpr;
 }
 
-function parseVarDecl(id, init, loc, yy) {
-    var stmt = yy.Node('VariableDeclaration', 'var', [], yy.loc(loc));
-    return addVarDecl(stmt, id, init, loc, yy);
+function parseVarDecl(id, init, yyloc, yy) {
+    var stmt = yy.Node('VariableDeclaration', 'var', [], yyloc);
+    return addVarDecl(stmt, id, init, yyloc, yy);
 }
 
-function addVarDecl(stmt, id, init, loc, yy) {
-    var decl = yy.Node('VariableDeclarator', id, getValueIfUndefined(init, null), yy.loc(loc));
+function addVarDecl(stmt, id, init, yyloc, yy) {
+    var decl = yy.Node('VariableDeclarator', id, getValueIfUndefined(init, null), yyloc);
     stmt.declarations.push(decl);
     return stmt;
 }
 
-function parseNumLiteral(type, token, loc, yy, yytext) {
+function parseNumLiteral(type, token, yyloc, yy, yytext) {
     var node;
     if (token[0] === '-') {
-        node = parseLiteral(type, -Number(token), loc, yytext, yy);
-        node = yy.Node('UnaryExpression', '-', node, true, yy.loc(loc));
+        node = parseLiteral(type, -Number(token), yyloc, yytext, yy);
+        node = yy.Node('UnaryExpression', '-', node, true, yyloc);
     } else {
-        node = parseLiteral(type, Number(token), loc, yytext, yy);
+        node = parseLiteral(type, Number(token), yyloc, yytext, yy);
     }
     return node;
 }
 
-function parseLiteral(type, value, rawloc, raw, yy) {
-    var loc = yy.loc(rawloc);
-    return yy.Node('Literal', value, loc, raw);
-//    return yy.Node('NewExpression', yy.Node('Identifier', type, loc), [lit], loc);
+function parseLiteral(type, value, yyloc, raw, yy) {
+    return yy.Node('Literal', value, yyloc, raw);
 }
 
-function parseCollectionLiteral(type, items, rawloc, yy) {
-    var loc = yy.loc(rawloc);
-    return yy.Node('CallExpression', yy.Node('Identifier', parseIdentifier(type), loc), items, loc);
+function parseCollectionLiteral(type, items, yyloc, yy) {
+    return yy.Node('CallExpression', yy.Node('Identifier', parseIdentifierName(type), yyloc), items, yyloc);
 }
 
 var charMap = {
@@ -31280,7 +31286,7 @@ var charMap = {
     '/': '_$SLASH_',
     '?': '_$QMARK_'
 };
-function parseIdentifier(name) {
+function parseIdentifierName(name) {
     var charsToReplace = new RegExp('[' + Object.keys(charMap).join('') + ']', 'g');
     return name.replace(charsToReplace, function (c) { return charMap[c]; });
 }
@@ -31302,6 +31308,28 @@ function parseString(str) {
         .replace(/\\f/g,'\f')
         .replace(/\\b/g,'\b')
         .replace(/\\(.)/g, '$1');
+}
+
+function processLocsAndRanges(prog, locs, ranges) {
+    // this cannot be done 1 pass over all the nodes
+    // because some of the loc / range objects point to the same instance in memory
+    // so deleting one deletes the other as well
+    estraverse.replace(prog, {
+        leave: function (node) {
+            if (ranges) node.range = node.loc.range || [0, 0];
+            return node;
+        }
+    });
+
+    estraverse.replace(prog, {
+        leave: function (node) {
+            if (node.loc && typeof node.loc.range !== 'undefined')
+                delete node.loc.range;
+            if (! locs && typeof node.loc !== 'undefined')
+                delete node.loc;
+            return node;
+        }
+    });
 }
 
 function getValueIfUndefined(variable, valueIfUndefined) {
@@ -31757,8 +31785,8 @@ exports.main = function commonjsMain(args) {
 if (typeof module !== 'undefined' && require.main === module) {
   exports.main(process.argv.slice(1));
 }
-}}).call(this,require("/mnt/Windows/Users/chijwani/Downloads/Linux/codecombat-clojure/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"))
-},{"/mnt/Windows/Users/chijwani/Downloads/Linux/codecombat-clojure/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":35,"estraverse":44,"fs":29,"path":36}],44:[function(require,module,exports){
+}}).call(this,require("/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"))
+},{"/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":35,"estraverse":44,"fs":29,"path":36}],44:[function(require,module,exports){
 /*
   Copyright (C) 2012-2013 Yusuke Suzuki <utatane.tea@gmail.com>
   Copyright (C) 2012 Ariya Hidayat <ariya.hidayat@gmail.com>
@@ -67308,8 +67336,8 @@ module.exports = {
   runMain: runMain,
   runModule: runModule
 };
-}).call(this,require("/mnt/Windows/Users/chijwani/Downloads/Linux/codecombat-clojure/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"))
-},{"./module":225,"/mnt/Windows/Users/chijwani/Downloads/Linux/codecombat-clojure/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":35,"module":29,"path":36,"source-map":237}],232:[function(require,module,exports){
+}).call(this,require("/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"))
+},{"./module":225,"/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":35,"module":29,"path":36,"source-map":237}],232:[function(require,module,exports){
 (function() {
   var StringScanner;
   StringScanner = (function() {
@@ -70972,7 +71000,7 @@ module.exports={
   },
   "_id": "escodegen@0.0.28",
   "dist": {
-    "shasum": "d8aa571ad91ae3a243fb9f85af7d886e3b374771"
+    "shasum": "0e4ff1715f328775d6cab51ac44a406cd7abffd3"
   },
   "_from": "escodegen@0.0.28",
   "_resolved": "https://registry.npmjs.org/escodegen/-/escodegen-0.0.28.tgz"
@@ -72574,8 +72602,8 @@ function amdefine(module, requireFn) {
 }
 
 module.exports = amdefine;
-}).call(this,require("/mnt/Windows/Users/chijwani/Downloads/Linux/codecombat-clojure/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),"/../node_modules/coffee-script-redux/node_modules/source-map/node_modules/amdefine/amdefine.js")
-},{"/mnt/Windows/Users/chijwani/Downloads/Linux/codecombat-clojure/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":35,"path":36}],247:[function(require,module,exports){
+}).call(this,require("/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),"/../node_modules/coffee-script-redux/node_modules/source-map/node_modules/amdefine/amdefine.js")
+},{"/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":35,"path":36}],247:[function(require,module,exports){
 module.exports={
   "name": "coffee-script-redux",
   "author": {
@@ -72639,11 +72667,7 @@ module.exports={
   "readme": "CoffeeScript II: The Wrath of Khan\n==================================\n\n```\n          {\n       }   }   {\n      {   {  }  }\n       }   }{  {\n      {  }{  }  }             _____       __  __\n     ( }{ }{  { )            / ____|     / _|/ _|\n   .- { { }  { }} -.        | |     ___ | |_| |_ ___  ___\n  (  ( } { } { } }  )       | |    / _ \\|  _|  _/ _ \\/ _ \\\n  |`-..________ ..-'|       | |___| (_) | | | ||  __/  __/\n  |                 |        \\_____\\___/|_| |_| \\___|\\___|       .-''-.\n  |                 ;--.                                       .' .-.  )\n  |                (__  \\     _____           _       _       / .'  / /\n  |                 | )  )   / ____|         (_)     | |     (_/   / /\n  |                 |/  /   | (___   ___ _ __ _ _ __ | |_         / /\n  |                 (  /     \\___ \\ / __| '__| | '_ \\| __|       / /\n  |                 |/       ____) | (__| |  | | |_) | |_       . '\n  |                 |       |_____/ \\___|_|  |_| .__/ \\__|     / /    _.-')\n   `-.._________..-'                           | |           .' '  _.'.-''\n                                               |_|          /  /.-'_.'\n                                                           /    _.'\n                                                          ( _.-'\n```\n\n### Status\n\nComplete enough to use for nearly every project. See the [roadmap to 2.0](https://github.com/michaelficarra/CoffeeScriptRedux/wiki/Roadmap).\n\n### Getting Started\n\n    npm install -g coffee-script-redux\n    coffee --help\n    coffee --js <input.coffee >output.js\n\nBefore transitioning from Jeremy's compiler, see the\n[intentional deviations from jashkenas/coffee-script](https://github.com/michaelficarra/CoffeeScriptRedux/wiki/Intentional-Deviations-From-jashkenas-coffee-script)\nwiki page.\n\n### Development\n\n    git clone git://github.com/michaelficarra/CoffeeScriptRedux.git && cd CoffeeScriptRedux && npm install\n    make clean && git checkout -- lib && make -j build && make test\n\n### Notable Contributors\n\nI'd like to thank the following financial contributors for their large\ndonations to [the Kickstarter project](http://www.kickstarter.com/projects/michaelficarra/make-a-better-coffeescript-compiler)\nthat funded the initial work on this compiler.\nTogether, you donated over $10,000. Without you, I wouldn't have been able to do this.\n\n* [Groupon](http://groupon.com/), who is generously allowing me to work in their offices\n* [Trevor Burnham](http://trevorburnham.com)\n* [Shopify](http://www.shopify.com)\n* [Abakas](http://abakas.com)\n* [37signals](http://37signals.com)\n* [Brightcove](http://www.brightcove.com)\n* [Gaslight](http://gaslight.co)\n* [Pantheon](https://www.getpantheon.com)\n* Benbria\n* Sam Stephenson\n* Bevan Hunt\n* Meryn Stol\n* Rob Tsuk\n* Dion Almaer\n* Andrew Davey\n* Thomas Burleson\n* Michael Kedzierski\n* Jeremy Kemper\n* Kyle Cordes\n* Jason R. Lauman\n* Martin Drenovac (Envizion Systems - Aust)\n* Julian Bilcke\n* Michael Edmondson\n\nAnd of course, thank you [Jeremy](https://github.com/jashkenas) (and all the other\n[contributors](https://github.com/jashkenas/coffee-script/graphs/contributors))\nfor making [the original CoffeeScript compiler](https://github.com/jashkenas/coffee-script).\n",
   "readmeFilename": "README.md",
   "_id": "coffee-script-redux@2.0.0-beta8",
-  "dist": {
-    "shasum": "addee710279e5e60ce7766468276adf5ddb7613c"
-  },
-  "_from": "coffee-script-redux@~2.0.0-beta8",
-  "_resolved": "https://registry.npmjs.org/coffee-script-redux/-/coffee-script-redux-2.0.0-beta8.tgz"
+  "_from": "coffee-script-redux@~2.0.0-beta8"
 }
 
 },{}],248:[function(require,module,exports){
@@ -75167,11 +75191,7 @@ module.exports={
     "url": "https://github.com/Constellation/escodegen/issues"
   },
   "_id": "escodegen@1.3.2",
-  "dist": {
-    "shasum": "80fa8b2bb7c7e41e9ae5bdcd6e5391f8551f0d55"
-  },
-  "_from": "escodegen@1.3.2",
-  "_resolved": "https://registry.npmjs.org/escodegen/-/escodegen-1.3.2.tgz"
+  "_from": "escodegen@~1.3.0"
 }
 
 },{}],253:[function(require,module,exports){
@@ -151098,8 +151118,8 @@ function amdefine(module, requireFn) {
 }
 
 module.exports = amdefine;
-}).call(this,require("/mnt/Windows/Users/chijwani/Downloads/Linux/codecombat-clojure/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),"/../node_modules/source-map/node_modules/amdefine/amdefine.js")
-},{"/mnt/Windows/Users/chijwani/Downloads/Linux/codecombat-clojure/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":35,"path":36}],281:[function(require,module,exports){
+}).call(this,require("/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),"/../node_modules/source-map/node_modules/amdefine/amdefine.js")
+},{"/Users/winter/Desktop/aether/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":35,"path":36}],281:[function(require,module,exports){
 /*
 Author: Geraint Luff and others
 Year: 2013

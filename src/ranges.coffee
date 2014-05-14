@@ -16,6 +16,12 @@ module.exports.rowColToPos = rowColToPos = (row, col, source, prefix='') ->
 module.exports.rowColsToRange = rowColsToRange = (start, end, source, prefix='') ->
   start: rowColToPos(start.row, start.col, source, prefix), end: rowColToPos(end.row, end.col, source, prefix)
 
+module.exports.locToPos = locToPos = (loc, source, prefix='') ->
+  rowColToPos loc.line, loc.column, source, prefix
+
+module.exports.locsToRange = locsToRange = (start, end, source, prefix='') ->
+  start: locToPos(start, source, prefix), end: locToPos(end, source, prefix)
+
 module.exports.stringifyPos = stringifyPos = (pos) ->
   "{ofs: #{pos.ofs}, row: #{pos.row}, col: #{pos.col}}"
 
