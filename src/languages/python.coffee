@@ -31,4 +31,9 @@ module.exports = class Python extends Language
   # Using a third-party parser, produce an AST in the standardized Mozilla format.
   parse: (code, aether) ->
     ast = parser.parse code, {locations: true, ranges: true}
+
+    # 'this' is not a keyword in Python, so it does not parse to a ThisExpression
+    # Instead, we expect the variable 'self', and map it to a ThisExpression here.
+    ast.body[0].body.body.unshift {"type": "VariableDeclaration","declarations": [{ "type": "VariableDeclarator", "id": {"type": "Identifier", "name": "self" },"init": {"type": "ThisExpression"} }],"kind": "var"}
+
     ast
