@@ -22,7 +22,7 @@ module.exports = class Clojure extends Language
     @wrappedCodePrefix + rawCode + @wrappedCodeSuffix
 
   parse: (code, aether) ->
-    ast = closer.parse code
+    ast = closer.parse code, { loc: true, range: true }
 
     # remove the arity check from the top-level function
     ast.body[0].declarations[0].init.body.body.splice(0, 1)
