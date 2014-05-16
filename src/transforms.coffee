@@ -121,7 +121,7 @@ module.exports.yieldConditionally = yieldConditionally = (node) ->
     # Because we have a wrapper function which shouldn't yield, we only yield inside nested functions.
     # We can't generatorify inner functions or when they're called, they'll return generator values, not real values.
     return unless getFunctionNestingLevel(node) is 2
-    node.update "#{node.source()} if (this._aetherShouldYield) { var _yieldValue = this._aetherShouldYield; this._aetherShouldYield = false; yield _yieldValue; }"
+    node.update "#{node.source()} if (_aether._shouldYield) { var _yieldValue = _aether._shouldYield; _aether._shouldYield = false; yield _yieldValue; }"
     node.yields = true
     possiblyGeneratorifyAncestorFunction node
   else if node.mustBecomeGeneratorFunction
@@ -158,9 +158,13 @@ module.exports.makeInstrumentStatements = makeInstrumentStatements = (varNames) 
     safeRange = ranges.stringifyRange orig.originalRange.start, orig.originalRange.end
     safeSource = orig.originalSource.replace(/\"/g, '\\"').replace(/\n/g, '\\n')
     prefix = "_aether.logStatementStart(#{safeRange});"
-    loggers = ("_aether.vars['#{varName}'] = typeof #{varName} == 'undefined' ? undefined : #{varName};" for varName of varNames)
-    loggers.push "_aether.logStatement(#{safeRange}, \"#{safeSource}\", this._aetherUserInfo);"
-    node.update "#{prefix} #{node.source()} #{loggers.join ' '}"
+    if varNames
+      loggers = ("_aether.vars['#{varName}'] = typeof #{varName} == 'undefined' ? undefined : #{varName};" for varName of varNames)
+      logging = " if (!_aether._shouldSkipFlow) { #{loggers.join ' '} }"
+    else
+      logging = ''
+    suffix = " _aether.logStatement(#{safeRange}, \"#{safeSource}\", _aether._userInfo, #{if varNames then '!_aether._shouldSkipFlow' else 'false'});"
+    node.update "#{prefix} #{node.source()} #{logging}#{suffix}"
     #console.log " ... created logger", node.source(), orig
 
 module.exports.interceptThis = interceptThis = (node) ->
@@ -177,7 +181,7 @@ module.exports.makeInstrumentCalls = makeInstrumentCalls = (varNames) ->
       node.update "_aether.logCallEnd(); #{node.source()}"
     # Look at the top variable declaration inside our appropriately nested function to see where the call starts
     return unless node.type is S.VariableDeclaration
-    node.update "_aether.logCallStart(this._aetherUserInfo); #{node.source()}"  # TODO: pull in arguments?
+    node.update "_aether.logCallStart(_aether._userInfo); #{node.source()}"  # TODO: pull in arguments?
 
 module.exports.makeProtectAPI = makeProtectAPI = (parameters) ->
   parameters ?= []

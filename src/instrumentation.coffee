@@ -28,7 +28,7 @@ serializeVariableValue = (value, depth=0) ->
 
 module.exports.logStatementStart = logStatementStart = (@lastStatementRange) ->
 
-module.exports.logStatement = logStatement = (range, source, userInfo) ->
+module.exports.logStatement = logStatement = (range, source, userInfo, captureFlow) ->
   @lastStatementRange = null
   if @options.includeMetrics
     m = (@metrics.statements ?= {})[range[0].ofs + "-" + range[1].ofs] ?= {source: source}
@@ -39,17 +39,14 @@ module.exports.logStatement = logStatement = (range, source, userInfo) ->
   if flopt = @options.includeFlow
     call = _.last @callStack
     ++call.statementsExecuted
-    capture = true
-    capture = false if flopt.callIndex? and flopt.callIndex isnt @flow.states.length - 1
-    capture = false if flopt.statementIndex? and flopt.statementIndex isnt call.statementsExecuted
-    variables = {}
-    for name, value of @vars when capture or name in (flopt.timelessVariables ? [])
-      # TODO: We should probably only store changes, not full copies every time.
-      if @options.noSerializationInFlow
-        variables[name] = value
-      else
-        variables[name] = serializeVariableValue value
-    if capture or not _.isEmpty variables
+    if captureFlow
+      variables = {}
+      for name, value of @vars when captureFlow
+        # TODO: We should probably only store changes, not full copies every time.
+        if @options.noSerializationInFlow
+          variables[name] = value
+        else
+          variables[name] = serializeVariableValue value
       state =
         range: range
         source: source
@@ -69,6 +66,7 @@ module.exports.logCallStart = logCallStart = (userInfo) ->
   if @options.includeFlow
     if @callStack.length is 1
       ((@flow ?= {}).states ?= []).push call
+      @vars = {}
     else
       3
       # TODO: Nest the current call into the parent call? Otherwise it's just thrown away.

@@ -281,11 +281,6 @@ examples = [
     '''
 
   aether: '''
-    var thisValue = {
-      charge: function() { this.say("attack!"); return "attack!"; },
-      hesitate: function() { this.say("uhh..."); this._aetherShouldYield = true; },
-      say: console.log
-    };
     var aetherOptions = {
       problems: {
         jshint_W040: {level: "ignore"},
@@ -296,6 +291,11 @@ examples = [
       yieldConditionally: true,
     };
     var aether = new Aether(aetherOptions);
+    var thisValue = {
+      charge: function() { this.say("attack!"); return "attack!"; },
+      hesitate: function() { this.say("uhh..."); aether._shouldYield = true; },
+      say: console.log
+    };
     var code = grabDemoCode();
     aether.transpile(code);
     var method = aether.createMethod(thisValue);

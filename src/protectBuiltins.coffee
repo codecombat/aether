@@ -51,7 +51,7 @@ module.exports.builtinNames = builtinNames = builtinObjectNames.concat [
 global = (-> @)()
 builtinClones = []
 builtinReal = []
-addedGlobals = {}
+module.exports.addedGlobals = addedGlobals = {}
 
 module.exports.addGlobal = addGlobal = (name, value) ->
   # Ex.: Aether.addGlobal('Vector', require('lib/world/vector')), before the Aether instance is constructed

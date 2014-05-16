@@ -36,7 +36,7 @@ describe "ES6 Test Suite", ->
     it "should yield when necessary", ->
       dude =
         charge: -> "attack!"
-        hesitate: -> @_aetherShouldYield = true
+        hesitate: -> aether._shouldYield = true
       code = """
         this.charge();
         this.hesitate();
@@ -77,7 +77,7 @@ describe "ES6 Test Suite", ->
     it "should not yield", ->
       dude =
         charge: -> "attack!"
-        hesitate: -> @_aetherShouldYield = true
+        hesitate: -> aether._shouldYield = true
       code = """
         this.charge();
         this.hesitate();
@@ -94,7 +94,7 @@ describe "ES6 Test Suite", ->
     it "should handle breaking out of a while loop with yields inside", ->
       dude =
         slay: -> @enemy = "slain!"
-        hesitate: -> @_aetherShouldYield = true
+        hesitate: -> aether._shouldYield = true
       code = """
         while(true) {
           this.hesitate();
@@ -111,10 +111,11 @@ describe "ES6 Test Suite", ->
       expect(gen.next().done).toEqual false
       expect(gen.next().done).toEqual true
 
+    aether = new Aether yieldConditionally: true
     it "should handle breaking and continuing in a while loop with yields inside", ->
       dude =
         slay: -> @enemy = "slain!"
-        hesitate: -> @_aetherShouldYield = true
+        hesitate: -> aether._shouldYield = true
       code = """
         var i = 0;
         while (true) {

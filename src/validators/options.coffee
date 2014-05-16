@@ -41,26 +41,9 @@ module.exports = (options) ->
       problems:
         required: false
       includeFlow:
-        oneOf: [
-          type: 'boolean'
-          default: true
-          description: "If true, will record everything."
-        ,
-          type: 'object'
-          description: "Limitations on what to record."
-          properties:
-            callIndex:
-              type: 'integer'
-              description: "If set, record flow only for the given call, not every call."
-            statementIndex:
-              type: 'integer'
-              description: "If set, record flow only for the given statement within the given call."
-            timelessVariables:
-              type: 'array'
-              description: "Record flow for these variables regardless of callIndex and statementIndex."
-              items:
-                type: 'string'
-        ]
+        type: 'boolean'
+        default: true
+        description: "Whether to record control flow and variable values as user code executes."
       noSerializationInFlow:
         type: 'boolean'
         default: false

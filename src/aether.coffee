@@ -19,6 +19,7 @@ languages = require './languages/languages'
 module.exports = class Aether
   @execution: execution
   @addGlobal: protectBuiltins.addGlobal  # Use before instantiating Aether instances
+  @globals: protectBuiltins.addedGlobals
 
   # Current call depth
   depth: 0
