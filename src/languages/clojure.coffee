@@ -33,7 +33,13 @@ module.exports = class Clojure extends Language
           obj = closer.node 'Identifier', 'closerCore', node.loc
           prop = closer.node 'Identifier', node.name, node.loc
           node = closer.node 'MemberExpression', obj, prop, false, node.loc
-        if node.type is 'Program'
+        else if (node.type is 'MemberExpression' and node.object.type is 'Identifier' and node.object.name is 'closerCore' and
+        node.property.type is 'MemberExpression' and node.property.object.type is 'Identifier' and node.property.object.name is 'closerCore')
+          # some nodes are the same object instance in memory, so they will be processed multiple times
+          # so map.call(...) will become closerCore.closerCore.closerCore.map.call(...)
+          # this is to reverse that effect
+          return node.property
+        else if node.type is 'Program'
           # replace last statement with return
           lastStmt = node.body[node.body.length-1]
           if lastStmt.type is 'ExpressionStatement'
