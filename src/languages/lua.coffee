@@ -32,7 +32,7 @@ module.exports = class Lua extends Language
     
 
   wrapResult: (ast, name) -> 
-    ast = {type: "Program", body:[{type: "FunctionDeclaration", id: {type: "Identifier", name: name}, params: [], body: ast}]}
+    ast = {type: "Program", body:[{type: "FunctionDeclaration", id: {type: "Identifier", name: name or 'foo'}, params: [], body: ast}]}
     ast.body[0].body.body.unshift {"type": "VariableDeclaration","declarations": [
          { "type": "VariableDeclarator", "id": {"type": "Identifier", "name": "self" },"init": {"type": "ThisExpression"} }
       ],"kind": "var"}
