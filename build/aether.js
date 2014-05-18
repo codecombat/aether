@@ -22179,7 +22179,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
       return false;
     };
 
-    Lua.prototype.callParser = function(code, aether, loose) {
+    Lua.prototype.callParser = function(code, loose) {
       var ast;
       ast = lua2js.parse(code, {
         loose: loose,
@@ -22196,7 +22196,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
       var ast, e, error, lintProblems, rng, _i, _len, _ref1;
       lintProblems = [];
       try {
-        ast = this.callParser(rawCode, aether, true);
+        ast = this.callParser(rawCode, true);
       } catch (_error) {
         e = _error;
         return [];
@@ -22261,13 +22261,13 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
     };
 
     Lua.prototype.parse = function(code, aether) {
-      return Lua.prototype.wrapResult(Lua.prototype.callParser(code, aether, false), aether.options.functionName);
+      return Lua.prototype.wrapResult(Lua.prototype.callParser(code, false), aether.options.functionName);
     };
 
     Lua.prototype.parseDammit = function(code, aether) {
       var error;
       try {
-        return Lua.prototype.wrapResult(Lua.prototype.callParser(code, aether, true), aether.options.functionName);
+        return Lua.prototype.wrapResult(Lua.prototype.callParser(code, true), aether.options.functionName);
       } catch (_error) {
         error = _error;
         return {
@@ -22469,8 +22469,8 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
         null;
         break;
       case 'lua2js':
-        if (options.mesasge == null) {
-          options.mesasge = error.message;
+        if (options.message == null) {
+          options.message = error.message;
         }
         rng = ranges.offsetsToRange(error.offset, error.offset, code, '');
         options.range = [rng.start, rng.end];
