@@ -70,7 +70,7 @@ extractTranspileErrorDetails = (options) ->
     when 'closer'
       null
     when 'lua2js'
-      options.mesasge ?= error.message
+      options.message ?= error.message
       rng = ranges.offsetsToRange(error.offset, error.offset, code, '')
       options.range = [rng.start, rng.end]
     when 'filbert'

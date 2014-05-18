@@ -11,7 +11,7 @@ module.exports = class Lua extends Language
   obviouslyCannotTranspile: (rawCode) ->
     false
 
-  callParser: (code, aether, loose) ->
+  callParser: (code, loose) ->
     ast = lua2js.parse code, {loose: loose, forceVar: false, decorateLuaObjects: true, luaCalls: true, luaOperators: true, encloseWithFunctions: false }
     ast
 
@@ -20,7 +20,7 @@ module.exports = class Lua extends Language
     lintProblems = []
 
     try
-      ast = @callParser rawCode, aether, true
+      ast = @callParser rawCode, true
     catch e
       return []
       return [aether.createUserCodeProblem type: 'transpile', reporter:'lua2js', error: e, code:rawCode, codePrefix: ""]
@@ -39,11 +39,11 @@ module.exports = class Lua extends Language
     ast
 
   parse: (code, aether) ->
-    Lua.prototype.wrapResult (Lua.prototype.callParser code, aether, false), aether.options.functionName
+    Lua.prototype.wrapResult (Lua.prototype.callParser code, false), aether.options.functionName
 
 
   parseDammit: (code, aether) ->
     try 
-      return Lua.prototype.wrapResult (Lua.prototype.callParser code, aether, true), aether.options.functionName
+      return Lua.prototype.wrapResult (Lua.prototype.callParser code, true), aether.options.functionName
     catch error
       return {"type": "BlockStatement": body:[{type: "EmptyStatement"}]}
