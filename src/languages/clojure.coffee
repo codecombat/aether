@@ -1,5 +1,4 @@
 Language = require './language'
-aether = require '../aether'
 closer = require 'closer/lib/src/closer'
 closerCore = require 'closer/lib/src/closer-core'
 assertions = require 'closer/lib/src/assertions'

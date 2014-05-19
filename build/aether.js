@@ -21566,13 +21566,11 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"lodash":29}],5:[function(require,module,exports){
 (function() {
-  var Clojure, Language, aether, assertions, callParser, closer, closerCore,
+  var Clojure, Language, assertions, callParser, closer, closerCore,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   Language = require('./language');
-
-  aether = require('../aether');
 
   closer = require('closer/lib/src/closer');
 
@@ -21669,7 +21667,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
 
 }).call(this);
 
-},{"../aether":1,"./language":9,"closer/lib/src/assertions":39,"closer/lib/src/closer":41,"closer/lib/src/closer-core":40}],6:[function(require,module,exports){
+},{"./language":9,"closer/lib/src/assertions":39,"closer/lib/src/closer":41,"closer/lib/src/closer-core":40}],6:[function(require,module,exports){
 (function (global){(function() {
   var CoffeeScript, Language, StructuredCode, csredux, estraverse, fixLocations, _, _ref, _ref1, _ref2, _ref3,
     __hasProp = {}.hasOwnProperty,
