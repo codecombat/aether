@@ -32,3 +32,7 @@ describe 'Clojure test suite', ->
       code = '(+ 1 2 "string")'
       aether.transpile(code)
       expect(aether.run()).toBeAUserCodeProblemOfType 'aether_ArgTypeError'
+
+    it 'should parse incomplete code in loose mode', ->
+      aether.transpile('(clj->js (map inc [1 2 3')
+      expect(aether.run()).toEqual [2, 3, 4]
