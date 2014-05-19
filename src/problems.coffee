@@ -68,7 +68,9 @@ extractTranspileErrorDetails = (options) ->
     when 'aether'
       null
     when 'closer'
-      null
+      if error.startOffset and error.endOffset
+        range = ranges.offsetsToRange(error.startOffset, error.endOffset, code)
+        options.range = [range.start, range.end]
     when 'lua2js'
       null
     when 'filbert'
