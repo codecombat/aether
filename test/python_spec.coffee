@@ -157,3 +157,53 @@ describe "Python Test suite", ->
       method = aether.createMethod thisValue
       aether.run method
       expect(history).toEqual([1, 4, 3, 5])
+
+  describe "parseDammit! & Ranges", ->
+    aether = new Aether language: "python"
+    it "missing )", ->
+      code = """
+      def fn():
+        return 45
+      x = fn(
+      return x
+      """
+      aether.transpile(code)
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(/Unexpected token/.test(aether.problems.errors[0].message)).toBe(true)
+      expect(aether.problems.errors[0].range).toEqual([ { ofs : 38, row : 2, col : 7 }, { ofs : 39, row : 2, col : 8 } ])
+      result = aether.run()
+      expect(result).toEqual(45)
+
+    it "bad indent", ->
+      code = """
+      def fn():
+        x = 45
+          x += 5
+        return x
+      return fn()
+      """
+      aether.transpile(code)
+      result = aether.run()
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(/Unexpected indent/.test(aether.problems.errors[0].message)).toBe(true)
+      expect(aether.problems.errors[0].range).toEqual([ { ofs : 33, row : 2, col : 2 }, { ofs : 35, row : 2, col : 4 } ])
+      expect(result).toEqual(50)
+
+    it "x()", ->
+      code = """x()"""
+      aether.transpile(code)
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(aether.problems.errors[0].message).toEqual("Missing `this.` keyword; should be `this.x`.")
+      expect(aether.problems.errors[0].range).toEqual([ { ofs: 4, row: 0, col: 4 }, { ofs: 7, row: 0, col: 7 } ])
+
+    it "incomplete string", ->
+      code = """
+      s = 'hi
+      return s
+      """
+      aether.transpile(code)
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(/Unterminated string constant/.test(aether.problems.errors[0].message)).toBe(true)
+      expect(aether.problems.errors[0].range).toEqual([ { ofs : 4, row : 0, col : 4 }, { ofs : 7, row : 0, col : 7 } ])
+      result = aether.run()
+      expect(result).toEqual('hi')

@@ -175,7 +175,7 @@ module.exports = class Aether
       [transformedCode, transformedAST] = @transform wrappedCode, preNormalizationTransforms, @language.parse, true
     catch error
       # TODO: test if using @language.wrappedCodePrefix is better here than ''
-      problemOptions = error: error, code: wrappedCode, codePrefix: '', reporter: @language.parserID, kind: error.index or error.id, type: 'transpile'
+      problemOptions = error: error, code: wrappedCode, codePrefix: @language.wrappedCodePrefix, reporter: @language.parserID, kind: error.index or error.id, type: 'transpile'
       @addProblem @createUserCodeProblem problemOptions
       return '' unless @language.parseDammit
       originalNodeRanges.splice()  # Reset any ranges we did find; we'll try again.

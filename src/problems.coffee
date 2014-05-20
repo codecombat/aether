@@ -76,7 +76,15 @@ extractTranspileErrorDetails = (options) ->
       rng = ranges.offsetsToRange(error.offset, error.offset, code, '')
       options.range = [rng.start, rng.end]
     when 'filbert'
-      null
+      if error.loc
+        columnOffset = 0
+        columnOffset++ while originalLines[lineOffset - 2][columnOffset] is ' '
+        # filbert lines are 1-based, columns are 0-based
+        row = error.loc.line - lineOffset - 1
+        col = error.loc.column - columnOffset
+        start = ranges.rowColToPos(row, col, code)
+        end = ranges.rowColToPos(row, col + error.raisedAt - error.pos, code)
+        options.range = [start, end]
     when 'iota'
       null
     else
