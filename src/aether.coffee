@@ -175,7 +175,10 @@ module.exports = class Aether
       [transformedCode, transformedAST] = @transform wrappedCode, preNormalizationTransforms, @language.parse, true
     catch error
       # TODO: test if using @language.wrappedCodePrefix is better here than ''
+      # TODO: Python needs @language.wrappedCodePrefix to calculate problem ranges
       problemOptions = error: error, code: wrappedCode, codePrefix: '', reporter: @language.parserID, kind: error.index or error.id, type: 'transpile'
+      problemOptions.codePrefix = @language.wrappedCodePrefix if @language.id is 'python'
+
       @addProblem @createUserCodeProblem problemOptions
       return '' unless @language.parseDammit
       originalNodeRanges.splice()  # Reset any ranges we did find; we'll try again.
