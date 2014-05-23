@@ -29,6 +29,10 @@ serializeVariableValue = (value, depth=0) ->
 module.exports.logStatementStart = logStatementStart = (@lastStatementRange) ->
 
 module.exports.logStatement = logStatement = (range, source, userInfo, captureFlow) ->
+  # Source is not used, but we're in the middle of migrating it.
+  unless _.isString source
+    captureFlow = userInfo
+    userInfo = source
   @lastStatementRange = null
   if @options.includeMetrics
     m = (@metrics.statements ?= {})[range[0].ofs + "-" + range[1].ofs] ?= {source: source}

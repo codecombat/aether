@@ -156,14 +156,13 @@ module.exports.makeInstrumentStatements = makeInstrumentStatements = (varNames) 
       orig = orig.parent.parent
     # TODO: actually save this into aether.flow, and have it happen before the yield happens
     safeRange = ranges.stringifyRange orig.originalRange.start, orig.originalRange.end
-    safeSource = orig.originalSource.replace(/\"/g, '\\"').replace(/\n/g, '\\n')
     prefix = "_aether.logStatementStart(#{safeRange});"
     if varNames
       loggers = ("_aether.vars['#{varName}'] = typeof #{varName} == 'undefined' ? undefined : #{varName};" for varName of varNames)
       logging = " if (!_aether._shouldSkipFlow) { #{loggers.join ' '} }"
     else
       logging = ''
-    suffix = " _aether.logStatement(#{safeRange}, \"#{safeSource}\", _aether._userInfo, #{if varNames then '!_aether._shouldSkipFlow' else 'false'});"
+    suffix = " _aether.logStatement(#{safeRange}, _aether._userInfo, #{if varNames then '!_aether._shouldSkipFlow' else 'false'});"
     node.update "#{prefix} #{node.source()} #{logging}#{suffix}"
     #console.log " ... created logger", node.source(), orig
 
