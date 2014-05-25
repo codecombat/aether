@@ -20,3 +20,21 @@ describe "Io test suite", ->
 
     it "factorial function", ->
       expect(ioEval("""fact := method(n, if (n == 0, 1, n * fact (n - 1))); fact(5)""")).toBe(120)
+
+  describe "Usage", ->
+    it "moveRight, say", ->
+      history = []
+      log = (s) ->
+        expect(s).toEqual "hello"
+        history.push s
+      thisValue = {say: log}
+      thisValue.moveDown = () ->
+        expect(this).toEqual thisValue
+        history.push 'moveDown'
+
+      aether = new Aether language: 'io'
+      code = """moveDown;say("hello")"""
+      aether.transpile code
+      method = aether.createMethod thisValue
+      aether.run method
+      expect(history).toEqual(['moveDown', 'hello'])
