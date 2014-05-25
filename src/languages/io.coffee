@@ -6,7 +6,7 @@ module.exports = class Io extends Language
   name: 'Io'
   id: 'io'
   parserID: 'iota'
-  runtimeGlobals: iota.lib
+  runtimeGlobals: {"_io": iota.lib}
 
   obviouslyCannotTranspile: (rawCode) ->
     false
@@ -20,9 +20,10 @@ module.exports = class Io extends Language
   parse: (code, aether) ->
 
     wrappedCode = iota.compile(code, true);
-    wrappedCode = wrappedCode.replace('execute', aether.options.functionName) if aether.options.functionName
+    if aether.options.functionName
+      wrappedCode = wrappedCode.replace('execute', aether.options.functionName)
+    else
+      wrappedCode = wrappedCode.replace('execute', 'foo')
 
-    console.log wrappedCode
-
-    ast = esprima.parse(wrappedCode)
+    ast = esprima.parse(wrappedCode, {range: true})
     ast
