@@ -17,6 +17,32 @@ module.exports = class Io extends Language
 
     @wrappedCodePrefix + rawCode + @wrappedCodeSuffix
 
+  unwrapTransform: (expr) ->
+    {
+      type: "CallExpression",
+      callee: {
+        type: "MemberExpression",
+        computed: false,
+        object: {
+          type: "Identifier",
+          name: "_io"
+        },
+        property: {
+          type: "Identifier",
+          name: "unwrapIoValue"
+        }
+      },
+      arguments: [expr]
+    }
+
+  makeLastStatementReturn: (ast) ->
+    program = ast
+    wrapperFunction = program.body[0]
+    blockStatement = wrapperFunction.body
+    lastExpressionStatement = blockStatement.body[blockStatement.body.length - 1]
+    blockStatement.body[blockStatement.body.length - 1] = {type: "ReturnStatement", argument: Io.prototype.unwrapTransform(lastExpressionStatement.expression)}
+    ast
+
   parse: (code, aether) ->
 
     wrappedCode = iota.compile(code, true);
@@ -26,4 +52,5 @@ module.exports = class Io extends Language
       wrappedCode = wrappedCode.replace('execute', 'foo')
 
     ast = esprima.parse(wrappedCode, {range: true})
+    ast = Io.prototype.makeLastStatementReturn ast
     ast
