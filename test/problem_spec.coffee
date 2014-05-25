@@ -41,3 +41,35 @@ describe "Problem Test Suite", ->
       problem = aether.problems.errors[0]
       expect(problem.type).toEqual 'transpile'
       expect(problem.level).toEqual 'error'
+
+    it "Should hard-cap execution to break infinite loops.", ->
+      code = """
+        while(true) {
+          ;
+        }
+      """
+      aether = new Aether {executionLimit: 9001}
+      aether.transpile(code)
+      aether.run()
+      expect(aether.problems.errors.length).toBeGreaterThan 0
+      problem = aether.problems.errors[0]
+      expect(problem.type).toEqual 'runtime'
+      expect(problem.level).toEqual 'error'
+
+    it "Should hard-cap execution after a certain limit.", ->
+      code = """
+        for (var i = 0; i < 1000; ++i) {}
+        return 'mojambo';
+      """
+      aether = new Aether {executionLimit: 500}
+      aether.transpile(code)
+      expect(aether.run()).toBeUndefined()
+
+    it "Shouldn't hard-cap execution too early.", ->
+      code = """
+        for (var i = 0; i < 1000; ++i) {}
+        return 'mojambo';
+      """
+      aether = new Aether {executionLimit: 9001}
+      aether.transpile(code)
+      expect(aether.run()).toEqual 'mojambo'

@@ -97,6 +97,9 @@ extractRuntimeErrorDetails = (options) ->
   if error = options.error
     options.kind ?= error.name  # I think this will pick up [Error, EvalError, RangeError, ReferenceError, SyntaxError, TypeError, URIError, DOMException]
     options.message = explainErrorMessage error.message or error.toString()
+    options.hint = error.hint
+    options.level = error.level
+    options.userInfo = error.userInfo
   options.range ?= options.aether?.lastStatementRange
   if options.range
     lineNumber = options.range[0].row + 1

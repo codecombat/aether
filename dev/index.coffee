@@ -54,10 +54,13 @@ showProblems = (aether) ->
           type: "array"
           maxItems: aether.problems.infos.length
 
-  treema = TreemaNode.make(el, treemaOptions)
-  treema.build()
-  $("#aether-problems").empty().append el
-  treema.open 2
+  try
+    treema = TreemaNode.make(el, treemaOptions)
+    treema.build()
+    $("#aether-problems").empty().append el
+    treema.open 2
+  catch err
+    console.error "Couldn't make problems Treema:", err
   editor = editors[0]
   session = editor.getSession()
   annotations = []
@@ -112,10 +115,13 @@ showFlow = (aether) ->
       properties:
         states:
           type: "array"
-  treema = TreemaNode.make(el, treemaOptions)
-  treema.build()
-  $("#aether-flow").append el
-  treema.open 3
+  try
+    treema = TreemaNode.make(el, treemaOptions)
+    treema.build()
+    $("#aether-flow").append el
+    treema.open 3
+  catch err
+    console.error "Couldn't make flow Treema:", err
 
 showMetrics = (aether) ->
   $("#aether-metrics").empty()
@@ -126,10 +132,13 @@ showMetrics = (aether) ->
     data: aether.metrics
     schema:
       type: "object"
-  treema = TreemaNode.make(el, treemaOptions)
-  treema.build()
-  $("#aether-metrics").append el
-  treema.open 1
+  try
+    treema = TreemaNode.make(el, treemaOptions)
+    treema.build()
+    $("#aether-metrics").append el
+    treema.open 1
+  catch err
+    console.error "Couldn't make metrics Treema:", err
 
 demoShowOutput = (aether) ->
   showProblems aether
@@ -196,6 +205,7 @@ examples = [
   aether: '''
     var thisValue = {say: console.log};
     var aetherOptions = {
+      executionLimit: 1000,
       problems: {jshint_W040: {level: "ignore"}}
     };
     var aether = new Aether(aetherOptions);
@@ -254,6 +264,7 @@ examples = [
       explode: function() { this.say("Exploooode!"); }
     };
     var aetherOptions = {
+      executionLimit: 1000,
       problems: {
         jshint_W040: {level: "ignore"},
         aether_MissingThis: {level: "warning"}
@@ -282,6 +293,7 @@ examples = [
 
   aether: '''
     var aetherOptions = {
+      executionLimit: 1000,
       problems: {
         jshint_W040: {level: "ignore"},
         aether_MissingThis: {level: "warning"}
@@ -322,6 +334,7 @@ examples = [
       print: console.log
     };
     var aetherOptions = {
+      executionLimit: 1000,
       problems: {
         jshint_W040: {level: "ignore"}
       },
@@ -353,6 +366,7 @@ examples = [
   aether: '''
     var thisValue = {say: console.log};
     var aetherOptions = {
+      executionLimit: 1000,
       problems: {jshint_W040: {level: "ignore"}}
     };
     var aether = new Aether(aetherOptions);
@@ -459,6 +473,7 @@ examples = [
       wait: function() { }
     };
     var aetherOptions = {
+      executionLimit: 10000,
       problems: {
         jshint_W040: {level: "ignore"},
         aether_MissingThis: {level: "warning"}

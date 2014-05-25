@@ -143,6 +143,7 @@ module.exports = class Aether
     catch error
       problem = @createUserCodeProblem error: error, code: @raw, type: 'runtime', reporter: 'aether'
       @addProblem problem
+      return
 
   # Create a standard Aether problem object out of some sort of transpile or runtime problem.
   createUserCodeProblem: problems.createUserCodeProblem
@@ -213,7 +214,7 @@ module.exports = class Aether
     postNormalizationTransforms.unshift transforms.yieldAutomatically if @options.yieldAutomatically
     if @options.includeFlow
       postNormalizationTransforms.unshift transforms.makeInstrumentStatements varNames
-    else if @options.includeMetrics
+    else if @options.includeMetrics or @options.executionLimit
       postNormalizationTransforms.unshift transforms.makeInstrumentStatements()
     postNormalizationTransforms.unshift transforms.makeInstrumentCalls() if @options.includeMetrics or @options.includeFlow
     postNormalizationTransforms.unshift transforms.makeFindOriginalNodes originalNodeRanges, @language.wrappedCodePrefix, normalizedSourceMap, normalizedNodeIndex

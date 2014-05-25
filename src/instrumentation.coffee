@@ -34,12 +34,18 @@ module.exports.logStatement = logStatement = (range, source, userInfo, captureFl
     captureFlow = userInfo
     userInfo = source
   @lastStatementRange = null
-  if @options.includeMetrics
+  if @options.includeMetrics or @options.executionLimit
     m = (@metrics.statements ?= {})[range[0].ofs + "-" + range[1].ofs] ?= {source: source}
     m.executions ?= 0
     ++m.executions
     @metrics.statementsExecuted ?= 0
     @metrics.statementsExecuted += 1
+    @metrics.statementsExecutedThisCall += 1
+    if @metrics.statementsExecutedThisCall > @options.executionLimit
+      error = new Error "Hard execution limit of #{@options.executionLimit} exceeded."
+      error.name = "ExecutionLimitExceededError"
+      error.userInfo = userInfo
+      throw error
   if flopt = @options.includeFlow
     call = _.last @callStack
     ++call.statementsExecuted
@@ -67,6 +73,7 @@ module.exports.logCallStart = logCallStart = (userInfo) ->
     @metrics.callsExecuted ?= 0
     ++@metrics.callsExecuted
     @metrics.maxDepth = Math.max(@metrics.maxDepth or 0, @callStack.length)
+    @metrics.statementsExecutedThisCall = 0 if @callStack.length is 1
   if @options.includeFlow
     if @callStack.length is 1
       ((@flow ?= {}).states ?= []).push call

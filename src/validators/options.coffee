@@ -9,25 +9,25 @@ module.exports = (options) ->
         required: false
       globals:
         type: 'array'
-        required: false
       functionName:
-        required: false
+        type: 'string'
       functionParameters:
-        required: false
+        type: ['array', 'undefined']
       yieldAutomatically:
         type: 'boolean'
-        required: false
       yieldConditionally:
         type: 'boolean'
-        required: false
       executionCosts:
-        required: false
+        type: 'object'
+      executionLimit:
+        type: 'integer'
+        minimum: 0
+        description: 'If given and non-zero, user code will throw execution exceeded errors after using too many statements.'
       language:
         type: 'string'
         description: "Input language"
         minLength:1
         'enum': ['javascript', 'coffeescript', 'clojure', 'lua', 'python', 'io']
-        required: false
       languageVersion:
         oneOf: [
           type: 'string'
@@ -39,7 +39,7 @@ module.exports = (options) ->
           description: "Input language version"
         ]
       problems:
-        required: false
+        type: ['object', 'undefined']
       includeFlow:
         type: 'boolean'
         default: true

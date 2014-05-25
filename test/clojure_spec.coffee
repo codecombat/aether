@@ -25,13 +25,15 @@ describe 'Clojure test suite', ->
     it 'should generate an ArityError UserCodeProblem if a function is passed the wrong number of arguments', ->
       code = '(#(do %) 2 3)'
       aether.transpile(code)
-      expect(aether.run()).toBeAUserCodeProblemOfType 'aether_ArityError'
+      aether.run()
+      expect(aether.problems.errors[0]).toBeAUserCodeProblemOfType 'aether_ArityError'
 
     aether.reset()
     it 'should generate an ArgTypeError UserCodeProblem if a function is passed the wrong types of arguments', ->
       code = '(+ 1 2 "string")'
       aether.transpile(code)
-      expect(aether.run()).toBeAUserCodeProblemOfType 'aether_ArgTypeError'
+      aether.run()
+      expect(aether.problems.errors[0]).toBeAUserCodeProblemOfType 'aether_ArgTypeError'
 
     it 'should parse incomplete code in loose mode', ->
       aether.transpile('(clj->js (map inc [1 2 3')
