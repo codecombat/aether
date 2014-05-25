@@ -45,11 +45,10 @@ module.exports = class Io extends Language
 
   parse: (code, aether) ->
 
-    wrappedCode = iota.compile(code, true);
-    if aether.options.functionName
-      wrappedCode = wrappedCode.replace('execute', aether.options.functionName)
-    else
-      wrappedCode = wrappedCode.replace('execute', 'foo')
+    wrappedCode = iota.compile(code,
+      boilerplate: true,
+      functionName: aether.options.functionName or 'foo'
+    );
 
     ast = esprima.parse(wrappedCode, {range: true})
     ast = Io.prototype.makeLastStatementReturn ast
