@@ -7,6 +7,20 @@ describe "Global Scope Exploit Suite", ->
     aether.transpile(code)
     expect(aether.run()).toEqual 100
 
+  it 'should disallow using eval', ->
+    code = "eval('var x = 2; ++x;');"
+    aether = new Aether()
+    aether.transpile(code)
+    func = aether.createFunction()
+    expect(func).toThrow()
+
+  it 'should disallow using eval without identifier', ->
+    code = "0['ev'+'al']('var x = 2; ++x;');"
+    aether = new Aether()
+    aether.transpile(code)
+    func = aether.createFunction()
+    expect(func).toThrow()
+
   it 'should disallow using Function', ->
     code = "Function('')"
     aether = new Aether()

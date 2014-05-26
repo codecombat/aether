@@ -220,6 +220,7 @@ module.exports = class Aether
     postNormalizationTransforms.unshift transforms.makeFindOriginalNodes originalNodeRanges, @language.wrappedCodePrefix, normalizedSourceMap, normalizedNodeIndex
     postNormalizationTransforms.unshift transforms.makeProtectAPI @options.functionParameters if @options.protectAPI
     postNormalizationTransforms.unshift transforms.interceptThis
+    postNormalizationTransforms.unshift transforms.interceptEval
     try
       instrumentedCode = @transform normalizedCode, postNormalizationTransforms, @languageJS.parse
     catch error

@@ -171,6 +171,10 @@ module.exports.interceptThis = interceptThis = (node) ->
   return unless getFunctionNestingLevel(node) > 1
   node.update "__interceptThis(this, __global)"
 
+module.exports.interceptEval = interceptEval = (node) ->
+  return unless node.type is S.Identifier and node.name is 'eval'
+  node.update "evil"
+
 module.exports.makeInstrumentCalls = makeInstrumentCalls = (varNames) ->
   # set up any state tracking here
   return (node) ->
