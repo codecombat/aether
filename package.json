@@ -32,7 +32,8 @@
     "estraverse": "~1.5.0",
     "closer": "https://github.com/vickychijwani/closer.js/tarball/master",
     "lua2js": "https://github.com/basicer/lua2js-dist/tarball/master",
-    "filbert": "~0.1.0"
+    "filbert": "~0.1.0",
+    "iota-compiler": "^0.1.10"
   },
   "devDependencies": {
     "grunt": "~0.4.1",
