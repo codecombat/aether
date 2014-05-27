@@ -3,10 +3,6 @@
 parser = require 'filbert'
 parser_loose = require 'filbert/filbert_loose'
 
-estraverse = require 'estraverse'
-escodegen = require 'escodegen'
-esprima = require 'esprima'
-
 Language = require './language'
 
 module.exports = class Python extends Language

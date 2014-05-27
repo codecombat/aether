@@ -71,7 +71,7 @@ extractTranspileErrorDetails = (options) ->
       if error.startOffset and error.endOffset
         range = ranges.offsetsToRange(error.startOffset, error.endOffset, code)
         options.range = [range.start, range.end]
-    when 'lua2js'
+    when 'lua2js', 'luapegjs'
       options.message ?= error.message
       rng = ranges.offsetsToRange(error.offset, error.offset, code, '')
       options.range = [rng.start, rng.end]

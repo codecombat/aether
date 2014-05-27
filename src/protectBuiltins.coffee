@@ -86,7 +86,7 @@ module.exports.createSandboxedFunction = createSandboxedFunction = (functionName
     wrapper = new Function ['_aether'], code
     wrapper.call dummyContext, aether
   catch e
-    console.warn "Error creating function, so returning empty function instead. Error: #{e}\nCode:", code
+    console.warn "Error creating function, so returning empty function instead. Error: #{e}"  #\nCode:", code
     problem = aether.createUserCodeProblem reporter: 'aether', type: 'transpile', kind: 'Untranspilable', message: 'Code could not be compiled. Check syntax.', error: e, code: code, codePrefix: ''
     aether.addProblem problem
     return ->
