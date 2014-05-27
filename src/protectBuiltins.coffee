@@ -1,88 +1,82 @@
+_ = window?._ ? self?._ ? global?._ ? require 'lodash'  # rely on lodash existing, since it busts CodeCombat to browserify it--TODO
+
 problems = require './problems'
 
-getOwnPropertyNames = Object.getOwnPropertyNames
-
-copy = (source, target) ->
-  for name in getOwnPropertyNames source
-    target[name] = source[name]
-
-  return target
-
-cloneBuiltin = (obj,name) ->
-  if not obj?
-    throw name
-
-  masked = {}
-  copy obj, masked
-
-  if obj::
-    masked:: = {}
-    copy obj::, masked::
-
-  return masked
-
-
-module.exports.copyBuiltin = copyBuiltin = (source, target) ->
-  copy source, target
-
-  if source::
-    copy source::, target::
-
-
+# These builtins, being objects, will have to be cloned and restored.
 module.exports.builtinObjectNames = builtinObjectNames = [
-  # Built-in objects
+  # Built-in Objects
   'Object', 'Function', 'Array', 'String', 'Boolean', 'Number', 'Date', 'RegExp', 'Math', 'JSON',
 
   # Error Objects
   'Error', 'EvalError', 'RangeError', 'ReferenceError', 'SyntaxError', 'TypeError', 'URIError'
 ]
 
+# These builtins aren't objects, so it's easy.
 module.exports.builtinNames = builtinNames = builtinObjectNames.concat [
-  # Math related
+  # Math-related
   'NaN', 'Infinity', 'undefined', 'parseInt', 'parseFloat', 'isNaN', 'isFinite',
 
-  # URI related
+  # URI-related
   'decodeURI', 'decodeURIComponent', 'encodeURI', 'encodeURIComponent',
 
-  # Nope
+  # Nope!
   # 'eval'
 ]
 
-global = (-> @)()
-builtinClones = []
-builtinReal = []
+
+getOwnPropertyNames = Object.getOwnPropertyNames  # Grab all properties, including non-enumerable ones.
+copy = (source, target) ->
+  target[name] = source[name] for name in getOwnPropertyNames source
+  target
+
+cloneBuiltin = (obj) ->
+  masked = {}
+  copy obj, masked
+  if obj::
+    masked:: = {}
+    copy obj::, masked::
+  masked
+
+copyBuiltin = (source, target, resetPrototype) ->
+  copy source, target
+  if source::
+    copy source::, target::
+    if resetPrototype
+      # I wish I could just do target:: = {} above, but it doesn't work.
+      delete target::[name] for name in getOwnPropertyNames(target::) when not source::[name]?
+
+globalScope = (-> @)()
+builtinClones = []  # We make pristine copies of our builtins so that we can copy them overtop the real ones later.
+builtinReal = []  # These are the globals that the player will actually get to mess with, which we'll clean up after.
 module.exports.addedGlobals = addedGlobals = {}
 
 module.exports.addGlobal = addGlobal = (name, value) ->
-  # Ex.: Aether.addGlobal('Vector', require('lib/world/vector')), before the Aether instance is constructed
+  # Ex.: Aether.addGlobal('Vector', require('lib/world/vector')), before the Aether instance is constructed.
   return if addedGlobals[name]?
-  value ?= global[name]
-  builtinClones.push cloneBuiltin(value, name)
+  value ?= globalScope[name]
+  builtinClones.push cloneBuiltin value
   builtinReal.push value
   addedGlobals[name] = value
 
-addGlobal name for name in builtinObjectNames
+addGlobal name for name in builtinObjectNames  # Protect our initial builtin objects as globals.
 
-module.exports.restoreBuiltins = restoreBuiltins = (globals)->
-  ## Mask Builtins
+module.exports.restoreBuiltins = restoreBuiltins = (globals) ->
+  # Restore the original state of the builtins.
   for name, offset in builtinObjectNames
     real = builtinReal[offset]
     cloned = builtinClones[offset]
-    copyBuiltin cloned, real
-    global[name] = real
+    copyBuiltin cloned, real, true  # Write over the real object with the pristine clone.
+    globalScope[name] = addedGlobals[name] = real
   return
 
 
-module.exports.raiseDisabledFunctionConstructor = raiseDisabledFunctionConstructor = ->
-  # Should we make this a normal Aether UserCodeProblem?
+raiseDisabledFunctionConstructor = ->
   throw new Error '[Sandbox] Function::constructor is disabled. If you are a developer, please make sure you have a reference to your builtins.'
-
 
 module.exports.createSandboxedFunction = createSandboxedFunction = (functionName, code, aether) ->
   dummyContext = {}
-  globalRef = global ? window
   for name in builtinNames.concat aether.options.globals, Object.keys aether.language.runtimeGlobals
-    dummyContext[name] = addedGlobals[name] ? globalRef[name]
+    dummyContext[name] = addedGlobals[name]
   dummyFunction = raiseDisabledFunctionConstructor
   copyBuiltin Function, dummyFunction
   dummyContext.Function = dummyFunction
@@ -100,8 +94,7 @@ module.exports.createSandboxedFunction = createSandboxedFunction = (functionName
   dummyContext[functionName]
 
 module.exports.wrapWithSandbox = wrapWithSandbox = (self, fn) ->
-  # Wrap calls to aether function in a sandbox
-  # This is NOT safe with functions parsed outside of aether
+  # Wrap calls to Aether function in a sandbox. Not safe with functions parsed outside of Aether.
   ->
     Function::constructor = raiseDisabledFunctionConstructor
     try

@@ -96,3 +96,33 @@ describe "Global Scope Exploit Suite", ->
     aether.transpile code
     fn = aether.createFunction()
     fn()
+
+  it 'should protect builtin prototypes', ->
+    codeOne = '''
+      Array.prototype.diff = function(a) {
+        return this.filter(function(i) { return a.indexOf(i) < 0; });
+      };
+      var sweet = ["frogs", "toads"];
+      var salty = ["toads"];
+      return sweet.diff(salty);
+    '''
+    codeTwo = '''
+      var a = ["just", "three", "properties"];
+      var x = 0;
+      for (var key in a)
+        ++x;
+      return x;
+    '''
+    aether = new Aether()
+    aether.transpile codeOne
+    fn = aether.createFunction()
+    ret = fn()
+    expect(ret.length).toEqual(1)
+
+    aether = new Aether()
+    aether.transpile codeTwo
+    fn = aether.createFunction()
+    ret = fn()
+    expect(ret).toEqual 3
+    expect(Array.prototype.diff).toBeUndefined()
+    delete Array.prototype.diff  # Needed, or test never returns.
