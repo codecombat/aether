@@ -60,7 +60,7 @@ module.exports.addGlobal = addGlobal = (name, value) ->
 
 addGlobal name for name in builtinObjectNames  # Protect our initial builtin objects as globals.
 
-module.exports.restoreBuiltins = restoreBuiltins = (globals) ->
+module.exports.restoreBuiltins = restoreBuiltins = ->
   # Restore the original state of the builtins.
   for name, offset in builtinObjectNames
     real = builtinReal[offset]
@@ -76,7 +76,7 @@ raiseDisabledFunctionConstructor = ->
 module.exports.createSandboxedFunction = createSandboxedFunction = (functionName, code, aether) ->
   dummyContext = {}
   for name in builtinNames.concat aether.options.globals, Object.keys aether.language.runtimeGlobals
-    dummyContext[name] = addedGlobals[name]
+    dummyContext[name] = addedGlobals[name] ? globalScope[name]
   dummyFunction = raiseDisabledFunctionConstructor
   copyBuiltin Function, dummyFunction
   dummyContext.Function = dummyFunction
