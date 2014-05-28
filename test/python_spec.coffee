@@ -189,14 +189,34 @@ describe "Python Test suite", ->
       expect(aether.problems.errors[0].range).toEqual([ { ofs : 33, row : 2, col : 2 }, { ofs : 35, row : 2, col : 4 } ])
       expect(result).toEqual(50)
 
-    it "x()", ->
+    it "x() row 0", ->
       code = """x()"""
       aether.transpile(code)
       expect(aether.problems.errors.length).toEqual(1)
       expect(aether.problems.errors[0].message).toEqual("Missing `this.` keyword; should be `this.x`.")
-      expect(aether.problems.errors[0].range).toEqual([ { ofs: 4, row: 0, col: 4 }, { ofs: 7, row: 0, col: 7 } ])
-      # This latter one is what it actually should be; we need to account for the added indentation, in this and in other tests
-      #expect(aether.problems.errors[0].range).toEqual([ { ofs: 0, row: 0, col: 0 }, { ofs: 3, row: 0, col: 3 } ])
+      expect(aether.problems.errors[0].range).toEqual([ { ofs: 0, row: 0, col: 0 }, { ofs: 3, row: 0, col: 3 } ])
+
+    it "x() row 1", ->
+      code = """
+      y = 5
+      x()
+      """
+      aether.transpile(code)
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(aether.problems.errors[0].message).toEqual("Missing `this.` keyword; should be `this.x`.")
+      expect(aether.problems.errors[0].range).toEqual([ { ofs: 10, row: 1, col: 0 }, { ofs: 13, row: 1, col: 3 } ])
+
+    it "x() row 3", ->
+      code = """
+      y = 5
+      s = 'some other stuff'
+      if y is 5:
+        x()
+      """
+      aether.transpile(code)
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(aether.problems.errors[0].message).toEqual("Missing `this.` keyword; should be `this.x`.")
+      expect(aether.problems.errors[0].range).toEqual([ { ofs: 54, row: 3, col: 2 }, { ofs: 57, row: 3, col: 5 } ])
 
     it "incomplete string", ->
       code = """
