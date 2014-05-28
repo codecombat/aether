@@ -73,7 +73,7 @@ describe "Python Test suite", ->
           item = int(r * random.random())
           shuffle.append(item)
         return shuffle
-    
+
       def bubbleSort(data):
         sorted = False
         while not sorted:
@@ -85,13 +85,13 @@ describe "Python Test suite", ->
               data[i + 1] = t
               sorted = False
         return data
-    
+
       def isSorted(data):
         for i in range(len(data) - 1):
           if data[i] > data[i + 1]:
             return False
         return True
-    
+
       data = createShuffled(10)
       bubbleSort(data)
       return isSorted(data)
@@ -110,7 +110,7 @@ describe "Python Test suite", ->
   describe "Usage", ->
     it "self.doStuff via thisValue param", ->
       history = []
-      log = (s) -> history.push s 
+      log = (s) -> history.push s
       moveDown = () -> history.push 'moveDown'
       thisValue = {say: log, moveDown: moveDown}
       aetherOptions = {
@@ -195,6 +195,8 @@ describe "Python Test suite", ->
       expect(aether.problems.errors.length).toEqual(1)
       expect(aether.problems.errors[0].message).toEqual("Missing `this.` keyword; should be `this.x`.")
       expect(aether.problems.errors[0].range).toEqual([ { ofs: 4, row: 0, col: 4 }, { ofs: 7, row: 0, col: 7 } ])
+      # This latter one is what it actually should be; we need to account for the added indentation, in this and in other tests
+      #expect(aether.problems.errors[0].range).toEqual([ { ofs: 0, row: 0, col: 0 }, { ofs: 3, row: 0, col: 3 } ])
 
     it "incomplete string", ->
       code = """

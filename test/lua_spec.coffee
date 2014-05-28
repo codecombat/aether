@@ -1,6 +1,6 @@
 Aether = require '../aether'
 
-for language in ['lua', 'lua2']
+for language in ['lua']  #, 'lua2']
   do (language) ->
     aether = new Aether language: language
 
@@ -173,3 +173,34 @@ for language in ['lua', 'lua2']
           method = aether.createMethod thisValue
           aether.run method
           expect(history).toEqual([1, 4, 3, 5])
+
+      describe "Runtime problems", ->
+        it "Should capture runtime problems", ->
+          # 0123456789012345678901234567
+          code = """
+            self:explode()
+            self:exploooode()  -- should error
+            self:explode()
+          """
+          explosions = []
+          thisValue = explode: -> explosions.push 'explosion!'
+          aetherOptions = language: language
+          aether = new Aether aetherOptions
+          aether.transpile code
+          method = aether.createMethod thisValue
+          aether.run method
+          expect(explosions).toEqual(['explosion!'])
+          expect(aether.problems.errors.length).toEqual 1
+          problem = aether.problems.errors[0]
+          expect(problem.type).toEqual 'runtime'
+          expect(problem.level).toEqual 'error'
+          expect(problem.message).toMatch /exploooode/
+          expect(problem.range?.length).toEqual 2
+          [start, end] = problem.range
+          expect(start.ofs).toEqual 15
+          expect(start.row).toEqual 1
+          expect(start.col).toEqual 0
+          expect(end.ofs).toEqual 32
+          expect(end.row).toEqual 1
+          expect(end.col).toEqual 17
+          expect(problem.message).toMatch /Line 2/

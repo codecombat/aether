@@ -38,3 +38,54 @@ describe 'Clojure test suite', ->
     it 'should parse incomplete code in loose mode', ->
       aether.transpile('(clj->js (map inc [1 2 3')
       expect(aether.run()).toEqual [2, 3, 4]
+
+  describe "Runtime problems", ->
+    xit 'should error out on missing methods', ->
+      code = """
+        (.exploooode this)  ;; Should error
+      """
+      thisValue = explode: ->
+      aetherOptions = language: 'clojure'
+      aether = new Aether aetherOptions
+      aether.transpile code
+      method = aether.createMethod thisValue
+      aether.run method
+      expect(aether.problems.errors.length).toEqual 1
+      if problem = aether.problems.errors[0]
+        expect(problem.type).toEqual 'runtime'
+        expect(problem.level).toEqual 'error'
+        expect(problem.message).toMatch /exploooode/
+
+    xit "should capture runtime problems", ->
+      # 0123456789012345678901234567
+      code = """
+        (.moveXY this 30 26)
+        (.exploooode this 3)   ;; Should error
+        (.attackXY this 46 5)  ;; Shouldn't run
+      """
+      moves = []
+      attacks = []
+      thisValue =
+        moveXY: (x, y) -> moves.push {x: x, y: y}
+        attackXY: (x, y) -> attacks.push {x: x, y: y}
+      aetherOptions = language: 'clojure'
+      aether = new Aether aetherOptions
+      aether.transpile code
+      method = aether.createMethod thisValue
+      aether.run method
+      expect(moves).toEqual([{x: 30, y: 26}])
+      expect(attacks).toEqual([])
+      expect(aether.problems.errors.length).toEqual 1
+      if problem = aether.problems.errors[0]
+        expect(problem.type).toEqual 'runtime'
+        expect(problem.level).toEqual 'error'
+        expect(problem.message).toMatch /exploooode/
+        expect(problem.range?.length).toEqual 2
+        [start, end] = problem.range
+        expect(start.ofs).toEqual 21
+        expect(start.row).toEqual 1
+        expect(start.col).toEqual 0
+        expect(end.ofs).toEqual 38
+        expect(end.row).toEqual 1
+        expect(end.col).toEqual 18
+        expect(problem.message).toMatch /Line 2/
