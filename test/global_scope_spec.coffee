@@ -1,11 +1,14 @@
 Aether = require '../aether'
 
 describe "Global Scope Exploit Suite", ->
+  # This one should now be handled by strict mode, so this is undefined
   it 'should intercept "this"', ->
     code = "G=100;var globals=(function(){return this;})();return globals.G;"
     aether = new Aether()
     aether.transpile(code)
-    expect(aether.run()).toEqual 100
+    aether.run()
+    expect(aether.problems.errors.length).toEqual 1
+    expect(aether.problems.errors[0].message).toMatch /Cannot read property 'G' of undefined/
 
   it 'should disallow using eval', ->
     code = "eval('var x = 2; ++x;');"
@@ -83,9 +86,9 @@ describe "Global Scope Exploit Suite", ->
       # If we change the error message or whatever make sure we change it here too
       expect(e.message).toEqual '[Sandbox] Function::constructor is disabled. If you are a developer, please make sure you have a reference to your builtins.'
 
-  xit 'should not break on invalid code', ->
-    # Why doesn't this work? It should be catching the error. Works in production...
+  it 'should not break on invalid code', ->
     code = '''
+      var friend = {health: 10};
       if (friend.health < 5) {
           this.castRegen(friend);
           this.say("Healing " + friend.id + ".");
@@ -126,3 +129,30 @@ describe "Global Scope Exploit Suite", ->
     expect(ret).toEqual 3
     expect(Array.prototype.diff).toBeUndefined()
     delete Array.prototype.diff  # Needed, or test never returns.
+
+  it 'should disallow callee hacking', ->
+    safe = ["secret"]
+    music = []
+    inner = addMusic: (song) -> music.push song
+    outer = entertain: -> inner.sing()
+    outer.entertain.burninate = -> safe.pop()
+    code = '''
+      this.addMusic("trololo");
+      var caller = arguments.callee.caller;
+      this.addMusic("trololo")
+      var callerDepth = 0;
+      while (caller.caller && callerDepth++ < 10) {
+        this.addMusic(''+caller);
+        caller = caller.caller;
+        if (caller.burninate)
+          caller.burninate();
+      }
+      this.addMusic("trololo");
+    '''
+    aether = new Aether
+    aether.transpile code, functionName: 'sing'
+    inner.sing = aether.createMethod inner
+    expect(-> outer.entertain()).toThrow()
+    expect(safe.length).toEqual 1
+    expect(music.length).toEqual 1
+    expect(music[0]).toEqual 'trololo'

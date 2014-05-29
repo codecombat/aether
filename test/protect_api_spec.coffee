@@ -31,12 +31,17 @@ describe "API Protection Test Suite", ->
   enemy.apiProperties = ['id', 'pos', 'target', 'getTarget']
 
   it 'should not let you mess with original objects', ->
+    # Writes should fail to non-writable property, and in strict mode, they throw errors.
     code = """
+      var failures = 0;
       var enemy = this.getTarget();
-      enemy.id = 'Zelda';
+      try { delete enemy.id; } catch (e) { ++failures; }
+      try { enemy.id = 'Zelda'; } catch (e) { ++failures; }
       var enemy2 = this.getTarget();
-      enemy2.pos.z = this.pos.z = enemy2.getTarget().pos.z = 9001;
-      return enemy2.id;
+      try { enemy2.pos.z = 9001; } catch (e) { ++failures; }
+      try { this.pos.z = 9001; } catch (e) { ++failures; }
+      try { enemy2.getTarget().pos.z = 9001; } catch (e) { ++failures; }
+      return enemy2.id + failures;
     """
     aether = new Aether protectAPI: true
     aether.transpile code
@@ -45,19 +50,20 @@ describe "API Protection Test Suite", ->
     result = method()
     hero._aetherAPIMethodsAllowed = false
     expect(aether.problems.errors.length).toEqual 0
-    expect(result).toEqual 'Skeletor'  # Writes fail to non-writable property
+    expect(result).toEqual 'Skeletor5'
     expect(enemy.id).toEqual 'Skeletor'
     expect(hero.pos.z).not.toEqual 9001
     expect(enemy.pos.z).not.toEqual 9001
 
   it 'should restore original objects when used as function arguments', ->
     code = """
+      var failures = 0;
       var hero = this.getTarget().getTarget();
       var heroID = hero.id;
       hero.setTarget(hero);
       var hero2 = hero.getTarget();
-      hero2.id = 'Pikachu';
-      return heroID;
+      try { hero2.id = 'Pikachu'; } catch (e) { ++failures; }
+      return heroID + failures;
     """
     aether = new Aether protectAPI: true
     aether.transpile code
@@ -66,7 +72,7 @@ describe "API Protection Test Suite", ->
     result = method()
     hero._aetherAPIMethodsAllowed = false
     expect(aether.problems.errors.length).toEqual 0
-    expect(result).toEqual "He-Man"
+    expect(result).toEqual "He-Man1"
     expect(hero.id).toEqual 'He-Man'
     expect(hero.target.id).toEqual 'He-Man'
     expect(enemy.id).toEqual 'Skeletor'
@@ -81,17 +87,19 @@ describe "API Protection Test Suite", ->
     hand.getEnemies = foot.getEnemies = butt.getEnemies = -> @enemies
 
     code = """
+      var failures = 0;
       var enemies = this.getEnemies();
       enemies[1] = enemies[0];
-      enemies[0].id = 'The Hammer';
+      try { enemies[0].id = 'The Hammer'; } catch (e) { ++failures; }
       enemies.push(enemies[0]);
       var thisWorld = this.world;
-      this.world = 'Public';
+      try { this.world = 'Public'; } catch (e) { ++failures; }
       var theirWorld = enemies[0].world;
-      enemies[0].world = 'Mine';
+      try { enemies[0].world = 'Mine'; } catch (e) { ++failures; }
       return {ourWorld: thisWorld, theirWorld: theirWorld,
               ourEnemies: this.enemies, theirEnemies: enemies[0].enemies,
-              ourWorldAttempted: this.world, ourEnemiesAttempted: enemies};
+              ourWorldAttempted: this.world, ourEnemiesAttempted: enemies,
+              failures: failures};
     """
     aether = new Aether protectAPI: true
     aether.transpile code
@@ -112,6 +120,7 @@ describe "API Protection Test Suite", ->
     expect(result.ourWorldAttempted).toEqual 'Public'  # Not in API, they can write their own values
     expect(result.ourEnemiesAttempted.length).toEqual 2  # Don't let them modify the array
     expect(result.ourEnemiesAttempted[0].id).toEqual 'Foot'  # Non-writable
+    expect(result.failures).not.toEqual 0
 
   it 'should handle instances of classes', ->
     p0 = new Vector 0, 0, 0
@@ -128,11 +137,14 @@ describe "API Protection Test Suite", ->
       apiProperties: ['id', 'pos', 'target', 'target2']
       apiMethods: ['setTarget', 'move']
     code = """
-      this.pos.constructor.subtract = this.pos.constructor.add;
-      this.pos.subtract = this.target.subtract = this.target2.subtract = this.pos.add;
+      var failures = 0;
+      try { this.pos.constructor.subtract = this.pos.constructor.add; } catch (e) { ++failures; } // no error I guess
+      try { this.pos.subtract = this.pos.add; } catch (e) { ++failures; }
+      try { this.target.subtract = this.pos.add; } catch (e) { ++failures; }
+      try { this.target2.subtract = this.pos.add; } catch (e) { ++failures; }
       var points = [];
       points.push(this.pos.copy());  // points[0] == p0
-      this.pos.x = this.target.x;
+      try { this.pos.x = this.target.x; } catch (e) { ++failures; }
       points.push(this.pos.copy());  // points[1] == p0
       this.pos.add(this.target);
       points.push(this.pos.copy());  // points[2] == p0
@@ -141,13 +153,13 @@ describe "API Protection Test Suite", ->
       this.setTarget(this.target2);
       this.move();
       points.push(this.pos.copy());  // points[4] == p2
-      return points;
+      return {points: points, failures: failures};
     """
     aether = new Aether protectAPI: true
     aether.transpile code
     method = aether.createMethod milo
     milo._aetherAPIMethodsAllowed = true
-    points = method()
+    {points, failures} = method()
     milo._aetherAPIMethodsAllowed = false
     expect(aether.problems.errors.length).toEqual 0
     expect(milo.pos).toBe p0
@@ -158,22 +170,27 @@ describe "API Protection Test Suite", ->
     expect(points[2].equals(originalPoints[0])).toBe true
     expect(points[3].equals(originalPoints[1])).toBe true
     expect(points[4].equals(originalPoints[2])).toBe true
+    expect(failures).toBeGreaterThan 3
 
   it 'should protect function arguments', ->
     p0 = new Vector 10, 10, 10
     p1 = new Vector 100, 100, 100
     code = """
-      target.x = 5;
-      home.y = 50;
-      return target.z;
+      var failures = 0;
+      try { target.x = 5; } catch (e) { ++failures; }
+      try { home.y = 50; } catch (e) { ++failures; }
+      return {tx: target.x, hy: home.y, tz: target.z, failures: failures};
     """
     aether = new Aether protectAPI: true, functionParameters: ['target', 'home', 'nothing']
     aether.transpile code
-    result = aether.run null, p0, p1
+    {tx, hy, tz, failures} = aether.run null, p0, p1
     expect(aether.problems.errors.length).toEqual 0
     expect(p0.x).toEqual 10
     expect(p1.y).toEqual 100
-    expect(result).toEqual 10
+    expect(tx).toEqual 10
+    expect(hy).toEqual 100
+    expect(tz).toEqual 10
+    expect(failures).toEqual 2
 
   it 'should protect return values', ->
     code = """

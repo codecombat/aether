@@ -184,7 +184,7 @@ module.exports.makeInstrumentCalls = makeInstrumentCalls = (varNames) ->
       node.update "_aether.logCallEnd(); #{node.source()}"
     # Look at the top variable declaration inside our appropriately nested function to see where the call starts
     return unless node.type is S.VariableDeclaration
-    node.update "_aether.logCallStart(_aether._userInfo); #{node.source()}"  # TODO: pull in arguments?
+    node.update "'use strict'; _aether.logCallStart(_aether._userInfo); #{node.source()}"  # TODO: pull in arguments?
 
 module.exports.makeProtectAPI = makeProtectAPI = (parameters) ->
   parameters ?= []

@@ -83,10 +83,7 @@ module.exports = class JavaScript extends Language
   wrap: (rawCode, aether) ->
     @wrappedCodePrefix ?="""
     function #{aether.options.functionName or 'foo'}(#{aether.options.functionParameters.join(', ')}) {
-    \"use strict\";
     """
-    # Should add \n after? (Not `"use strict";this.moveXY(30, 26);` on one line.)
-    # TODO: Try it and make sure our line counts are fine.
     @wrappedCodeSuffix ?= "\n}"
     @wrappedCodePrefix + rawCode + @wrappedCodeSuffix
 
@@ -101,6 +98,7 @@ module.exports = class JavaScript extends Language
 
   # Using a third-party parser, produce an AST in the standardized Mozilla format.
   parse: (code, aether) ->
+    # loc: https://github.com/codecombat/aether/issues/71
     ast = esprima.parse code, {range: true, loc: true}
 
   # Optional: if parseDammit() is implemented, then if parse() throws an error, we'll try again using parseDammit().
