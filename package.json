@@ -31,7 +31,6 @@
     "jshint": "~2.3.0",
     "lodash": "~2.4.1",
     "lua2js": "https://github.com/basicer/lua2js-dist/tarball/master",
-    "luapegjs": "^0.3.0",
     "source-map": "~0.1.29",
     "traceur": "0.0.25",
     "tv4": "~1.0.7"

@@ -38,3 +38,35 @@ describe "Io test suite", ->
       method = aether.createMethod thisValue
       aether.run method
       expect(history).toEqual(['moveDown', 'hello'])
+
+  describe "Runtime problems", ->
+    it "Should capture runtime problems", ->
+      # 0123456789012345678901234567
+      code = """
+        explode
+        exploooode  // should error
+        explode
+      """
+      explosions = []
+      thisValue = explode: -> explosions.push 'explosion!'
+      aetherOptions = language: 'io'
+      aether = new Aether aetherOptions
+      aether.transpile code
+      method = aether.createMethod thisValue
+      aether.run method
+      expect(explosions).toEqual(['explosion!'])
+      expect(aether.problems.errors.length).toEqual 1
+      problem = aether.problems.errors[0]
+      expect(problem.type).toEqual 'runtime'
+      expect(problem.level).toEqual 'error'
+      #expect(problem.message).toMatch /exploooode/  # would be nice
+      expect(problem.range?.length).toEqual 2
+      [start, end] = problem.range
+      # These are not close.
+      #expect(start.ofs).toEqual 8
+      #expect(start.row).toEqual 1
+      #expect(start.col).toEqual 0
+      #expect(end.ofs).toEqual 18
+      #expect(end.row).toEqual 1
+      #expect(end.col).toEqual 10
+      #expect(problem.message).toMatch /Line 2/

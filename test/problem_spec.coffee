@@ -42,6 +42,19 @@ describe "Problem Test Suite", ->
       expect(problem.type).toEqual 'transpile'
       expect(problem.level).toEqual 'error'
 
+    it "Shouldn't die on more invalid crazy code", ->
+      code = """
+        var coins = {'emerald': []};
+        coins.'emerald'.push({type: 'emerald', bountyGold: 5});
+      """
+      aether = new Aether {}
+      expect(-> aether.transpile(code)).not.toThrow()
+      aether.run()
+      expect(aether.problems.errors.length).toBeGreaterThan 0
+      problem = aether.problems.errors[0]
+      expect(problem.type).toEqual 'transpile'
+      expect(problem.level).toEqual 'error'
+
     it "Should hard-cap execution to break infinite loops.", ->
       code = """
         while(true) {

@@ -19,6 +19,7 @@ languages = require './languages/languages'
 module.exports = class Aether
   @execution: execution
   @addGlobal: protectBuiltins.addGlobal  # Use before instantiating Aether instances
+  @replaceBuiltin: protectBuiltins.replaceBuiltin
   @globals: protectBuiltins.addedGlobals
 
   # Current call depth
@@ -193,8 +194,8 @@ module.exports = class Aether
     try
       normalizedAST = normalizer.normalize transformedAST, {}
     catch error
-      console.log "JS_WALA couldn't handle", normalizedAST, "\ngave error:", error.toString()
-      problemOptions = error: error, message: 'Syntax error.', kind: 'NormalizationError', code: '', codePrefix: '', reporter: 'aether', type: 'transpile', hint: 'Possibly a bug with advanced JavaScript feature parsing.'
+      console.log "JS_WALA couldn't handle", transformedAST, "\ngave error:", error.toString()
+      problemOptions = error: error, message: 'Syntax error during code normalization.', kind: 'NormalizationError', code: '', codePrefix: '', reporter: 'aether', type: 'transpile', hint: 'Possibly a bug with advanced JavaScript feature parsing.'
       @addProblem @createUserCodeProblem problemOptions
       return ''
     normalizedNodeIndex = []
@@ -203,7 +204,14 @@ module.exports = class Aether
       node.loc = {start: {line: 1, column: normalizedNodeIndex.length}, end: {line: 1, column: normalizedNodeIndex.length + 1}}
       normalizedNodeIndex.push node
 
-    normalized = escodegen.generate normalizedAST, {sourceMap: @options.functionName or 'foo', sourceMapWithCode: true}
+    try
+      normalized = escodegen.generate normalizedAST, {sourceMap: @options.functionName or 'foo', sourceMapWithCode: true}
+    catch error
+      #console.log "escodegen couldn't handle", normalizedAST, "\ngave error:", error.toString()
+      problemOptions = error: error, message: 'Syntax error during code generation.', kind: 'CodeGenerationError', code: '', codePrefix: '', reporter: 'aether', type: 'transpile', hint: 'Possibly a bug with advanced JavaScript feature parsing.'
+      @addProblem @createUserCodeProblem problemOptions
+      return ''
+
     normalizedCode = normalized.code
     normalizedSourceMap = normalized.map
 
@@ -231,7 +239,7 @@ module.exports = class Aether
         purifiedCode = @traceurify instrumentedCode
       catch error
         console.log "Traceur couldn't handle", instrumentedCode, "\ngave error:", error.toString()
-        problemOptions = error: error, code: instrumentedCode, codePrefix: '', reporter: 'aether', kind: 'TraceurError', type: 'transpile', message: 'Syntax error.', hint: 'Possibly a bug with break/continue parsing.'
+        problemOptions = error: error, code: instrumentedCode, codePrefix: '', reporter: 'aether', kind: 'TraceurError', type: 'transpile', message: 'Syntax error during code transmogrification.', hint: 'Possibly a bug with break/continue parsing.'
         @addProblem @createUserCodeProblem problemOptions
         return ''
     else

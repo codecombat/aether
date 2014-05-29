@@ -60,13 +60,19 @@ module.exports.addGlobal = addGlobal = (name, value) ->
 
 addGlobal name for name in builtinObjectNames  # Protect our initial builtin objects as globals.
 
+module.exports.replaceBuiltin = replaceBuiltin = (name, value) ->
+  # Say we want to protect a new version of Math (for Math.random) afterwards. We'll use this.
+  builtinIndex = _.indexOf builtinReal, value
+  return console.error "We can't replace builtin #{name}, because we never added it:", value if builtinIndex is -1
+  builtinClones[builtinIndex] = cloneBuiltin value
+
 module.exports.restoreBuiltins = restoreBuiltins = ->
   # Restore the original state of the builtins.
   for name, offset in builtinObjectNames
     real = builtinReal[offset]
     cloned = builtinClones[offset]
     copyBuiltin cloned, real, true  # Write over the real object with the pristine clone.
-    globalScope[name] = addedGlobals[name] = real
+    globalScope[name] = real
   return
 
 
@@ -86,7 +92,7 @@ module.exports.createSandboxedFunction = createSandboxedFunction = (functionName
     wrapper = new Function ['_aether'], code
     wrapper.call dummyContext, aether
   catch e
-    console.warn "Error creating function, so returning empty function instead. Error: #{e}"  #\nCode:", code
+    console.warn "Error creating function. Returning empty function instead. Error: #{e}"  #\nCode:", code
     problem = aether.createUserCodeProblem reporter: 'aether', type: 'transpile', kind: 'Untranspilable', message: 'Code could not be compiled. Check syntax.', error: e, code: code, codePrefix: ''
     aether.addProblem problem
     return ->

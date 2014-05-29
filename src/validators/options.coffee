@@ -27,7 +27,7 @@ module.exports = (options) ->
         type: 'string'
         description: "Input language"
         minLength:1
-        'enum': ['javascript', 'coffeescript', 'python', 'clojure', 'lua', 'lua2', 'io']
+        'enum': ['javascript', 'coffeescript', 'python', 'clojure', 'lua', 'io']
       languageVersion:
         oneOf: [
           type: 'string'
