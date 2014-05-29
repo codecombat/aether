@@ -2,6 +2,7 @@
 
 parser = require 'filbert'
 parser_loose = require 'filbert/filbert_loose'
+estraverse = require 'estraverse'
 
 Language = require './language'
 
@@ -39,17 +40,26 @@ module.exports = class Python extends Language
   # Using a third-party parser, produce an AST in the standardized Mozilla format.
   parse: (code, aether) ->
     ast = parser.parse code, {locations: false, ranges: true}
+    fixLocations ast
     selfToThis ast
     ast
 
   parseDammit: (code, aether) ->
     try
       ast = parser_loose.parse_dammit code, {locations: false, ranges: true}
+      fixLocations ast
       selfToThis ast
     catch error
       ast = {type: "Program", body:[{"type": "EmptyStatement"}]}
     ast
 
+
+fixLocations = (ast) ->
+  wrappedCodeIndent = 4
+  estraverse.traverse ast,
+    leave: (node, parent) ->
+      if node.range?
+        node.range = [node.range[0] - wrappedCodeIndent, node.range[1] - wrappedCodeIndent]
 
 # 'this' is not a keyword in Python, so it does not parse to a ThisExpression
 # Instead, we expect the variable 'self', and map it to a ThisExpression

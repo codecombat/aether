@@ -175,7 +175,6 @@ module.exports = class Aether
     try
       [transformedCode, transformedAST] = @transform wrappedCode, preNormalizationTransforms, @language.parse, true
     catch error
-      # TODO: test if using @language.wrappedCodePrefix is better here than ''
       problemOptions = error: error, code: wrappedCode, codePrefix: @language.wrappedCodePrefix, reporter: @language.parserID, kind: error.index or error.id, type: 'transpile'
       @addProblem @createUserCodeProblem problemOptions
       return '' unless @language.parseDammit
