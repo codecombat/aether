@@ -22,7 +22,7 @@ describe "Io test suite", ->
       expect(ioEval("""fact := method(n, if (n == 0, 1, n * fact (n - 1))); fact(5)""")).toBe(120)
 
   describe "Usage", ->
-    it "moveRight, say", ->
+    it "invoking methods of an arbitrary object", ->
       history = []
       log = (s) ->
         expect(s).toEqual "hello"
