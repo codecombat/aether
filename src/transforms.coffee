@@ -186,21 +186,26 @@ module.exports.makeInstrumentCalls = makeInstrumentCalls = (varNames) ->
     return unless node.type is S.VariableDeclaration
     node.update "'use strict'; _aether.logCallStart(_aether._userInfo); #{node.source()}"  # TODO: pull in arguments?
 
-module.exports.makeProtectAPI = makeProtectAPI = (parameters) ->
-  parameters ?= []
-  return (node) ->
-    return unless node.type in [S.CallExpression, S.ThisExpression, S.VariableDeclaration, S.ReturnStatement]
-    level = getFunctionNestingLevel node
-    return unless level > 1
-    if node.type is S.CallExpression
-      for arg in node.arguments
-        arg.update "_aether.restoreAPIClone(#{arg.source()})"
-    if node.parent.type is S.AssignmentExpression or node.type is S.ThisExpression
-      node.update "_aether.createAPIClone(#{node.source()})"
-    else if level is 2
-      if node.type is S.VariableDeclaration and parameters.length
-        protectors = ("#{parameter} = _aether.createAPIClone(#{parameter});" for parameter in parameters)
-        node.update "#{node.source()} #{protectors.join ' '}"
-      else if node.type is S.ReturnStatement and arg = node.argument
-        arg.update "_aether.restoreAPIClone(#{arg.source()})"
-    #console.log "protectAPI?", node, node.source()
+module.exports.protectAPI = (node) ->
+  return unless node.type in [S.CallExpression, S.ThisExpression, S.VariableDeclaration, S.ReturnStatement]
+  level = getFunctionNestingLevel node
+  return unless level > 1
+
+  # Restore clones when passing to functions or returning them.
+  if node.type is S.CallExpression
+    for arg in node.arguments
+      arg.update "_aether.restoreAPIClone(#{arg.source()})"
+  else if node.type is S.ReturnStatement and arg = node.argument
+    arg.update "_aether.restoreAPIClone(#{arg.source()})"
+
+  # Create clones from arguments and function return values.
+  if node.parent.type is S.AssignmentExpression or node.type is S.ThisExpression
+    node.update "_aether.createAPIClone(#{node.source()})"
+  else if node.type is S.VariableDeclaration
+    parameters = (param.name for param in (node.parent.parent.params ? []))
+    protectors = ("#{parameter} = _aether.createAPIClone(#{parameter});" for parameter in parameters)
+    argumentsProtector = "for(var __argIndexer = 0; __argIndexer < arguments.length; ++__argIndexer) arguments[__argIndexer] = _aether.createAPIClone(arguments[__argIndexer]);"
+    node.update "#{node.source()} #{protectors.join ' '} #{argumentsProtector}"
+    #console.log "variable declaration #{node.source()} grandparent is", node.parent.parent
+
+  #console.log "protectAPI?", node, node.source()

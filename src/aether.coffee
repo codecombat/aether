@@ -225,7 +225,7 @@ module.exports = class Aether
       postNormalizationTransforms.unshift transforms.makeInstrumentStatements()
     postNormalizationTransforms.unshift transforms.makeInstrumentCalls() if @options.includeMetrics or @options.includeFlow
     postNormalizationTransforms.unshift transforms.makeFindOriginalNodes originalNodeRanges, @language.wrappedCodePrefix, normalizedSourceMap, normalizedNodeIndex
-    postNormalizationTransforms.unshift transforms.makeProtectAPI @options.functionParameters if @options.protectAPI
+    postNormalizationTransforms.unshift transforms.protectAPI if @options.protectAPI
     postNormalizationTransforms.unshift transforms.interceptThis
     postNormalizationTransforms.unshift transforms.interceptEval
     try

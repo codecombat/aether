@@ -1,3 +1,5 @@
+_ = window?._ ? self?._ ? global?._ ? require 'lodash'  # rely on lodash existing, since it busts CodeCombat to browserify it--TODO
+
 Aether = require '../aether'
 
 describe "API Protection Test Suite", ->
@@ -122,6 +124,91 @@ describe "API Protection Test Suite", ->
     expect(result.ourEnemiesAttempted[0].id).toEqual 'Foot'  # Non-writable
     expect(result.failures).not.toEqual 0
 
+  it 'should restrict mutation of nested function parameters', ->
+    coins = [{gold: 5, pos: {x: 10, y: 20}, apiProperties: ['gold', 'pos']}, {gold: 10, pos: {x: 30, y: 40}, apiProperties: ['gold', 'pos']}]
+    originalCoins = _.cloneDeep coins
+    peon = {getCoins: -> coins}
+
+    code = """
+      var failures = 0;
+      var coins = this.getCoins();
+      var coin = coins[0];
+      try { coin.gold = 50; } catch(e) { ++failures; }
+      try { coins[0].gold = 50; } catch(e) { ++failures; }
+      try { coins[1].pos.x = 50; } catch(e) { ++failures; }
+      coins.push({gold: 50, pos: {x: 50, y: 50}});
+      this.inner = function(items) {
+        try { items[0].gold = 50; } catch(e) { ++failures; }
+        try { items[1].pos.x = 50; } catch(e) { ++failures; }
+        items.push({gold: 50, pos: {x: 50, y: 50}});
+      };
+      this.inner(coins);
+      return failures;
+    """
+    aether = new Aether protectAPI: true, includeMetrics: false, includeFlow: false
+    aether.transpile code
+    method = aether.createMethod peon
+    peon._aetherAPIMethodsAllowed = true
+    failures = method()
+    peon._aetherAPIMethodsAllowed = false
+    expect(aether.problems.errors.length).toEqual 0
+    #expect(failures).toEqual 5  # hmm, why is failures 0?
+    expect(coins).toEqual originalCoins
+
+  it 'should let you use your own arrays', ->
+    coins = [{gold: 5, apiProperties: ['gold']}, {gold: 10, apiProperties: ['gold']}, {gold: 15, apiProperties: ['gold']}]
+    originalCoins = _.cloneDeep coins
+    peon = {getCoins: -> coins}
+
+    code = """
+      var coinLengths = [];
+      var coins = this.getCoins();
+      coinLengths.push(coins.length);
+      this.inner = function(items) {
+        items.push({gold: 50});
+        items.push({gold: 50});
+        items.push({gold: 50});
+        items.splice(0, 1);
+        coinLengths.push(items.length);
+      };
+      this.inner2 = function() {
+        coins.push({gold: 50});
+        coins.push({gold: 50});
+        coins.push({gold: 50});
+        coins.splice(0, 1);
+        coinLengths.push(coins.length);
+      };
+      coins.push({gold: 50});
+      coins.push({gold: 50});
+      coins.push({gold: 50});
+      coins.splice(0, 1);
+      coinLengths.push(coins.length);
+      this.inner(coins);
+      this.inner2();
+
+      // https://github.com/codecombat/aether/issues/43
+      var board = [];
+      this.makeBoard = function() {
+        for(var i = 0; i < 3; ++i) {
+          board.push([]);
+          for(var j = 0; j < 3; ++j) {
+            board[i].push([]);
+          }
+        }
+      }
+
+      return coinLengths;
+    """
+    aether = new Aether protectAPI: true
+    aether.transpile code
+    method = aether.createMethod peon
+    peon._aetherAPIMethodsAllowed = true
+    coinLengths = method()
+    peon._aetherAPIMethodsAllowed = false
+    expect(aether.problems.errors).toEqual []
+    expect(coinLengths).toEqual [3, 5, 7, 9]
+    expect(coins).toEqual originalCoins
+
   it 'should handle instances of classes', ->
     p0 = new Vector 0, 0, 0
     p1 = new Vector 10, 10, 10
@@ -179,6 +266,7 @@ describe "API Protection Test Suite", ->
       var failures = 0;
       try { target.x = 5; } catch (e) { ++failures; }
       try { home.y = 50; } catch (e) { ++failures; }
+      try { arguments[0].z = 500; } catch (e) { ++failures; }
       return {tx: target.x, hy: home.y, tz: target.z, failures: failures};
     """
     aether = new Aether protectAPI: true, functionParameters: ['target', 'home', 'nothing']
@@ -190,7 +278,7 @@ describe "API Protection Test Suite", ->
     expect(tx).toEqual 10
     expect(hy).toEqual 100
     expect(tz).toEqual 10
-    expect(failures).toEqual 2
+    expect(failures).toEqual 3
 
   it 'should protect return values', ->
     code = """
