@@ -107,6 +107,63 @@ describe "Python Test suite", ->
       aether.transpile(code)
       expect(aether.run()).toBe('prop1')
 
+    it "class", ->
+      code = """
+      class MyClass:
+        i = 123
+        def __init__(self, i):
+          self.i = i
+        def f(self):
+          return self.i
+      x = MyClass(456)
+      return x.f()
+      """
+      aether.transpile(code)
+      expect(aether.run()).toEqual(456)
+
+    it "L[0:2]", ->
+      code = """
+      L = [1, 45, 6, -9]
+      return L[0:2]
+      """
+      aether.transpile(code)
+      expect(aether.run()).toEqual([1, 45])
+
+    it "L[f(2)::9 - (2 * 5)]", ->
+      code = """
+      def f(x):
+        return x
+      L = [0, 1, 2, 3, 4]
+      return L[f(2)::9 - (2 * 5)]
+      """
+      aether.transpile(code)
+      expect(aether.run()).toEqual([2, 1, 0])
+
+    it "T[-1:-3:-1]", ->
+      code = """
+      T = (0, 1, 2, 3, 4)
+      return T[-1:-3:-1]
+      """
+      aether.transpile(code)
+      expect(aether.run()).toEqual([4, 3])
+
+    it "[str(round(pi, i)) for i in range(1, 6)]", ->
+      code = """
+      pi = 3.1415926
+      L = [str(round(pi, i)) for i in range(1, 6)]
+      return L
+      """
+      aether.transpile(code)
+      expect(aether.run()).toEqual(['3.1', '3.14', '3.142', '3.1416', '3.14159'])
+      
+    it "[(x*2, y) for x in range(4) if x > 1 for y in range(2)]", ->
+      code = """
+      L = [(x*2, y) for x in range(4) if x > 1 for y in range(2)]
+      return L[1]
+      """
+      aether.transpile(code)
+      expect(aether.run()).toEqual([4, 1])
+
   describe "Usage", ->
     it "self.doStuff via thisValue param", ->
       history = []
