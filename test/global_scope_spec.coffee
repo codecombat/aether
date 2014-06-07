@@ -149,10 +149,36 @@ describe "Global Scope Exploit Suite", ->
       }
       this.addMusic("trololo");
     '''
-    aether = new Aether
-    aether.transpile code, functionName: 'sing'
+    aether = new Aether functionName: 'sing'
+    aether.transpile code
     inner.sing = aether.createMethod inner
     expect(-> outer.entertain()).toThrow()
     expect(safe.length).toEqual 1
     expect(music.length).toEqual 1
     expect(music[0]).toEqual 'trololo'
+
+  it 'should disallow prepareStackTrace hacking', ->
+    # https://github.com/bcoe/sandcastle/issues/31
+    code = """
+      var getStackframes = function x(a,b,c){function d(e,f){d=f}c=(b=Error)[a='prepareStackTrace'];b.captureStackTrace(b[a]=d,x);d.stack;b[a]=c;return d};
+
+      var payload = \"var fs = require('fs');fs.writeFileSync('owned.txt', 'You could have been owned now\\n');exports.api = {};\";
+
+      var jsonPayload = JSON.stringify({source:\";exit('');\", sourceAPI:payload});
+
+      status = 'safe'
+      // get frame at Sandbox.executeScript(connection, data)
+      getStackframes().forEach(function(frame) {
+        if (frame.getFunctionName() != 'Sandbox.executeScript')
+          return;
+        status = 'owned'
+
+        frame.getFunction().call(frame.getThis(), null, jsonPayload);
+        exit();
+      });
+      return status
+    """
+    aether = new Aether
+    aether.transpile code
+    ret = aether.run()
+    expect(ret).toEqual 'safe'
