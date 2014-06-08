@@ -158,27 +158,33 @@ describe "Global Scope Exploit Suite", ->
     expect(music[0]).toEqual 'trololo'
 
   it 'should disallow prepareStackTrace hacking', ->
-    # https://github.com/bcoe/sandcastle/issues/31
+    # https://github.com/codecombat/aether/issues/81
     code = """
-      var getStackframes = function x(a,b,c){function d(e,f){d=f}c=(b=Error)[a='prepareStackTrace'];b.captureStackTrace(b[a]=d,x);d.stack;b[a]=c;return d};
+      var getStackframes = function () {
+        var capture;
+        Error.prepareStackTrace = function(e, t) {
+          return t;
+        };
+        try {
+          capture.error();
+        } catch (e) {
+          capture = e.stack;
+        }
+        return capture;
+      };
 
-      var payload = \"var fs = require('fs');fs.writeFileSync('owned.txt', 'You could have been owned now\\n');exports.api = {};\";
-
-      var jsonPayload = JSON.stringify({source:\";exit('');\", sourceAPI:payload});
-
-      status = 'safe'
-      // get frame at Sandbox.executeScript(connection, data)
-      getStackframes().forEach(function(frame) {
-        if (frame.getFunctionName() != 'Sandbox.executeScript')
+      var boop = [];
+      getStackframes().forEach(function(x) {
+        if(x.getFunctionName() != 'module.exports.Aether.run')
           return;
-        status = 'owned'
-
-        frame.getFunction().call(frame.getThis(), null, jsonPayload);
-        exit();
+        boop.push(x.getFunctionName());
+        boop.push(x.getFunction());
       });
-      return status
+
+      return boop;
     """
     aether = new Aether
     aether.transpile code
     ret = aether.run()
-    expect(ret).toEqual 'safe'
+    expect(ret).toEqual null
+    expect(aether.problems.errors).not.toEqual []

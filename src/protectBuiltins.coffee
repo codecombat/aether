@@ -23,6 +23,7 @@ module.exports.builtinNames = builtinNames = builtinObjectNames.concat [
   # 'eval'
 ]
 
+Object.freeze Error  # https://github.com/codecombat/aether/issues/81
 
 getOwnPropertyNames = Object.getOwnPropertyNames  # Grab all properties, including non-enumerable ones.
 copy = (source, target) ->
