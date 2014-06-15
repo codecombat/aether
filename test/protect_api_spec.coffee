@@ -313,12 +313,16 @@ describe "API Protection Test Suite", ->
       mama._aetherAPIMethodsAllowed = true
       expect(method()).toEqual i + 1
       mama._aetherAPIMethodsAllowed = false
-      for prop of mama.__aetherAPIClone when typeof mama[prop] is 'undefined' and not (prop in (mama.apiUserProperties ? []))
+
+      # Get the API clone of the mama object
+      clone = aether.protectAPIValuesToClones[mama.__aetherID]
+
+      for prop of clone when typeof mama[prop] is 'undefined' and not (prop in (mama.apiUserProperties ? []))
         mama.apiUserProperties ?= []
         mama.apiUserProperties.push prop
       for prop in (mama.apiUserProperties ? [])
-        mama[prop] = mama.__aetherAPIClone[prop]
-      delete mama.__aetherAPIClone
+        mama[prop] = clone[prop]
+
       expect(mama.infants).toEqual i + 1
       expect(mama.namesUsed.length).toEqual i + 1
       expect(mama.namesLeft.length).toEqual 2 - i
