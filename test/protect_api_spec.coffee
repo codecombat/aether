@@ -330,15 +330,18 @@ describe "API Protection Test Suite", ->
     code = """
       function Foo(arr) {
           this.arr = arr;
-          this.bar();
+          this.val = this.bar();
       }
 
       Foo.prototype.bar = function() {
           return this.arr[0];
       };
 
-      new Foo([1, 2, 3]);
+      return new Foo([1, 2, 3]).val;
     """
     aether = new Aether protectAPI: true
     aether.transpile code
     expect(aether.problems.errors.length).toEqual 0
+    that = {}
+    method = aether.createMethod that
+    expect(method()).toBe 1
