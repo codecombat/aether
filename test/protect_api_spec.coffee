@@ -344,4 +344,6 @@ describe "API Protection Test Suite", ->
     expect(aether.problems.errors.length).toEqual 0
     that = {}
     method = aether.createMethod that
-    expect(method()).toBe 1
+    result = aether.run method
+    expect(result).toBe 1
+    expect(aether.problems.errors).toEqual []
