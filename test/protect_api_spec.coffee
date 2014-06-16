@@ -324,3 +324,26 @@ describe "API Protection Test Suite", ->
       expect(mama.namesLeft.length).toEqual 2 - i
       expect(mama.petShouldEat[0]).toEqual mama.namesUsed[mama.namesUsed.length - 1]
       expect(mama.pets.length).toEqual 1
+
+  it 'should allow assigning complex prototypes to this', ->
+    # See: https://github.com/codecombat/codecombat/issues/654
+    code = """
+      function Foo(arr) {
+          this.arr = arr;
+          this.val = this.bar();
+      }
+
+      Foo.prototype.bar = function() {
+          return this.arr[0];
+      };
+
+      return new Foo([1, 2, 3]).val;
+    """
+    aether = new Aether protectAPI: true
+    aether.transpile code
+    expect(aether.problems.errors.length).toEqual 0
+    that = {}
+    method = aether.createMethod that
+    result = aether.run method
+    expect(result).toBe 1
+    expect(aether.problems.errors).toEqual []
