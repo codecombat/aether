@@ -35,7 +35,7 @@ module.exports = class Aether
     @originalOptions = _.cloneDeep options  # TODO: slow
 
     # Merge the given options with the defaults.
-    defaultsCopy = _.extend({}, defaults)
+    defaultsCopy = _.cloneDeep defaults
     @options = _.merge defaultsCopy, options
 
     @setLanguage @options.language, @options.languageVersion
