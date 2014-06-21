@@ -3,6 +3,7 @@ _ = window?._ ? self?._ ? global?._ ? require 'lodash'  # rely on lodash existin
 jshint = require('jshint').JSHINT
 esprima = require 'esprima'  # getting our Esprima Harmony
 acorn_loose = require 'acorn/acorn_loose'  # for if Esprima dies. Note it can't do ES6.
+escodegen = require 'escodegen'
 
 Language = require './language'
 traversal = require '../traversal'
