@@ -41,6 +41,10 @@ module.exports = class Aether
     @setLanguage @options.language, @options.languageVersion
     @allGlobals = @options.globals.concat protectBuiltins.builtinNames, Object.keys @language.runtimeGlobals  # After setLanguage, which can add globals.
 
+    ## For mapping API clones and values to each other
+    @protectAPIClonesToValues = {}
+    @protectAPIValuesToClones = {}
+
   # Language can be changed after construction. (It will reset Aether's state.)
   setLanguage: (language, languageVersion) ->
     return if @language and @language.id is language and @language.version is languageVersion
