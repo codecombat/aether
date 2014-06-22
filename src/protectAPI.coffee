@@ -27,6 +27,9 @@ cloneableClasses[argsClass] = cloneableClasses[arrayClass] = cloneableClasses[bo
 #   any this problem -BUT- was avoided for performance reasons.
 protectionIdCounter = 0
 
+module.exports.protectionVersion = PROTECTION_VERSION = 0  # Old way of doing it, storing clone/value references on each other (which is insecure)
+#module.exports.protectionVersion = PROTECTION_VERSION = 1  # New way of doing it, storing a mapping in each Aether instance (which can't share them globally)
+
 # Used to match regexp flags from their coerced string values.
 reFlags = /\w*$/
 
@@ -46,12 +49,17 @@ module.exports.createAPIClone = createAPIClone = (aether, value) ->
       result.lastIndex = value.lastIndex
       return result
 
-  if value.__aetherID?
-    id = value.__aetherID
-    return result if (result = aether.protectAPIValuesToClones[id])?
-  else
-    id = protectionIdCounter++
-    Object.defineProperty value, '__aetherID', value: id
+  if PROTECTION_VERSION is 0
+    # Check for circular references and return corresponding clone.
+    return clone if clone = value.__aetherAPIClone
+    return value if value.__aetherAPIValue
+  else  # PROTECTION_VERSION is 1
+    if value.__aetherID?
+      id = value.__aetherID
+      return result if (result = aether.protectAPIValuesToClones[id])?
+    else
+      id = protectionIdCounter++
+      Object.defineProperty value, '__aetherID', value: id
 
   if isArr = _.isArray value
     result = ctor value.length
@@ -61,11 +69,16 @@ module.exports.createAPIClone = createAPIClone = (aether, value) ->
   else
     result = {}
 
-  # Link the value and the clone together
-  Object.defineProperty result, '__aetherID', value: id
-
-  aether.protectAPIValuesToClones[id] = result
-  aether.protectAPIClonesToValues[id] = value
+  if PROTECTION_VERSION is 0
+    # Add the source value to the stack of traversed objects and associate it with its clone.
+    # Object.defineProperty defaults to non-configurable, non-enumerable, non-writable.
+    Object.defineProperty value, "__aetherAPIClone", value: result, writable: true, configurable: true
+    Object.defineProperty result, "__aetherAPIValue", value: value
+  else  # PROTECTION_VERSION is 1
+    # Link the value and the clone together
+    Object.defineProperty result, '__aetherID', value: id
+    aether.protectAPIValuesToClones[id] = result
+    aether.protectAPIClonesToValues[id] = value
 
   # Recursively populate clone (susceptible to call stack limits) with non-configurable, non-writable properties.
   if isArr
@@ -91,7 +104,7 @@ module.exports.createAPIClone = createAPIClone = (aether, value) ->
   else
     # Hmm, should we protect normal objects?
     #result[k] = createAPIClone(v) for own k, v of value
-    Object.defineProperty result, k, value: createAPIClone(aether,v), enumerable: true for own k, v of value
+    Object.defineProperty result, k, value: createAPIClone(aether, v), enumerable: true for own k, v of value
 
   result
 
@@ -102,8 +115,12 @@ module.exports.restoreAPIClone = restoreAPIClone = (aether, value, depth=0) ->
   className = Object::toString.call value
   return value unless cloneableClasses[className]
   return value if className in [boolClass, dateClass, numberClass, stringClass, regexpClass]
-  return source if (source = aether.protectAPIClonesToValues[value.__aetherID])?
-  #return source if source = value.__aetherAPIClone?.__aetherAPIValue  # hack, but this helped in one case, not sure why
+  if PROTECTION_VERSION is 0
+    return source if source = value.__aetherAPIValue
+    return source if source = value.__aetherAPIClone?.__aetherAPIValue  # hack, but this helped in one case, not sure why
+  else  # PROTECTION_VERSION is 1
+    return source if (source = aether.protectAPIClonesToValues[value.__aetherID])?
+    #return source if source = value.__aetherAPIClone?.__aetherAPIValue  # hack, but this helped in one case, not sure why
   return value if depth > 1  # hack, but I don't understand right now--when do we stop? can't recurse forever
 
   # We now have a new array/object that may contain some clones, so let's recurse to find them.

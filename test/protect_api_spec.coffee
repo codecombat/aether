@@ -1,6 +1,7 @@
 _ = window?._ ? self?._ ? global?._ ? require 'lodash'  # rely on lodash existing, since it busts CodeCombat to browserify it--TODO
 
 Aether = require '../aether'
+{protectionVersion} = require '../protectAPI'
 
 describe "API Protection Test Suite", ->
   class Vector
@@ -310,18 +311,23 @@ describe "API Protection Test Suite", ->
     aether.transpile code
     method = aether.createMethod mama
     for i in [0 ... 3]
-      mama._aetherAPIMethodsAllowed = true
+      mama._aetherAPIMethodsAllowed = 1
       expect(method()).toEqual i + 1
-      mama._aetherAPIMethodsAllowed = false
+      mama._aetherAPIMethodsAllowed = 0
 
       # Get the API clone of the mama object
-      clone = aether.protectAPIValuesToClones[mama.__aetherID]
+      if protectionVersion is 0
+        clone = mama.__aetherAPIClone
+      else  # protectionVersion is 1
+        clone = aether.protectAPIValuesToClones[mama.__aetherID]
 
       for prop of clone when typeof mama[prop] is 'undefined' and not (prop in (mama.apiUserProperties ? []))
         mama.apiUserProperties ?= []
         mama.apiUserProperties.push prop
       for prop in (mama.apiUserProperties ? [])
         mama[prop] = clone[prop]
+      if protectionVersion is 0
+        delete mama.__aetherAPIClone
 
       expect(mama.infants).toEqual i + 1
       expect(mama.namesUsed.length).toEqual i + 1
@@ -351,3 +357,91 @@ describe "API Protection Test Suite", ->
     result = aether.run method
     expect(result).toBe 1
     expect(aether.problems.errors).toEqual []
+
+  it 'should work with multiple Aethers', ->
+    # See: https://github.com/codecombat/aether/pull/83
+    # and: http://discourse.codecombat.com/t/gamebreaking-bug-attack-target-method-broken-in-dungeon-arena/936
+    # I keep trying, but I can't make a test case that captures the issue.
+    # Here's the inspiration:
+    #
+    # Human Base chooseAction():
+    # this.enemies = this.getEnemies();
+    # if(!this.builtHero)
+    #     return this.builtHero = this.build('tharin');
+    # return this.build('soldier');
+    #
+    # Tharin chooseAction():
+    # this.getFriends();
+    # this.attack(this.getEnemies()[0]);
+    #
+    # This fails because somehow the human base's this.enemies = this.getEnemies() assignment interacting with
+    # Tharin's this.getFriends() call to make the Ogre Base enemy passed to attack just be a clone, not the full Thang.
+    # If Tharin doesn't call this.getFriends() (even though he doesn't do anything with it), it works.
+
+    movies = 0
+    guys = (first: name.split(' ')[0], last: name.split(' ')[1], apiMethods: ['getFriends', 'bond'], apiProperties: ['first'] for name in ['George Clooney', 'Brad Pitt'])
+    getFriends = ->
+      (guy for guy in guys when guy.last isnt @last)
+    bond = (friend) ->
+      movies += friend.last.length
+    guys[0].getFriends = guys[1].getFriends = getFriends
+    guys[0].bond = guys[1].bond = bond
+
+    for guy in guys
+      do (guy) ->
+        code = """
+          this.friends = this.getFriends();
+          this.bond(this.friends[0]);
+          if (!this.breaths)
+            this.breaths = 0;
+          return this.breaths += this.friends[0].first.length;
+        """
+        guy.aether = new Aether protectAPI: true, functionName: 'breathe'
+        guy.aether.transpile code
+        guy.breathe = guy.aether.createMethod guy
+        guy.live = ->
+          if protectionVersion is 0
+            delete @__aetherAPIClone
+          else
+            if @__aetherID
+              delete @aether.protectAPIValuesToClones[@__aetherID]
+              delete @aether.protectAPIClonesToValues[@__aetherID]
+              delete @__aetherID
+          @_aetherAPIMethodsAllowed = 1
+          ret = @breathe()
+          @_aetherAPIMethodsAllowed = 0
+          if protectionVersion is 0
+            clone = guy.__aetherAPIClone
+          else
+            clone = guy.aether.protectAPIValuesToClones[@__aetherID]
+          for prop of clone when typeof @[prop] is 'undefined' and not (prop in (@apiUserProperties ? []))
+            @apiUserProperties ?= []
+            @apiUserProperties.push prop
+          for prop in (@apiUserProperties ? [])
+            @[prop] = clone[prop]
+          if protectionVersion is 0
+            delete @__aetherAPIClone
+          else
+            if @__aetherID
+              delete @aether.protectAPIValuesToClones[@__aetherID]
+              delete @aether.protectAPIClonesToValues[@__aetherID]
+              delete @__aetherID
+          for prop in @apiProperties
+            if protectionVersion is 0
+              delete @[prop].__aetherAPIClone if @[prop]?.__aetherAPIClone
+            else
+              if propAetherID = @[prop]?.__aetherID
+                delete @aether.protectAPIValuesToClones[propAetherID]
+                delete @aether.protectAPIClonesToValues[propAetherID]
+                delete @[prop].__aetherID
+          ret
+
+    guys[0].live()
+    expect(guys[0].breaths).toEqual 1 * guys[1].first.length
+    guys[1].live()
+    expect(guys[1].breaths).toEqual 1 * guys[0].first.length
+    guys[0].live()
+    guys[1].live()
+    expect(guys[0].breaths).toEqual 2 * guys[1].first.length
+    expect(guys[1].breaths).toEqual 2 * guys[0].first.length
+    expect(movies).toEqual 2 * guys[0].last.length + 2 * guys[1].last.length
