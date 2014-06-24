@@ -20,6 +20,235 @@ getParentsOfTypes = (node, types) ->
 getFunctionNestingLevel = (node) ->
   getParentsOfTypes(node, [S.FunctionExpression]).length
 
+possiblyGeneratorifyAncestorFunction = (node) ->
+  while node.type isnt S.FunctionExpression
+    node = node.parent
+  node.mustBecomeGeneratorFunction = true
+
+possiblyGeneratorifyUserFunction = (fnExpr, node) ->
+  # Look for a CallExpression in fnExpr, that isn't in an inner function
+  node = fnExpr unless node
+  for key, child of node
+    continue if key is 'parent' or key is 'leadingComments' or key is 'originalNode'
+    if child?.type is S.ExpressionStatement and child.expression.right?.type is S.CallExpression
+      return fnExpr.mustBecomeGeneratorFunction = true
+    else if child?.type is S.FunctionExpression 
+      continue
+    else if _.isArray child
+      for grandchild in child
+        if _.isString grandchild?.type
+          if grandchild?.type is S.ExpressionStatement and grandchild.expression?.right?.type is S.CallExpression
+            return fnExpr.mustBecomeGeneratorFunction = true
+          continue if grandchild?.type is S.FunctionExpression
+          return true if possiblyGeneratorifyUserFunction fnExpr, grandchild
+    else if _.isString child?.type
+      return true if possiblyGeneratorifyUserFunction fnExpr, child
+  false
+
+getUserFnMap = (startNode) ->
+  # Return map of CallExpressions to user defined FunctionExpressions
+  # Parses whole AST, given any startNode in user code
+  # Assumes normalized AST, and morphAST helpers
+  # Ideally called only once per unique user code
+  # High level steps:
+  # 1. Build a scope hierarchy of calls, functions, and variable mappings
+  # 2. Resolve all user FunctionExpression assignments to outermost value
+  # 3. Resolve all CallExpressions to outermost value
+  # 4. Match each CallExpression to a FunctionExpression, if possible
+  
+  # TODO: Handle calling an inner function returned from another function
+  # TODO: We're doing unnecessary work in favor of simplicity
+
+  ## Helpers
+
+  parseVal = (node) ->
+    if node?.type is S.Literal 
+      return node.value 
+    else if node?.type is S.Identifier 
+      return node.name 
+    else if node?.type is S.ThisExpression 
+      return 'this' 
+    else if node?.type is S.MemberExpression
+      return [node.object.name, node.property.name] if node.object?.name? and node.property?.name?
+
+  updateVal = (val, left, right) ->
+    # Update val based on a 'left = right' assignment
+    if _.isArray val
+      for j in [0..val.length-1]
+        if left is val[j]
+          if _.isArray right 
+            val.splice.apply val, [j, 1].concat right
+          else 
+            val[j] = right
+        else if right is val[j] and _.isArray left
+          if _.isArray left 
+            val.splice.apply val, [j, 1].concat left
+          else 
+            val[j] = left
+    else
+      if left is val 
+        val = right
+      else if right is val and _.isArray left 
+        val = left
+    val
+
+  getRootScope = ->
+    # A scope here is a flattened variable map, call map, and immediate children scopes
+    # Scope.current is the scope container, always a FunctionExpression currently
+
+    buildVarMap = (varMap, node) ->
+      if node?.type is S.ExpressionStatement and node.expression?.type is S.AssignmentExpression
+        vLeft = parseVal(node.expression.left)
+        vRight = parseVal(node.expression.right)
+        varMap.push [vLeft, vRight] if vLeft and vRight
+      for key, child of node
+        continue if key is 'parent' or key is 'leadingComments' or key is 'originalNode'
+        continue if child?.type is S.FunctionExpression
+        if _.isArray child
+          for grandchild in child
+            buildVarMap varMap, grandchild if _.isString grandchild?.type
+        else if _.isString child?.type
+          buildVarMap varMap, child
+
+    buildCallMap = (calls, node) ->
+      if node?.type is S.ExpressionStatement and node.expression?.type is S.AssignmentExpression
+        calls.push node.expression if node.expression.right?.type is S.CallExpression
+
+      for key, child of node
+        continue if key is 'parent' or key is 'leadingComments' or key is 'originalNode'
+        continue if child?.type is S.FunctionExpression
+        if _.isArray child
+          for grandchild in child
+            buildCallMap calls, grandchild if _.isString grandchild?.type
+        else if _.isString child?.type
+          buildCallMap calls, child
+
+    buildScope = (scope, fn) ->
+      # Use fn to fill out scope.children, scope.varMap, scope.calls
+      # Scope.parent, and scope.current are filled out by caller
+      buildVarMap scope.varMap, fn
+      buildCallMap scope.calls, fn
+
+      if fn.body?.body?
+        for key, child of fn.body.body
+          continue if key is 'parent' or key is 'leadingComments' or key is 'originalNode'
+          if child?.type is S.ExpressionStatement and child.expression?.type is S.AssignmentExpression
+            if child.expression.right?.type is S.FunctionExpression
+              childScope = {
+                children: []
+                varMap: []
+                calls: []
+                parent: scope
+                current: child.expression
+              }
+              buildScope childScope, child.expression.right
+              scope.children.push childScope
+
+    wrapperFn = startNode
+    while wrapperFn and (wrapperFn.type isnt S.FunctionExpression or getFunctionNestingLevel(wrapperFn) > 1)
+      wrapperFn = wrapperFn.parent
+
+    scope = {
+      children: []
+      varMap: []
+      calls: []
+      parent: null
+      current: null
+    }
+    buildScope scope, wrapperFn if wrapperFn
+    scope
+
+  findCall = (scope, fnVal) ->
+    # Find a CallExpression that resolves to fnVal
+    return [null, null] unless fnVal
+    for c in scope.calls
+      cVal = parseVal c.right.callee
+      cVal = resolveVal scope, scope.varMap, cVal
+      return [scope, c.right] if _.isEqual(cVal, fnVal)
+    for childScope in scope.children
+      if childScope.current
+        childFn = parseVal childScope.current.left
+        if childFn isnt fnVal
+          return call if call = findCall childScope, fnVal
+    [null, null]
+
+  resolveVal = (scope, vm, val) ->
+    # Resolve value based on assignments in this scope
+    # E.g. a = tmp1; tmp1 = tmp2; resolveVal(tmp2) resturns 'a'
+    return unless val
+    # Look locally
+    if vm.length > 0
+      for i in [vm.length-1..0]
+        val = updateVal val, vm[i][0], vm[i][1]
+    # Look in params if in a function
+    if scope.current?.right?.type is S.FunctionExpression and scope.current.right.params.length > 0
+      for i in [0..scope.current.right.params.length-1]
+        pVal = parseVal scope.current.right.params[i]
+        if (_.isArray val) and val[0] is pVal or val is pVal
+          fnVal = parseVal scope.current.left
+          fnVal = resolveVal scope, scope.varMap, fnVal
+          [newScope, callExpr] = findCall rootScope, fnVal
+          if newScope and callExpr
+            # Update val based on passed in argument, and resolve from new scope
+            argVal = parseVal callExpr.arguments[i]
+            if _.isArray val
+              val[0] = argVal
+            else
+              val = argVal
+            val = resolveVal newScope, newScope.varMap, val
+          break
+    # Look in parent
+    val = resolveVal scope.parent, scope.parent.varMap, val if scope.parent
+    val
+
+  resolveFunctions = (scope, fns) ->
+    # Resolve all FunctionExpression nodes
+    if scope?.current?.right?.type is S.FunctionExpression
+      fnVal = parseVal scope.current.left
+      fnVal = resolveVal scope, scope.varMap, fnVal
+      fns.push [scope.current.right, fnVal]
+    resolveFunctions childScope, fns for childScope in scope.children
+
+  resolveCalls = (scope, calls) ->
+    # Resolve all CallExpression nodes
+    for call in scope.calls
+      val = parseVal call.right.callee
+      val = resolveVal scope, scope.varMap, val
+      calls.push [call.right, val]
+    resolveCalls childScope, calls for childScope in scope.children
+
+  ## End helpers
+
+  userFnMap = []
+  try
+    rootScope = getRootScope()
+
+    resolvedFunctions = []
+    resolveFunctions rootScope, resolvedFunctions
+    #console.log 'resolvedFunctions', resolvedFunctions
+
+    resolvedCalls = []
+    resolveCalls rootScope, resolvedCalls
+    #console.log 'resolvedCalls', resolvedCalls
+
+    for [call, callVal] in resolvedCalls
+      for [fn, fnVal] in resolvedFunctions
+        if _.isEqual(callVal, fnVal)
+          userFnMap.push [call, fn]
+          break
+        else if (_.isArray callVal) and callVal[0] is fnVal
+          userFnMap.push [call, fn]
+          break
+    #console.log 'userFnMap', userFnMap
+  catch error
+    console.log 'ERROR in transforms.getUserFnMap', error
+  userFnMap
+
+getUserFnExpr = (userFnMap, callExpr) ->
+  if userFnMap
+    for [call, fn] in userFnMap
+      return fn if callExpr is call
+
 ########## Before JS_WALA Normalization ##########
 
 # Original node range preservation.
@@ -44,6 +273,7 @@ module.exports.makeCheckThisKeywords = makeCheckThisKeywords = (globals, varName
       varNames[node.id.name] = true if node.id?
       varNames[param.name] = true for param in node.params
     else if node.type is S.CallExpression
+      # TODO: false negative when user method call precedes function declaration
       v = node
       while v.type in [S.CallExpression, S.MemberExpression]
         v = if v.object? then v.object else v.callee
@@ -109,36 +339,52 @@ module.exports.makeFindOriginalNodes = makeFindOriginalNodes = (originalNodes, c
     node.originalNode = normalizedPosToOriginalNode normalizedNode.attr.pos
     #console.log "  Got original node", node.originalNode, "from pos", normalizedNode.attr?.pos
 
-possiblyGeneratorifyAncestorFunction = (node) ->
-  while node.type isnt S.FunctionExpression
-    node = node.parent
-  node.mustBecomeGeneratorFunction = true
-
 # Now that it's normalized to this: https://github.com/nwinter/JS_WALA/blob/master/normalizer/doc/normalization.md
 # ... we can basically just put a yield check in after every CallExpression except the outermost one if we are yielding conditionally.
-module.exports.yieldConditionally = yieldConditionally = (node) ->
-  if node.type is S.ExpressionStatement and node.expression.right?.type is S.CallExpression
-    # Because we have a wrapper function which shouldn't yield, we only yield inside nested functions.
-    # We can't generatorify inner functions or when they're called, they'll return generator values, not real values.
-    return unless getFunctionNestingLevel(node) is 2
-    node.update "#{node.source()} if (_aether._shouldYield) { var _yieldValue = _aether._shouldYield; _aether._shouldYield = false; yield _yieldValue; }"
-    node.yields = true
-    possiblyGeneratorifyAncestorFunction node
-  else if node.mustBecomeGeneratorFunction
-    node.update node.source().replace /^function \(/, 'function* ('
+module.exports.makeYieldConditionally = makeYieldConditionally = ->
+  userFnMap = null
+  return (node) ->
+    if node.type is S.ExpressionStatement and node.expression.right?.type is S.CallExpression
+      # Because we have a wrapper function which shouldn't yield, we only yield inside nested functions.
+      # Don't yield after calls to generatorified inner functions, because their yields are passed upwards
+      return unless getFunctionNestingLevel(node) > 1
+      userFnMap = getUserFnMap(node) unless userFnMap
+      unless getUserFnExpr(userFnMap, node.expression.right)?.mustBecomeGeneratorFunction
+        node.update "#{node.source()} if (_aether._shouldYield) { var _yieldValue = _aether._shouldYield; _aether._shouldYield = false; yield _yieldValue; }"
+      node.yields = true
+      possiblyGeneratorifyAncestorFunction node unless node.mustBecomeGeneratorFunction
+    else if node.mustBecomeGeneratorFunction
+      node.update node.source().replace /^function \(/, 'function* ('
+    else if node.type is S.AssignmentExpression and node.right?.type is S.CallExpression
+      # Update call to generatorified user function to process yields, and set return result
+      userFnMap = getUserFnMap(node) unless userFnMap
+      if (fnExpr = getUserFnExpr(userFnMap, node.right)) and possiblyGeneratorifyUserFunction fnExpr
+        node.update "var __gen#{node.left.source()} = #{node.right.source()}; while (true) { var __result#{node.left.source()} = __gen#{node.left.source()}.next(); if (__result#{node.left.source()}.done) { #{node.left.source()} = __result#{node.left.source()}.value; break; } yield __result#{node.left.source()}.value;}"
 
-module.exports.yieldAutomatically = yieldAutomatically = (node) ->
-  # TODO: don't yield after things like 'use strict';
-  # TODO: think about only doing this after some of the statements which have a different original range?
-  if node.type in statements
-    # Because we have a wrapper function which shouldn't yield, we only yield inside nested functions.
-    # We can't generatorify inner functions or when they're called, they'll return generator values, not real values.
-    return unless getFunctionNestingLevel(node) is 2
-    node.update "#{node.source()} yield 'waiting...';"
-    node.yields = true
-    possiblyGeneratorifyAncestorFunction node
-  else if node.mustBecomeGeneratorFunction
-    node.update node.source().replace /^function \(/, 'function* ('
+module.exports.makeYieldAutomatically = makeYieldAutomatically = ->
+  userFnMap = null
+  return (node) ->
+    # TODO: don't yield after things like 'use strict';
+    # TODO: think about only doing this after some of the statements which have a different original range?
+    if node.type in statements
+      # Because we have a wrapper function which shouldn't yield, we only yield inside nested functions.
+      # Don't yield after calls to generatorified inner functions, because their yields are passed upwards
+      return unless getFunctionNestingLevel(node) > 1
+      if node.type is S.ExpressionStatement and node.expression.right?.type is S.CallExpression
+        userFnMap = getUserFnMap(node) unless userFnMap
+        unless getUserFnExpr(userFnMap, node.expression.right)?.mustBecomeGeneratorFunction
+          node.update "#{node.source()} yield 'waiting...';"
+      else
+        node.update "#{node.source()} yield 'waiting...';"
+      node.yields = true
+      possiblyGeneratorifyAncestorFunction node unless node.mustBecomeGeneratorFunction
+    else if node.mustBecomeGeneratorFunction
+      node.update node.source().replace /^function \(/, 'function* ('
+    else if node.type is S.AssignmentExpression and node.right?.type is S.CallExpression
+      # Update call to generatorified user function to process yields, and set return result
+      userFnMap = getUserFnMap(node) unless userFnMap
+      if (fnExpr = getUserFnExpr(userFnMap, node.right)) and possiblyGeneratorifyUserFunction fnExpr
+        node.update "var __gen#{node.left.source()} = #{node.right.source()}; while (true) { var __result#{node.left.source()} = __gen#{node.left.source()}.next(); if (__result#{node.left.source()}.done) { #{node.left.source()} = __result#{node.left.source()}.value; break; } yield __result#{node.left.source()}.value;}"
 
 module.exports.makeInstrumentStatements = makeInstrumentStatements = (varNames) ->
   # set up any state tracking here

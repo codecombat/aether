@@ -221,8 +221,8 @@ module.exports = class Aether
 
     postNormalizationTransforms = []
     postNormalizationTransforms.unshift transforms.validateReturns if @options.thisValue?.validateReturn  # TODO: parameter/return validation should be part of Aether, not some half-external function call
-    postNormalizationTransforms.unshift transforms.yieldConditionally if @options.yieldConditionally
-    postNormalizationTransforms.unshift transforms.yieldAutomatically if @options.yieldAutomatically
+    postNormalizationTransforms.unshift transforms.makeYieldConditionally() if @options.yieldConditionally
+    postNormalizationTransforms.unshift transforms.makeYieldAutomatically() if @options.yieldAutomatically
     if @options.includeFlow
       postNormalizationTransforms.unshift transforms.makeInstrumentStatements varNames
     else if @options.includeMetrics or @options.executionLimit
