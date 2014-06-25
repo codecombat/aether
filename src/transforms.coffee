@@ -292,14 +292,6 @@ module.exports.makeCheckThisKeywords = makeCheckThisKeywords = (globals, varName
         problem = @createUserCodeProblem type: 'transpile', reporter: 'aether', kind: 'MissingThis', message: message, hint: hint, range: range  # TODO: code/codePrefix?
         @addProblem problem
 
-module.exports.validateReturns = validateReturns = (node) ->
-  # Only on top-level function (inside the wrapper), not inner functions.
-  return unless getFunctionNestingLevel(node) is 2
-  if node.type is S.ReturnStatement and not node.argument
-    node.update node.source().replace "return;", "return this.validateReturn('#{@options.functionName}', null);"
-  else if node.parent?.type is S.ReturnStatement
-    node.update "this.validateReturn('#{@options.functionName}', (#{node.source()}))"
-
 module.exports.checkIncompleteMembers = checkIncompleteMembers = (node) ->
   #console.log 'check incomplete members', node, node.source() if node.source().search('this.') isnt -1
   if node.type is 'ExpressionStatement'

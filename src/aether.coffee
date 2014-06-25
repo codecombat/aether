@@ -220,7 +220,6 @@ module.exports = class Aether
     normalizedSourceMap = normalized.map
 
     postNormalizationTransforms = []
-    postNormalizationTransforms.unshift transforms.validateReturns if @options.thisValue?.validateReturn  # TODO: parameter/return validation should be part of Aether, not some half-external function call
     postNormalizationTransforms.unshift transforms.makeYieldConditionally() if @options.yieldConditionally
     postNormalizationTransforms.unshift transforms.makeYieldAutomatically() if @options.yieldAutomatically
     if @options.includeFlow
