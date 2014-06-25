@@ -43,3 +43,73 @@ describe "CS test Suite!", ->
       fn = aether.createFunction()
       expect(aether.canTranspile(code)).toEqual true
       expect(aether.run()).toEqual 8 # fail
+
+  describe "Basics", ->
+    aether = new Aether language: "coffeescript"
+    it "Simple For", ->
+      code = """
+      count = 0
+      count++ for num in [1..10]
+      return count
+      """
+      aether.transpile(code)
+      expect(aether.canTranspile(code)).toEqual true
+      expect(aether.run()).toEqual 10
+
+    it "Simple While", ->
+      code = """
+      count = 0
+      count++ until count is 100
+      return count
+      """
+      aether.transpile(code)
+      expect(aether.canTranspile(code)).toEqual true
+      expect(aether.run()).toEqual 100
+
+    it "Should Map", ->
+      code = "return (num for num in [10..1])"
+
+      aether.transpile(code)
+      expect(aether.canTranspile(code)).toEqual true
+      expect(aether.run()).toEqual [10, 9, 8, 7, 6, 5, 4, 3, 2, 1]
+
+    it "Should Map properties", ->
+      code = '''
+      yearsOld = max: 10, ida: 9, tim: 11
+      ages = for child, age of yearsOld
+        #{child} is #{age}'
+      return ages
+      '''
+      aether.transpile(code)
+      expect(aether.canTranspile(code)).toEqual true
+      expect(aether.run()).toEqual ["max is 10", "ida is 9", "tim is 11"]
+
+    it "Should compile empty function", ->
+      code = """
+        func = () ->
+        return typeof func
+        """
+      aether.transpile(code)
+      expect(aether.canTranspile(code)).toEqual true
+      expect(aether.run()).toEqual 'function'
+
+    it "Should compile objects", ->
+      code = """
+        singers = {Jagger: 'Rock', Elvis: 'Roll'}
+        return singers
+      """
+      aether.transpile(code)
+      expect(aether.canTranspile(code)).toEqual true
+      expect(aether.run()).toEqual ({Jagger: 'Rock', Elvis: 'Roll'})
+
+    it "Should compile classes", ->
+      code = """
+      class MyClass
+        test: ->
+          return 1000
+      myClass = new MyClass()
+      return myClass.test()
+      """
+      aether.transpile(code)
+      expect(aether.canTranspile(code)).toEqual true
+      expect(aether.run()).toEqual 1000
