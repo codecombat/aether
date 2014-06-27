@@ -445,3 +445,24 @@ describe "API Protection Test Suite", ->
     expect(guys[0].breaths).toEqual 2 * guys[1].first.length
     expect(guys[1].breaths).toEqual 2 * guys[0].first.length
     expect(movies).toEqual 2 * guys[0].last.length + 2 * guys[1].last.length
+
+  it 'should let you mess with your own method return values', ->
+    # https://github.com/codecombat/codecombat/issues/1100
+    code = '''
+      function makePoint (x, y) { return {x: x, y: y}; }
+      var p1 = makePoint(1, 2);
+      p1.d = 3;
+      var p2 = {x: 4, y: 5};
+      p2.d = 6;
+      return {p1: p1, p2: p2, p1s: JSON.stringify(p1), p2s: JSON.stringify(p2), p1d: p1.d, p2d: p2.d}
+    '''
+    aether = new Aether protectAPI: true
+    aether.transpile code
+    result = aether.run()
+    expect(result.p1).toEqual {x: 1, y: 2, d: 3}
+    expect(result.p2).toEqual {x: 4, y: 5, d: 6}
+    expect(result.p1s).toEqual '{"x":1,"y":2,"d":3}'
+    expect(result.p2s).toEqual '{"x":4,"y":5,"d":6}'
+    expect(result.p1d).toEqual 3
+    expect(result.p2d).toEqual 6
+    expect(aether.problems.errors).toEqual []
