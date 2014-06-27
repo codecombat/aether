@@ -81,13 +81,20 @@ fixLocations = (program) ->
           loc.start = node.loc.start
         else
           loc.start = structured.loc(node.range[0])
+        if _.isNaN loc.end.column
+          loc.end.column = loc.start.column + 1  # Fix for bad CSR(?) parsing of "Sammy the Python moved #{meters}m."
         node.loc = loc
+        unless node.range[1]?
+          node.range[1] = node.range[0] + 1  # Same #{meters} fix
         node.range = structured.fixRange(node.range, loc)
       else
         node.loc = switch node.type
           when 'BlockStatement'
-            start: node.body[0].loc.start
-            end: node.body[node.body.length - 1].loc.end
+            if node.body.length
+              start: node.body[0].loc.start
+              end: node.body[node.body.length - 1].loc.end
+            else
+              parent.loc
           when 'VariableDeclarator'
             if node?.init?.loc?
               start: node.id.loc.start

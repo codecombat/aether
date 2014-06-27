@@ -84,4 +84,4 @@ module.exports.logCallStart = logCallStart = (userInfo) ->
   #console.log "Logged call to", @options.functionName, @metrics, @flow
 
 module.exports.logCallEnd = logCallEnd = ->
-  @callStack.pop()
+  @callStack?.pop()

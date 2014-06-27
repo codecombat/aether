@@ -9,6 +9,7 @@ describe "CS test Suite!", ->
       """
       aether.transpile(code)
       expect(aether.run()).toEqual 1000
+      expect(aether.problems.errors).toEqual []
 
   describe "CS compilation with lang set after contruction", ->
     aether = new Aether()
@@ -19,8 +20,8 @@ describe "CS test Suite!", ->
       """
       aether.setLanguage "coffeescript"
       aether.transpile(code)
-
       expect(aether.canTranspile(code)).toEqual true
+      expect(aether.problems.errors).toEqual []
 
   describe "CS Test Spec #1", ->
     aether = new Aether language: "coffeescript"
@@ -30,6 +31,7 @@ describe "CS test Suite!", ->
       "
       aether.transpile(code)
       expect(aether.run()).toEqual 3
+      expect(aether.problems.errors).toEqual []
 
   describe "CS Test Spec #2", ->
     aether = new Aether language: "coffeescript"
@@ -43,6 +45,7 @@ describe "CS test Suite!", ->
       fn = aether.createFunction()
       expect(aether.canTranspile(code)).toEqual true
       expect(aether.run()).toEqual 8 # fail
+      expect(aether.problems.errors).toEqual []
 
   describe "Basics", ->
     aether = new Aether language: "coffeescript"
@@ -55,6 +58,7 @@ describe "CS test Suite!", ->
       aether.transpile(code)
       expect(aether.canTranspile(code)).toEqual true
       expect(aether.run()).toEqual 10
+      expect(aether.problems.errors).toEqual []
 
     it "Simple While", ->
       code = """
@@ -65,6 +69,7 @@ describe "CS test Suite!", ->
       aether.transpile(code)
       expect(aether.canTranspile(code)).toEqual true
       expect(aether.run()).toEqual 100
+      expect(aether.problems.errors).toEqual []
 
     it "Should Map", ->
       code = "return (num for num in [10..1])"
@@ -72,17 +77,19 @@ describe "CS test Suite!", ->
       aether.transpile(code)
       expect(aether.canTranspile(code)).toEqual true
       expect(aether.run()).toEqual [10, 9, 8, 7, 6, 5, 4, 3, 2, 1]
+      expect(aether.problems.errors).toEqual []
 
     it "Should Map properties", ->
       code = '''
-      yearsOld = max: 10, ida: 9, tim: 11
-      ages = for child, age of yearsOld
-        #{child} is #{age}'
-      return ages
+        yearsOld = max: 10, ida: 9, tim: 11
+        ages = for child, age of yearsOld
+          "#{child} is #{age}"
+        return ages
       '''
       aether.transpile(code)
       expect(aether.canTranspile(code)).toEqual true
       expect(aether.run()).toEqual ["max is 10", "ida is 9", "tim is 11"]
+      expect(aether.problems.errors).toEqual []
 
     it "Should compile empty function", ->
       code = """
@@ -92,6 +99,7 @@ describe "CS test Suite!", ->
       aether.transpile(code)
       expect(aether.canTranspile(code)).toEqual true
       expect(aether.run()).toEqual 'function'
+      expect(aether.problems.errors).toEqual []
 
     it "Should compile objects", ->
       code = """
@@ -101,15 +109,48 @@ describe "CS test Suite!", ->
       aether.transpile(code)
       expect(aether.canTranspile(code)).toEqual true
       expect(aether.run()).toEqual ({Jagger: 'Rock', Elvis: 'Roll'})
+      expect(aether.problems.errors).toEqual []
 
     it "Should compile classes", ->
       code = """
-      class MyClass
-        test: ->
-          return 1000
-      myClass = new MyClass()
-      return myClass.test()
+        class MyClass
+          test: ->
+            return 1000
+        myClass = new MyClass()
+        return myClass.test()
       """
       aether.transpile(code)
       expect(aether.canTranspile(code)).toEqual true
       expect(aether.run()).toEqual 1000
+      expect(aether.problems.errors).toEqual []
+
+    xit "Should compile super", ->
+      # super is not supported in CSR yet: https://github.com/michaelficarra/CoffeeScriptRedux/search?q=super&ref=cmdform&type=Issues
+      code = '''
+        class Animal
+          constructor: (@name) ->
+          move: (meters) ->
+            @name + " moved " + meters + "m."
+        class Snake extends Animal
+          move: ->
+            super 5
+        sam = new Snake "Sammy the Python"
+        sam.move()
+      '''
+      aether.transpile(code)
+      expect(aether.run()).toEqual "Sammy the Python moved 5m."
+      expect(aether.problems.errors).toEqual []
+
+    it "Should compile string interpolation", ->
+      code = '''
+        meters = 5
+        "Sammy the Python moved #{meters}m."
+      '''
+      aether.transpile(code)
+      expect(aether.run()).toEqual "Sammy the Python moved 5m."
+      expect(aether.problems.errors).toEqual []
+
+    it "Should implicitly return the last statement", ->
+      aether.transpile('"hi"')
+      expect(aether.run()).toEqual 'hi'
+      expect(aether.problems.errors).toEqual []

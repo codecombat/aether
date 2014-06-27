@@ -13,6 +13,12 @@ describe "Aether", ->
       aether.transpile(code)
       expect(aether.run()).toEqual 1000
 
+    it 'can run an empty function', ->
+      aether = new Aether()
+      aether.transpile ''
+      expect(aether.run()).toEqual undefined
+      expect(aether.problems.errors).toEqual []
+
   describe "Transpile heuristics", ->
     aether = null
     beforeEach ->

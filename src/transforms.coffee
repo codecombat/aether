@@ -32,7 +32,7 @@ possiblyGeneratorifyUserFunction = (fnExpr, node) ->
     continue if key is 'parent' or key is 'leadingComments' or key is 'originalNode'
     if child?.type is S.ExpressionStatement and child.expression.right?.type is S.CallExpression
       return fnExpr.mustBecomeGeneratorFunction = true
-    else if child?.type is S.FunctionExpression 
+    else if child?.type is S.FunctionExpression
       continue
     else if _.isArray child
       for grandchild in child
@@ -55,19 +55,19 @@ getUserFnMap = (startNode) ->
   # 2. Resolve all user FunctionExpression assignments to outermost value
   # 3. Resolve all CallExpressions to outermost value
   # 4. Match each CallExpression to a FunctionExpression, if possible
-  
+
   # TODO: Handle calling an inner function returned from another function
   # TODO: We're doing unnecessary work in favor of simplicity
 
   ## Helpers
 
   parseVal = (node) ->
-    if node?.type is S.Literal 
-      return node.value 
-    else if node?.type is S.Identifier 
-      return node.name 
-    else if node?.type is S.ThisExpression 
-      return 'this' 
+    if node?.type is S.Literal
+      return node.value
+    else if node?.type is S.Identifier
+      return node.name
+    else if node?.type is S.ThisExpression
+      return 'this'
     else if node?.type is S.MemberExpression
       return [node.object.name, node.property.name] if node.object?.name? and node.property?.name?
 
@@ -76,19 +76,19 @@ getUserFnMap = (startNode) ->
     if _.isArray val
       for j in [0..val.length-1]
         if left is val[j]
-          if _.isArray right 
+          if _.isArray right
             val.splice.apply val, [j, 1].concat right
-          else 
+          else
             val[j] = right
         else if right is val[j] and _.isArray left
-          if _.isArray left 
+          if _.isArray left
             val.splice.apply val, [j, 1].concat left
-          else 
+          else
             val[j] = left
     else
-      if left is val 
+      if left is val
         val = right
-      else if right is val and _.isArray left 
+      else if right is val and _.isArray left
         val = left
     val
 
@@ -258,6 +258,8 @@ getUserFnExpr = (userFnMap, callExpr) ->
 # 4. Instrumentation can then include the original ranges and node source in the saved flow state.
 module.exports.makeGatherNodeRanges = makeGatherNodeRanges = (nodeRanges, code, codePrefix) -> (node) ->
   return unless node.range
+  for x in node.range when _.isNaN x
+    console.log "got bad range", node.range, "from", node, node.parent
   node.originalRange = ranges.offsetsToRange node.range[0], node.range[1], code, codePrefix
   node.originalSource = node.source()
   nodeRanges.push node
@@ -285,10 +287,11 @@ module.exports.makeCheckThisKeywords = makeCheckThisKeywords = (globals, varName
           varNames[p.left.name] = true if p.left?
           varNames[param.name] = true for param in p.params if p.params?
           return if varNames[v] is true
+        return if /\$$/.test v  # accum$ in CoffeeScript Redux isn't handled properly
         # TODO: we need to know whether `this` has this method before saying this...
         message = "Missing `this.` keyword; should be `this.#{v}`."
         hint = "There is no function `#{v}`, but `this` has a method `#{v}`."
-        range = [node.originalRange.start, node.originalRange.end]
+        range = if node.originalRange then [node.originalRange.start, node.originalRange.end] else null
         problem = @createUserCodeProblem type: 'transpile', reporter: 'aether', kind: 'MissingThis', message: message, hint: hint, range: range  # TODO: code/codePrefix?
         @addProblem problem
 

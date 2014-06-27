@@ -196,10 +196,10 @@ module.exports = class Aether
 
     # TODO: need to insert 'use strict' after normalization, since otherwise you get tmp2 = 'use strict'
     try
-      normalizedAST = normalizer.normalize transformedAST, {}
+      normalizedAST = normalizer.normalize transformedAST, {reference_errors: true}
     catch error
       console.log "JS_WALA couldn't handle", transformedAST, "\ngave error:", error.toString()
-      problemOptions = error: error, message: 'Syntax error during code normalization.', kind: 'NormalizationError', code: '', codePrefix: '', reporter: 'aether', type: 'transpile', hint: 'Possibly a bug with advanced JavaScript feature parsing.'
+      problemOptions = error: error, message: 'Syntax error during code normalization.', kind: 'NormalizationError', code: '', codePrefix: '', reporter: 'aether', type: 'transpile', hint: "Possibly a bug with advanced #{@language.name} feature parsing."
       @addProblem @createUserCodeProblem problemOptions
       return ''
     normalizedNodeIndex = []
@@ -210,14 +210,19 @@ module.exports = class Aether
 
     try
       normalized = escodegen.generate normalizedAST, {sourceMap: @options.functionName or 'foo', sourceMapWithCode: true}
+      normalizedCode = normalized.code
+      normalizedSourceMap = normalized.map
     catch error
-      #console.log "escodegen couldn't handle", normalizedAST, "\ngave error:", error.toString()
-      problemOptions = error: error, message: 'Syntax error during code generation.', kind: 'CodeGenerationError', code: '', codePrefix: '', reporter: 'aether', type: 'transpile', hint: 'Possibly a bug with advanced JavaScript feature parsing.'
-      @addProblem @createUserCodeProblem problemOptions
-      return ''
-
-    normalizedCode = normalized.code
-    normalizedSourceMap = normalized.map
+      console.warn "escodegen couldn't handle", normalizedAST, "\ngave error:", error.toString()
+      try
+        # Maybe we can get it to work without source maps, if it errored during source mapping. Ranges (and thus other things) won't work, though.
+        normalizedCode = escodegen.generate normalizedAST, {}
+        normalizedSourceMap = null
+      catch error2
+        # Well, it was worth a try to do it without source maps.
+        problemOptions = error: error, message: 'Syntax error during code generation.', kind: 'CodeGenerationError', code: '', codePrefix: '', reporter: 'aether', type: 'transpile', hint: "Possibly a bug with advanced #{@language.name} feature parsing."
+        @addProblem @createUserCodeProblem problemOptions
+        return ''
 
     postNormalizationTransforms = []
     postNormalizationTransforms.unshift transforms.makeYieldConditionally() if @options.yieldConditionally
@@ -227,7 +232,8 @@ module.exports = class Aether
     else if @options.includeMetrics or @options.executionLimit
       postNormalizationTransforms.unshift transforms.makeInstrumentStatements()
     postNormalizationTransforms.unshift transforms.makeInstrumentCalls() if @options.includeMetrics or @options.includeFlow
-    postNormalizationTransforms.unshift transforms.makeFindOriginalNodes originalNodeRanges, @language.wrappedCodePrefix, normalizedSourceMap, normalizedNodeIndex
+    if normalizedSourceMap
+      postNormalizationTransforms.unshift transforms.makeFindOriginalNodes originalNodeRanges, @language.wrappedCodePrefix, normalizedSourceMap, normalizedNodeIndex
     postNormalizationTransforms.unshift transforms.protectAPI if @options.protectAPI
     postNormalizationTransforms.unshift transforms.interceptThis
     postNormalizationTransforms.unshift transforms.interceptEval

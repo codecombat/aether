@@ -86,3 +86,15 @@ describe "Problem Test Suite", ->
       aether = new Aether {executionLimit: 9001}
       aether.transpile(code)
       expect(aether.run()).toEqual 'mojambo'
+
+    it "Should error on undefined property accesses.", ->
+      code = """
+        var bar = 'bar';
+        var foobar = foo + bar;
+        return foobar;
+      """
+      aether = new Aether functionName: 'foobarFactory'
+      aether.transpile(code)
+      expect(aether.run()).not.toEqual 'undefinedbar'
+      expect(aether.run()).toEqual undefined
+      expect(aether.problems.errors).not.toEqual []
