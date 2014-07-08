@@ -164,6 +164,13 @@ describe "Python Test suite", ->
       aether.transpile(code)
       expect(aether.run()).toEqual([4, 1])
 
+    it "range(0, 10, 4)", ->
+      code = """
+      return range(0, 10, 4)
+      """
+      aether.transpile(code)
+      expect(aether.run()).toEqual([0, 4, 8])
+
   describe "Usage", ->
     it "self.doStuff via thisValue param", ->
       history = []
