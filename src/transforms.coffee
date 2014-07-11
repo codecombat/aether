@@ -258,8 +258,8 @@ getUserFnExpr = (userFnMap, callExpr) ->
 # 4. Instrumentation can then include the original ranges and node source in the saved flow state.
 module.exports.makeGatherNodeRanges = makeGatherNodeRanges = (nodeRanges, code, codePrefix) -> (node) ->
   return unless node.range
-  for x in node.range when _.isNaN x
-    console.log "got bad range", node.range, "from", node, node.parent
+  #for x in node.range when _.isNaN x
+  #  console.log "got bad range", node.range, "from", node, node.parent
   node.originalRange = ranges.offsetsToRange node.range[0], node.range[1], code, codePrefix
   node.originalSource = node.source()
   nodeRanges.push node
@@ -328,11 +328,12 @@ module.exports.makeFindOriginalNodes = makeFindOriginalNodes = (originalNodes, c
   #console.log "Got smc", smc, "from map", normalizedSourceMap, "string", normalizedSourceMap.toString()
   return (node) ->
     return unless mapped = smc.originalPositionFor line: node.loc.start.line, column: node.loc.start.column
-    #console.log "Got normalized position", mapped, "for node", node, node.source()
+    #doLog = node.loc.start.line is 20 and node.loc.start.column is 12
+    #console.log "Got normalized position", mapped, "for node", node, node.source() if doLog
     return unless normalizedNode = normalizedNodeIndex[mapped.column]
-    #console.log "  Got normalized node", normalizedNode
+    #console.log "  Got normalized node", normalizedNode if doLog
     node.originalNode = normalizedPosToOriginalNode normalizedNode.attr.pos
-    #console.log "  Got original node", node.originalNode, "from pos", normalizedNode.attr?.pos
+    #console.log "  Got original node", node.originalNode, "from pos", normalizedNode.attr?.pos if doLog
 
 # Now that it's normalized to this: https://github.com/nwinter/JS_WALA/blob/master/normalizer/doc/normalization.md
 # ... we can basically just put a yield check in after every CallExpression except the outermost one if we are yielding conditionally.
@@ -385,10 +386,16 @@ module.exports.makeInstrumentStatements = makeInstrumentStatements = (varNames) 
   # set up any state tracking here
   return (node) ->
     orig = node.originalNode
-    #console.log "Should we instrument", orig?.originalSource, node.source(), node, "?", (orig and orig.originalRange.start >= 0), (node.type in statements), orig?.type, getFunctionNestingLevel(node) if node.source().length < 50
+    #console.log "Should we instrument", orig?.originalSource, node.source(), node, "?", (orig and orig.originalRange.start.ofs >= 0), (node.type in statements), orig?.type, getFunctionNestingLevel(node), orig?.originalRange.start
     return unless orig and orig.originalRange.start.ofs >= 0
-    return unless node.type in statements
-    return if orig.type in [S.ThisExpression, S.Identifier]  # probably need to add to this to get statements which corresponded to interesting expressions before normalization
+    if node.type is S.BlockStatement  # Trying to handle the case of a ReferenceError-throwing variable turning into a block.
+      return unless orig.type is S.Identifier
+      source = node.source()
+      return unless /^\{\n *tmp\d+ = 'ReferenceError';/.test(source) and /throw tmp\d+;/.test(source)
+      blockStatement = true
+    else
+      return unless node.type in statements
+      return if orig.type in [S.ThisExpression, S.Identifier]  # probably need to add to this to get statements which corresponded to interesting expressions before normalization
     # Only do this in nested functions, not our wrapper
     return unless getFunctionNestingLevel(node) > 1
     if orig.parent?.type is S.AssignmentExpression and orig.parent.parent?.type is S.ExpressionStatement and orig.parent.parent.originalRange
@@ -404,7 +411,13 @@ module.exports.makeInstrumentStatements = makeInstrumentStatements = (varNames) 
     else
       logging = ''
     suffix = " _aether.logStatement(#{safeRange}, _aether._userInfo, #{if varNames then '!_aether._shouldSkipFlow' else 'false'});"
-    node.update "#{prefix} #{node.source()} #{logging}#{suffix}"
+    if blockStatement
+      blockSource = node.source()
+      inner = blockSource.substring(blockSource.indexOf('{') + 2, blockSource.lastIndexOf('}'))
+      node.update "{ #{prefix}\n#{inner}#{logging}#{suffix} }"
+      #console.log "got new source", node.source(), "from", blockSource
+    else
+      node.update "#{prefix} #{node.source()} #{logging}#{suffix}"
     #console.log " ... created logger", node.source(), orig
 
 module.exports.interceptThis = interceptThis = (node) ->
