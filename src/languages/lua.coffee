@@ -29,21 +29,22 @@ module.exports = class Lua extends Language
       lintProblems.push aether.createUserCodeProblem type: 'transpile', reporter: 'lua2js', message: error.msg, code: rawCode, codePrefix: "", range: [rng.start, rng.end]
 
     lintProblems
-    
 
-  wrapResult: (ast, name) -> 
-    ast = {type: "Program", body:[{type: "FunctionDeclaration", id: {type: "Identifier", name: name or 'foo'}, params: [], body: ast}]}
+
+  wrapResult: (ast, name, params) ->
+    params = ({type: 'Identifier', name: arg} for arg in params)
+    ast = {type: "Program", body:[{type: "FunctionDeclaration", id: {type: "Identifier", name: name or 'foo'}, params: params, body: ast}]}
     ast.body[0].body.body.unshift {"type": "VariableDeclaration","declarations": [
          { "type": "VariableDeclarator", "id": {"type": "Identifier", "name": "self" },"init": {"type": "ThisExpression"} }
       ],"kind": "var"}
     ast
 
   parse: (code, aether) ->
-    Lua.prototype.wrapResult (Lua.prototype.callParser code, false), aether.options.functionName
+    Lua.prototype.wrapResult (Lua.prototype.callParser code, false), aether.options.functionName, aether.options.functionParameters
 
 
   parseDammit: (code, aether) ->
-    try 
-      return Lua.prototype.wrapResult (Lua.prototype.callParser code, true), aether.options.functionName
+    try
+      return Lua.prototype.wrapResult (Lua.prototype.callParser code, true), aether.options.functionName, aether.options.functionParameters
     catch error
       return {"type": "BlockStatement": body:[{type: "EmptyStatement"}]}

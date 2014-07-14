@@ -26,7 +26,7 @@ module.exports.createUserCodeProblem = (options) ->
 
 extractTranspileErrorDetails = (options) ->
   code = options.code or ''
-  codePrefix = options.codePrefix or 'function wrapped() {\n"use strict";\n'
+  codePrefix = options.codePrefix or ''
   error = options.error
   options.message = error.message
 
@@ -71,7 +71,7 @@ extractTranspileErrorDetails = (options) ->
       if error.startOffset and error.endOffset
         range = ranges.offsetsToRange(error.startOffset, error.endOffset, code)
         options.range = [range.start, range.end]
-    when 'lua2js', 'luapegjs'
+    when 'lua2js'
       options.message ?= error.message
       rng = ranges.offsetsToRange(error.offset, error.offset, code, '')
       options.range = [rng.start, rng.end]

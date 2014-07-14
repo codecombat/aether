@@ -41,7 +41,7 @@ module.exports = class JavaScript extends Language
       console.log "Couldn't even loosely parse; are you sure #{a} and #{b} are #{@name}?"
       return true
     # acorn_loose annoyingly puts start/end in every node; we'll remove before comparing
-    removeLocations = (node) -> node.start = node.end = null
+    removeLocations = (node) -> node.start = node.end = null if node
     traversal.walkAST aAST, removeLocations
     traversal.walkAST bAST, removeLocations
     return not _.isEqual(aAST, bAST)
@@ -65,7 +65,7 @@ module.exports = class JavaScript extends Language
     catch e
       console.warn "JSHint died with error", e  #, "on code\n", wrappedCode
     for error in jshint.errors
-      lintProblems.push aether.createUserCodeProblem type: 'transpile', reporter: 'jshint', error: error, code: wrappedCode, codePrefix: aether.wrappedCodePrefix
+      lintProblems.push aether.createUserCodeProblem type: 'transpile', reporter: 'jshint', error: error, code: wrappedCode, codePrefix: @wrappedCodePrefix
 
     lintProblems
 
