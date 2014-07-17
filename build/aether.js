@@ -21351,7 +21351,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
 }).call(this);
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./defaults":2,"./execution":3,"./instrumentation":4,"./languages/languages":10,"./problems":13,"./protectAPI":14,"./protectBuiltins":15,"./transforms":17,"./traversal":18,"./validators/options":19,"JS_WALA/normalizer/lib/normalizer":24,"escodegen":231,"esprima":247,"lodash":251,"traceur":251}],2:[function(require,module,exports){
+},{"./defaults":2,"./execution":3,"./instrumentation":4,"./languages/languages":10,"./problems":13,"./protectAPI":14,"./protectBuiltins":15,"./transforms":17,"./traversal":18,"./validators/options":19,"JS_WALA/normalizer/lib/normalizer":24,"escodegen":230,"esprima":246,"lodash":250,"traceur":250}],2:[function(require,module,exports){
 (function (global){
 (function() {
   var defaults, execution, _, _ref, _ref1, _ref2;
@@ -21380,7 +21380,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
 }).call(this);
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./execution":3,"lodash":251}],3:[function(require,module,exports){
+},{"./execution":3,"lodash":250}],3:[function(require,module,exports){
 (function() {
   var execution;
 
@@ -21614,7 +21614,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
 }).call(this);
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"lodash":251}],5:[function(require,module,exports){
+},{"lodash":250}],5:[function(require,module,exports){
 (function() {
   var Clojure, Language, callParser, closer,
     __hasProp = {}.hasOwnProperty,
@@ -21921,7 +21921,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
 }).call(this);
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./language":9,"coffee-script-redux":216,"estraverse":248,"lodash":251}],7:[function(require,module,exports){
+},{"./language":9,"coffee-script-redux":215,"estraverse":247,"lodash":250}],7:[function(require,module,exports){
 (function() {
   var Io, Language, esprima, iota, _ref,
     __hasProp = {}.hasOwnProperty,
@@ -21979,7 +21979,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
 
 }).call(this);
 
-},{"./language":9,"esprima":247,"iota-compiler":262}],8:[function(require,module,exports){
+},{"./language":9,"esprima":246,"iota-compiler":261}],8:[function(require,module,exports){
 (function (global){
 (function() {
   var JavaScript, Language, acorn_loose, escodegen, esprima, jshint, traversal, _, _ref, _ref1, _ref2, _ref3,
@@ -22202,7 +22202,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
 }).call(this);
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../traversal":18,"./language":9,"acorn/acorn_loose":28,"escodegen":231,"esprima":247,"jshint":272,"lodash":251}],9:[function(require,module,exports){
+},{"../traversal":18,"./language":9,"acorn/acorn_loose":28,"escodegen":230,"esprima":246,"jshint":271,"lodash":250}],9:[function(require,module,exports){
 (function (global){
 (function() {
   var Language, _, _ref, _ref1, _ref2;
@@ -22274,7 +22274,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
 }).call(this);
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"lodash":251}],10:[function(require,module,exports){
+},{"lodash":250}],10:[function(require,module,exports){
 (function() {
   module.exports = {
     javascript: require('./javascript'),
@@ -22443,7 +22443,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
 
 }).call(this);
 
-},{"../ranges":16,"./language":9,"lua2js":279}],12:[function(require,module,exports){
+},{"../ranges":16,"./language":9,"lua2js":278}],12:[function(require,module,exports){
 (function (global){
 (function() {
   var Language, Python, estraverse, fixLocations, parser, parser_loose, selfToThis, _, _ref, _ref1, _ref2, _ref3,
@@ -22592,7 +22592,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
 }).call(this);
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./language":9,"estraverse":248,"filbert":249,"filbert/filbert_loose":250,"lodash":251}],13:[function(require,module,exports){
+},{"./language":9,"estraverse":247,"filbert":248,"filbert/filbert_loose":249,"lodash":250}],13:[function(require,module,exports){
 (function() {
   var commonMethods, explainErrorMessage, extractRuntimeErrorDetails, extractTranspileErrorDetails, ranges;
 
@@ -23009,7 +23009,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
 }).call(this);
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"lodash":251}],15:[function(require,module,exports){
+},{"lodash":250}],15:[function(require,module,exports){
 (function (global){
 (function() {
   var addGlobal, addedGlobals, builtinClones, builtinNames, builtinObjectNames, builtinReal, cloneBuiltin, copy, copyBuiltin, createSandboxedFunction, getOwnPropertyNames, globalScope, name, problems, raiseDisabledFunctionConstructor, replaceBuiltin, restoreBuiltins, wrapWithSandbox, _, _i, _len, _ref, _ref1, _ref2;
@@ -23169,7 +23169,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
 }).call(this);
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./problems":13,"lodash":251}],16:[function(require,module,exports){
+},{"./problems":13,"lodash":250}],16:[function(require,module,exports){
 (function() {
   var buildRowOffsets, lastRowOffsets, lastRowOffsetsPrefix, lastRowOffsetsSource, locToPos, locsToRange, offsetToPos, offsetToRow, offsetsToRange, rowColToPos, rowColsToRange, stringifyPos, stringifyRange;
 
@@ -24035,7 +24035,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
 }).call(this);
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./problems":13,"./ranges":16,"esprima":247,"lodash":251,"source-map":282}],18:[function(require,module,exports){
+},{"./problems":13,"./ranges":16,"esprima":246,"lodash":250,"source-map":281}],18:[function(require,module,exports){
 (function (global){
 (function() {
   var acorn_loose, csredux, esprima, insertHelpers, morphAST, walkAST, _, _ref, _ref1, _ref2;
@@ -24129,7 +24129,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
 }).call(this);
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"acorn/acorn_loose":28,"coffee-script-redux":216,"esprima":247,"lodash":251}],19:[function(require,module,exports){
+},{"acorn/acorn_loose":28,"coffee-script-redux":215,"esprima":246,"lodash":250}],19:[function(require,module,exports){
 (function() {
   var tv4;
 
@@ -24216,7 +24216,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
 
 }).call(this);
 
-},{"tv4":292}],20:[function(require,module,exports){
+},{"tv4":291}],20:[function(require,module,exports){
 /*******************************************************************************
  * Copyright (c) 2012 IBM Corporation.
  * All rights reserved. This program and the accompanying materials
@@ -28428,7 +28428,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
 }).call(this);
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"lodash-node":109,"mori":211}],30:[function(require,module,exports){
+},{"lodash-node":108,"mori":210}],30:[function(require,module,exports){
 (function (global){
 (function() {
   var assertions, bind, core, estraverse, m, _, _ref, _ref1, _ref2, _ref3, _ref4, _ref5,
@@ -28821,6 +28821,18 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
       }
       assertions.arity(2, 3, arguments.length);
       return m.get(coll, key, notFound);
+    },
+    'aget': function() {
+      var args, key, keys, obj, rest;
+      obj = arguments[0], keys = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+      assertions.arity(2, Infinity, arguments.length);
+      key = keys[0];
+      rest = keys.slice(1);
+      if (keys.length === 1) {
+        return obj[key];
+      }
+      args = [obj[key]].concat(rest);
+      return core.aget.apply(null, args);
     },
     'seq': function(coll) {
       assertions.arity(1, arguments.length);
@@ -29350,7 +29362,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
 }).call(this);
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./assertions":29,"estraverse":35,"lodash-node":109,"mori":211}],31:[function(require,module,exports){
+},{"./assertions":29,"estraverse":247,"lodash-node":108,"mori":210}],31:[function(require,module,exports){
 (function() {
   var Closer, Parser, balanceDelimiters, builder, closer, con, nodes, oldParse, parser;
 
@@ -31219,698 +31231,7 @@ if (typeof module !== 'undefined' && require.main === module) {
 }
 }
 }).call(this,require("JkpR2F"))
-},{"JkpR2F":259,"estraverse":35,"fs":251,"path":258}],35:[function(require,module,exports){
-/*
-  Copyright (C) 2012-2013 Yusuke Suzuki <utatane.tea@gmail.com>
-  Copyright (C) 2012 Ariya Hidayat <ariya.hidayat@gmail.com>
-
-  Redistribution and use in source and binary forms, with or without
-  modification, are permitted provided that the following conditions are met:
-
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in the
-      documentation and/or other materials provided with the distribution.
-
-  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-  ARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
-  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
-  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
-/*jslint vars:false, bitwise:true*/
-/*jshint indent:4*/
-/*global exports:true, define:true*/
-(function (root, factory) {
-    'use strict';
-
-    // Universal Module Definition (UMD) to support AMD, CommonJS/Node.js,
-    // and plain browser loading,
-    if (typeof define === 'function' && define.amd) {
-        define(['exports'], factory);
-    } else if (typeof exports !== 'undefined') {
-        factory(exports);
-    } else {
-        factory((root.estraverse = {}));
-    }
-}(this, function (exports) {
-    'use strict';
-
-    var Syntax,
-        isArray,
-        VisitorOption,
-        VisitorKeys,
-        BREAK,
-        SKIP;
-
-    Syntax = {
-        AssignmentExpression: 'AssignmentExpression',
-        ArrayExpression: 'ArrayExpression',
-        ArrayPattern: 'ArrayPattern',
-        ArrowFunctionExpression: 'ArrowFunctionExpression',
-        BlockStatement: 'BlockStatement',
-        BinaryExpression: 'BinaryExpression',
-        BreakStatement: 'BreakStatement',
-        CallExpression: 'CallExpression',
-        CatchClause: 'CatchClause',
-        ClassBody: 'ClassBody',
-        ClassDeclaration: 'ClassDeclaration',
-        ClassExpression: 'ClassExpression',
-        ConditionalExpression: 'ConditionalExpression',
-        ContinueStatement: 'ContinueStatement',
-        DebuggerStatement: 'DebuggerStatement',
-        DirectiveStatement: 'DirectiveStatement',
-        DoWhileStatement: 'DoWhileStatement',
-        EmptyStatement: 'EmptyStatement',
-        ExpressionStatement: 'ExpressionStatement',
-        ForStatement: 'ForStatement',
-        ForInStatement: 'ForInStatement',
-        FunctionDeclaration: 'FunctionDeclaration',
-        FunctionExpression: 'FunctionExpression',
-        Identifier: 'Identifier',
-        IfStatement: 'IfStatement',
-        Literal: 'Literal',
-        LabeledStatement: 'LabeledStatement',
-        LogicalExpression: 'LogicalExpression',
-        MemberExpression: 'MemberExpression',
-        MethodDefinition: 'MethodDefinition',
-        NewExpression: 'NewExpression',
-        ObjectExpression: 'ObjectExpression',
-        ObjectPattern: 'ObjectPattern',
-        Program: 'Program',
-        Property: 'Property',
-        ReturnStatement: 'ReturnStatement',
-        SequenceExpression: 'SequenceExpression',
-        SwitchStatement: 'SwitchStatement',
-        SwitchCase: 'SwitchCase',
-        ThisExpression: 'ThisExpression',
-        ThrowStatement: 'ThrowStatement',
-        TryStatement: 'TryStatement',
-        UnaryExpression: 'UnaryExpression',
-        UpdateExpression: 'UpdateExpression',
-        VariableDeclaration: 'VariableDeclaration',
-        VariableDeclarator: 'VariableDeclarator',
-        WhileStatement: 'WhileStatement',
-        WithStatement: 'WithStatement',
-        YieldExpression: 'YieldExpression'
-    };
-
-    function ignoreJSHintError() { }
-
-    isArray = Array.isArray;
-    if (!isArray) {
-        isArray = function isArray(array) {
-            return Object.prototype.toString.call(array) === '[object Array]';
-        };
-    }
-
-    function deepCopy(obj) {
-        var ret = {}, key, val;
-        for (key in obj) {
-            if (obj.hasOwnProperty(key)) {
-                val = obj[key];
-                if (typeof val === 'object' && val !== null) {
-                    ret[key] = deepCopy(val);
-                } else {
-                    ret[key] = val;
-                }
-            }
-        }
-        return ret;
-    }
-
-    function shallowCopy(obj) {
-        var ret = {}, key;
-        for (key in obj) {
-            if (obj.hasOwnProperty(key)) {
-                ret[key] = obj[key];
-            }
-        }
-        return ret;
-    }
-    ignoreJSHintError(shallowCopy);
-
-    // based on LLVM libc++ upper_bound / lower_bound
-    // MIT License
-
-    function upperBound(array, func) {
-        var diff, len, i, current;
-
-        len = array.length;
-        i = 0;
-
-        while (len) {
-            diff = len >>> 1;
-            current = i + diff;
-            if (func(array[current])) {
-                len = diff;
-            } else {
-                i = current + 1;
-                len -= diff + 1;
-            }
-        }
-        return i;
-    }
-
-    function lowerBound(array, func) {
-        var diff, len, i, current;
-
-        len = array.length;
-        i = 0;
-
-        while (len) {
-            diff = len >>> 1;
-            current = i + diff;
-            if (func(array[current])) {
-                i = current + 1;
-                len -= diff + 1;
-            } else {
-                len = diff;
-            }
-        }
-        return i;
-    }
-    ignoreJSHintError(lowerBound);
-
-    VisitorKeys = {
-        AssignmentExpression: ['left', 'right'],
-        ArrayExpression: ['elements'],
-        ArrayPattern: ['elements'],
-        ArrowFunctionExpression: ['params', 'defaults', 'rest', 'body'],
-        BlockStatement: ['body'],
-        BinaryExpression: ['left', 'right'],
-        BreakStatement: ['label'],
-        CallExpression: ['callee', 'arguments'],
-        CatchClause: ['param', 'body'],
-        ClassBody: ['body'],
-        ClassDeclaration: ['id', 'body', 'superClass'],
-        ClassExpression: ['id', 'body', 'superClass'],
-        ConditionalExpression: ['test', 'consequent', 'alternate'],
-        ContinueStatement: ['label'],
-        DebuggerStatement: [],
-        DirectiveStatement: [],
-        DoWhileStatement: ['body', 'test'],
-        EmptyStatement: [],
-        ExpressionStatement: ['expression'],
-        ForStatement: ['init', 'test', 'update', 'body'],
-        ForInStatement: ['left', 'right', 'body'],
-        ForOfStatement: ['left', 'right', 'body'],
-        FunctionDeclaration: ['id', 'params', 'defaults', 'rest', 'body'],
-        FunctionExpression: ['id', 'params', 'defaults', 'rest', 'body'],
-        Identifier: [],
-        IfStatement: ['test', 'consequent', 'alternate'],
-        Literal: [],
-        LabeledStatement: ['label', 'body'],
-        LogicalExpression: ['left', 'right'],
-        MemberExpression: ['object', 'property'],
-        MethodDefinition: ['key', 'value'],
-        NewExpression: ['callee', 'arguments'],
-        ObjectExpression: ['properties'],
-        ObjectPattern: ['properties'],
-        Program: ['body'],
-        Property: ['key', 'value'],
-        ReturnStatement: ['argument'],
-        SequenceExpression: ['expressions'],
-        SwitchStatement: ['discriminant', 'cases'],
-        SwitchCase: ['test', 'consequent'],
-        ThisExpression: [],
-        ThrowStatement: ['argument'],
-        TryStatement: ['block', 'handlers', 'handler', 'guardedHandlers', 'finalizer'],
-        UnaryExpression: ['argument'],
-        UpdateExpression: ['argument'],
-        VariableDeclaration: ['declarations'],
-        VariableDeclarator: ['id', 'init'],
-        WhileStatement: ['test', 'body'],
-        WithStatement: ['object', 'body'],
-        YieldExpression: ['argument']
-    };
-
-    // unique id
-    BREAK = {};
-    SKIP = {};
-
-    VisitorOption = {
-        Break: BREAK,
-        Skip: SKIP
-    };
-
-    function Reference(parent, key) {
-        this.parent = parent;
-        this.key = key;
-    }
-
-    Reference.prototype.replace = function replace(node) {
-        this.parent[this.key] = node;
-    };
-
-    function Element(node, path, wrap, ref) {
-        this.node = node;
-        this.path = path;
-        this.wrap = wrap;
-        this.ref = ref;
-    }
-
-    function Controller() { }
-
-    // API:
-    // return property path array from root to current node
-    Controller.prototype.path = function path() {
-        var i, iz, j, jz, result, element;
-
-        function addToPath(result, path) {
-            if (isArray(path)) {
-                for (j = 0, jz = path.length; j < jz; ++j) {
-                    result.push(path[j]);
-                }
-            } else {
-                result.push(path);
-            }
-        }
-
-        // root node
-        if (!this.__current.path) {
-            return null;
-        }
-
-        // first node is sentinel, second node is root element
-        result = [];
-        for (i = 2, iz = this.__leavelist.length; i < iz; ++i) {
-            element = this.__leavelist[i];
-            addToPath(result, element.path);
-        }
-        addToPath(result, this.__current.path);
-        return result;
-    };
-
-    // API:
-    // return array of parent elements
-    Controller.prototype.parents = function parents() {
-        var i, iz, result;
-
-        // first node is sentinel
-        result = [];
-        for (i = 1, iz = this.__leavelist.length; i < iz; ++i) {
-            result.push(this.__leavelist[i].node);
-        }
-
-        return result;
-    };
-
-    // API:
-    // return current node
-    Controller.prototype.current = function current() {
-        return this.__current.node;
-    };
-
-    Controller.prototype.__execute = function __execute(callback, element) {
-        var previous, result;
-
-        result = undefined;
-
-        previous  = this.__current;
-        this.__current = element;
-        this.__state = null;
-        if (callback) {
-            result = callback.call(this, element.node, this.__leavelist[this.__leavelist.length - 1].node);
-        }
-        this.__current = previous;
-
-        return result;
-    };
-
-    // API:
-    // notify control skip / break
-    Controller.prototype.notify = function notify(flag) {
-        this.__state = flag;
-    };
-
-    // API:
-    // skip child nodes of current node
-    Controller.prototype.skip = function () {
-        this.notify(SKIP);
-    };
-
-    // API:
-    // break traversals
-    Controller.prototype['break'] = function () {
-        this.notify(BREAK);
-    };
-
-    Controller.prototype.__initialize = function(root, visitor) {
-        this.visitor = visitor;
-        this.root = root;
-        this.__worklist = [];
-        this.__leavelist = [];
-        this.__current = null;
-        this.__state = null;
-    };
-
-    Controller.prototype.traverse = function traverse(root, visitor) {
-        var worklist,
-            leavelist,
-            element,
-            node,
-            nodeType,
-            ret,
-            key,
-            current,
-            current2,
-            candidates,
-            candidate,
-            sentinel;
-
-        this.__initialize(root, visitor);
-
-        sentinel = {};
-
-        // reference
-        worklist = this.__worklist;
-        leavelist = this.__leavelist;
-
-        // initialize
-        worklist.push(new Element(root, null, null, null));
-        leavelist.push(new Element(null, null, null, null));
-
-        while (worklist.length) {
-            element = worklist.pop();
-
-            if (element === sentinel) {
-                element = leavelist.pop();
-
-                ret = this.__execute(visitor.leave, element);
-
-                if (this.__state === BREAK || ret === BREAK) {
-                    return;
-                }
-                continue;
-            }
-
-            if (element.node) {
-
-                ret = this.__execute(visitor.enter, element);
-
-                if (this.__state === BREAK || ret === BREAK) {
-                    return;
-                }
-
-                worklist.push(sentinel);
-                leavelist.push(element);
-
-                if (this.__state === SKIP || ret === SKIP) {
-                    continue;
-                }
-
-                node = element.node;
-                nodeType = element.wrap || node.type;
-                candidates = VisitorKeys[nodeType];
-
-                current = candidates.length;
-                while ((current -= 1) >= 0) {
-                    key = candidates[current];
-                    candidate = node[key];
-                    if (!candidate) {
-                        continue;
-                    }
-
-                    if (!isArray(candidate)) {
-                        worklist.push(new Element(candidate, key, null, null));
-                        continue;
-                    }
-
-                    current2 = candidate.length;
-                    while ((current2 -= 1) >= 0) {
-                        if (!candidate[current2]) {
-                            continue;
-                        }
-                        if ((nodeType === Syntax.ObjectExpression || nodeType === Syntax.ObjectPattern) && 'properties' === candidates[current]) {
-                            element = new Element(candidate[current2], [key, current2], 'Property', null);
-                        } else {
-                            element = new Element(candidate[current2], [key, current2], null, null);
-                        }
-                        worklist.push(element);
-                    }
-                }
-            }
-        }
-    };
-
-    Controller.prototype.replace = function replace(root, visitor) {
-        var worklist,
-            leavelist,
-            node,
-            nodeType,
-            target,
-            element,
-            current,
-            current2,
-            candidates,
-            candidate,
-            sentinel,
-            outer,
-            key;
-
-        this.__initialize(root, visitor);
-
-        sentinel = {};
-
-        // reference
-        worklist = this.__worklist;
-        leavelist = this.__leavelist;
-
-        // initialize
-        outer = {
-            root: root
-        };
-        element = new Element(root, null, null, new Reference(outer, 'root'));
-        worklist.push(element);
-        leavelist.push(element);
-
-        while (worklist.length) {
-            element = worklist.pop();
-
-            if (element === sentinel) {
-                element = leavelist.pop();
-
-                target = this.__execute(visitor.leave, element);
-
-                // node may be replaced with null,
-                // so distinguish between undefined and null in this place
-                if (target !== undefined && target !== BREAK && target !== SKIP) {
-                    // replace
-                    element.ref.replace(target);
-                }
-
-                if (this.__state === BREAK || target === BREAK) {
-                    return outer.root;
-                }
-                continue;
-            }
-
-            target = this.__execute(visitor.enter, element);
-
-            // node may be replaced with null,
-            // so distinguish between undefined and null in this place
-            if (target !== undefined && target !== BREAK && target !== SKIP) {
-                // replace
-                element.ref.replace(target);
-                element.node = target;
-            }
-
-            if (this.__state === BREAK || target === BREAK) {
-                return outer.root;
-            }
-
-            // node may be null
-            node = element.node;
-            if (!node) {
-                continue;
-            }
-
-            worklist.push(sentinel);
-            leavelist.push(element);
-
-            if (this.__state === SKIP || target === SKIP) {
-                continue;
-            }
-
-            nodeType = element.wrap || node.type;
-            candidates = VisitorKeys[nodeType];
-
-            current = candidates.length;
-            while ((current -= 1) >= 0) {
-                key = candidates[current];
-                candidate = node[key];
-                if (!candidate) {
-                    continue;
-                }
-
-                if (!isArray(candidate)) {
-                    worklist.push(new Element(candidate, key, null, new Reference(node, key)));
-                    continue;
-                }
-
-                current2 = candidate.length;
-                while ((current2 -= 1) >= 0) {
-                    if (!candidate[current2]) {
-                        continue;
-                    }
-                    if (nodeType === Syntax.ObjectExpression && 'properties' === candidates[current]) {
-                        element = new Element(candidate[current2], [key, current2], 'Property', new Reference(candidate, current2));
-                    } else {
-                        element = new Element(candidate[current2], [key, current2], null, new Reference(candidate, current2));
-                    }
-                    worklist.push(element);
-                }
-            }
-        }
-
-        return outer.root;
-    };
-
-    function traverse(root, visitor) {
-        var controller = new Controller();
-        return controller.traverse(root, visitor);
-    }
-
-    function replace(root, visitor) {
-        var controller = new Controller();
-        return controller.replace(root, visitor);
-    }
-
-    function extendCommentRange(comment, tokens) {
-        var target;
-
-        target = upperBound(tokens, function search(token) {
-            return token.range[0] > comment.range[0];
-        });
-
-        comment.extendedRange = [comment.range[0], comment.range[1]];
-
-        if (target !== tokens.length) {
-            comment.extendedRange[1] = tokens[target].range[0];
-        }
-
-        target -= 1;
-        if (target >= 0) {
-            comment.extendedRange[0] = tokens[target].range[1];
-        }
-
-        return comment;
-    }
-
-    function attachComments(tree, providedComments, tokens) {
-        // At first, we should calculate extended comment ranges.
-        var comments = [], comment, len, i, cursor;
-
-        if (!tree.range) {
-            throw new Error('attachComments needs range information');
-        }
-
-        // tokens array is empty, we attach comments to tree as 'leadingComments'
-        if (!tokens.length) {
-            if (providedComments.length) {
-                for (i = 0, len = providedComments.length; i < len; i += 1) {
-                    comment = deepCopy(providedComments[i]);
-                    comment.extendedRange = [0, tree.range[0]];
-                    comments.push(comment);
-                }
-                tree.leadingComments = comments;
-            }
-            return tree;
-        }
-
-        for (i = 0, len = providedComments.length; i < len; i += 1) {
-            comments.push(extendCommentRange(deepCopy(providedComments[i]), tokens));
-        }
-
-        // This is based on John Freeman's implementation.
-        cursor = 0;
-        traverse(tree, {
-            enter: function (node) {
-                var comment;
-
-                while (cursor < comments.length) {
-                    comment = comments[cursor];
-                    if (comment.extendedRange[1] > node.range[0]) {
-                        break;
-                    }
-
-                    if (comment.extendedRange[1] === node.range[0]) {
-                        if (!node.leadingComments) {
-                            node.leadingComments = [];
-                        }
-                        node.leadingComments.push(comment);
-                        comments.splice(cursor, 1);
-                    } else {
-                        cursor += 1;
-                    }
-                }
-
-                // already out of owned node
-                if (cursor === comments.length) {
-                    return VisitorOption.Break;
-                }
-
-                if (comments[cursor].extendedRange[0] > node.range[1]) {
-                    return VisitorOption.Skip;
-                }
-            }
-        });
-
-        cursor = 0;
-        traverse(tree, {
-            leave: function (node) {
-                var comment;
-
-                while (cursor < comments.length) {
-                    comment = comments[cursor];
-                    if (node.range[1] < comment.extendedRange[0]) {
-                        break;
-                    }
-
-                    if (node.range[1] === comment.extendedRange[0]) {
-                        if (!node.trailingComments) {
-                            node.trailingComments = [];
-                        }
-                        node.trailingComments.push(comment);
-                        comments.splice(cursor, 1);
-                    } else {
-                        cursor += 1;
-                    }
-                }
-
-                // already out of owned node
-                if (cursor === comments.length) {
-                    return VisitorOption.Break;
-                }
-
-                if (comments[cursor].extendedRange[0] > node.range[1]) {
-                    return VisitorOption.Skip;
-                }
-            }
-        });
-
-        return tree;
-    }
-
-    exports.version = '1.5.1-dev';
-    exports.Syntax = Syntax;
-    exports.traverse = traverse;
-    exports.replace = replace;
-    exports.attachComments = attachComments;
-    exports.VisitorKeys = VisitorKeys;
-    exports.VisitorOption = VisitorOption;
-    exports.Controller = Controller;
-}));
-/* vim: set sw=4 ts=4 et tw=80 : */
-
-},{}],36:[function(require,module,exports){
+},{"JkpR2F":258,"estraverse":247,"fs":250,"path":257}],35:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -31952,7 +31273,7 @@ module.exports = {
   'zipObject': require('./arrays/zipObject')
 };
 
-},{"./arrays/compact":37,"./arrays/difference":38,"./arrays/findIndex":39,"./arrays/findLastIndex":40,"./arrays/first":41,"./arrays/flatten":42,"./arrays/indexOf":43,"./arrays/initial":44,"./arrays/intersection":45,"./arrays/last":46,"./arrays/lastIndexOf":47,"./arrays/pull":48,"./arrays/range":49,"./arrays/remove":50,"./arrays/rest":51,"./arrays/sortedIndex":52,"./arrays/union":53,"./arrays/uniq":54,"./arrays/without":55,"./arrays/xor":56,"./arrays/zip":57,"./arrays/zipObject":58}],37:[function(require,module,exports){
+},{"./arrays/compact":36,"./arrays/difference":37,"./arrays/findIndex":38,"./arrays/findLastIndex":39,"./arrays/first":40,"./arrays/flatten":41,"./arrays/indexOf":42,"./arrays/initial":43,"./arrays/intersection":44,"./arrays/last":45,"./arrays/lastIndexOf":46,"./arrays/pull":47,"./arrays/range":48,"./arrays/remove":49,"./arrays/rest":50,"./arrays/sortedIndex":51,"./arrays/union":52,"./arrays/uniq":53,"./arrays/without":54,"./arrays/xor":55,"./arrays/zip":56,"./arrays/zipObject":57}],36:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -31992,7 +31313,7 @@ function compact(array) {
 
 module.exports = compact;
 
-},{}],38:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -32025,7 +31346,7 @@ function difference(array) {
 
 module.exports = difference;
 
-},{"../internals/baseDifference":116,"../internals/baseFlatten":117}],39:[function(require,module,exports){
+},{"../internals/baseDifference":115,"../internals/baseFlatten":116}],38:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -32092,7 +31413,7 @@ function findIndex(array, callback, thisArg) {
 
 module.exports = findIndex;
 
-},{"../functions/createCallback":98}],40:[function(require,module,exports){
+},{"../functions/createCallback":97}],39:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -32157,7 +31478,7 @@ function findLastIndex(array, callback, thisArg) {
 
 module.exports = findLastIndex;
 
-},{"../functions/createCallback":98}],41:[function(require,module,exports){
+},{"../functions/createCallback":97}],40:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -32245,7 +31566,7 @@ function first(array, callback, thisArg) {
 
 module.exports = first;
 
-},{"../functions/createCallback":98,"../internals/slice":151}],42:[function(require,module,exports){
+},{"../functions/createCallback":97,"../internals/slice":150}],41:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -32313,7 +31634,7 @@ function flatten(array, isShallow, callback, thisArg) {
 
 module.exports = flatten;
 
-},{"../collections/map":78,"../internals/baseFlatten":117}],43:[function(require,module,exports){
+},{"../collections/map":77,"../internals/baseFlatten":116}],42:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -32365,7 +31686,7 @@ function indexOf(array, value, fromIndex) {
 
 module.exports = indexOf;
 
-},{"../internals/baseIndexOf":118,"./sortedIndex":52}],44:[function(require,module,exports){
+},{"../internals/baseIndexOf":117,"./sortedIndex":51}],43:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -32449,7 +31770,7 @@ function initial(array, callback, thisArg) {
 
 module.exports = initial;
 
-},{"../functions/createCallback":98,"../internals/slice":151}],45:[function(require,module,exports){
+},{"../functions/createCallback":97,"../internals/slice":150}],44:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -32534,7 +31855,7 @@ function intersection() {
 
 module.exports = intersection;
 
-},{"../internals/baseIndexOf":118,"../internals/cacheIndexOf":123,"../internals/createCache":128,"../internals/getArray":132,"../internals/largeArraySize":138,"../internals/releaseArray":146,"../internals/releaseObject":147,"../objects/isArguments":168,"../objects/isArray":169}],46:[function(require,module,exports){
+},{"../internals/baseIndexOf":117,"../internals/cacheIndexOf":122,"../internals/createCache":127,"../internals/getArray":131,"../internals/largeArraySize":137,"../internals/releaseArray":145,"../internals/releaseObject":146,"../objects/isArguments":167,"../objects/isArray":168}],45:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -32620,7 +31941,7 @@ function last(array, callback, thisArg) {
 
 module.exports = last;
 
-},{"../functions/createCallback":98,"../internals/slice":151}],47:[function(require,module,exports){
+},{"../functions/createCallback":97,"../internals/slice":150}],46:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -32676,7 +31997,7 @@ function lastIndexOf(array, value, fromIndex) {
 
 module.exports = lastIndexOf;
 
-},{}],48:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -32735,7 +32056,7 @@ function pull(array) {
 
 module.exports = pull;
 
-},{}],49:[function(require,module,exports){
+},{}],48:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -32806,7 +32127,7 @@ function range(start, end, step) {
 
 module.exports = range;
 
-},{}],50:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -32879,7 +32200,7 @@ function remove(array, callback, thisArg) {
 
 module.exports = remove;
 
-},{"../functions/createCallback":98}],51:[function(require,module,exports){
+},{"../functions/createCallback":97}],50:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -32964,7 +32285,7 @@ function rest(array, callback, thisArg) {
 
 module.exports = rest;
 
-},{"../functions/createCallback":98,"../internals/slice":151}],52:[function(require,module,exports){
+},{"../functions/createCallback":97,"../internals/slice":150}],51:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -33043,7 +32364,7 @@ function sortedIndex(array, value, callback, thisArg) {
 
 module.exports = sortedIndex;
 
-},{"../functions/createCallback":98,"../utilities/identity":197}],53:[function(require,module,exports){
+},{"../functions/createCallback":97,"../utilities/identity":196}],52:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -33075,7 +32396,7 @@ function union() {
 
 module.exports = union;
 
-},{"../internals/baseFlatten":117,"../internals/baseUniq":122}],54:[function(require,module,exports){
+},{"../internals/baseFlatten":116,"../internals/baseUniq":121}],53:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -33146,7 +32467,7 @@ function uniq(array, isSorted, callback, thisArg) {
 
 module.exports = uniq;
 
-},{"../functions/createCallback":98,"../internals/baseUniq":122}],55:[function(require,module,exports){
+},{"../functions/createCallback":97,"../internals/baseUniq":121}],54:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -33179,7 +32500,7 @@ function without(array) {
 
 module.exports = without;
 
-},{"../internals/baseDifference":116,"../internals/slice":151}],56:[function(require,module,exports){
+},{"../internals/baseDifference":115,"../internals/slice":150}],55:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -33227,7 +32548,7 @@ function xor() {
 
 module.exports = xor;
 
-},{"../internals/baseDifference":116,"../internals/baseUniq":122,"../objects/isArguments":168,"../objects/isArray":169}],57:[function(require,module,exports){
+},{"../internals/baseDifference":115,"../internals/baseUniq":121,"../objects/isArguments":167,"../objects/isArray":168}],56:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -33269,7 +32590,7 @@ function zip() {
 
 module.exports = zip;
 
-},{"../collections/max":79,"../collections/pluck":81}],58:[function(require,module,exports){
+},{"../collections/max":78,"../collections/pluck":80}],57:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -33319,7 +32640,7 @@ function zipObject(keys, values) {
 
 module.exports = zipObject;
 
-},{"../objects/isArray":169}],59:[function(require,module,exports){
+},{"../objects/isArray":168}],58:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -33338,7 +32659,7 @@ module.exports = {
   'wrapperValueOf': require('./chaining/wrapperValueOf')
 };
 
-},{"./chaining/chain":60,"./chaining/tap":61,"./chaining/wrapperChain":62,"./chaining/wrapperToString":63,"./chaining/wrapperValueOf":64}],60:[function(require,module,exports){
+},{"./chaining/chain":59,"./chaining/tap":60,"./chaining/wrapperChain":61,"./chaining/wrapperToString":62,"./chaining/wrapperValueOf":63}],59:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -33381,7 +32702,7 @@ function chain(value) {
 
 module.exports = chain;
 
-},{"../internals/lodashWrapper":139}],61:[function(require,module,exports){
+},{"../internals/lodashWrapper":138}],60:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -33418,7 +32739,7 @@ function tap(value, interceptor) {
 
 module.exports = tap;
 
-},{}],62:[function(require,module,exports){
+},{}],61:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -33460,7 +32781,7 @@ function wrapperChain() {
 
 module.exports = wrapperChain;
 
-},{}],63:[function(require,module,exports){
+},{}],62:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -33488,7 +32809,7 @@ function wrapperToString() {
 
 module.exports = wrapperToString;
 
-},{}],64:[function(require,module,exports){
+},{}],63:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -33519,7 +32840,7 @@ function wrapperValueOf() {
 
 module.exports = wrapperValueOf;
 
-},{"../collections/forEach":73,"../support":193}],65:[function(require,module,exports){
+},{"../collections/forEach":72,"../support":192}],64:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -33570,7 +32891,7 @@ module.exports = {
   'where': require('./collections/where')
 };
 
-},{"./collections/at":66,"./collections/contains":67,"./collections/countBy":68,"./collections/every":69,"./collections/filter":70,"./collections/find":71,"./collections/findLast":72,"./collections/forEach":73,"./collections/forEachRight":74,"./collections/groupBy":75,"./collections/indexBy":76,"./collections/invoke":77,"./collections/map":78,"./collections/max":79,"./collections/min":80,"./collections/pluck":81,"./collections/reduce":82,"./collections/reduceRight":83,"./collections/reject":84,"./collections/sample":85,"./collections/shuffle":86,"./collections/size":87,"./collections/some":88,"./collections/sortBy":89,"./collections/toArray":90,"./collections/where":91}],66:[function(require,module,exports){
+},{"./collections/at":65,"./collections/contains":66,"./collections/countBy":67,"./collections/every":68,"./collections/filter":69,"./collections/find":70,"./collections/findLast":71,"./collections/forEach":72,"./collections/forEachRight":73,"./collections/groupBy":74,"./collections/indexBy":75,"./collections/invoke":76,"./collections/map":77,"./collections/max":78,"./collections/min":79,"./collections/pluck":80,"./collections/reduce":81,"./collections/reduceRight":82,"./collections/reject":83,"./collections/sample":84,"./collections/shuffle":85,"./collections/size":86,"./collections/some":87,"./collections/sortBy":88,"./collections/toArray":89,"./collections/where":90}],65:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -33618,7 +32939,7 @@ function at(collection) {
 
 module.exports = at;
 
-},{"../internals/baseFlatten":117,"../objects/isString":183}],67:[function(require,module,exports){
+},{"../internals/baseFlatten":116,"../objects/isString":182}],66:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -33685,7 +33006,7 @@ function contains(collection, target, fromIndex) {
 
 module.exports = contains;
 
-},{"../internals/baseIndexOf":118,"../objects/forOwn":163,"../objects/isArray":169,"../objects/isString":183}],68:[function(require,module,exports){
+},{"../internals/baseIndexOf":117,"../objects/forOwn":162,"../objects/isArray":168,"../objects/isString":182}],67:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -33742,7 +33063,7 @@ var countBy = createAggregator(function(result, value, key) {
 
 module.exports = countBy;
 
-},{"../internals/createAggregator":127}],69:[function(require,module,exports){
+},{"../internals/createAggregator":126}],68:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -33818,7 +33139,7 @@ function every(collection, callback, thisArg) {
 
 module.exports = every;
 
-},{"../functions/createCallback":98,"../objects/forOwn":163}],70:[function(require,module,exports){
+},{"../functions/createCallback":97,"../objects/forOwn":162}],69:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -33896,7 +33217,7 @@ function filter(collection, callback, thisArg) {
 
 module.exports = filter;
 
-},{"../functions/createCallback":98,"../objects/forOwn":163}],71:[function(require,module,exports){
+},{"../functions/createCallback":97,"../objects/forOwn":162}],70:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -33978,7 +33299,7 @@ function find(collection, callback, thisArg) {
 
 module.exports = find;
 
-},{"../functions/createCallback":98,"../objects/forOwn":163}],72:[function(require,module,exports){
+},{"../functions/createCallback":97,"../objects/forOwn":162}],71:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -34024,7 +33345,7 @@ function findLast(collection, callback, thisArg) {
 
 module.exports = findLast;
 
-},{"../functions/createCallback":98,"./forEachRight":74}],73:[function(require,module,exports){
+},{"../functions/createCallback":97,"./forEachRight":73}],72:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -34081,7 +33402,7 @@ function forEach(collection, callback, thisArg) {
 
 module.exports = forEach;
 
-},{"../internals/baseCreateCallback":114,"../objects/forOwn":163}],74:[function(require,module,exports){
+},{"../internals/baseCreateCallback":113,"../objects/forOwn":162}],73:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -34135,7 +33456,7 @@ function forEachRight(collection, callback, thisArg) {
 
 module.exports = forEachRight;
 
-},{"../internals/baseCreateCallback":114,"../objects/forOwn":163,"../objects/isArray":169,"../objects/isString":183,"../objects/keys":185}],75:[function(require,module,exports){
+},{"../internals/baseCreateCallback":113,"../objects/forOwn":162,"../objects/isArray":168,"../objects/isString":182,"../objects/keys":184}],74:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -34193,7 +33514,7 @@ var groupBy = createAggregator(function(result, value, key) {
 
 module.exports = groupBy;
 
-},{"../internals/createAggregator":127}],76:[function(require,module,exports){
+},{"../internals/createAggregator":126}],75:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -34249,7 +33570,7 @@ var indexBy = createAggregator(function(result, value, key) {
 
 module.exports = indexBy;
 
-},{"../internals/createAggregator":127}],77:[function(require,module,exports){
+},{"../internals/createAggregator":126}],76:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -34298,7 +33619,7 @@ function invoke(collection, methodName) {
 
 module.exports = invoke;
 
-},{"../internals/slice":151,"./forEach":73}],78:[function(require,module,exports){
+},{"../internals/slice":150,"./forEach":72}],77:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -34370,7 +33691,7 @@ function map(collection, callback, thisArg) {
 
 module.exports = map;
 
-},{"../functions/createCallback":98,"../objects/forOwn":163}],79:[function(require,module,exports){
+},{"../functions/createCallback":97,"../objects/forOwn":162}],78:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -34463,7 +33784,7 @@ function max(collection, callback, thisArg) {
 
 module.exports = max;
 
-},{"../functions/createCallback":98,"../internals/charAtCallback":125,"../objects/forOwn":163,"../objects/isArray":169,"../objects/isString":183,"./forEach":73}],80:[function(require,module,exports){
+},{"../functions/createCallback":97,"../internals/charAtCallback":124,"../objects/forOwn":162,"../objects/isArray":168,"../objects/isString":182,"./forEach":72}],79:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -34556,7 +33877,7 @@ function min(collection, callback, thisArg) {
 
 module.exports = min;
 
-},{"../functions/createCallback":98,"../internals/charAtCallback":125,"../objects/forOwn":163,"../objects/isArray":169,"../objects/isString":183,"./forEach":73}],81:[function(require,module,exports){
+},{"../functions/createCallback":97,"../internals/charAtCallback":124,"../objects/forOwn":162,"../objects/isArray":168,"../objects/isString":182,"./forEach":72}],80:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -34591,7 +33912,7 @@ var pluck = map;
 
 module.exports = pluck;
 
-},{"./map":78}],82:[function(require,module,exports){
+},{"./map":77}],81:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -34660,7 +33981,7 @@ function reduce(collection, callback, accumulator, thisArg) {
 
 module.exports = reduce;
 
-},{"../functions/createCallback":98,"../objects/forOwn":163}],83:[function(require,module,exports){
+},{"../functions/createCallback":97,"../objects/forOwn":162}],82:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -34704,7 +34025,7 @@ function reduceRight(collection, callback, accumulator, thisArg) {
 
 module.exports = reduceRight;
 
-},{"../functions/createCallback":98,"./forEachRight":74}],84:[function(require,module,exports){
+},{"../functions/createCallback":97,"./forEachRight":73}],83:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -34763,7 +34084,7 @@ function reject(collection, callback, thisArg) {
 
 module.exports = reject;
 
-},{"../functions/createCallback":98,"./filter":70}],85:[function(require,module,exports){
+},{"../functions/createCallback":97,"./filter":69}],84:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -34814,7 +34135,7 @@ function sample(collection, n, guard) {
 
 module.exports = sample;
 
-},{"../internals/baseRandom":121,"../objects/isString":183,"../objects/values":192,"./shuffle":86}],86:[function(require,module,exports){
+},{"../internals/baseRandom":120,"../objects/isString":182,"../objects/values":191,"./shuffle":85}],85:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -34855,7 +34176,7 @@ function shuffle(collection) {
 
 module.exports = shuffle;
 
-},{"../internals/baseRandom":121,"./forEach":73}],87:[function(require,module,exports){
+},{"../internals/baseRandom":120,"./forEach":72}],86:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -34893,7 +34214,7 @@ function size(collection) {
 
 module.exports = size;
 
-},{"../objects/keys":185}],88:[function(require,module,exports){
+},{"../objects/keys":184}],87:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -34971,7 +34292,7 @@ function some(collection, callback, thisArg) {
 
 module.exports = some;
 
-},{"../functions/createCallback":98,"../objects/forOwn":163,"../objects/isArray":169}],89:[function(require,module,exports){
+},{"../functions/createCallback":97,"../objects/forOwn":162,"../objects/isArray":168}],88:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -35074,7 +34395,7 @@ function sortBy(collection, callback, thisArg) {
 
 module.exports = sortBy;
 
-},{"../functions/createCallback":98,"../internals/compareAscending":126,"../internals/getArray":132,"../internals/getObject":133,"../internals/releaseArray":146,"../internals/releaseObject":147,"../objects/isArray":169,"./forEach":73,"./map":78}],90:[function(require,module,exports){
+},{"../functions/createCallback":97,"../internals/compareAscending":125,"../internals/getArray":131,"../internals/getObject":132,"../internals/releaseArray":145,"../internals/releaseObject":146,"../objects/isArray":168,"./forEach":72,"./map":77}],89:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -35109,7 +34430,7 @@ function toArray(collection) {
 
 module.exports = toArray;
 
-},{"../internals/slice":151,"../objects/isString":183,"../objects/values":192}],91:[function(require,module,exports){
+},{"../internals/slice":150,"../objects/isString":182,"../objects/values":191}],90:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -35149,7 +34470,7 @@ var where = filter;
 
 module.exports = where;
 
-},{"./filter":70}],92:[function(require,module,exports){
+},{"./filter":69}],91:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -35178,7 +34499,7 @@ module.exports = {
   'wrap': require('./functions/wrap')
 };
 
-},{"./functions/after":93,"./functions/bind":94,"./functions/bindAll":95,"./functions/bindKey":96,"./functions/compose":97,"./functions/createCallback":98,"./functions/curry":99,"./functions/debounce":100,"./functions/defer":101,"./functions/delay":102,"./functions/memoize":103,"./functions/once":104,"./functions/partial":105,"./functions/partialRight":106,"./functions/throttle":107,"./functions/wrap":108}],93:[function(require,module,exports){
+},{"./functions/after":92,"./functions/bind":93,"./functions/bindAll":94,"./functions/bindKey":95,"./functions/compose":96,"./functions/createCallback":97,"./functions/curry":98,"./functions/debounce":99,"./functions/defer":100,"./functions/delay":101,"./functions/memoize":102,"./functions/once":103,"./functions/partial":104,"./functions/partialRight":105,"./functions/throttle":106,"./functions/wrap":107}],92:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -35226,7 +34547,7 @@ function after(n, func) {
 
 module.exports = after;
 
-},{"../objects/isFunction":176}],94:[function(require,module,exports){
+},{"../objects/isFunction":175}],93:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -35268,7 +34589,7 @@ function bind(func, thisArg) {
 
 module.exports = bind;
 
-},{"../internals/createWrapper":129,"../internals/slice":151}],95:[function(require,module,exports){
+},{"../internals/createWrapper":128,"../internals/slice":150}],94:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -35319,7 +34640,7 @@ function bindAll(object) {
 
 module.exports = bindAll;
 
-},{"../internals/baseFlatten":117,"../internals/createWrapper":129,"../objects/functions":165}],96:[function(require,module,exports){
+},{"../internals/baseFlatten":116,"../internals/createWrapper":128,"../objects/functions":164}],95:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -35373,7 +34694,7 @@ function bindKey(object, key) {
 
 module.exports = bindKey;
 
-},{"../internals/createWrapper":129,"../internals/slice":151}],97:[function(require,module,exports){
+},{"../internals/createWrapper":128,"../internals/slice":150}],96:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -35436,7 +34757,7 @@ function compose() {
 
 module.exports = compose;
 
-},{"../objects/isFunction":176}],98:[function(require,module,exports){
+},{"../objects/isFunction":175}],97:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -35519,7 +34840,7 @@ function createCallback(func, thisArg, argCount) {
 
 module.exports = createCallback;
 
-},{"../internals/baseCreateCallback":114,"../internals/baseIsEqual":119,"../objects/isObject":180,"../objects/keys":185,"../utilities/property":203}],99:[function(require,module,exports){
+},{"../internals/baseCreateCallback":113,"../internals/baseIsEqual":118,"../objects/isObject":179,"../objects/keys":184,"../utilities/property":202}],98:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -35565,7 +34886,7 @@ function curry(func, arity) {
 
 module.exports = curry;
 
-},{"../internals/createWrapper":129}],100:[function(require,module,exports){
+},{"../internals/createWrapper":128}],99:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -35723,7 +35044,7 @@ function debounce(func, wait, options) {
 
 module.exports = debounce;
 
-},{"../objects/isFunction":176,"../objects/isObject":180,"../utilities/now":201}],101:[function(require,module,exports){
+},{"../objects/isFunction":175,"../objects/isObject":179,"../utilities/now":200}],100:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -35760,7 +35081,7 @@ function defer(func) {
 
 module.exports = defer;
 
-},{"../internals/slice":151,"../objects/isFunction":176}],102:[function(require,module,exports){
+},{"../internals/slice":150,"../objects/isFunction":175}],101:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -35798,7 +35119,7 @@ function delay(func, wait) {
 
 module.exports = delay;
 
-},{"../internals/slice":151,"../objects/isFunction":176}],103:[function(require,module,exports){
+},{"../internals/slice":150,"../objects/isFunction":175}],102:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -35871,7 +35192,7 @@ function memoize(func, resolver) {
 
 module.exports = memoize;
 
-},{"../internals/keyPrefix":137,"../objects/isFunction":176}],104:[function(require,module,exports){
+},{"../internals/keyPrefix":136,"../objects/isFunction":175}],103:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -35921,7 +35242,7 @@ function once(func) {
 
 module.exports = once;
 
-},{"../objects/isFunction":176}],105:[function(require,module,exports){
+},{"../objects/isFunction":175}],104:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -35957,7 +35278,7 @@ function partial(func) {
 
 module.exports = partial;
 
-},{"../internals/createWrapper":129,"../internals/slice":151}],106:[function(require,module,exports){
+},{"../internals/createWrapper":128,"../internals/slice":150}],105:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -36002,7 +35323,7 @@ function partialRight(func) {
 
 module.exports = partialRight;
 
-},{"../internals/createWrapper":129,"../internals/slice":151}],107:[function(require,module,exports){
+},{"../internals/createWrapper":128,"../internals/slice":150}],106:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -36075,7 +35396,7 @@ function throttle(func, wait, options) {
 
 module.exports = throttle;
 
-},{"../objects/isFunction":176,"../objects/isObject":180,"./debounce":100}],108:[function(require,module,exports){
+},{"../objects/isFunction":175,"../objects/isObject":179,"./debounce":99}],107:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -36113,7 +35434,7 @@ function wrap(value, wrapper) {
 
 module.exports = wrap;
 
-},{"../internals/createWrapper":129}],109:[function(require,module,exports){
+},{"../internals/createWrapper":128}],108:[function(require,module,exports){
 /**
  * @license
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
@@ -36469,7 +35790,7 @@ lodash.support = support;
 (lodash.templateSettings = utilities.templateSettings).imports._ = lodash;
 module.exports = lodash;
 
-},{"./arrays":36,"./chaining":59,"./collections":65,"./collections/forEach":73,"./functions":92,"./internals/lodashWrapper":139,"./objects":153,"./objects/forOwn":163,"./objects/isArray":169,"./support":193,"./utilities":194,"./utilities/mixin":198,"./utilities/templateSettings":207}],110:[function(require,module,exports){
+},{"./arrays":35,"./chaining":58,"./collections":64,"./collections/forEach":72,"./functions":91,"./internals/lodashWrapper":138,"./objects":152,"./objects/forOwn":162,"./objects/isArray":168,"./support":192,"./utilities":193,"./utilities/mixin":197,"./utilities/templateSettings":206}],109:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -36484,7 +35805,7 @@ var arrayPool = [];
 
 module.exports = arrayPool;
 
-},{}],111:[function(require,module,exports){
+},{}],110:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -36548,7 +35869,7 @@ function baseBind(bindData) {
 
 module.exports = baseBind;
 
-},{"../objects/isObject":180,"./baseCreate":113,"./setBindData":148,"./slice":151}],112:[function(require,module,exports){
+},{"../objects/isObject":179,"./baseCreate":112,"./setBindData":147,"./slice":150}],111:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -36702,7 +36023,7 @@ function baseClone(value, isDeep, callback, stackA, stackB) {
 
 module.exports = baseClone;
 
-},{"../collections/forEach":73,"../objects/assign":154,"../objects/forOwn":163,"../objects/isArray":169,"../objects/isObject":180,"./getArray":132,"./releaseArray":146,"./slice":151}],113:[function(require,module,exports){
+},{"../collections/forEach":72,"../objects/assign":153,"../objects/forOwn":162,"../objects/isArray":168,"../objects/isObject":179,"./getArray":131,"./releaseArray":145,"./slice":150}],112:[function(require,module,exports){
 (function (global){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
@@ -36748,7 +36069,7 @@ if (!nativeCreate) {
 module.exports = baseCreate;
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../objects/isObject":180,"../utilities/noop":200,"./isNative":136}],114:[function(require,module,exports){
+},{"../objects/isObject":179,"../utilities/noop":199,"./isNative":135}],113:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -36830,7 +36151,7 @@ function baseCreateCallback(func, thisArg, argCount) {
 
 module.exports = baseCreateCallback;
 
-},{"../functions/bind":94,"../support":193,"../utilities/identity":197,"./setBindData":148}],115:[function(require,module,exports){
+},{"../functions/bind":93,"../support":192,"../utilities/identity":196,"./setBindData":147}],114:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -36910,7 +36231,7 @@ function baseCreateWrapper(bindData) {
 
 module.exports = baseCreateWrapper;
 
-},{"../objects/isObject":180,"./baseCreate":113,"./setBindData":148,"./slice":151}],116:[function(require,module,exports){
+},{"../objects/isObject":179,"./baseCreate":112,"./setBindData":147,"./slice":150}],115:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -36964,7 +36285,7 @@ function baseDifference(array, values) {
 
 module.exports = baseDifference;
 
-},{"./baseIndexOf":118,"./cacheIndexOf":123,"./createCache":128,"./largeArraySize":138,"./releaseObject":147}],117:[function(require,module,exports){
+},{"./baseIndexOf":117,"./cacheIndexOf":122,"./createCache":127,"./largeArraySize":137,"./releaseObject":146}],116:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -37018,7 +36339,7 @@ function baseFlatten(array, isShallow, isStrict, fromIndex) {
 
 module.exports = baseFlatten;
 
-},{"../objects/isArguments":168,"../objects/isArray":169}],118:[function(require,module,exports){
+},{"../objects/isArguments":167,"../objects/isArray":168}],117:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -37052,7 +36373,7 @@ function baseIndexOf(array, value, fromIndex) {
 
 module.exports = baseIndexOf;
 
-},{}],119:[function(require,module,exports){
+},{}],118:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -37263,7 +36584,7 @@ function baseIsEqual(a, b, callback, isWhere, stackA, stackB) {
 
 module.exports = baseIsEqual;
 
-},{"../objects/forIn":161,"../objects/isFunction":176,"./getArray":132,"./objectTypes":142,"./releaseArray":146}],120:[function(require,module,exports){
+},{"../objects/forIn":160,"../objects/isFunction":175,"./getArray":131,"./objectTypes":141,"./releaseArray":145}],119:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -37344,7 +36665,7 @@ function baseMerge(object, source, callback, stackA, stackB) {
 
 module.exports = baseMerge;
 
-},{"../collections/forEach":73,"../objects/forOwn":163,"../objects/isArray":169,"../objects/isPlainObject":181}],121:[function(require,module,exports){
+},{"../collections/forEach":72,"../objects/forOwn":162,"../objects/isArray":168,"../objects/isPlainObject":180}],120:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -37375,7 +36696,7 @@ function baseRandom(min, max) {
 
 module.exports = baseRandom;
 
-},{}],122:[function(require,module,exports){
+},{}],121:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -37441,7 +36762,7 @@ function baseUniq(array, isSorted, callback) {
 
 module.exports = baseUniq;
 
-},{"./baseIndexOf":118,"./cacheIndexOf":123,"./createCache":128,"./getArray":132,"./largeArraySize":138,"./releaseArray":146,"./releaseObject":147}],123:[function(require,module,exports){
+},{"./baseIndexOf":117,"./cacheIndexOf":122,"./createCache":127,"./getArray":131,"./largeArraySize":137,"./releaseArray":145,"./releaseObject":146}],122:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -37482,7 +36803,7 @@ function cacheIndexOf(cache, value) {
 
 module.exports = cacheIndexOf;
 
-},{"./baseIndexOf":118,"./keyPrefix":137}],124:[function(require,module,exports){
+},{"./baseIndexOf":117,"./keyPrefix":136}],123:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -37522,7 +36843,7 @@ function cachePush(value) {
 
 module.exports = cachePush;
 
-},{"./keyPrefix":137}],125:[function(require,module,exports){
+},{"./keyPrefix":136}],124:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -37546,7 +36867,7 @@ function charAtCallback(value) {
 
 module.exports = charAtCallback;
 
-},{}],126:[function(require,module,exports){
+},{}],125:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -37595,7 +36916,7 @@ function compareAscending(a, b) {
 
 module.exports = compareAscending;
 
-},{}],127:[function(require,module,exports){
+},{}],126:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -37642,7 +36963,7 @@ function createAggregator(setter) {
 
 module.exports = createAggregator;
 
-},{"../functions/createCallback":98,"../objects/forOwn":163,"../objects/isArray":169}],128:[function(require,module,exports){
+},{"../functions/createCallback":97,"../objects/forOwn":162,"../objects/isArray":168}],127:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -37689,7 +37010,7 @@ function createCache(array) {
 
 module.exports = createCache;
 
-},{"./cachePush":124,"./getObject":133,"./releaseObject":147}],129:[function(require,module,exports){
+},{"./cachePush":123,"./getObject":132,"./releaseObject":146}],128:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -37797,7 +37118,7 @@ function createWrapper(func, bitmask, partialArgs, partialRightArgs, thisArg, ar
 
 module.exports = createWrapper;
 
-},{"../objects/isFunction":176,"./baseBind":111,"./baseCreateWrapper":115,"./slice":151}],130:[function(require,module,exports){
+},{"../objects/isFunction":175,"./baseBind":110,"./baseCreateWrapper":114,"./slice":150}],129:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -37821,7 +37142,7 @@ function escapeHtmlChar(match) {
 
 module.exports = escapeHtmlChar;
 
-},{"./htmlEscapes":134}],131:[function(require,module,exports){
+},{"./htmlEscapes":133}],130:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -37856,7 +37177,7 @@ function escapeStringChar(match) {
 
 module.exports = escapeStringChar;
 
-},{}],132:[function(require,module,exports){
+},{}],131:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -37879,7 +37200,7 @@ function getArray() {
 
 module.exports = getArray;
 
-},{"./arrayPool":110}],133:[function(require,module,exports){
+},{"./arrayPool":109}],132:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -37916,7 +37237,7 @@ function getObject() {
 
 module.exports = getObject;
 
-},{"./objectPool":141}],134:[function(require,module,exports){
+},{"./objectPool":140}],133:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -37944,7 +37265,7 @@ var htmlEscapes = {
 
 module.exports = htmlEscapes;
 
-},{}],135:[function(require,module,exports){
+},{}],134:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -37961,7 +37282,7 @@ var htmlUnescapes = invert(htmlEscapes);
 
 module.exports = htmlUnescapes;
 
-},{"../objects/invert":167,"./htmlEscapes":134}],136:[function(require,module,exports){
+},{"../objects/invert":166,"./htmlEscapes":133}],135:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -37997,7 +37318,7 @@ function isNative(value) {
 
 module.exports = isNative;
 
-},{}],137:[function(require,module,exports){
+},{}],136:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -38012,7 +37333,7 @@ var keyPrefix = +new Date + '';
 
 module.exports = keyPrefix;
 
-},{}],138:[function(require,module,exports){
+},{}],137:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -38027,7 +37348,7 @@ var largeArraySize = 75;
 
 module.exports = largeArraySize;
 
-},{}],139:[function(require,module,exports){
+},{}],138:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -38052,7 +37373,7 @@ function lodashWrapper(value, chainAll) {
 
 module.exports = lodashWrapper;
 
-},{}],140:[function(require,module,exports){
+},{}],139:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -38067,7 +37388,7 @@ var maxPoolSize = 40;
 
 module.exports = maxPoolSize;
 
-},{}],141:[function(require,module,exports){
+},{}],140:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -38082,7 +37403,7 @@ var objectPool = [];
 
 module.exports = objectPool;
 
-},{}],142:[function(require,module,exports){
+},{}],141:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -38104,7 +37425,7 @@ var objectTypes = {
 
 module.exports = objectTypes;
 
-},{}],143:[function(require,module,exports){
+},{}],142:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -38121,7 +37442,7 @@ var reEscapedHtml = RegExp('(' + keys(htmlUnescapes).join('|') + ')', 'g');
 
 module.exports = reEscapedHtml;
 
-},{"../objects/keys":185,"./htmlUnescapes":135}],144:[function(require,module,exports){
+},{"../objects/keys":184,"./htmlUnescapes":134}],143:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -38136,7 +37457,7 @@ var reInterpolate = /<%=([\s\S]+?)%>/g;
 
 module.exports = reInterpolate;
 
-},{}],145:[function(require,module,exports){
+},{}],144:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -38153,7 +37474,7 @@ var reUnescapedHtml = RegExp('[' + keys(htmlEscapes).join('') + ']', 'g');
 
 module.exports = reUnescapedHtml;
 
-},{"../objects/keys":185,"./htmlEscapes":134}],146:[function(require,module,exports){
+},{"../objects/keys":184,"./htmlEscapes":133}],145:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -38180,7 +37501,7 @@ function releaseArray(array) {
 
 module.exports = releaseArray;
 
-},{"./arrayPool":110,"./maxPoolSize":140}],147:[function(require,module,exports){
+},{"./arrayPool":109,"./maxPoolSize":139}],146:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -38211,7 +37532,7 @@ function releaseObject(object) {
 
 module.exports = releaseObject;
 
-},{"./maxPoolSize":140,"./objectPool":141}],148:[function(require,module,exports){
+},{"./maxPoolSize":139,"./objectPool":140}],147:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -38256,7 +37577,7 @@ var setBindData = !defineProperty ? noop : function(func, value) {
 
 module.exports = setBindData;
 
-},{"../utilities/noop":200,"./isNative":136}],149:[function(require,module,exports){
+},{"../utilities/noop":199,"./isNative":135}],148:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -38310,7 +37631,7 @@ function shimIsPlainObject(value) {
 
 module.exports = shimIsPlainObject;
 
-},{"../objects/forIn":161,"../objects/isFunction":176}],150:[function(require,module,exports){
+},{"../objects/forIn":160,"../objects/isFunction":175}],149:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -38350,7 +37671,7 @@ var shimKeys = function(object) {
 
 module.exports = shimKeys;
 
-},{"./objectTypes":142}],151:[function(require,module,exports){
+},{"./objectTypes":141}],150:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -38390,7 +37711,7 @@ function slice(array, start, end) {
 
 module.exports = slice;
 
-},{}],152:[function(require,module,exports){
+},{}],151:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -38414,7 +37735,7 @@ function unescapeHtmlChar(match) {
 
 module.exports = unescapeHtmlChar;
 
-},{"./htmlUnescapes":135}],153:[function(require,module,exports){
+},{"./htmlUnescapes":134}],152:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -38468,7 +37789,7 @@ module.exports = {
   'values': require('./objects/values')
 };
 
-},{"./objects/assign":154,"./objects/clone":155,"./objects/cloneDeep":156,"./objects/create":157,"./objects/defaults":158,"./objects/findKey":159,"./objects/findLastKey":160,"./objects/forIn":161,"./objects/forInRight":162,"./objects/forOwn":163,"./objects/forOwnRight":164,"./objects/functions":165,"./objects/has":166,"./objects/invert":167,"./objects/isArguments":168,"./objects/isArray":169,"./objects/isBoolean":170,"./objects/isDate":171,"./objects/isElement":172,"./objects/isEmpty":173,"./objects/isEqual":174,"./objects/isFinite":175,"./objects/isFunction":176,"./objects/isNaN":177,"./objects/isNull":178,"./objects/isNumber":179,"./objects/isObject":180,"./objects/isPlainObject":181,"./objects/isRegExp":182,"./objects/isString":183,"./objects/isUndefined":184,"./objects/keys":185,"./objects/mapValues":186,"./objects/merge":187,"./objects/omit":188,"./objects/pairs":189,"./objects/pick":190,"./objects/transform":191,"./objects/values":192}],154:[function(require,module,exports){
+},{"./objects/assign":153,"./objects/clone":154,"./objects/cloneDeep":155,"./objects/create":156,"./objects/defaults":157,"./objects/findKey":158,"./objects/findLastKey":159,"./objects/forIn":160,"./objects/forInRight":161,"./objects/forOwn":162,"./objects/forOwnRight":163,"./objects/functions":164,"./objects/has":165,"./objects/invert":166,"./objects/isArguments":167,"./objects/isArray":168,"./objects/isBoolean":169,"./objects/isDate":170,"./objects/isElement":171,"./objects/isEmpty":172,"./objects/isEqual":173,"./objects/isFinite":174,"./objects/isFunction":175,"./objects/isNaN":176,"./objects/isNull":177,"./objects/isNumber":178,"./objects/isObject":179,"./objects/isPlainObject":180,"./objects/isRegExp":181,"./objects/isString":182,"./objects/isUndefined":183,"./objects/keys":184,"./objects/mapValues":185,"./objects/merge":186,"./objects/omit":187,"./objects/pairs":188,"./objects/pick":189,"./objects/transform":190,"./objects/values":191}],153:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -38540,7 +37861,7 @@ var assign = function(object, source, guard) {
 
 module.exports = assign;
 
-},{"../internals/baseCreateCallback":114,"../internals/objectTypes":142,"./keys":185}],155:[function(require,module,exports){
+},{"../internals/baseCreateCallback":113,"../internals/objectTypes":141,"./keys":184}],154:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -38605,7 +37926,7 @@ function clone(value, isDeep, callback, thisArg) {
 
 module.exports = clone;
 
-},{"../internals/baseClone":112,"../internals/baseCreateCallback":114}],156:[function(require,module,exports){
+},{"../internals/baseClone":111,"../internals/baseCreateCallback":113}],155:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -38664,7 +37985,7 @@ function cloneDeep(value, callback, thisArg) {
 
 module.exports = cloneDeep;
 
-},{"../internals/baseClone":112,"../internals/baseCreateCallback":114}],157:[function(require,module,exports){
+},{"../internals/baseClone":111,"../internals/baseCreateCallback":113}],156:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -38714,7 +38035,7 @@ function create(prototype, properties) {
 
 module.exports = create;
 
-},{"../internals/baseCreate":113,"./assign":154}],158:[function(require,module,exports){
+},{"../internals/baseCreate":112,"./assign":153}],157:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -38770,7 +38091,7 @@ var defaults = function(object, source, guard) {
 
 module.exports = defaults;
 
-},{"../internals/objectTypes":142,"./keys":185}],159:[function(require,module,exports){
+},{"../internals/objectTypes":141,"./keys":184}],158:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -38837,7 +38158,7 @@ function findKey(object, callback, thisArg) {
 
 module.exports = findKey;
 
-},{"../functions/createCallback":98,"./forOwn":163}],160:[function(require,module,exports){
+},{"../functions/createCallback":97,"./forOwn":162}],159:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -38904,7 +38225,7 @@ function findLastKey(object, callback, thisArg) {
 
 module.exports = findLastKey;
 
-},{"../functions/createCallback":98,"./forOwnRight":164}],161:[function(require,module,exports){
+},{"../functions/createCallback":97,"./forOwnRight":163}],160:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -38960,7 +38281,7 @@ var forIn = function(collection, callback, thisArg) {
 
 module.exports = forIn;
 
-},{"../internals/baseCreateCallback":114,"../internals/objectTypes":142}],162:[function(require,module,exports){
+},{"../internals/baseCreateCallback":113,"../internals/objectTypes":141}],161:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -39019,7 +38340,7 @@ function forInRight(object, callback, thisArg) {
 
 module.exports = forInRight;
 
-},{"../internals/baseCreateCallback":114,"./forIn":161}],163:[function(require,module,exports){
+},{"../internals/baseCreateCallback":113,"./forIn":160}],162:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -39071,7 +38392,7 @@ var forOwn = function(collection, callback, thisArg) {
 
 module.exports = forOwn;
 
-},{"../internals/baseCreateCallback":114,"../internals/objectTypes":142,"./keys":185}],164:[function(require,module,exports){
+},{"../internals/baseCreateCallback":113,"../internals/objectTypes":141,"./keys":184}],163:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -39117,7 +38438,7 @@ function forOwnRight(object, callback, thisArg) {
 
 module.exports = forOwnRight;
 
-},{"../internals/baseCreateCallback":114,"./keys":185}],165:[function(require,module,exports){
+},{"../internals/baseCreateCallback":113,"./keys":184}],164:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -39156,7 +38477,7 @@ function functions(object) {
 
 module.exports = functions;
 
-},{"./forIn":161,"./isFunction":176}],166:[function(require,module,exports){
+},{"./forIn":160,"./isFunction":175}],165:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -39193,7 +38514,7 @@ function has(object, key) {
 
 module.exports = has;
 
-},{}],167:[function(require,module,exports){
+},{}],166:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -39232,7 +38553,7 @@ function invert(object) {
 
 module.exports = invert;
 
-},{"./keys":185}],168:[function(require,module,exports){
+},{"./keys":184}],167:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -39274,7 +38595,7 @@ function isArguments(value) {
 
 module.exports = isArguments;
 
-},{}],169:[function(require,module,exports){
+},{}],168:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -39321,7 +38642,7 @@ var isArray = nativeIsArray || function(value) {
 
 module.exports = isArray;
 
-},{"../internals/isNative":136}],170:[function(require,module,exports){
+},{"../internals/isNative":135}],169:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -39360,7 +38681,7 @@ function isBoolean(value) {
 
 module.exports = isBoolean;
 
-},{}],171:[function(require,module,exports){
+},{}],170:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -39398,7 +38719,7 @@ function isDate(value) {
 
 module.exports = isDate;
 
-},{}],172:[function(require,module,exports){
+},{}],171:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -39427,7 +38748,7 @@ function isElement(value) {
 
 module.exports = isElement;
 
-},{}],173:[function(require,module,exports){
+},{}],172:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -39492,7 +38813,7 @@ function isEmpty(value) {
 
 module.exports = isEmpty;
 
-},{"./forOwn":163,"./isFunction":176}],174:[function(require,module,exports){
+},{"./forOwn":162,"./isFunction":175}],173:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -39548,7 +38869,7 @@ function isEqual(a, b, callback, thisArg) {
 
 module.exports = isEqual;
 
-},{"../internals/baseCreateCallback":114,"../internals/baseIsEqual":119}],175:[function(require,module,exports){
+},{"../internals/baseCreateCallback":113,"../internals/baseIsEqual":118}],174:[function(require,module,exports){
 (function (global){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
@@ -39598,7 +38919,7 @@ function isFinite(value) {
 module.exports = isFinite;
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],176:[function(require,module,exports){
+},{}],175:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -39627,7 +38948,7 @@ function isFunction(value) {
 
 module.exports = isFunction;
 
-},{}],177:[function(require,module,exports){
+},{}],176:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -39671,7 +38992,7 @@ function isNaN(value) {
 
 module.exports = isNaN;
 
-},{"./isNumber":179}],178:[function(require,module,exports){
+},{"./isNumber":178}],177:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -39703,7 +39024,7 @@ function isNull(value) {
 
 module.exports = isNull;
 
-},{}],179:[function(require,module,exports){
+},{}],178:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -39744,7 +39065,7 @@ function isNumber(value) {
 
 module.exports = isNumber;
 
-},{}],180:[function(require,module,exports){
+},{}],179:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -39785,7 +39106,7 @@ function isObject(value) {
 
 module.exports = isObject;
 
-},{"../internals/objectTypes":142}],181:[function(require,module,exports){
+},{"../internals/objectTypes":141}],180:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -39847,7 +39168,7 @@ var isPlainObject = !getPrototypeOf ? shimIsPlainObject : function(value) {
 
 module.exports = isPlainObject;
 
-},{"../internals/isNative":136,"../internals/shimIsPlainObject":149}],182:[function(require,module,exports){
+},{"../internals/isNative":135,"../internals/shimIsPlainObject":148}],181:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -39885,7 +39206,7 @@ function isRegExp(value) {
 
 module.exports = isRegExp;
 
-},{}],183:[function(require,module,exports){
+},{}],182:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -39924,7 +39245,7 @@ function isString(value) {
 
 module.exports = isString;
 
-},{}],184:[function(require,module,exports){
+},{}],183:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -39953,7 +39274,7 @@ function isUndefined(value) {
 
 module.exports = isUndefined;
 
-},{}],185:[function(require,module,exports){
+},{}],184:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -39991,7 +39312,7 @@ var keys = !nativeKeys ? shimKeys : function(object) {
 
 module.exports = keys;
 
-},{"../internals/isNative":136,"../internals/shimKeys":150,"./isObject":180}],186:[function(require,module,exports){
+},{"../internals/isNative":135,"../internals/shimKeys":149,"./isObject":179}],185:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -40051,7 +39372,7 @@ function mapValues(object, callback, thisArg) {
 
 module.exports = mapValues;
 
-},{"../functions/createCallback":98,"./forOwn":163}],187:[function(require,module,exports){
+},{"../functions/createCallback":97,"./forOwn":162}],186:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -40150,7 +39471,7 @@ function merge(object) {
 
 module.exports = merge;
 
-},{"../internals/baseCreateCallback":114,"../internals/baseMerge":120,"../internals/getArray":132,"../internals/releaseArray":146,"../internals/slice":151,"./isObject":180}],188:[function(require,module,exports){
+},{"../internals/baseCreateCallback":113,"../internals/baseMerge":119,"../internals/getArray":131,"../internals/releaseArray":145,"../internals/slice":150,"./isObject":179}],187:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -40219,7 +39540,7 @@ function omit(object, callback, thisArg) {
 
 module.exports = omit;
 
-},{"../functions/createCallback":98,"../internals/baseDifference":116,"../internals/baseFlatten":117,"./forIn":161}],189:[function(require,module,exports){
+},{"../functions/createCallback":97,"../internals/baseDifference":115,"../internals/baseFlatten":116,"./forIn":160}],188:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -40259,7 +39580,7 @@ function pairs(object) {
 
 module.exports = pairs;
 
-},{"./keys":185}],190:[function(require,module,exports){
+},{"./keys":184}],189:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -40326,7 +39647,7 @@ function pick(object, callback, thisArg) {
 
 module.exports = pick;
 
-},{"../functions/createCallback":98,"../internals/baseFlatten":117,"./forIn":161,"./isObject":180}],191:[function(require,module,exports){
+},{"../functions/createCallback":97,"../internals/baseFlatten":116,"./forIn":160,"./isObject":179}],190:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -40395,7 +39716,7 @@ function transform(object, callback, accumulator, thisArg) {
 
 module.exports = transform;
 
-},{"../collections/forEach":73,"../functions/createCallback":98,"../internals/baseCreate":113,"./forOwn":163,"./isArray":169}],192:[function(require,module,exports){
+},{"../collections/forEach":72,"../functions/createCallback":97,"../internals/baseCreate":112,"./forOwn":162,"./isArray":168}],191:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -40433,7 +39754,7 @@ function values(object) {
 
 module.exports = values;
 
-},{"./keys":185}],193:[function(require,module,exports){
+},{"./keys":184}],192:[function(require,module,exports){
 (function (global){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
@@ -40477,7 +39798,7 @@ support.funcNames = typeof Function.name == 'string';
 module.exports = support;
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./internals/isNative":136}],194:[function(require,module,exports){
+},{"./internals/isNative":135}],193:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -40507,7 +39828,7 @@ module.exports = {
   'uniqueId': require('./utilities/uniqueId')
 };
 
-},{"./functions/createCallback":98,"./utilities/constant":195,"./utilities/escape":196,"./utilities/identity":197,"./utilities/mixin":198,"./utilities/noConflict":199,"./utilities/noop":200,"./utilities/now":201,"./utilities/parseInt":202,"./utilities/property":203,"./utilities/random":204,"./utilities/result":205,"./utilities/template":206,"./utilities/templateSettings":207,"./utilities/times":208,"./utilities/unescape":209,"./utilities/uniqueId":210}],195:[function(require,module,exports){
+},{"./functions/createCallback":97,"./utilities/constant":194,"./utilities/escape":195,"./utilities/identity":196,"./utilities/mixin":197,"./utilities/noConflict":198,"./utilities/noop":199,"./utilities/now":200,"./utilities/parseInt":201,"./utilities/property":202,"./utilities/random":203,"./utilities/result":204,"./utilities/template":205,"./utilities/templateSettings":206,"./utilities/times":207,"./utilities/unescape":208,"./utilities/uniqueId":209}],194:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -40540,7 +39861,7 @@ function constant(value) {
 
 module.exports = constant;
 
-},{}],196:[function(require,module,exports){
+},{}],195:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -40573,7 +39894,7 @@ function escape(string) {
 
 module.exports = escape;
 
-},{"../internals/escapeHtmlChar":130,"../internals/reUnescapedHtml":145,"../objects/keys":185}],197:[function(require,module,exports){
+},{"../internals/escapeHtmlChar":129,"../internals/reUnescapedHtml":144,"../objects/keys":184}],196:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -40603,7 +39924,7 @@ function identity(value) {
 
 module.exports = identity;
 
-},{}],198:[function(require,module,exports){
+},{}],197:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -40693,7 +40014,7 @@ function mixin(object, source, options) {
 
 module.exports = mixin;
 
-},{"../collections/forEach":73,"../objects/functions":165,"../objects/isFunction":176,"../objects/isObject":180}],199:[function(require,module,exports){
+},{"../collections/forEach":72,"../objects/functions":164,"../objects/isFunction":175,"../objects/isObject":179}],198:[function(require,module,exports){
 (function (global){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
@@ -40727,7 +40048,7 @@ function noConflict() {
 module.exports = noConflict;
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],200:[function(require,module,exports){
+},{}],199:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -40755,7 +40076,7 @@ function noop() {
 
 module.exports = noop;
 
-},{}],201:[function(require,module,exports){
+},{}],200:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -40785,7 +40106,7 @@ var now = isNative(now = Date.now) && now || function() {
 
 module.exports = now;
 
-},{"../internals/isNative":136}],202:[function(require,module,exports){
+},{"../internals/isNative":135}],201:[function(require,module,exports){
 (function (global){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
@@ -40842,7 +40163,7 @@ var parseInt = nativeParseInt(whitespace + '08') == 8 ? nativeParseInt : functio
 module.exports = parseInt;
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../objects/isString":183}],203:[function(require,module,exports){
+},{"../objects/isString":182}],202:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -40884,7 +40205,7 @@ function property(key) {
 
 module.exports = property;
 
-},{}],204:[function(require,module,exports){
+},{}],203:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -40959,7 +40280,7 @@ function random(min, max, floating) {
 
 module.exports = random;
 
-},{"../internals/baseRandom":121}],205:[function(require,module,exports){
+},{"../internals/baseRandom":120}],204:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -41006,7 +40327,7 @@ function result(object, key) {
 
 module.exports = result;
 
-},{"../objects/isFunction":176}],206:[function(require,module,exports){
+},{"../objects/isFunction":175}],205:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -41224,7 +40545,7 @@ function template(text, data, options) {
 
 module.exports = template;
 
-},{"../internals/escapeStringChar":131,"../internals/reInterpolate":144,"../objects/defaults":158,"../objects/keys":185,"../objects/values":192,"./escape":196,"./templateSettings":207}],207:[function(require,module,exports){
+},{"../internals/escapeStringChar":130,"../internals/reInterpolate":143,"../objects/defaults":157,"../objects/keys":184,"../objects/values":191,"./escape":195,"./templateSettings":206}],206:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -41299,7 +40620,7 @@ var templateSettings = {
 
 module.exports = templateSettings;
 
-},{"../internals/reInterpolate":144,"./escape":196}],208:[function(require,module,exports){
+},{"../internals/reInterpolate":143,"./escape":195}],207:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -41347,7 +40668,7 @@ function times(n, callback, thisArg) {
 
 module.exports = times;
 
-},{"../internals/baseCreateCallback":114}],209:[function(require,module,exports){
+},{"../internals/baseCreateCallback":113}],208:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -41381,7 +40702,7 @@ function unescape(string) {
 
 module.exports = unescape;
 
-},{"../internals/reEscapedHtml":143,"../internals/unescapeHtmlChar":152,"../objects/keys":185}],210:[function(require,module,exports){
+},{"../internals/reEscapedHtml":142,"../internals/unescapeHtmlChar":151,"../objects/keys":184}],209:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -41417,7 +40738,7 @@ function uniqueId(prefix) {
 
 module.exports = uniqueId;
 
-},{}],211:[function(require,module,exports){
+},{}],210:[function(require,module,exports){
 (function(definition){if(typeof exports==="object"){module.exports=definition();}else if(typeof define==="function"&&define.amd){define(definition);}else{mori=definition();}})(function(){return function(){
 var g,aa=this;
 function m(a){var b=typeof a;if("object"==b)if(a){if(a instanceof Array)return"array";if(a instanceof Object)return b;var c=Object.prototype.toString.call(a);if("[object Window]"==c)return"object";if("[object Array]"==c||"number"==typeof a.length&&"undefined"!=typeof a.splice&&"undefined"!=typeof a.propertyIsEnumerable&&!a.propertyIsEnumerable("splice"))return"array";if("[object Function]"==c||"undefined"!=typeof a.call&&"undefined"!=typeof a.propertyIsEnumerable&&!a.propertyIsEnumerable("call"))return"function"}else return"null";else if("function"==
@@ -41820,7 +41141,7 @@ p("mori.zip.insert_right",function(a,b){var c=P.c(a,0,null),d=P.c(a,1,null),d=Mc
 p("mori.zip.next",function(a){if(Wb.a(eh,a.b?a.b(1):a.call(null,1)))return a;var b;b=Oi(a);b=r(b)?Ri(a):b;if(r(b))return b;b=Ti(a);if(r(b))return b;for(;;)if(r(Si(a))){b=Ti(Si(a));if(r(b))return b;a=Si(a)}else return new W(null,2,5,X,[Ni(a),eh],null)});p("mori.zip.prev",function(a){var b=Vi(a);if(r(b))for(a=b;;)if(b=Oi(a),b=r(b)?Ri(a):b,r(b))a=Ui(b);else return a;else return Si(a)});p("mori.zip.is_end",function(a){return Wb.a(eh,a.b?a.b(1):a.call(null,1))});
 p("mori.zip.remove",function(a){P.c(a,0,null);var b=P.c(a,1,null),b=Mc(b)?S.a(Tf,b):b,c=Q.a(b,Zg),d=Q.a(b,Ug),e=Q.a(b,ah),f=Q.a(b,Wg);if(null==b)throw"Remove at top";if(0<O(c))for(a=N(new W(null,2,5,X,[yc(c),R.d(b,Zg,zc(c),J([bh,!0],0))],null),xc(a));;)if(b=Oi(a),b=r(b)?Ri(a):b,r(b))a=Ui(b);else return a;else return N(new W(null,2,5,X,[Qi(a,yc(e),f),r(d)?R.c(d,bh,!0):d],null),xc(a))});;return this.mori;}.call({});});
 
-},{}],212:[function(require,module,exports){
+},{}],211:[function(require,module,exports){
 // Generated by CoffeeScript 2.0.0-beta9-dev
 var any, assignment, beingDeclared, collectIdentifiers, concat, concatMap, CS, declarationsNeeded, declarationsNeededRecursive, defaultRules, difference, divMod, dynamicMemberAccess, enabledHelpers, envEnrichments, exports, expr, fn, fn, foldl1, forceBlock, generateMutatingWalker, generateSoak, genSym, h, h, hasSoak, helperNames, helpers, inlineHelpers, intersect, isIdentifierName, JS, jsReserved, makeReturn, makeVarDeclaration, map, memberAccess, needsCaching, nub, owns, partition, span, stmt, union, usedAsExpression, variableDeclarations;
 cache$ = require('./functional-helpers');
@@ -44236,7 +43557,7 @@ function isOwn$(o, p) {
   return {}.hasOwnProperty.call(o, p);
 }
 
-},{"./../package.json":230,"./functional-helpers":213,"./helpers":214,"./js-nodes":215,"./nodes":217}],213:[function(require,module,exports){
+},{"./../package.json":229,"./functional-helpers":212,"./helpers":213,"./js-nodes":214,"./nodes":216}],212:[function(require,module,exports){
 // Generated by CoffeeScript 2.0.0-beta9-dev
 var concat, foldl, map, nub, span;
 this.any = function (list, fn) {
@@ -44393,7 +43714,7 @@ function in$(member, list) {
   return false;
 }
 
-},{}],214:[function(require,module,exports){
+},{}],213:[function(require,module,exports){
 (function (process){
 // Generated by CoffeeScript 2.0.0-beta9-dev
 var beingDeclared, cleanMarkers, colourise, COLOURS, concat, concatMap, CS, difference, envEnrichments, envEnrichments_, foldl, humanReadable, map, nub, numberLines, pointToErrorLocation, SUPPORTS_COLOUR, usedAsExpression, usedAsExpression_;
@@ -44594,7 +43915,7 @@ function in$(member, list) {
 }
 
 }).call(this,require("JkpR2F"))
-},{"./functional-helpers":213,"./nodes":217,"JkpR2F":259}],215:[function(require,module,exports){
+},{"./functional-helpers":212,"./nodes":216,"JkpR2F":258}],214:[function(require,module,exports){
 // Generated by CoffeeScript 2.0.0-beta9-dev
 var ArrayExpression, AssignmentExpression, BinaryExpression, BlockStatement, CallExpression, createNode, ctor, difference, exports, FunctionDeclaration, FunctionExpression, GenSym, handleLists, handlePrimitives, Identifier, isStatement, Literal, LogicalExpression, MemberExpression, NewExpression, node, nodeData, Nodes, ObjectExpression, params, Program, SequenceExpression, SwitchCase, SwitchStatement, TryStatement, UnaryExpression, UpdateExpression, VariableDeclaration, VariableDeclaration;
 difference = require('./functional-helpers').difference;
@@ -45071,7 +44392,7 @@ function in$(member, list) {
   return false;
 }
 
-},{"./functional-helpers":213}],216:[function(require,module,exports){
+},{"./functional-helpers":212}],215:[function(require,module,exports){
 // Generated by CoffeeScript 2.0.0-beta9-dev
 var CoffeeScript, Compiler, cscodegen, escodegen, escodegenFormat, ext, formatParserError, Nodes, Optimiser, Parser, pkg, Preprocessor;
 formatParserError = require('./helpers').formatParserError;
@@ -45197,7 +44518,7 @@ if (null != (null != require.extensions ? require.extensions['.node'] : void 0))
   }
 }
 
-},{"./../package.json":230,"./compiler":212,"./helpers":214,"./nodes":217,"./optimiser":218,"./parser":219,"./preprocessor":220,"./register":221,"cscodegen":224,"escodegen":225}],217:[function(require,module,exports){
+},{"./../package.json":229,"./compiler":211,"./helpers":213,"./nodes":216,"./optimiser":217,"./parser":218,"./preprocessor":219,"./register":220,"cscodegen":223,"escodegen":224}],216:[function(require,module,exports){
 // Generated by CoffeeScript 2.0.0-beta9-dev
 var ArrayInitialiser, Block, Bool, Class, CompoundAssignOp, concat, concatMap, Conditional, createNodes, difference, exports, ForOf, FunctionApplications, Functions, GenSym, handleLists, handlePrimitives, HeregExp, Identifier, Identifiers, map, NegatedConditional, NewOp, Nodes, nub, ObjectInitialiser, Primitives, Range, RegExp, RegExps, Slice, StaticMemberAccessOps, Super, Switch, SwitchCase, union, While;
 cache$ = require('./functional-helpers');
@@ -45783,7 +45104,7 @@ function in$(member, list) {
   return false;
 }
 
-},{"./functional-helpers":213}],218:[function(require,module,exports){
+},{"./functional-helpers":212}],217:[function(require,module,exports){
 (function (global){
 // Generated by CoffeeScript 2.0.0-beta9-dev
 var all, any, beingDeclared, concat, concatMap, CS, declarationsFor, defaultRules, difference, envEnrichments, exports, foldl, foldl1, isFalsey, isTruthy, makeDispatcher, mayHaveSideEffects, union, usedAsExpression;
@@ -46601,7 +45922,7 @@ function in$(member, list) {
 }
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./functional-helpers":213,"./helpers":214,"./nodes":217}],219:[function(require,module,exports){
+},{"./functional-helpers":212,"./helpers":213,"./nodes":216}],218:[function(require,module,exports){
 module.exports = (function() {
   /*
    * Generated by PEG.js 0.8.0.
@@ -65138,7 +64459,7 @@ module.exports = (function() {
   };
 })();
 
-},{"../package.json":230,"./nodes":217}],220:[function(require,module,exports){
+},{"../package.json":229,"./nodes":216}],219:[function(require,module,exports){
 // Generated by CoffeeScript 2.0.0-beta9-dev
 var DEDENT, INDENT, pointToErrorLocation, Preprocessor, StringScanner, TERM, ws;
 pointToErrorLocation = require('./helpers').pointToErrorLocation;
@@ -65468,7 +64789,7 @@ this.Preprocessor = Preprocessor = function () {
   return Preprocessor;
 }();
 
-},{"./helpers":214,"StringScanner":223}],221:[function(require,module,exports){
+},{"./helpers":213,"StringScanner":222}],220:[function(require,module,exports){
 // Generated by CoffeeScript 2.0.0-beta9-dev
 var child_process, coffeeBinary, CoffeeScript, fork, fs, path, runModule;
 child_process = require('child_process');
@@ -65526,7 +64847,7 @@ function in$(member, list) {
   return false;
 }
 
-},{"./module":216,"./run":222,"child_process":251,"fs":251,"path":258}],222:[function(require,module,exports){
+},{"./module":215,"./run":221,"child_process":250,"fs":250,"path":257}],221:[function(require,module,exports){
 (function (process){
 // Generated by CoffeeScript 2.0.0-beta9-dev
 var CoffeeScript, formatSourcePosition, Module, patched, patchStackTrace, path, runMain, runModule, SourceMapConsumer;
@@ -65635,7 +64956,7 @@ module.exports = {
 };
 
 }).call(this,require("JkpR2F"))
-},{"./module":216,"JkpR2F":259,"module":251,"path":258,"source-map":282}],223:[function(require,module,exports){
+},{"./module":215,"JkpR2F":258,"module":250,"path":257,"source-map":281}],222:[function(require,module,exports){
 (function() {
   var StringScanner;
   StringScanner = (function() {
@@ -65803,7 +65124,7 @@ module.exports = {
   module.exports = StringScanner;
 }).call(this);
 
-},{}],224:[function(require,module,exports){
+},{}],223:[function(require,module,exports){
 // Generated by CoffeeScript 1.3.3
 (function() {
   var __hasProp = {}.hasOwnProperty,
@@ -66425,7 +65746,7 @@ module.exports = {
 
 }).call(this);
 
-},{}],225:[function(require,module,exports){
+},{}],224:[function(require,module,exports){
 (function (global){
 /*
   Copyright (C) 2012-2013 Yusuke Suzuki <utatane.tea@gmail.com>
@@ -68617,7 +67938,7 @@ module.exports = {
 /* vim: set sw=4 ts=4 et tw=80 : */
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./package.json":229,"estraverse":248,"esutils":228,"source-map":282}],226:[function(require,module,exports){
+},{"./package.json":228,"estraverse":247,"esutils":227,"source-map":281}],225:[function(require,module,exports){
 /*
   Copyright (C) 2013 Yusuke Suzuki <utatane.tea@gmail.com>
 
@@ -68709,7 +68030,7 @@ module.exports = {
 }());
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{}],227:[function(require,module,exports){
+},{}],226:[function(require,module,exports){
 /*
   Copyright (C) 2013 Yusuke Suzuki <utatane.tea@gmail.com>
 
@@ -68828,7 +68149,7 @@ module.exports = {
 }());
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{"./code":226}],228:[function(require,module,exports){
+},{"./code":225}],227:[function(require,module,exports){
 /*
   Copyright (C) 2013 Yusuke Suzuki <utatane.tea@gmail.com>
 
@@ -68862,7 +68183,7 @@ module.exports = {
 }());
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{"./code":226,"./keyword":227}],229:[function(require,module,exports){
+},{"./code":225,"./keyword":226}],228:[function(require,module,exports){
 module.exports={
   "name": "escodegen",
   "description": "ECMAScript code generator",
@@ -68934,7 +68255,7 @@ module.exports={
   "_resolved": "https://registry.npmjs.org/escodegen/-/escodegen-1.2.0.tgz"
 }
 
-},{}],230:[function(require,module,exports){
+},{}],229:[function(require,module,exports){
 module.exports={
   "name": "coffee-script-redux",
   "author": {
@@ -69003,7 +68324,7 @@ module.exports={
   "_resolved": "https://github.com/michaelficarra/CoffeeScriptRedux/tarball/master"
 }
 
-},{}],231:[function(require,module,exports){
+},{}],230:[function(require,module,exports){
 (function (global){
 /*
   Copyright (C) 2012-2013 Yusuke Suzuki <utatane.tea@gmail.com>
@@ -71290,15 +70611,704 @@ module.exports={
 /* vim: set sw=4 ts=4 et tw=80 : */
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./package.json":246,"estraverse":232,"esutils":235,"source-map":236}],232:[function(require,module,exports){
-module.exports=require(35)
+},{"./package.json":245,"estraverse":231,"esutils":234,"source-map":235}],231:[function(require,module,exports){
+/*
+  Copyright (C) 2012-2013 Yusuke Suzuki <utatane.tea@gmail.com>
+  Copyright (C) 2012 Ariya Hidayat <ariya.hidayat@gmail.com>
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+/*jslint vars:false, bitwise:true*/
+/*jshint indent:4*/
+/*global exports:true, define:true*/
+(function (root, factory) {
+    'use strict';
+
+    // Universal Module Definition (UMD) to support AMD, CommonJS/Node.js,
+    // and plain browser loading,
+    if (typeof define === 'function' && define.amd) {
+        define(['exports'], factory);
+    } else if (typeof exports !== 'undefined') {
+        factory(exports);
+    } else {
+        factory((root.estraverse = {}));
+    }
+}(this, function (exports) {
+    'use strict';
+
+    var Syntax,
+        isArray,
+        VisitorOption,
+        VisitorKeys,
+        BREAK,
+        SKIP;
+
+    Syntax = {
+        AssignmentExpression: 'AssignmentExpression',
+        ArrayExpression: 'ArrayExpression',
+        ArrayPattern: 'ArrayPattern',
+        ArrowFunctionExpression: 'ArrowFunctionExpression',
+        BlockStatement: 'BlockStatement',
+        BinaryExpression: 'BinaryExpression',
+        BreakStatement: 'BreakStatement',
+        CallExpression: 'CallExpression',
+        CatchClause: 'CatchClause',
+        ClassBody: 'ClassBody',
+        ClassDeclaration: 'ClassDeclaration',
+        ClassExpression: 'ClassExpression',
+        ConditionalExpression: 'ConditionalExpression',
+        ContinueStatement: 'ContinueStatement',
+        DebuggerStatement: 'DebuggerStatement',
+        DirectiveStatement: 'DirectiveStatement',
+        DoWhileStatement: 'DoWhileStatement',
+        EmptyStatement: 'EmptyStatement',
+        ExpressionStatement: 'ExpressionStatement',
+        ForStatement: 'ForStatement',
+        ForInStatement: 'ForInStatement',
+        FunctionDeclaration: 'FunctionDeclaration',
+        FunctionExpression: 'FunctionExpression',
+        Identifier: 'Identifier',
+        IfStatement: 'IfStatement',
+        Literal: 'Literal',
+        LabeledStatement: 'LabeledStatement',
+        LogicalExpression: 'LogicalExpression',
+        MemberExpression: 'MemberExpression',
+        MethodDefinition: 'MethodDefinition',
+        NewExpression: 'NewExpression',
+        ObjectExpression: 'ObjectExpression',
+        ObjectPattern: 'ObjectPattern',
+        Program: 'Program',
+        Property: 'Property',
+        ReturnStatement: 'ReturnStatement',
+        SequenceExpression: 'SequenceExpression',
+        SwitchStatement: 'SwitchStatement',
+        SwitchCase: 'SwitchCase',
+        ThisExpression: 'ThisExpression',
+        ThrowStatement: 'ThrowStatement',
+        TryStatement: 'TryStatement',
+        UnaryExpression: 'UnaryExpression',
+        UpdateExpression: 'UpdateExpression',
+        VariableDeclaration: 'VariableDeclaration',
+        VariableDeclarator: 'VariableDeclarator',
+        WhileStatement: 'WhileStatement',
+        WithStatement: 'WithStatement',
+        YieldExpression: 'YieldExpression'
+    };
+
+    function ignoreJSHintError() { }
+
+    isArray = Array.isArray;
+    if (!isArray) {
+        isArray = function isArray(array) {
+            return Object.prototype.toString.call(array) === '[object Array]';
+        };
+    }
+
+    function deepCopy(obj) {
+        var ret = {}, key, val;
+        for (key in obj) {
+            if (obj.hasOwnProperty(key)) {
+                val = obj[key];
+                if (typeof val === 'object' && val !== null) {
+                    ret[key] = deepCopy(val);
+                } else {
+                    ret[key] = val;
+                }
+            }
+        }
+        return ret;
+    }
+
+    function shallowCopy(obj) {
+        var ret = {}, key;
+        for (key in obj) {
+            if (obj.hasOwnProperty(key)) {
+                ret[key] = obj[key];
+            }
+        }
+        return ret;
+    }
+    ignoreJSHintError(shallowCopy);
+
+    // based on LLVM libc++ upper_bound / lower_bound
+    // MIT License
+
+    function upperBound(array, func) {
+        var diff, len, i, current;
+
+        len = array.length;
+        i = 0;
+
+        while (len) {
+            diff = len >>> 1;
+            current = i + diff;
+            if (func(array[current])) {
+                len = diff;
+            } else {
+                i = current + 1;
+                len -= diff + 1;
+            }
+        }
+        return i;
+    }
+
+    function lowerBound(array, func) {
+        var diff, len, i, current;
+
+        len = array.length;
+        i = 0;
+
+        while (len) {
+            diff = len >>> 1;
+            current = i + diff;
+            if (func(array[current])) {
+                i = current + 1;
+                len -= diff + 1;
+            } else {
+                len = diff;
+            }
+        }
+        return i;
+    }
+    ignoreJSHintError(lowerBound);
+
+    VisitorKeys = {
+        AssignmentExpression: ['left', 'right'],
+        ArrayExpression: ['elements'],
+        ArrayPattern: ['elements'],
+        ArrowFunctionExpression: ['params', 'defaults', 'rest', 'body'],
+        BlockStatement: ['body'],
+        BinaryExpression: ['left', 'right'],
+        BreakStatement: ['label'],
+        CallExpression: ['callee', 'arguments'],
+        CatchClause: ['param', 'body'],
+        ClassBody: ['body'],
+        ClassDeclaration: ['id', 'body', 'superClass'],
+        ClassExpression: ['id', 'body', 'superClass'],
+        ConditionalExpression: ['test', 'consequent', 'alternate'],
+        ContinueStatement: ['label'],
+        DebuggerStatement: [],
+        DirectiveStatement: [],
+        DoWhileStatement: ['body', 'test'],
+        EmptyStatement: [],
+        ExpressionStatement: ['expression'],
+        ForStatement: ['init', 'test', 'update', 'body'],
+        ForInStatement: ['left', 'right', 'body'],
+        ForOfStatement: ['left', 'right', 'body'],
+        FunctionDeclaration: ['id', 'params', 'defaults', 'rest', 'body'],
+        FunctionExpression: ['id', 'params', 'defaults', 'rest', 'body'],
+        Identifier: [],
+        IfStatement: ['test', 'consequent', 'alternate'],
+        Literal: [],
+        LabeledStatement: ['label', 'body'],
+        LogicalExpression: ['left', 'right'],
+        MemberExpression: ['object', 'property'],
+        MethodDefinition: ['key', 'value'],
+        NewExpression: ['callee', 'arguments'],
+        ObjectExpression: ['properties'],
+        ObjectPattern: ['properties'],
+        Program: ['body'],
+        Property: ['key', 'value'],
+        ReturnStatement: ['argument'],
+        SequenceExpression: ['expressions'],
+        SwitchStatement: ['discriminant', 'cases'],
+        SwitchCase: ['test', 'consequent'],
+        ThisExpression: [],
+        ThrowStatement: ['argument'],
+        TryStatement: ['block', 'handlers', 'handler', 'guardedHandlers', 'finalizer'],
+        UnaryExpression: ['argument'],
+        UpdateExpression: ['argument'],
+        VariableDeclaration: ['declarations'],
+        VariableDeclarator: ['id', 'init'],
+        WhileStatement: ['test', 'body'],
+        WithStatement: ['object', 'body'],
+        YieldExpression: ['argument']
+    };
+
+    // unique id
+    BREAK = {};
+    SKIP = {};
+
+    VisitorOption = {
+        Break: BREAK,
+        Skip: SKIP
+    };
+
+    function Reference(parent, key) {
+        this.parent = parent;
+        this.key = key;
+    }
+
+    Reference.prototype.replace = function replace(node) {
+        this.parent[this.key] = node;
+    };
+
+    function Element(node, path, wrap, ref) {
+        this.node = node;
+        this.path = path;
+        this.wrap = wrap;
+        this.ref = ref;
+    }
+
+    function Controller() { }
+
+    // API:
+    // return property path array from root to current node
+    Controller.prototype.path = function path() {
+        var i, iz, j, jz, result, element;
+
+        function addToPath(result, path) {
+            if (isArray(path)) {
+                for (j = 0, jz = path.length; j < jz; ++j) {
+                    result.push(path[j]);
+                }
+            } else {
+                result.push(path);
+            }
+        }
+
+        // root node
+        if (!this.__current.path) {
+            return null;
+        }
+
+        // first node is sentinel, second node is root element
+        result = [];
+        for (i = 2, iz = this.__leavelist.length; i < iz; ++i) {
+            element = this.__leavelist[i];
+            addToPath(result, element.path);
+        }
+        addToPath(result, this.__current.path);
+        return result;
+    };
+
+    // API:
+    // return array of parent elements
+    Controller.prototype.parents = function parents() {
+        var i, iz, result;
+
+        // first node is sentinel
+        result = [];
+        for (i = 1, iz = this.__leavelist.length; i < iz; ++i) {
+            result.push(this.__leavelist[i].node);
+        }
+
+        return result;
+    };
+
+    // API:
+    // return current node
+    Controller.prototype.current = function current() {
+        return this.__current.node;
+    };
+
+    Controller.prototype.__execute = function __execute(callback, element) {
+        var previous, result;
+
+        result = undefined;
+
+        previous  = this.__current;
+        this.__current = element;
+        this.__state = null;
+        if (callback) {
+            result = callback.call(this, element.node, this.__leavelist[this.__leavelist.length - 1].node);
+        }
+        this.__current = previous;
+
+        return result;
+    };
+
+    // API:
+    // notify control skip / break
+    Controller.prototype.notify = function notify(flag) {
+        this.__state = flag;
+    };
+
+    // API:
+    // skip child nodes of current node
+    Controller.prototype.skip = function () {
+        this.notify(SKIP);
+    };
+
+    // API:
+    // break traversals
+    Controller.prototype['break'] = function () {
+        this.notify(BREAK);
+    };
+
+    Controller.prototype.__initialize = function(root, visitor) {
+        this.visitor = visitor;
+        this.root = root;
+        this.__worklist = [];
+        this.__leavelist = [];
+        this.__current = null;
+        this.__state = null;
+    };
+
+    Controller.prototype.traverse = function traverse(root, visitor) {
+        var worklist,
+            leavelist,
+            element,
+            node,
+            nodeType,
+            ret,
+            key,
+            current,
+            current2,
+            candidates,
+            candidate,
+            sentinel;
+
+        this.__initialize(root, visitor);
+
+        sentinel = {};
+
+        // reference
+        worklist = this.__worklist;
+        leavelist = this.__leavelist;
+
+        // initialize
+        worklist.push(new Element(root, null, null, null));
+        leavelist.push(new Element(null, null, null, null));
+
+        while (worklist.length) {
+            element = worklist.pop();
+
+            if (element === sentinel) {
+                element = leavelist.pop();
+
+                ret = this.__execute(visitor.leave, element);
+
+                if (this.__state === BREAK || ret === BREAK) {
+                    return;
+                }
+                continue;
+            }
+
+            if (element.node) {
+
+                ret = this.__execute(visitor.enter, element);
+
+                if (this.__state === BREAK || ret === BREAK) {
+                    return;
+                }
+
+                worklist.push(sentinel);
+                leavelist.push(element);
+
+                if (this.__state === SKIP || ret === SKIP) {
+                    continue;
+                }
+
+                node = element.node;
+                nodeType = element.wrap || node.type;
+                candidates = VisitorKeys[nodeType];
+
+                current = candidates.length;
+                while ((current -= 1) >= 0) {
+                    key = candidates[current];
+                    candidate = node[key];
+                    if (!candidate) {
+                        continue;
+                    }
+
+                    if (!isArray(candidate)) {
+                        worklist.push(new Element(candidate, key, null, null));
+                        continue;
+                    }
+
+                    current2 = candidate.length;
+                    while ((current2 -= 1) >= 0) {
+                        if (!candidate[current2]) {
+                            continue;
+                        }
+                        if ((nodeType === Syntax.ObjectExpression || nodeType === Syntax.ObjectPattern) && 'properties' === candidates[current]) {
+                            element = new Element(candidate[current2], [key, current2], 'Property', null);
+                        } else {
+                            element = new Element(candidate[current2], [key, current2], null, null);
+                        }
+                        worklist.push(element);
+                    }
+                }
+            }
+        }
+    };
+
+    Controller.prototype.replace = function replace(root, visitor) {
+        var worklist,
+            leavelist,
+            node,
+            nodeType,
+            target,
+            element,
+            current,
+            current2,
+            candidates,
+            candidate,
+            sentinel,
+            outer,
+            key;
+
+        this.__initialize(root, visitor);
+
+        sentinel = {};
+
+        // reference
+        worklist = this.__worklist;
+        leavelist = this.__leavelist;
+
+        // initialize
+        outer = {
+            root: root
+        };
+        element = new Element(root, null, null, new Reference(outer, 'root'));
+        worklist.push(element);
+        leavelist.push(element);
+
+        while (worklist.length) {
+            element = worklist.pop();
+
+            if (element === sentinel) {
+                element = leavelist.pop();
+
+                target = this.__execute(visitor.leave, element);
+
+                // node may be replaced with null,
+                // so distinguish between undefined and null in this place
+                if (target !== undefined && target !== BREAK && target !== SKIP) {
+                    // replace
+                    element.ref.replace(target);
+                }
+
+                if (this.__state === BREAK || target === BREAK) {
+                    return outer.root;
+                }
+                continue;
+            }
+
+            target = this.__execute(visitor.enter, element);
+
+            // node may be replaced with null,
+            // so distinguish between undefined and null in this place
+            if (target !== undefined && target !== BREAK && target !== SKIP) {
+                // replace
+                element.ref.replace(target);
+                element.node = target;
+            }
+
+            if (this.__state === BREAK || target === BREAK) {
+                return outer.root;
+            }
+
+            // node may be null
+            node = element.node;
+            if (!node) {
+                continue;
+            }
+
+            worklist.push(sentinel);
+            leavelist.push(element);
+
+            if (this.__state === SKIP || target === SKIP) {
+                continue;
+            }
+
+            nodeType = element.wrap || node.type;
+            candidates = VisitorKeys[nodeType];
+
+            current = candidates.length;
+            while ((current -= 1) >= 0) {
+                key = candidates[current];
+                candidate = node[key];
+                if (!candidate) {
+                    continue;
+                }
+
+                if (!isArray(candidate)) {
+                    worklist.push(new Element(candidate, key, null, new Reference(node, key)));
+                    continue;
+                }
+
+                current2 = candidate.length;
+                while ((current2 -= 1) >= 0) {
+                    if (!candidate[current2]) {
+                        continue;
+                    }
+                    if (nodeType === Syntax.ObjectExpression && 'properties' === candidates[current]) {
+                        element = new Element(candidate[current2], [key, current2], 'Property', new Reference(candidate, current2));
+                    } else {
+                        element = new Element(candidate[current2], [key, current2], null, new Reference(candidate, current2));
+                    }
+                    worklist.push(element);
+                }
+            }
+        }
+
+        return outer.root;
+    };
+
+    function traverse(root, visitor) {
+        var controller = new Controller();
+        return controller.traverse(root, visitor);
+    }
+
+    function replace(root, visitor) {
+        var controller = new Controller();
+        return controller.replace(root, visitor);
+    }
+
+    function extendCommentRange(comment, tokens) {
+        var target;
+
+        target = upperBound(tokens, function search(token) {
+            return token.range[0] > comment.range[0];
+        });
+
+        comment.extendedRange = [comment.range[0], comment.range[1]];
+
+        if (target !== tokens.length) {
+            comment.extendedRange[1] = tokens[target].range[0];
+        }
+
+        target -= 1;
+        if (target >= 0) {
+            comment.extendedRange[0] = tokens[target].range[1];
+        }
+
+        return comment;
+    }
+
+    function attachComments(tree, providedComments, tokens) {
+        // At first, we should calculate extended comment ranges.
+        var comments = [], comment, len, i, cursor;
+
+        if (!tree.range) {
+            throw new Error('attachComments needs range information');
+        }
+
+        // tokens array is empty, we attach comments to tree as 'leadingComments'
+        if (!tokens.length) {
+            if (providedComments.length) {
+                for (i = 0, len = providedComments.length; i < len; i += 1) {
+                    comment = deepCopy(providedComments[i]);
+                    comment.extendedRange = [0, tree.range[0]];
+                    comments.push(comment);
+                }
+                tree.leadingComments = comments;
+            }
+            return tree;
+        }
+
+        for (i = 0, len = providedComments.length; i < len; i += 1) {
+            comments.push(extendCommentRange(deepCopy(providedComments[i]), tokens));
+        }
+
+        // This is based on John Freeman's implementation.
+        cursor = 0;
+        traverse(tree, {
+            enter: function (node) {
+                var comment;
+
+                while (cursor < comments.length) {
+                    comment = comments[cursor];
+                    if (comment.extendedRange[1] > node.range[0]) {
+                        break;
+                    }
+
+                    if (comment.extendedRange[1] === node.range[0]) {
+                        if (!node.leadingComments) {
+                            node.leadingComments = [];
+                        }
+                        node.leadingComments.push(comment);
+                        comments.splice(cursor, 1);
+                    } else {
+                        cursor += 1;
+                    }
+                }
+
+                // already out of owned node
+                if (cursor === comments.length) {
+                    return VisitorOption.Break;
+                }
+
+                if (comments[cursor].extendedRange[0] > node.range[1]) {
+                    return VisitorOption.Skip;
+                }
+            }
+        });
+
+        cursor = 0;
+        traverse(tree, {
+            leave: function (node) {
+                var comment;
+
+                while (cursor < comments.length) {
+                    comment = comments[cursor];
+                    if (node.range[1] < comment.extendedRange[0]) {
+                        break;
+                    }
+
+                    if (node.range[1] === comment.extendedRange[0]) {
+                        if (!node.trailingComments) {
+                            node.trailingComments = [];
+                        }
+                        node.trailingComments.push(comment);
+                        comments.splice(cursor, 1);
+                    } else {
+                        cursor += 1;
+                    }
+                }
+
+                // already out of owned node
+                if (cursor === comments.length) {
+                    return VisitorOption.Break;
+                }
+
+                if (comments[cursor].extendedRange[0] > node.range[1]) {
+                    return VisitorOption.Skip;
+                }
+            }
+        });
+
+        return tree;
+    }
+
+    exports.version = '1.5.1-dev';
+    exports.Syntax = Syntax;
+    exports.traverse = traverse;
+    exports.replace = replace;
+    exports.attachComments = attachComments;
+    exports.VisitorKeys = VisitorKeys;
+    exports.VisitorOption = VisitorOption;
+    exports.Controller = Controller;
+}));
+/* vim: set sw=4 ts=4 et tw=80 : */
+
+},{}],232:[function(require,module,exports){
+module.exports=require(225)
 },{}],233:[function(require,module,exports){
 module.exports=require(226)
-},{}],234:[function(require,module,exports){
+},{"./code":232}],234:[function(require,module,exports){
 module.exports=require(227)
-},{"./code":233}],235:[function(require,module,exports){
-module.exports=require(228)
-},{"./code":233,"./keyword":234}],236:[function(require,module,exports){
+},{"./code":232,"./keyword":233}],235:[function(require,module,exports){
 /*
  * Copyright 2009-2011 Mozilla Foundation and contributors
  * Licensed under the New BSD license. See LICENSE.txt or:
@@ -71308,7 +71318,7 @@ exports.SourceMapGenerator = require('./source-map/source-map-generator').Source
 exports.SourceMapConsumer = require('./source-map/source-map-consumer').SourceMapConsumer;
 exports.SourceNode = require('./source-map/source-node').SourceNode;
 
-},{"./source-map/source-map-consumer":241,"./source-map/source-map-generator":242,"./source-map/source-node":243}],237:[function(require,module,exports){
+},{"./source-map/source-map-consumer":240,"./source-map/source-map-generator":241,"./source-map/source-node":242}],236:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -71407,7 +71417,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./util":244,"amdefine":245}],238:[function(require,module,exports){
+},{"./util":243,"amdefine":244}],237:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -71553,7 +71563,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./base64":239,"amdefine":245}],239:[function(require,module,exports){
+},{"./base64":238,"amdefine":244}],238:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -71597,7 +71607,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"amdefine":245}],240:[function(require,module,exports){
+},{"amdefine":244}],239:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -71680,7 +71690,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"amdefine":245}],241:[function(require,module,exports){
+},{"amdefine":244}],240:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -72160,7 +72170,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./array-set":237,"./base64-vlq":238,"./binary-search":240,"./util":244,"amdefine":245}],242:[function(require,module,exports){
+},{"./array-set":236,"./base64-vlq":237,"./binary-search":239,"./util":243,"amdefine":244}],241:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -72565,7 +72575,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./array-set":237,"./base64-vlq":238,"./util":244,"amdefine":245}],243:[function(require,module,exports){
+},{"./array-set":236,"./base64-vlq":237,"./util":243,"amdefine":244}],242:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -72975,7 +72985,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./source-map-generator":242,"./util":244,"amdefine":245}],244:[function(require,module,exports){
+},{"./source-map-generator":241,"./util":243,"amdefine":244}],243:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -73292,7 +73302,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"amdefine":245}],245:[function(require,module,exports){
+},{"amdefine":244}],244:[function(require,module,exports){
 (function (process,__filename){
 /** vim: et:ts=4:sw=4:sts=4
  * @license amdefine 0.1.0 Copyright (c) 2011, The Dojo Foundation All Rights Reserved.
@@ -73595,7 +73605,7 @@ function amdefine(module, requireFn) {
 module.exports = amdefine;
 
 }).call(this,require("JkpR2F"),"/../node_modules/escodegen/node_modules/source-map/node_modules/amdefine/amdefine.js")
-},{"JkpR2F":259,"path":258}],246:[function(require,module,exports){
+},{"JkpR2F":258,"path":257}],245:[function(require,module,exports){
 module.exports={
   "name": "escodegen",
   "description": "ECMAScript code generator",
@@ -73667,7 +73677,7 @@ module.exports={
   "_resolved": "https://registry.npmjs.org/escodegen/-/escodegen-1.3.3.tgz"
 }
 
-},{}],247:[function(require,module,exports){
+},{}],246:[function(require,module,exports){
 /*
   Copyright (C) 2013 Ariya Hidayat <ariya.hidayat@gmail.com>
   Copyright (C) 2013 Thaddee Tyl <thaddee.tyl@gmail.com>
@@ -78887,9 +78897,9 @@ parseYieldExpression: true
 }));
 /* vim: set sw=4 ts=4 et tw=80 : */
 
+},{}],247:[function(require,module,exports){
+module.exports=require(231)
 },{}],248:[function(require,module,exports){
-module.exports=require(35)
-},{}],249:[function(require,module,exports){
 // Filbert is a Python parser written in JavaScript.
 //
 // Filbert was written by Matt Lott and released under an MIT
@@ -81742,7 +81752,7 @@ module.exports=require(35)
     }
   };
 });
-},{}],250:[function(require,module,exports){
+},{}],249:[function(require,module,exports){
 // Filbert: Loose parser
 //
 // This module provides an alternative parser (`parse_dammit`) that
@@ -82682,9 +82692,9 @@ module.exports=require(35)
   }
 });
 
-},{"./filbert":249}],251:[function(require,module,exports){
+},{"./filbert":248}],250:[function(require,module,exports){
 
-},{}],252:[function(require,module,exports){
+},{}],251:[function(require,module,exports){
 // http://wiki.commonjs.org/wiki/Unit_Testing/1.0
 //
 // THIS IS NOT TESTED NOR LIKELY TO WORK OUTSIDE V8!
@@ -83046,7 +83056,7 @@ var objectKeys = Object.keys || function (obj) {
   return keys;
 };
 
-},{"util/":255}],253:[function(require,module,exports){
+},{"util/":254}],252:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -83071,14 +83081,14 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],254:[function(require,module,exports){
+},{}],253:[function(require,module,exports){
 module.exports = function isBuffer(arg) {
   return arg && typeof arg === 'object'
     && typeof arg.copy === 'function'
     && typeof arg.fill === 'function'
     && typeof arg.readUInt8 === 'function';
 }
-},{}],255:[function(require,module,exports){
+},{}],254:[function(require,module,exports){
 (function (process,global){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -83668,7 +83678,7 @@ function hasOwnProperty(obj, prop) {
 }
 
 }).call(this,require("JkpR2F"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":254,"JkpR2F":259,"inherits":253}],256:[function(require,module,exports){
+},{"./support/isBuffer":253,"JkpR2F":258,"inherits":252}],255:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -83973,9 +83983,9 @@ function isUndefined(arg) {
   return arg === void 0;
 }
 
+},{}],256:[function(require,module,exports){
+module.exports=require(252)
 },{}],257:[function(require,module,exports){
-module.exports=require(253)
-},{}],258:[function(require,module,exports){
 (function (process){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -84203,7 +84213,7 @@ var substr = 'ab'.substr(-1) === 'b'
 ;
 
 }).call(this,require("JkpR2F"))
-},{"JkpR2F":259}],259:[function(require,module,exports){
+},{"JkpR2F":258}],258:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -84268,11 +84278,11 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
+},{}],259:[function(require,module,exports){
+module.exports=require(253)
 },{}],260:[function(require,module,exports){
 module.exports=require(254)
-},{}],261:[function(require,module,exports){
-module.exports=require(255)
-},{"./support/isBuffer":260,"JkpR2F":259,"inherits":257}],262:[function(require,module,exports){
+},{"./support/isBuffer":259,"JkpR2F":258,"inherits":256}],261:[function(require,module,exports){
 
 var compile = require('./src/compile');
 var lib = require('./src/lib');
@@ -84308,7 +84318,7 @@ module.exports = {
 	eval: evaluate,
 };
 
-},{"./src/compile":263,"./src/lib":264}],263:[function(require,module,exports){
+},{"./src/compile":262,"./src/lib":263}],262:[function(require,module,exports){
 
 var escodegen = require('escodegen');
 
@@ -84847,7 +84857,7 @@ module.exports = {
 	setOptions: setOptions,
 };
 
-},{"./parser":265,"./pratt":266,"escodegen":231}],264:[function(require,module,exports){
+},{"./parser":264,"./pratt":265,"escodegen":230}],263:[function(require,module,exports){
 
 var _io = (function () {
 
@@ -85253,7 +85263,7 @@ if (typeof module !== 'undefined' && module.exports) {
 	module.exports = _io;
 }
 
-},{}],265:[function(require,module,exports){
+},{}],264:[function(require,module,exports){
 (function (process){
 /* parser generated by jison 0.4.13 */
 /*
@@ -85969,7 +85979,7 @@ if (typeof module !== 'undefined' && require.main === module) {
 }
 }
 }).call(this,require("JkpR2F"))
-},{"JkpR2F":259,"fs":251,"path":258}],266:[function(require,module,exports){
+},{"JkpR2F":258,"fs":250,"path":257}],265:[function(require,module,exports){
 
 // AST nodes
 
@@ -86122,7 +86132,7 @@ module.exports = {
 	},
 	isOperator: isOperator
 };
-},{}],267:[function(require,module,exports){
+},{}],266:[function(require,module,exports){
 var identifierStartTable = [];
 
 for (var i = 0; i < 128; i++) {
@@ -86146,7 +86156,7 @@ module.exports = {
 	asciiIdentifierPartTable: identifierPartTable
 };
 
-},{}],268:[function(require,module,exports){
+},{}],267:[function(require,module,exports){
 module.exports = [
 	768,
 	769,
@@ -87718,7 +87728,7 @@ module.exports = [
 	65343
 ];
 
-},{}],269:[function(require,module,exports){
+},{}],268:[function(require,module,exports){
 module.exports = [
 	170,
 	181,
@@ -136197,7 +136207,7 @@ module.exports = [
 	65500
 ];
 
-},{}],270:[function(require,module,exports){
+},{}],269:[function(require,module,exports){
 (function (global){
 /*global window, global*/
 var util = require("util")
@@ -136286,7 +136296,7 @@ function assert(expression) {
 }
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"assert":252,"util":261}],271:[function(require,module,exports){
+},{"assert":251,"util":260}],270:[function(require,module,exports){
 //     Underscore.js 1.4.4
 //     http://underscorejs.org
 //     (c) 2009-2013 Jeremy Ashkenas, DocumentCloud Inc.
@@ -137514,7 +137524,7 @@ function assert(expression) {
 
 }).call(this);
 
-},{}],272:[function(require,module,exports){
+},{}],271:[function(require,module,exports){
 /*!
  * JSHint, by JSHint Community.
  *
@@ -142518,7 +142528,7 @@ if (typeof exports === "object" && exports) {
 	exports.JSHINT = JSHINT;
 }
 
-},{"./lex.js":273,"./messages.js":274,"./reg.js":275,"./state.js":276,"./style.js":277,"./vars.js":278,"console-browserify":270,"events":256,"underscore":271}],273:[function(require,module,exports){
+},{"./lex.js":272,"./messages.js":273,"./reg.js":274,"./state.js":275,"./style.js":276,"./vars.js":277,"console-browserify":269,"events":255,"underscore":270}],272:[function(require,module,exports){
 /*
  * Lexical analysis and token construction.
  */
@@ -144096,7 +144106,7 @@ Lexer.prototype = {
 
 exports.Lexer = Lexer;
 
-},{"../data/ascii-identifier-data.js":267,"../data/non-ascii-identifier-part-only.js":268,"../data/non-ascii-identifier-start.js":269,"./reg.js":275,"./state.js":276,"events":256,"underscore":271}],274:[function(require,module,exports){
+},{"../data/ascii-identifier-data.js":266,"../data/non-ascii-identifier-part-only.js":267,"../data/non-ascii-identifier-start.js":268,"./reg.js":274,"./state.js":275,"events":255,"underscore":270}],273:[function(require,module,exports){
 "use strict";
 
 var _ = require("underscore");
@@ -144318,7 +144328,7 @@ _.each(info, function (desc, code) {
 	exports.info[code] = { code: code, desc: desc };
 });
 
-},{"underscore":271}],275:[function(require,module,exports){
+},{"underscore":270}],274:[function(require,module,exports){
 /*
  * Regular expressions. Some of these are stupidly long.
  */
@@ -144354,7 +144364,7 @@ exports.javascriptURL = /^(?:javascript|jscript|ecmascript|vbscript|mocha|livesc
 // Catches /* falls through */ comments (ft)
 exports.fallsThrough = /^\s*\/\*\s*falls?\sthrough\s*\*\/\s*$/;
 
-},{}],276:[function(require,module,exports){
+},{}],275:[function(require,module,exports){
 "use strict";
 
 var state = {
@@ -144382,7 +144392,7 @@ var state = {
 
 exports.state = state;
 
-},{}],277:[function(require,module,exports){
+},{}],276:[function(require,module,exports){
 "use strict";
 
 exports.register = function (linter) {
@@ -144554,7 +144564,7 @@ exports.register = function (linter) {
 		}
 	});
 };
-},{}],278:[function(require,module,exports){
+},{}],277:[function(require,module,exports){
 // jshint -W001
 
 "use strict";
@@ -145145,7 +145155,7 @@ exports.yui = {
 };
 
 
-},{}],279:[function(require,module,exports){
+},{}],278:[function(require,module,exports){
 
 var parser = require('./parser.js');
 var stdlib = require('./stdlib.js');
@@ -145155,7 +145165,7 @@ this.parse = parser.parser.parse;
 
 
 
-},{"./parser.js":280,"./stdlib.js":281}],280:[function(require,module,exports){
+},{"./parser.js":279,"./stdlib.js":280}],279:[function(require,module,exports){
 this.parser = (function() {
   /*
    * Generated by PEG.js 0.8.0.
@@ -152140,7 +152150,7 @@ this.parser = (function() {
   };
 })();
 
-},{}],281:[function(require,module,exports){
+},{}],280:[function(require,module,exports){
 var env = {};
 var __lua = (function() {
 
@@ -152697,25 +152707,25 @@ __lua.env = env;
 for ( var idx in env ) this[idx] = env[idx];
 
 
-},{}],282:[function(require,module,exports){
+},{}],281:[function(require,module,exports){
+arguments[4][235][0].apply(exports,arguments)
+},{"./source-map/source-map-consumer":286,"./source-map/source-map-generator":287,"./source-map/source-node":288}],282:[function(require,module,exports){
 arguments[4][236][0].apply(exports,arguments)
-},{"./source-map/source-map-consumer":287,"./source-map/source-map-generator":288,"./source-map/source-node":289}],283:[function(require,module,exports){
+},{"./util":289,"amdefine":290}],283:[function(require,module,exports){
 arguments[4][237][0].apply(exports,arguments)
-},{"./util":290,"amdefine":291}],284:[function(require,module,exports){
+},{"./base64":284,"amdefine":290}],284:[function(require,module,exports){
 arguments[4][238][0].apply(exports,arguments)
-},{"./base64":285,"amdefine":291}],285:[function(require,module,exports){
+},{"amdefine":290}],285:[function(require,module,exports){
 arguments[4][239][0].apply(exports,arguments)
-},{"amdefine":291}],286:[function(require,module,exports){
+},{"amdefine":290}],286:[function(require,module,exports){
 arguments[4][240][0].apply(exports,arguments)
-},{"amdefine":291}],287:[function(require,module,exports){
+},{"./array-set":282,"./base64-vlq":283,"./binary-search":285,"./util":289,"amdefine":290}],287:[function(require,module,exports){
 arguments[4][241][0].apply(exports,arguments)
-},{"./array-set":283,"./base64-vlq":284,"./binary-search":286,"./util":290,"amdefine":291}],288:[function(require,module,exports){
+},{"./array-set":282,"./base64-vlq":283,"./util":289,"amdefine":290}],288:[function(require,module,exports){
 arguments[4][242][0].apply(exports,arguments)
-},{"./array-set":283,"./base64-vlq":284,"./util":290,"amdefine":291}],289:[function(require,module,exports){
+},{"./source-map-generator":287,"./util":289,"amdefine":290}],289:[function(require,module,exports){
 arguments[4][243][0].apply(exports,arguments)
-},{"./source-map-generator":288,"./util":290,"amdefine":291}],290:[function(require,module,exports){
-arguments[4][244][0].apply(exports,arguments)
-},{"amdefine":291}],291:[function(require,module,exports){
+},{"amdefine":290}],290:[function(require,module,exports){
 (function (process,__filename){
 /** vim: et:ts=4:sw=4:sts=4
  * @license amdefine 0.1.0 Copyright (c) 2011, The Dojo Foundation All Rights Reserved.
@@ -153018,7 +153028,7 @@ function amdefine(module, requireFn) {
 module.exports = amdefine;
 
 }).call(this,require("JkpR2F"),"/../node_modules/source-map/node_modules/amdefine/amdefine.js")
-},{"JkpR2F":259,"path":258}],292:[function(require,module,exports){
+},{"JkpR2F":258,"path":257}],291:[function(require,module,exports){
 /*
 Author: Geraint Luff and others
 Year: 2013
