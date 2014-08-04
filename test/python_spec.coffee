@@ -171,6 +171,34 @@ describe "Python Test suite", ->
       aether.transpile(code)
       expect(aether.run()).toEqual([0, 4, 8])
 
+    it "sequence operations", ->
+      code = """
+      a = [1]
+      b = a + [2]
+      b *= 2
+      return b
+      """
+      aether.transpile(code)
+      expect(aether.run()).toEqual([1, 2, 1, 2])
+
+    it "default and keyword fn arguments", ->
+      code = """
+      def f(a=4, b=7, c=10):
+        return a + b + c
+      return f(4, c=2, b=1)
+      """
+      aether.transpile(code)
+      expect(aether.run()).toEqual(7)
+
+    it "*args and **kwargs", ->
+      code = """
+      def f(x, y=5, z=8, *a, **b):
+        return x + y + z + sum(a) + sum([b[k] for k in b])
+      return f(1, 2, 3, 4, 5, a=10, b=100)
+      """
+      aether.transpile(code)
+      expect(aether.run()).toEqual(125)
+
   describe "Usage", ->
     it "self.doStuff via thisValue param", ->
       history = []
