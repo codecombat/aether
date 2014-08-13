@@ -85,22 +85,27 @@ module.exports.createAPIClone = createAPIClone = (aether, value) ->
     result[i] = createAPIClone aether, v for v, i in value
     #Object.freeze result  # Do we want to freeze arrays? Maybe not; caused bug with defining __aetherAPIClone.
   else if value.apiProperties
-    for prop in value.apiMethods ? []
+    for prop in value.apiOwnMethods ? []
       # Make a version of the function that calls itself on the original, and only if allowed.
       do (prop) ->
         fn = ->
-          throw new Error "Calling #{prop} is not allowed." unless value._aetherAPIMethodsAllowed
+          throw new Error "Calling #{prop} is not allowed." unless value._aetherAPIOwnMethodsAllowed
           value[prop].apply value, arguments
         Object.defineProperty result, prop, value: fn, enumerable: true
+    for prop in value.apiMethods ? []
+      # Make a version of the function that calls itself on the original.
+      do (prop) ->
+        fn = ->
+          value[prop].apply value, arguments
+        Object.defineProperty result, prop, value: fn, enumerable: true
+    for prop in value.apiUserProperties ? [] when not result[prop]?  # Don't redefine it if it's already done.
+      result[prop] = createAPIClone aether, value[prop]  # Maybe we don't need to clone this?
     for prop in value.apiProperties when not result[prop]?  # Don't redefine it if it's already done.
       do (prop) ->
         # Accessing a property on the clone will get the value from the original.
         fn = ->
           createAPIClone aether, value[prop]
-
         Object.defineProperty result, prop, get: fn, enumerable: true
-    for prop in value.apiUserProperties ? [] when not result[prop]?  # Don't redefine it if it's already done.
-      result[prop] = createAPIClone aether, value[prop]  # Maybe we don't need to clone this?
   else
     # Hmm, should we protect normal objects?
     #result[k] = createAPIClone(v) for own k, v of value
