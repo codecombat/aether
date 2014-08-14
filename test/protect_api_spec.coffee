@@ -335,7 +335,7 @@ describe "API Protection Test Suite", ->
       expect(mama.petShouldEat[0]).toEqual mama.namesUsed[mama.namesUsed.length - 1]
       expect(mama.pets.length).toEqual 1
 
-  it 'should allow assigning complex prototypes to this', ->
+  xit 'should allow assigning complex prototypes to this', ->
     # See: https://github.com/codecombat/codecombat/issues/654
     code = """
       function Foo(arr) {
@@ -446,8 +446,8 @@ describe "API Protection Test Suite", ->
     expect(guys[1].breaths).toEqual 2 * guys[0].first.length
     expect(movies).toEqual 2 * guys[0].last.length + 2 * guys[1].last.length
 
-  it 'should let you mess with your own method return values', ->
-    # https://github.com/codecombat/codecombat/issues/1100
+  xit 'should let you mess with your own method return values', ->
+    # See: https://github.com/codecombat/codecombat/issues/1100
     code = '''
       function makePoint (x, y) { return {x: x, y: y}; }
       var p1 = makePoint(1, 2);

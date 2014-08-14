@@ -252,7 +252,8 @@ describe "Python Test suite", ->
 
   describe "parseDammit! & Ranges", ->
     aether = new Aether language: "python"
-    it "missing )", ->
+    xit "missing )", ->
+      # See: https://github.com/codecombat/aether/issues/99
       code = """
       def fn():
         return 45
@@ -267,7 +268,8 @@ describe "Python Test suite", ->
       result = aether.run()
       expect(result).toEqual(45)
 
-    it "bad indent", ->
+    xit "bad indent", ->
+      # See: https://github.com/codecombat/aether/issues/99
       code = """
       def fn():
         x = 45
