@@ -53,6 +53,9 @@ module.exports = class Python extends Language
       ast = {type: "Program", body:[{"type": "EmptyStatement"}]}
     ast
 
+  convertToNativeType: (obj) ->
+    return parser.pythonRuntime.utils.createList(obj) if not obj?.isPython and _.isArray obj
+    obj
 
 fixLocations = (ast) ->
   wrappedCodeIndent = 4

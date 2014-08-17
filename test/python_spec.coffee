@@ -199,11 +199,23 @@ describe "Python Test suite", ->
       aether.transpile(code)
       expect(aether.run()).toEqual(125)
 
+    it "API returns Python object", ->
+      code ="""
+        items = self.getItems()
+        if items.isPython:
+           return items.count(3)
+        return 'not a Python object'
+      """
+      aether.transpile code
+      selfValue = {getItems: -> [3, 3, 4, 3, 5, 6, 3]}
+      method = aether.createMethod selfValue
+      expect(aether.run(method)).toEqual(4)
+
   describe "Usage", ->
     it "self.doStuff via thisValue param", ->
       history = []
       log = (s) -> history.push s
-      moveDown = () -> history.push 'moveDown'
+      moveDown = -> history.push 'moveDown'
       thisValue = {say: log, moveDown: moveDown}
       aetherOptions = {
         language: 'python'
@@ -233,7 +245,7 @@ describe "Python Test suite", ->
 
     it "self.getItems", ->
       history = []
-      getItems = () -> [{'pos':1}, {'pos':4}, {'pos':3}, {'pos':5}]
+      getItems = -> [{'pos':1}, {'pos':4}, {'pos':3}, {'pos':5}]
       move = (i) -> history.push i
       thisValue = {getItems: getItems, move: move}
       aetherOptions = {

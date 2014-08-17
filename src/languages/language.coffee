@@ -53,3 +53,8 @@ module.exports = class Language
   # Useful for parsing incomplete code as it is being written without giving up.
   # This should never throw an error and should always return some sort of AST, even if incomplete or empty.
   #parseDammit: (code, aether) ->
+
+  # Convert obj to a language-specific type
+  # E.g. if obj is an Array and language is Python, return a Python list
+  convertToNativeType: (obj) ->
+    obj
