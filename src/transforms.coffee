@@ -440,6 +440,13 @@ module.exports.makeInstrumentCalls = makeInstrumentCalls = (varNames) ->
     return unless node.type is S.VariableDeclaration
     node.update "'use strict'; _aether.logCallStart(_aether._userInfo); #{node.source()}"  # TODO: pull in arguments?
 
+module.exports.convertToNativeTypes = (node) ->
+  # Hook all function calls and convert returns to native types if necessary
+  # E.g. return from getEnemies API call is intercepted and converted to a Python list, when language is Python
+  return unless node.type is S.CallExpression
+  return unless getFunctionNestingLevel(node) > 1
+  node.update "_aether.convertToNativeType(#{node.source()})"
+
 module.exports.protectAPI = (node) ->
   return unless node.type in [S.CallExpression, S.ThisExpression, S.VariableDeclaration, S.ReturnStatement]
   level = getFunctionNestingLevel node

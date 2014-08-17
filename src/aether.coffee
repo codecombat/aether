@@ -234,6 +234,7 @@ module.exports = class Aether
     postNormalizationTransforms.unshift transforms.makeInstrumentCalls() if @options.includeMetrics or @options.includeFlow
     if normalizedSourceMap
       postNormalizationTransforms.unshift transforms.makeFindOriginalNodes originalNodeRanges, @language.wrappedCodePrefix, normalizedSourceMap, normalizedNodeIndex
+    postNormalizationTransforms.unshift transforms.convertToNativeTypes
     postNormalizationTransforms.unshift transforms.protectAPI if @options.protectAPI
     postNormalizationTransforms.unshift transforms.interceptThis
     postNormalizationTransforms.unshift transforms.interceptEval
@@ -295,6 +296,11 @@ module.exports = class Aether
     lines = source.split /\r?\n/
     indent = if lines.length then lines[0].length - lines[0].replace(/^ +/, '').length else 0
     (line.slice indent for line in lines).join '\n'
+
+  convertToNativeType: (obj) ->
+    # Convert obj to current language's equivalent type if necessary
+    # E.g. if language is Python, JavaScript Array is converted to a Python list
+    @language.convertToNativeType(obj)
 
   # Runtime modules
 
