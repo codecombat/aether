@@ -466,3 +466,18 @@ describe "API Protection Test Suite", ->
     expect(result.p1d).toEqual 3
     expect(result.p2d).toEqual 6
     expect(aether.problems.errors).toEqual []
+
+  it 'cloning with non-JS language yields language-specific object', ->
+    code = '''
+      a = [1]
+      a += [2]
+      a *= 3
+      return a
+    '''
+    aether = new Aether protectAPI: true, language:'python'
+    aether.transpile code
+    result = aether.run()
+    expect(result.isPython).toEqual true
+    expect(result.type).toEqual 'list'
+    expect(result).toEqual [1, 2, 1, 2, 1, 2]
+    expect(aether.problems.errors).toEqual []
