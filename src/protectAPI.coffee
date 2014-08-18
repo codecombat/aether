@@ -63,9 +63,10 @@ module.exports.createAPIClone = createAPIClone = (aether, value) ->
 
   if isArr = _.isArray value
     result = ctor value.length
-    # Add array properties assigned by RegExp.exec.
-    result.index = value.index if value.hasOwnProperty "index"
-    result.input = value.input if value.hasOwnProperty "input"
+    if className is regexpClass
+      # Add array properties assigned by RegExp.exec.
+      result.index = value.index if value.hasOwnProperty "index"
+      result.input = value.input if value.hasOwnProperty "input"
   else
     result = {}
 
@@ -129,9 +130,5 @@ module.exports.restoreAPIClone = restoreAPIClone = (aether, value, depth=0) ->
   return value if depth > 1  # hack, but I don't understand right now--when do we stop? can't recurse forever
 
   # We now have a new array/object that may contain some clones, so let's recurse to find them.
-  if isArr = _.isArray value
-    result = (restoreAPIClone aether, v, depth + 1 for v in value)
-  else
-    result = {}
-    result[k] = restoreAPIClone aether, v, depth + 1 for k, v of value
-  result
+  # Use language-specific cloning in case we need a non-JS equivalent
+  aether.language.cloneObj(value, (v) -> restoreAPIClone aether, v, depth + 1)

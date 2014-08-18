@@ -58,3 +58,16 @@ module.exports = class Language
   # E.g. if obj is an Array and language is Python, return a Python list
   convertToNativeType: (obj) ->
     obj
+
+  cloneObj: (obj, cloneFn=(o) -> o) ->
+    # Clone obj to a language-specific equivalent object
+    # E.g. if obj is an Array and language is Python, we want a new Python list instead of a JavaScript Array.
+    # Use cloneFn for children and simple types
+    if _.isArray obj
+      result = (cloneFn v for v in obj)
+    else if _.isObject obj
+      result = {}
+      result[k] = cloneFn v for k, v of obj
+    else
+      result = cloneFn obj
+    result

@@ -218,6 +218,31 @@ examples = [
     demoShowOutput(aether);
     '''
 ,
+  name: "Python protected"
+  code: '''
+    a = [1]
+    b = [2]
+    c = a + b
+    print(c.type)
+    print(c)
+    '''
+
+  aether: '''
+    var thisValue = {say: console.log};
+    var aetherOptions = {
+      executionLimit: 1000,
+      problems: {jshint_W040: {level: "ignore"}},
+      language:'python',
+      protectAPI:true
+    };
+    var aether = new Aether(aetherOptions);
+    var code = grabDemoCode();
+    aether.transpile(code);
+    var method = aether.createMethod(thisValue);
+    aether.run(method);
+    demoShowOutput(aether);
+    '''
+,
   name: "Buggy"
   code: '''
     function distance_squared(from, target) {  // no camelCase

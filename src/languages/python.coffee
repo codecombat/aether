@@ -57,6 +57,17 @@ module.exports = class Python extends Language
     return parser.pythonRuntime.utils.createList(obj) if not obj?.isPython and _.isArray obj
     obj
 
+  cloneObj: (obj, cloneFn=(o) -> o) ->
+    if _.isArray obj
+      result = new parser.pythonRuntime.objects.list()
+      result.append(cloneFn v) for v in obj
+    else if _.isObject obj
+      result = new parser.pythonRuntime.objects.dict()
+      result[k] = cloneFn v for k, v of obj
+    else
+      result = cloneFn obj
+    result
+
 fixLocations = (ast) ->
   wrappedCodeIndent = 4
   estraverse.traverse ast,
