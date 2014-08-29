@@ -199,17 +199,41 @@ describe "Python Test suite", ->
       aether.transpile(code)
       expect(aether.run()).toEqual(125)
 
-    it "API returns Python object", ->
+    it "Protected API returns Python list", ->
       code ="""
         items = self.getItems()
         if items.isPython:
            return items.count(3)
         return 'not a Python object'
       """
+      aether = new Aether language: "python", protectAPI: true
       aether.transpile code
       selfValue = {getItems: -> [3, 3, 4, 3, 5, 6, 3]}
       method = aether.createMethod selfValue
       expect(aether.run(method)).toEqual(4)
+
+    it "Protected API returns Python dict", ->
+      code ="""
+        items = self.getItems()
+        if items.isPython:
+           return items.length
+        return 'not a Python object'
+      """
+      aether = new Aether language: "python", protectAPI: true
+      aether.transpile code
+      selfValue = {getItems: -> {'name': 'Bob', 'shortName': true}}
+      method = aether.createMethod selfValue
+      expect(aether.run(method)).toEqual(2)
+
+    it "Pass Python arguments to inner functions", ->
+      code ="""
+        def f(d, l):
+          return d.isPython and l.isPython
+        return f({'p1': 'Bob'}, ['Python', 'is', 'fun.', True])
+      """
+      aether = new Aether language: "python", protectAPI: true
+      aether.transpile code
+      expect(aether.run()).toEqual(true)
 
   describe "Usage", ->
     it "self.doStuff via thisValue param", ->
