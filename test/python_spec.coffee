@@ -202,7 +202,7 @@ describe "Python Test suite", ->
     it "Protected API returns Python list", ->
       code ="""
         items = self.getItems()
-        if items.isPython:
+        if items._isPython:
            return items.count(3)
         return 'not a Python object'
       """
@@ -215,7 +215,7 @@ describe "Python Test suite", ->
     it "Protected API returns Python dict", ->
       code ="""
         items = self.getItems()
-        if items.isPython:
+        if items._isPython:
            return items.length
         return 'not a Python object'
       """
@@ -228,12 +228,22 @@ describe "Python Test suite", ->
     it "Pass Python arguments to inner functions", ->
       code ="""
         def f(d, l):
-          return d.isPython and l.isPython
+          return d._isPython and l._isPython
         return f({'p1': 'Bob'}, ['Python', 'is', 'fun.', True])
       """
       aether = new Aether language: "python", protectAPI: true
       aether.transpile code
       expect(aether.run()).toEqual(true)
+
+  describe "Conflicts", ->
+    it "doesn't interfere with type property", ->
+      code = """
+      d = {'type': 'merino wool'}
+      return d['type']
+      """
+      aether = new Aether language: "python", protectAPI: true
+      aether.transpile(code)
+      expect(aether.run()).toBe('merino wool')
 
   describe "Usage", ->
     it "self.doStuff via thisValue param", ->

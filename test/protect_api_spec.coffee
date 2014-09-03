@@ -477,7 +477,7 @@ describe "API Protection Test Suite", ->
     aether = new Aether protectAPI: true, language:'python'
     aether.transpile code
     result = aether.run()
-    expect(result.isPython).toEqual true
-    expect(result.type).toEqual 'list'
+    expect(result._isPython).toEqual true
+    expect(result._type).toEqual 'list'
     expect(result).toEqual [1, 2, 1, 2, 1, 2]
     expect(aether.problems.errors).toEqual []
