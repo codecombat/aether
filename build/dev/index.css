@@ -44,7 +44,7 @@ li {
   margin-bottom: 20px;
   border-left: 1px solid lightgray;
   border-right: 1px solid lightgray;
-  box-shadow: 0 0 10px #aaaaaa; }
+  box-shadow: 0 0 10px #aaa; }
 
 .nav-tabs li {
   z-index: 1; }
@@ -59,7 +59,7 @@ footer {
   text-align: center;
   clear: both; }
   footer div {
-    background-color: #666666; }
+    background-color: #666; }
   footer .bar {
     margin-top: 10px;
     width: 100%; }
@@ -118,3 +118,5 @@ pre {
     color: orange; }
   #worst-problem-wrapper.info {
     color: green; }
+
+/*# sourceMappingURL=index.css.map */

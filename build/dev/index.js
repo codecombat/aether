@@ -276,6 +276,10 @@
       code: 'function fib(n) {\n  return n < 2 ? n : fib(n - 1) + fib(n - 2);\n}\nvar chupacabra = fib(Math.ceil(Math.random() * 5))\nthis.say("I want", chupacabra, "gold.");\nreturn chupacabra;',
       aether: 'var thisValue = {say: console.log};\nvar aetherOptions = {\n  executionLimit: 1000,\n  problems: {jshint_W040: {level: "ignore"}}\n};\nvar aether = new Aether(aetherOptions);\nvar code = grabDemoCode();\naether.transpile(code);\nvar method = aether.createMethod(thisValue);\naether.run(method);\naether.run(method);\naether.run(method);\ndemoShowOutput(aether);'
     }, {
+      name: "Simple loop yields",
+      code: 'loop() {\n  this.slay();\n  if (this.getKillCount() >= 5) {\n    break;\n  }\n}',
+      aether: 'var aetherOptions = {\n  yieldConditionally: true,\n  simpleLoops: true,\n};\nvar aether = new Aether(aetherOptions);\nvar thisValue = {\n  killCount: 0,\n  slay: function() { this.killCount += 1;},\n  getKillCount: function() { return this.killCount; }\n};\nvar code = grabDemoCode();\naether.transpile(code);\nvar method = aether.createMethod(thisValue);\nvar generator = method.apply(thisValue);\ngenerator.next();\ngenerator.next();\ngenerator.next();\ngenerator.next();\nconsole.log(thisValue.killCount);'
+    }, {
       name: "Python protected",
       code: 'a = [1]\nb = [2]\nc = a + b\nprint(c.type)\nprint(c)',
       aether: 'var thisValue = {say: console.log};\nvar aetherOptions = {\n  executionLimit: 1000,\n  problems: {jshint_W040: {level: "ignore"}},\n  language:\'python\',\n  protectAPI:true\n};\nvar aether = new Aether(aetherOptions);\nvar code = grabDemoCode();\naether.transpile(code);\nvar method = aether.createMethod(thisValue);\naether.run(method);\ndemoShowOutput(aether);'
