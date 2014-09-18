@@ -537,10 +537,10 @@ describe "JavaScript Test Suite", ->
     #  expect(dude.enemy).toEqual "slain!"
 
   describe "Simple loop", ->
-    it "loop() {", ->
+    it "loop{", ->
       code = """
       var total = 0
-      loop() {
+      loop{
         total += 1
         break;
       }
@@ -550,10 +550,10 @@ describe "JavaScript Test Suite", ->
       aether.transpile(code)
       expect(aether.run()).toEqual(1)
 
-    it "loop () {}", ->
+    it "loop {}", ->
       code = """
       var total = 0
-      loop () { total += 1; if (total >= 12) {break;}}
+      loop { total += 1; if (total >= 12) {break;}}
       return total
       """
       aether = new Aether language: "javascript", simpleLoops: true
@@ -571,7 +571,7 @@ describe "JavaScript Test Suite", ->
           this.slay();
           break;
         }
-        loop() {
+        loop {
           this.slay();
           if (this.getKillCount() >= 5) {
             break;
@@ -606,7 +606,7 @@ describe "JavaScript Test Suite", ->
           this.slay();
           break;
         }
-        loop() {
+        loop {
           this.slay();
           if (this.getKillCount() >= 5) {
             break;
@@ -624,5 +624,3 @@ describe "JavaScript Test Suite", ->
       while (true)
         if gen.next().done then break
       expect(dude.killCount).toEqual 6
-
-
