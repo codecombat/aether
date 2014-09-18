@@ -371,3 +371,70 @@ describe "Python Test suite", ->
       expect(aether.problems.errors[0].range).toEqual([ { ofs : 4, row : 0, col : 4 }, { ofs : 7, row : 0, col : 7 } ])
       result = aether.run()
       expect(result).toEqual('hi')
+
+  describe "Simple loop", ->
+    it "loop:", ->
+      code = """
+      total = 0
+      loop:
+        total += 1
+        if total is 10: break;
+      return total
+      """
+      aether = new Aether language: "python", simpleLoops: true
+      aether.transpile(code)
+      expect(aether.run()).toEqual(10)
+
+    xit "one line", ->
+      # Blocked by https://github.com/differentmatt/filbert/issues/41
+      code = """
+      total = 0
+      loop: total += 12; break;
+      return total
+      """
+      aether = new Aether language: "python", simpleLoops: true
+      aether.transpile(code)
+      expect(aether.run()).toEqual(12)
+
+    it "loop  :", ->
+      code = """
+      total = 0
+      loop  :
+        total += 23;
+        break;
+      return total
+      """
+      aether = new Aether language: "python", simpleLoops: true
+      aether.transpile(code)
+      expect(aether.run()).toEqual(23)
+      
+    it "Conditional yielding", ->
+      aether = new Aether language: "python", yieldConditionally: true, simpleLoops: true
+      dude =
+        killCount: 0
+        slay: -> @killCount += 1
+        getKillCount: -> return @killCount
+      code = """
+        while True:
+          self.slay();
+          break;
+        loop:
+          self.slay();
+          if self.getKillCount() >= 5:
+            break;
+        while True:
+          self.slay();
+          break;
+      """
+      aether.transpile code
+      f = aether.createFunction()
+      gen = f.apply dude
+      aether._shouldYield = true
+      expect(gen.next().done).toEqual false
+      aether._shouldYield = true
+      expect(gen.next().done).toEqual false
+      aether._shouldYield = true
+      expect(gen.next().done).toEqual false
+      expect(gen.next().done).toEqual true
+      expect(dude.killCount).toEqual 6
+

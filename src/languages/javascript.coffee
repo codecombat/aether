@@ -46,6 +46,25 @@ module.exports = class JavaScript extends Language
     traversal.walkAST bAST, removeLocations
     return not _.isEqual(aAST, bAST)
 
+  # Replace instances of 'loop' with 'while (true)'
+  # Assuming 'loop()' is on a single line, only preceded by whitespace
+  replaceLoops: (rawCode) ->
+    convertedCode = ""
+    replacedLoops = []
+    rangeIndex = 0
+    for line in rawCode.split '\n'
+      if line.replace(/^\s+/g, "").indexOf('loop') is 0
+        # Replace loop with while, remember line number
+        start = line.indexOf 'loop'
+        a = line.split("")
+        a[start..start + 3] = 'while (true)'.split ""
+        convertedCode += a.join("")
+        replacedLoops.push rangeIndex + start
+      else
+        convertedCode += line + '\n'
+      rangeIndex += line.length + 1 # + newline
+    [convertedCode, replacedLoops]
+
   # Return an array of problems detected during linting.
   lint: (rawCode, aether) ->
     lintProblems = []

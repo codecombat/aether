@@ -109,6 +109,7 @@ module.exports = class Aether
   # Transpile it. Even if it can't transpile, it will give syntax errors and warnings and such. Clears any old state.
   transpile: (@raw) ->
     @reset()
+    [@raw, @replacedLoops] = @language.replaceLoops @raw if @options.simpleLoops
     @problems = @lint @raw
     @pure = @purifyCode @raw
     @pure
@@ -225,6 +226,7 @@ module.exports = class Aether
         return ''
 
     postNormalizationTransforms = []
+    postNormalizationTransforms.unshift transforms.makeLoopsYieldConditionally(@replacedLoops, @language.wrappedCodePrefix) if @options.yieldConditionally
     postNormalizationTransforms.unshift transforms.makeYieldConditionally() if @options.yieldConditionally
     postNormalizationTransforms.unshift transforms.makeYieldAutomatically() if @options.yieldAutomatically
     if @options.includeFlow

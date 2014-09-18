@@ -24,6 +24,28 @@ module.exports = class Python extends Language
       return not _.isEqual(aAST, bAST)
     catch error
       return true
+  
+  # Replace 'loop:' with 'while True:'
+  # TODO: support 'loop():' too?
+  replaceLoops: (rawCode, aether) ->
+    convertedCode = ""
+    replacedLoops = []
+    rangeIndex = 0
+    for line in rawCode.split '\n'
+      lineLength = line.length
+      if line.replace(/^\s+/g, "").indexOf('loop') is 0
+        start = line.indexOf 'loop'
+        end = start + 4
+        end++ while (line[end] != ':' and end < line.length)
+        if end < line.length
+          # Replace loop with while, remember line number
+          a = line.split("")
+          a[start..end] = 'while True:'.split ""
+          line = a.join("")
+          replacedLoops.push rangeIndex + start
+      convertedCode += line + '\n'
+      rangeIndex += lineLength + 1 + 4 # + newline + wrapped indent
+    [convertedCode, replacedLoops]
 
   # Wrap the user code in a function. Store @wrappedCodePrefix and @wrappedCodeSuffix.
   wrap: (rawCode, aether) ->
