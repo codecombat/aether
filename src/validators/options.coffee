@@ -57,3 +57,7 @@ module.exports = (options) ->
         type: 'boolean'
         default: false
         description: "Whether to clone/restore values coming in and out of user code to limit them to apiProperties."
+      simpleLoops:
+        type: 'boolean'
+        default: false
+        description: "Whether simple loops will be supported, per language.  E.g. 'loop()' will be transpiled as 'while(true)'."

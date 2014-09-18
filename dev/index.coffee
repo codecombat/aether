@@ -218,6 +218,38 @@ examples = [
     demoShowOutput(aether);
     '''
 ,
+  name: "Simple loop yields"
+  code: '''
+    loop() {
+      this.slay();
+      if (this.getKillCount() >= 5) {
+        break;
+      }
+    }
+    '''
+
+  aether: '''
+    var aetherOptions = {
+      yieldConditionally: true,
+      simpleLoops: true,
+    };
+    var aether = new Aether(aetherOptions);
+    var thisValue = {
+      killCount: 0,
+      slay: function() { this.killCount += 1;},
+      getKillCount: function() { return this.killCount; }
+    };
+    var code = grabDemoCode();
+    aether.transpile(code);
+    var method = aether.createMethod(thisValue);
+    var generator = method.apply(thisValue);
+    generator.next();
+    generator.next();
+    generator.next();
+    generator.next();
+    console.log(thisValue.killCount);
+    '''
+,
   name: "Python protected"
   code: '''
     a = [1]

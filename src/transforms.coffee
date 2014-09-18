@@ -357,6 +357,26 @@ module.exports.makeYieldConditionally = makeYieldConditionally = ->
       if (fnExpr = getUserFnExpr(userFnMap, node.right)) and possiblyGeneratorifyUserFunction fnExpr
         node.update "var __gen#{node.left.source()} = #{node.right.source()}; while (true) { var __result#{node.left.source()} = __gen#{node.left.source()}.next(); if (__result#{node.left.source()}.done) { #{node.left.source()} = __result#{node.left.source()}.value; break; } yield __result#{node.left.source()}.value;}"
 
+module.exports.makeLoopsYieldConditionally = makeLoopsYieldConditionally = (replacedLoops, wrappedCodePrefix)->
+  # replacedLoops is an array of starting range indexes for replaced loop keywords
+  # replacedLoops values are off by wrappedCodePrefix.length, because @language.wrap() is called later
+  replacedLoops ?= []
+  return (node) ->
+    return unless replacedLoops.length > 0 and node.type is S.WhileStatement
+    # TODO: is originalNode supposed to be hanging off children of WhileStatement node?
+    # TODO: https://github.com/codecombat/aether/issues/105
+    if node?.body?.originalNode?.range?[0] - wrappedCodePrefix.length in replacedLoops
+      if node.body.body?
+        bodySource = ""
+        for item in node.body.body
+          if item.source?
+            bodySource += item.source()
+          else
+            console.warn "No source() for", item
+            return
+        bodySource += " if (_aether._shouldYield) { var _yieldValue = _aether._shouldYield; _aether._shouldYield = false; yield _yieldValue; }"
+        node.update "while (#{node.test.source()}) {#{bodySource}}"
+
 module.exports.makeYieldAutomatically = makeYieldAutomatically = ->
   userFnMap = null
   return (node) ->

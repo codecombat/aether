@@ -1,7 +1,7 @@
 Aether = require '../aether'
 
-describe "ES6 Test Suite", ->
-  describe "Traceur compilation", ->
+describe "JavaScript Test Suite", ->
+  describe "Traceur compilation with ES6", ->
     aether = new Aether languageVersion: "ES6"
     it "should compile generator functions", ->
       code = """
@@ -535,3 +535,94 @@ describe "ES6 Test Suite", ->
     #  expect(gen.next().done).toEqual false
     #  expect(gen.next().done).toEqual true
     #  expect(dude.enemy).toEqual "slain!"
+
+  describe "Simple loop", ->
+    it "loop() {", ->
+      code = """
+      var total = 0
+      loop() {
+        total += 1
+        break;
+      }
+      return total
+      """
+      aether = new Aether language: "javascript", simpleLoops: true
+      aether.transpile(code)
+      expect(aether.run()).toEqual(1)
+
+    it "loop () {}", ->
+      code = """
+      var total = 0
+      loop () { total += 1; if (total >= 12) {break;}}
+      return total
+      """
+      aether = new Aether language: "javascript", simpleLoops: true
+      aether.transpile(code)
+      expect(aether.run()).toEqual(12)
+      
+    it "Conditional yielding", ->
+      aether = new Aether yieldConditionally: true, simpleLoops: true
+      dude =
+        killCount: 0
+        slay: -> @killCount += 1
+        getKillCount: -> return @killCount
+      code = """
+        while (true) {
+          this.slay();
+          break;
+        }
+        loop() {
+          this.slay();
+          if (this.getKillCount() >= 5) {
+            break;
+          }
+        }
+        while (true) {
+          this.slay();
+          break;
+        }
+    
+      """
+      aether.transpile code
+      f = aether.createFunction()
+      gen = f.apply dude
+      aether._shouldYield = true
+      expect(gen.next().done).toEqual false
+      aether._shouldYield = true
+      expect(gen.next().done).toEqual false
+      aether._shouldYield = true
+      expect(gen.next().done).toEqual false
+      expect(gen.next().done).toEqual true
+      expect(dude.killCount).toEqual 6
+    
+    it "Automatic yielding", ->
+      aether = new Aether yieldAutomatically: true, simpleLoops: true
+      dude =
+        killCount: 0
+        slay: -> @killCount += 1
+        getKillCount: -> return @killCount
+      code = """
+        while (true) {
+          this.slay();
+          break;
+        }
+        loop() {
+          this.slay();
+          if (this.getKillCount() >= 5) {
+            break;
+          }
+        }
+        while (true) {
+          this.slay();
+          break;
+        }
+
+      """
+      aether.transpile code
+      f = aether.createFunction()
+      gen = f.apply dude
+      while (true)
+        if gen.next().done then break
+      expect(dude.killCount).toEqual 6
+
+
