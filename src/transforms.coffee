@@ -357,7 +357,7 @@ module.exports.makeYieldConditionally = makeYieldConditionally = ->
       if (fnExpr = getUserFnExpr(userFnMap, node.right)) and possiblyGeneratorifyUserFunction fnExpr
         node.update "var __gen#{node.left.source()} = #{node.right.source()}; while (true) { var __result#{node.left.source()} = __gen#{node.left.source()}.next(); if (__result#{node.left.source()}.done) { #{node.left.source()} = __result#{node.left.source()}.value; break; } yield __result#{node.left.source()}.value;}"
 
-module.exports.makeLoopsYieldConditionally = makeLoopsYieldConditionally = (replacedLoops, wrappedCodePrefix)->
+module.exports.makeLoopsYieldAutomatically = makeLoopsYieldAutomatically = (replacedLoops, wrappedCodePrefix)->
   # replacedLoops is an array of starting range indexes for replaced loop keywords
   # replacedLoops values are off by wrappedCodePrefix.length, because @language.wrap() is called later
   replacedLoops ?= []
@@ -374,8 +374,9 @@ module.exports.makeLoopsYieldConditionally = makeLoopsYieldConditionally = (repl
           else
             console.warn "No source() for", item
             return
-        bodySource += " if (_aether._shouldYield) { var _yieldValue = _aether._shouldYield; _aether._shouldYield = false; yield _yieldValue; }"
+        bodySource += " yield 'waiting...';"
         node.update "while (#{node.test.source()}) {#{bodySource}}"
+        possiblyGeneratorifyAncestorFunction node
 
 module.exports.makeYieldAutomatically = makeYieldAutomatically = ->
   userFnMap = null

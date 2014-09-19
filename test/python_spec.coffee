@@ -431,9 +431,12 @@ describe "Python Test suite", ->
       gen = f.apply dude
       aether._shouldYield = true
       expect(gen.next().done).toEqual false
-      aether._shouldYield = true
       expect(gen.next().done).toEqual false
       aether._shouldYield = true
+      expect(gen.next().done).toEqual false
+      expect(gen.next().done).toEqual false
+      aether._shouldYield = true
+      expect(gen.next().done).toEqual false
       expect(gen.next().done).toEqual false
       expect(gen.next().done).toEqual true
       expect(dude.killCount).toEqual 6

@@ -28,7 +28,7 @@ module.exports = class Language
 
   # Replace 'loop' statement with equivalent of 'while(true)'
   # Return updated code, and an array of starting range indexes for replaced loop keywords
-  # E.g. in JavaScript 'loop()' is replaced with 'while(true)'
+  # E.g. in JavaScript 'loop {}' is replaced with 'while(true) {}'
   replaceLoops: (rawCode) ->
     console.warn "Simple loop not implemented for #{@name}"
     [rawCode, []]

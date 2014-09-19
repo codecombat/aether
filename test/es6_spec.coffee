@@ -588,12 +588,33 @@ describe "JavaScript Test Suite", ->
       gen = f.apply dude
       aether._shouldYield = true
       expect(gen.next().done).toEqual false
-      aether._shouldYield = true
       expect(gen.next().done).toEqual false
       aether._shouldYield = true
+      expect(gen.next().done).toEqual false
+      expect(gen.next().done).toEqual false
+      aether._shouldYield = true
+      expect(gen.next().done).toEqual false
       expect(gen.next().done).toEqual false
       expect(gen.next().done).toEqual true
       expect(dude.killCount).toEqual 6
+    
+    it "Conditional yielding infinite loop", ->
+      aether = new Aether yieldConditionally: true, simpleLoops: true
+      dude =
+        killCount: 0
+        slay: -> @killCount += 1
+        getKillCount: -> return @killCount
+      code = """
+        x = 0
+        loop {
+          x++;
+        }
+      """
+      aether.transpile code
+      f = aether.createFunction()
+      gen = f.apply dude
+      for i in [0..10]
+        expect(gen.next().done).toEqual false
     
     it "Automatic yielding", ->
       aether = new Aether yieldAutomatically: true, simpleLoops: true
