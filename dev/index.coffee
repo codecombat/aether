@@ -218,36 +218,47 @@ examples = [
     demoShowOutput(aether);
     '''
 ,
-  name: "Simple loop yields"
+  name: "Simple loop"
   code: '''
-    loop() {
-      this.slay();
-      if (this.getKillCount() >= 5) {
-        break;
-      }
-    }
-    '''
-
+    x = 0
+    loop:
+      y = 0
+      loop:
+        self.slay()
+        y += 1
+        if y >= 2:
+          break
+      x += 1
+      if x >= 3:
+        break
+  '''
   aether: '''
     var aetherOptions = {
       yieldConditionally: true,
       simpleLoops: true,
+      language: 'python',
     };
     var aether = new Aether(aetherOptions);
     var thisValue = {
       killCount: 0,
-      slay: function() { this.killCount += 1;},
+      slay: function() { 
+        this.killCount += 1;
+        aether._shouldYield = true;
+        },
       getKillCount: function() { return this.killCount; }
     };
     var code = grabDemoCode();
     aether.transpile(code);
-    var method = aether.createMethod(thisValue);
-    var generator = method.apply(thisValue);
-    generator.next();
-    generator.next();
-    generator.next();
-    generator.next();
-    console.log(thisValue.killCount);
+    var f = aether.createFunction();
+    var gen = f.apply(thisValue);
+    for (var i = 1; i <= 3; i++) {
+      for (var j = 1; j <= 2; j++) {
+        console.log(gen.next().done);
+        console.log(thisValue.killCount);
+      }
+      if (i < 3) console.log(gen.next().done);
+    }
+    console.log("Equals 6?", thisValue.killCount);
     '''
 ,
   name: "Python protected"

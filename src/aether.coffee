@@ -226,8 +226,12 @@ module.exports = class Aether
         return ''
 
     postNormalizationTransforms = []
-    postNormalizationTransforms.unshift transforms.makeLoopsYieldAutomatically(@replacedLoops, @language.wrappedCodePrefix) if @options.yieldConditionally
-    postNormalizationTransforms.unshift transforms.makeYieldConditionally() if @options.yieldConditionally
+    if @options.yieldConditionally and @options.simpleLoops
+      postNormalizationTransforms.unshift transforms.makeSimpleLoopsYieldAutomatically @replacedLoops, @language.wrappedCodePrefix
+    if @options.yieldConditionally
+      postNormalizationTransforms.unshift transforms.makeYieldConditionally @options.simpleLoops
+    if @options.yieldConditionally and @options.simpleLoops
+      postNormalizationTransforms.unshift transforms.makeIndexSimpleLoops()
     postNormalizationTransforms.unshift transforms.makeYieldAutomatically() if @options.yieldAutomatically
     if @options.includeFlow
       postNormalizationTransforms.unshift transforms.makeInstrumentStatements varNames

@@ -1,6 +1,6 @@
 Aether = require '../aether'
 
-describe "Python Test suite", ->
+describe "Python test suite", ->
   describe "Basics", ->
     aether = new Aether language: "python"
     it "return 1000", ->
@@ -412,7 +412,9 @@ describe "Python Test suite", ->
       aether = new Aether language: "python", yieldConditionally: true, simpleLoops: true
       dude =
         killCount: 0
-        slay: -> @killCount += 1
+        slay: -> 
+          @killCount += 1
+          aether._shouldYield = true
         getKillCount: -> return @killCount
       code = """
         while True:
@@ -429,15 +431,161 @@ describe "Python Test suite", ->
       aether.transpile code
       f = aether.createFunction()
       gen = f.apply dude
-      aether._shouldYield = true
-      expect(gen.next().done).toEqual false
-      expect(gen.next().done).toEqual false
-      aether._shouldYield = true
-      expect(gen.next().done).toEqual false
-      expect(gen.next().done).toEqual false
-      aether._shouldYield = true
-      expect(gen.next().done).toEqual false
-      expect(gen.next().done).toEqual false
+      
+      for i in [1..6]
+        expect(gen.next().done).toEqual false
+        expect(dude.killCount).toEqual i
       expect(gen.next().done).toEqual true
       expect(dude.killCount).toEqual 6
 
+    it "Conditional yielding mixed loops", ->
+      aether = new Aether language: "python", yieldConditionally: true, simpleLoops: true
+      dude =
+        killCount: 0
+        slay: -> 
+          @killCount += 1
+          aether._shouldYield = true
+        getKillCount: -> return @killCount
+      code = """
+        loop:
+          self.slay()
+          if self.getKillCount() >= 5:
+            break
+        x = 0
+        loop:
+          x += 1
+          if x > 10:
+            break
+        loop:
+          self.slay()
+          if self.getKillCount() >= 15:
+            break
+        while True:
+          self.slay()
+          break
+      """
+      aether.transpile code
+      f = aether.createFunction()
+      gen = f.apply dude
+      for i in [1..5]
+        expect(gen.next().done).toEqual false
+        expect(dude.killCount).toEqual i
+      for i in [1..10]
+        expect(gen.next().done).toEqual false
+        expect(dude.killCount).toEqual 5
+      for i in [6..15]
+        expect(gen.next().done).toEqual false
+        expect(dude.killCount).toEqual i
+      expect(gen.next().done).toEqual false
+      expect(dude.killCount).toEqual 16
+      expect(gen.next().done).toEqual true
+      expect(dude.killCount).toEqual 16
+
+    it "Conditional yielding nested loops", ->
+      aether = new Aether language: "python", yieldConditionally: true, simpleLoops: true
+      dude =
+        killCount: 0
+        slay: -> 
+          @killCount += 1
+          aether._shouldYield = true
+        getKillCount: -> return @killCount
+      code = """
+        # outer auto yield, inner yield
+        x = 0
+        loop:
+          y = 0
+          loop:
+            self.slay()
+            y += 1
+            if y >= 2:
+              break
+          x += 1
+          if x >= 3:
+            break
+        
+        # outer yield, inner auto yield
+        x = 0
+        loop:
+          self.slay()
+          y = 0
+          loop:
+            y += 1
+            if y >= 4:
+              break
+          x += 1
+          if x >= 5:
+            break
+        
+        # outer and inner auto yield
+        x = 0
+        loop:
+          y = 0
+          loop:
+            y += 1
+            if y >= 6:
+              break
+          x += 1
+          if x >= 7:
+            break
+        
+        # outer and inner yields
+        x = 0
+        loop:
+          self.slay()
+          y = 0
+          loop:
+            self.slay()
+            y += 1
+            if y >= 9:
+              break
+          x += 1
+          if x >= 8:
+            break
+      """
+      aether.transpile code
+      f = aether.createFunction()
+      gen = f.apply dude
+      
+      # NOTE: auto yield loops break before invisible automatic yield
+      
+      # outer auto yield, inner yield
+      for i in [1..3]
+        for j in [1..2]
+          expect(gen.next().done).toEqual false
+          expect(dude.killCount).toEqual (i - 1) * 2 + j
+        expect(gen.next().done).toEqual false if i < 3
+      expect(dude.killCount).toEqual 6
+
+      # outer yield, inner auto yield
+      killOffset = dude.killCount
+      for i in [1..5]
+        for j in [1..3]
+          expect(gen.next().done).toEqual false
+        expect(gen.next().done).toEqual false
+        expect(dude.killCount).toEqual i + killOffset
+      expect(dude.killCount).toEqual 6 + 5
+
+      # outer and inner auto yield 
+      killOffset = dude.killCount
+      for i in [1..7]
+        for j in [1..5]
+          expect(gen.next().done).toEqual false
+          expect(dude.killCount).toEqual killOffset
+        expect(gen.next().done).toEqual false if i < 7
+      expect(dude.killCount).toEqual 6 + 5 + 0
+
+      # outer and inner yields
+      killOffset = dude.killCount
+      for i in [1..8]
+        expect(gen.next().done).toEqual false
+        for j in [1..9]
+          expect(gen.next().done).toEqual false
+          expect(dude.killCount).toEqual (i - 1) * 9 + i + j + killOffset
+      expect(dude.killCount).toEqual 6 + 5 + 0 + 80
+
+      expect(gen.next().done).toEqual true
+      expect(dude.killCount).toEqual 91
+
+    # TODO: simple loop in a function
+    # TODO: blocked by https://github.com/codecombat/aether/issues/48
+    

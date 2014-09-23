@@ -564,7 +564,9 @@ describe "JavaScript Test Suite", ->
       aether = new Aether yieldConditionally: true, simpleLoops: true
       dude =
         killCount: 0
-        slay: -> @killCount += 1
+        slay: -> 
+          @killCount += 1
+          aether._shouldYield = true
         getKillCount: -> return @killCount
       code = """
         while (true) {
@@ -581,29 +583,18 @@ describe "JavaScript Test Suite", ->
           this.slay();
           break;
         }
-    
       """
       aether.transpile code
       f = aether.createFunction()
       gen = f.apply dude
-      aether._shouldYield = true
-      expect(gen.next().done).toEqual false
-      expect(gen.next().done).toEqual false
-      aether._shouldYield = true
-      expect(gen.next().done).toEqual false
-      expect(gen.next().done).toEqual false
-      aether._shouldYield = true
-      expect(gen.next().done).toEqual false
-      expect(gen.next().done).toEqual false
+      for i in [1..6]
+        expect(gen.next().done).toEqual false
+        expect(dude.killCount).toEqual i
       expect(gen.next().done).toEqual true
       expect(dude.killCount).toEqual 6
     
     it "Conditional yielding infinite loop", ->
       aether = new Aether yieldConditionally: true, simpleLoops: true
-      dude =
-        killCount: 0
-        slay: -> @killCount += 1
-        getKillCount: -> return @killCount
       code = """
         x = 0
         loop {
@@ -612,9 +603,168 @@ describe "JavaScript Test Suite", ->
       """
       aether.transpile code
       f = aether.createFunction()
-      gen = f.apply dude
-      for i in [0..10]
+      gen = f()
+      for i in [0..100]
         expect(gen.next().done).toEqual false
+    
+    it "Conditional yielding mixed loops", ->
+      aether = new Aether yieldConditionally: true, simpleLoops: true
+      dude =
+        killCount: 0
+        slay: -> 
+          @killCount += 1
+          aether._shouldYield = true
+        getKillCount: -> return @killCount
+      code = """
+        loop {
+          this.slay();
+          if (this.getKillCount() >= 5) {
+            break;
+          }
+        }
+        function f() {
+          var x = 0;
+          loop {
+            x++;
+            if (x > 10) break;
+          }
+          loop {
+            this.slay();
+            if (this.getKillCount() >= 15) {
+              break;
+            }
+          }
+        }
+        f.call(this);
+        while (true) {
+          this.slay();
+          break;
+        }
+      """
+      aether.transpile code
+      f = aether.createFunction()
+      gen = f.apply dude
+      for i in [1..5]
+        expect(gen.next().done).toEqual false
+        expect(dude.killCount).toEqual i
+      for i in [1..10]
+        expect(gen.next().done).toEqual false
+        expect(dude.killCount).toEqual 5
+      for i in [6..15]
+        expect(gen.next().done).toEqual false
+        expect(dude.killCount).toEqual i
+      expect(gen.next().done).toEqual false
+      expect(dude.killCount).toEqual 16
+      expect(gen.next().done).toEqual true
+      expect(dude.killCount).toEqual 16
+    
+    it "Conditional yielding nested loops", ->
+      aether = new Aether yieldConditionally: true, simpleLoops: true
+      dude =
+        killCount: 0
+        slay: -> 
+          @killCount += 1
+          aether._shouldYield = true
+        getKillCount: -> return @killCount
+      code = """
+        function f() {
+          // outer auto yield, inner yield
+          var x = 0;
+          loop {
+            var y = 0;
+            loop {
+              this.slay();
+              y++;
+              if (y >= 2) break;
+            }
+            x++;
+            if (x >= 3) break;
+          }
+        }
+        f.call(this);
+        
+        // outer yield, inner auto yield
+        var x = 0;
+        loop {
+          this.slay();
+          var y = 0;
+          loop {
+            y++;
+            if (y >= 4) break;
+          }
+          x++;
+          if (x >= 5) break;
+        }
+        
+        // outer and inner auto yield
+        x = 0;
+        loop {
+          y = 0;
+          loop {
+            y++;
+            if (y >= 6) break;
+          }
+          x++;
+          if (x >= 7) break;
+        }
+        
+        // outer and inner yields
+        x = 0;
+        loop {
+          this.slay();
+          y = 0;
+          loop {
+            this.slay();
+            y++;
+            if (y >= 9) break;
+          }
+          x++;
+          if (x >= 8) break;
+        }
+      """
+      aether.transpile code
+      f = aether.createFunction()
+      gen = f.apply dude
+      
+      # NOTE: keep in mind no-yield loops break before invisible automatic yield
+      
+      # outer auto yield, inner yield
+      for i in [1..3]
+        for j in [1..2]
+          expect(gen.next().done).toEqual false
+          expect(dude.killCount).toEqual (i - 1) * 2 + j
+        expect(gen.next().done).toEqual false if i < 3
+      expect(dude.killCount).toEqual 6
+
+      # outer yield, inner auto yield
+      killOffset = dude.killCount
+      for i in [1..5]
+        for j in [1..3]
+          expect(gen.next().done).toEqual false
+        expect(gen.next().done).toEqual false
+        expect(dude.killCount).toEqual i + killOffset
+      expect(dude.killCount).toEqual 6 + 5
+
+      # outer and inner auto yield 
+      killOffset = dude.killCount
+      for i in [1..7]
+        for j in [1..5]
+          expect(gen.next().done).toEqual false
+          expect(dude.killCount).toEqual killOffset
+        expect(gen.next().done).toEqual false if i < 7
+      expect(dude.killCount).toEqual 6 + 5 + 0
+
+      # outer and inner yields
+      killOffset = dude.killCount
+      for i in [1..8]
+        expect(gen.next().done).toEqual false
+        for j in [1..9]
+          expect(gen.next().done).toEqual false
+          expect(dude.killCount).toEqual (i - 1) * 9 + i + j + killOffset
+      expect(dude.killCount).toEqual 6 + 5 + 0 + 80
+
+      expect(gen.next().done).toEqual true
+      expect(dude.killCount).toEqual 91
     
     it "Automatic yielding", ->
       aether = new Aether yieldAutomatically: true, simpleLoops: true

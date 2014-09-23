@@ -31,7 +31,6 @@ module.exports = class Python extends Language
     replacedLoops = []
     rangeIndex = 0
     for line in rawCode.split '\n'
-      lineLength = line.length
       if line.replace(/^\s+/g, "").indexOf('loop') is 0
         start = line.indexOf 'loop'
         end = start + 4
@@ -42,7 +41,7 @@ module.exports = class Python extends Language
           line = a.join("")
           replacedLoops.push rangeIndex + start
       convertedCode += line + '\n'
-      rangeIndex += lineLength + 1 + 4 # + newline + wrapped indent
+      rangeIndex += line.length + 1 + 4 # + newline + wrapped indent
     [convertedCode, replacedLoops]
 
   # Wrap the user code in a function. Store @wrappedCodePrefix and @wrappedCodeSuffix.
