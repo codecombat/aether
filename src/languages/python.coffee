@@ -24,13 +24,15 @@ module.exports = class Python extends Language
       return not _.isEqual(aAST, bAST)
     catch error
       return true
-  
+
   # Replace 'loop:' with 'while True:'
   replaceLoops: (rawCode, aether) ->
+    return [rawCode, []] if rawCode.indexOf('loop:') is -1
     convertedCode = ""
     replacedLoops = []
     rangeIndex = 0
-    for line in rawCode.split '\n'
+    lines = rawCode.split '\n'
+    for line, lineNumber in lines
       if line.replace(/^\s+/g, "").indexOf('loop') is 0
         start = line.indexOf 'loop'
         end = start + 4
@@ -40,7 +42,7 @@ module.exports = class Python extends Language
           a[start..end] = 'while True:'.split ""
           line = a.join("")
           replacedLoops.push rangeIndex + start
-      convertedCode += line + '\n'
+      convertedCode += line + '\n' unless lineNumber is lines.length - 1
       rangeIndex += line.length + 1 + 4 # + newline + wrapped indent
     [convertedCode, replacedLoops]
 

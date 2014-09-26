@@ -49,17 +49,19 @@ module.exports = class JavaScript extends Language
   # Replace instances of 'loop {}' with 'while (true) {}'
   # Assuming 'loop' is on a single line, only preceded by whitespace
   replaceLoops: (rawCode) ->
+    return [rawCode, []] if rawCode.indexOf('loop') is -1
     convertedCode = ""
     replacedLoops = []
     rangeIndex = 0
-    for line in rawCode.split '\n'
+    lines = rawCode.split '\n'
+    for line, lineNumber in lines
       if line.replace(/^\s+/g, "").indexOf('loop') is 0
         start = line.indexOf 'loop'
         a = line.split("")
         a[start..start + 3] = 'while (true)'.split ""
         line = a.join("")
         replacedLoops.push rangeIndex + start
-      convertedCode += line + '\n'
+      convertedCode += line + '\n' unless lineNumber is lines.length - 1
       rangeIndex += line.length + 1 # + newline
     [convertedCode, replacedLoops]
 
