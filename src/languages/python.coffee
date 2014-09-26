@@ -42,7 +42,8 @@ module.exports = class Python extends Language
           a[start..end] = 'while True:'.split ""
           line = a.join("")
           replacedLoops.push rangeIndex + start
-      convertedCode += line + '\n' unless lineNumber is lines.length - 1
+      convertedCode += line
+      convertedCode += '\n' unless lineNumber is lines.length - 1
       rangeIndex += line.length + 1 + 4 # + newline + wrapped indent
     [convertedCode, replacedLoops]
 

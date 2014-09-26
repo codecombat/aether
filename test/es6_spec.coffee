@@ -593,20 +593,19 @@ describe "JavaScript Test Suite", ->
       expect(gen.next().done).toEqual true
       expect(dude.killCount).toEqual 6
 
-# Huh, somehow this is being actually infinite for me.
-#    it "Conditional yielding infinite loop", ->
-#      aether = new Aether yieldConditionally: true, simpleLoops: true
-#      code = """
-#        x = 0
-#        loop {
-#          x++;
-#        }
-#      """
-#      aether.transpile code
-#      f = aether.createFunction()
-#      gen = f()
-#      for i in [0..100]
-#        expect(gen.next().done).toEqual false
+    it "Conditional yielding infinite loop", ->
+      aether = new Aether yieldConditionally: true, simpleLoops: true
+      code = """
+        x = 0
+        loop {
+          x++;
+        }
+      """
+      aether.transpile code
+      f = aether.createFunction()
+      gen = f()
+      for i in [0..100]
+        expect(gen.next().done).toEqual false
 
     it "Conditional yielding mixed loops", ->
       aether = new Aether yieldConditionally: true, simpleLoops: true

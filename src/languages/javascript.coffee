@@ -61,7 +61,8 @@ module.exports = class JavaScript extends Language
         a[start..start + 3] = 'while (true)'.split ""
         line = a.join("")
         replacedLoops.push rangeIndex + start
-      convertedCode += line + '\n' unless lineNumber is lines.length - 1
+      convertedCode += line
+      convertedCode += '\n' unless lineNumber is lines.length - 1
       rangeIndex += line.length + 1 # + newline
     [convertedCode, replacedLoops]
 
