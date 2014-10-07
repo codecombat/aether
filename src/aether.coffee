@@ -94,10 +94,7 @@ module.exports = class Aether
     return true if careAboutLineNumbers and @language.hasChangedLineNumbers a, b
     return true if careAboutLint and @hasChangedLintProblems a, b
     # If the simple tests fail, we compare abstract syntax trees for equality.
-    result = @language.hasChangedASTs a, b
-    if result
-      console.log 'Aether hasChangedSignificantly', result
-    result
+    @language.hasChangedASTs a, b
 
   # Determine whether two strings of code produce different lint problems.
   hasChangedLintProblems: (a, b) ->
