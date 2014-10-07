@@ -94,7 +94,10 @@ module.exports = class Aether
     return true if careAboutLineNumbers and @language.hasChangedLineNumbers a, b
     return true if careAboutLint and @hasChangedLintProblems a, b
     # If the simple tests fail, we compare abstract syntax trees for equality.
-    @language.hasChangedASTs a, b
+    result = @language.hasChangedASTs a, b
+    if result
+      console.log 'Aether hasChangedSignificantly', result
+    result
 
   # Determine whether two strings of code produce different lint problems.
   hasChangedLintProblems: (a, b) ->
@@ -109,9 +112,12 @@ module.exports = class Aether
   # Transpile it. Even if it can't transpile, it will give syntax errors and warnings and such. Clears any old state.
   transpile: (@raw) ->
     @reset()
-    [@raw, @replacedLoops] = @language.replaceLoops @raw if @options.simpleLoops
-    @problems = @lint @raw
-    @pure = @purifyCode @raw
+    rawCode = @raw
+    if @options.simpleLoops
+      rawCode = _.cloneDeep @raw
+      [rawCode, @replacedLoops] = @language.replaceLoops rawCode
+    @problems = @lint rawCode
+    @pure = @purifyCode rawCode
     @pure
 
   # Perform some fast static analysis (without transpiling) and find any lint problems.
