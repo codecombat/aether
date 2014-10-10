@@ -276,6 +276,10 @@
       code: 'function fib(n) {\n  return n < 2 ? n : fib(n - 1) + fib(n - 2);\n}\nvar chupacabra = fib(Math.ceil(Math.random() * 5))\nthis.say("I want", chupacabra, "gold.");\nreturn chupacabra;',
       aether: 'var thisValue = {say: console.log};\nvar aetherOptions = {\n  executionLimit: 1000,\n  problems: {jshint_W040: {level: "ignore"}}\n};\nvar aether = new Aether(aetherOptions);\nvar code = grabDemoCode();\naether.transpile(code);\nvar method = aether.createMethod(thisValue);\naether.run(method);\naether.run(method);\naether.run(method);\ndemoShowOutput(aether);'
     }, {
+      name: "Basic Python",
+      code: 'self.sayItLoud(\'Hi\')',
+      aether: 'var thisValue = {\n    sayItLoud: function (s) { console.log(s + \'!\');}\n};\nvar aetherOptions = {\n  executionLimit: 1000,\n  problems: {jshint_W040: {level: "ignore"}},\n  language: \'python\'\n};\nvar aether = new Aether(aetherOptions);\nvar code = grabDemoCode();\naether.transpile(code);\nvar method = aether.createMethod(thisValue);\naether.run(method);\ndemoShowOutput(aether);'
+    }, {
       name: "Simple loop",
       code: 'x = 0\nloop:\n  y = 0\n  loop:\n    self.slay()\n    y += 1\n    if y >= 2:\n      break\n  x += 1\n  if x >= 3:\n    break',
       aether: 'var aetherOptions = {\n  yieldConditionally: true,\n  simpleLoops: true,\n  language: \'python\',\n};\nvar aether = new Aether(aetherOptions);\nvar thisValue = {\n  killCount: 0,\n  slay: function() { \n    this.killCount += 1;\n    aether._shouldYield = true;\n    },\n  getKillCount: function() { return this.killCount; }\n};\nvar code = grabDemoCode();\naether.transpile(code);\nvar f = aether.createFunction();\nvar gen = f.apply(thisValue);\nfor (var i = 1; i <= 3; i++) {\n  for (var j = 1; j <= 2; j++) {\n    console.log(gen.next().done);\n    console.log(thisValue.killCount);\n  }\n  if (i < 3) console.log(gen.next().done);\n}\nconsole.log("Equals 6?", thisValue.killCount);'

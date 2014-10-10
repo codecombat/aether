@@ -1,6 +1,6 @@
 {
   "name": "aether",
-  "version": "0.2.37",
+  "version": "0.2.38",
   "description": "Analyzes, instruments, and transpiles JS to help beginners.",
   "keywords": [
     "lint",
