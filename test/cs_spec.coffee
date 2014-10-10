@@ -155,3 +155,24 @@ describe "CS test Suite!", ->
       aether.transpile('"hi"')
       expect(aether.run()).toEqual 'hi'
       expect(aether.problems.errors).toEqual []
+
+    xit "@getItems missing parentheses", ->
+      history = []
+      getItems = -> [{'pos':1}, {'pos':4}, {'pos':3}, {'pos':5}]
+      move = (i) -> history.push i
+      thisValue = {getItems: getItems, move: move}
+      # aetherOptions = {
+      #   language: 'coffeescript'
+      # }
+      # aether = new Aether aetherOptions
+      code = """
+        @getItems
+      """
+      aether.transpile code
+      method = aether.createMethod thisValue
+      aether.run method
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(aether.problems.errors[0].message).toEqual('@getItems has no effect.')
+      expect(aether.problems.errors[0].hint).toEqual('Is it a method? Those need parentheses: @getItems()')
+      expect(aether.problems.errors[0].range).toEqual([ { ofs : 6, row : 1, col : 0 }, { ofs : 19, row : 1, col : 13 } ])
+

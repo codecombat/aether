@@ -269,7 +269,7 @@ module.exports.makeGatherNodeRanges = makeGatherNodeRanges = (nodeRanges, code, 
   nodeRanges.push node
 
 # Making
-module.exports.makeCheckThisKeywords = makeCheckThisKeywords = (globals, varNames) ->
+module.exports.makeCheckThisKeywords = makeCheckThisKeywords = (globals, varNames, language) ->
   return (node) ->
     if node.type is S.VariableDeclarator
       varNames[node.id.name] = true
@@ -293,31 +293,36 @@ module.exports.makeCheckThisKeywords = makeCheckThisKeywords = (globals, varName
           return if varNames[v] is true
         return if /\$$/.test v  # accum$ in CoffeeScript Redux isn't handled properly
         # TODO: we need to know whether `this` has this method before saying this...
-        message = "Missing `this.` keyword; should be `this.#{v}`."
-        hint = "There is no function `#{v}`, but `this` has a method `#{v}`."
-        range = if node.originalRange then [node.originalRange.start, node.originalRange.end] else null
+        # TODO: '@' in CoffeeScript isn't really a keyword
+        message = "Missing `#{language.thisValue}` keyword; should be `#{language.thisValueAccess}#{v}`."
+        hint = "There is no function `#{v}`, but `#{language.thisValue}` has a method `#{v}`."
+        if node.originalRange
+          range = language.removeWrappedIndent [node.originalRange.start, node.originalRange.end]
         problem = @createUserCodeProblem type: 'transpile', reporter: 'aether', kind: 'MissingThis', message: message, hint: hint, range: range  # TODO: code/codePrefix?
         @addProblem problem
 
-module.exports.checkIncompleteMembers = checkIncompleteMembers = (node) ->
-  #console.log 'check incomplete members', node, node.source() if node.source().search('this.') isnt -1
-  if node.type is 'ExpressionStatement'
-    exp = node.expression
-    if exp.type is 'MemberExpression'
-      # Handle missing parentheses, like in:  this.moveUp;
-      if exp.property.name is "IncompleteThisReference"
-        kind = 'IncompleteThis'
-        m = "this.what? (Check available spells below.)"
-        hint = ''
-      else
-        kind = 'NoEffect'
-        m = "#{exp.source()} has no effect."
-        if exp.property.name in commonMethods
-          m += " It needs parentheses: #{exp.source()}()"
+module.exports.makeCheckIncompleteMembers = makeCheckIncompleteMembers = (language) ->
+  return (node) ->
+    # console.log 'check incomplete members', node, node.source() if node.source().search('this.') isnt -1
+    if node.type is 'ExpressionStatement'
+      exp = node.expression
+      if exp.type is 'MemberExpression'
+        # Handle missing parentheses, like in:  this.moveUp;
+        if exp.property.name is "IncompleteThisReference"
+          kind = 'IncompleteThis'
+          m = "this.what? (Check available spells below.)"
+          hint = ''
         else
-          hint = "Is it a method? Those need parentheses: #{exp.source()}()"
-      problem = @createUserCodeProblem type: 'transpile', reporter: 'aether', message: m, kind: kind, hint: hint, range: if node.originalRange then [node.originalRange.start, node.originalRange.end] else null  # TODO: code/codePrefix?
-      @addProblem problem
+          kind = 'NoEffect'
+          m = "#{exp.source()} has no effect."
+          if exp.property.name in commonMethods
+            m += " It needs parentheses: #{exp.source()}()"
+          else
+            hint = "Is it a method? Those need parentheses: #{exp.source()}()"
+        if node.originalRange
+          range = language.removeWrappedIndent [node.originalRange.start, node.originalRange.end]
+        problem = @createUserCodeProblem type: 'transpile', reporter: 'aether', message: m, kind: kind, hint: hint, range: range  # TODO: code/codePrefix?
+        @addProblem problem
 
 ########## After JS_WALA Normalization ##########
 

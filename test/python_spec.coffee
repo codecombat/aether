@@ -277,7 +277,7 @@ describe "Python test suite", ->
       method = aether.createMethod thisValue
       expect(aether.run(method)).toEqual(true)
 
-    it "self.getItems", ->
+    it "self.getItems()", ->
       history = []
       getItems = -> [{'pos':1}, {'pos':4}, {'pos':3}, {'pos':5}]
       move = (i) -> history.push i
@@ -296,10 +296,50 @@ describe "Python test suite", ->
       aether.run method
       expect(history).toEqual([1, 4, 3, 5])
 
+    it "self.getItems missing parentheses", ->
+      history = []
+      getItems = -> [{'pos':1}, {'pos':4}, {'pos':3}, {'pos':5}]
+      move = (i) -> history.push i
+      thisValue = {getItems: getItems, move: move}
+      aetherOptions = {
+        language: 'python'
+      }
+      aether = new Aether aetherOptions
+      code = """
+      self.getItems
+      """
+      aether.transpile code
+      method = aether.createMethod thisValue
+      aether.run method
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(aether.problems.errors[0].message).toEqual('self.getItems has no effect.')
+      expect(aether.problems.errors[0].hint).toEqual('Is it a method? Those need parentheses: self.getItems()')
+      expect(aether.problems.errors[0].range).toEqual([ { ofs : 0, row : 0, col : 0 }, { ofs : 13, row : 0, col : 13 } ])
+
+    it "self.getItems missing parentheses row 1", ->
+      history = []
+      getItems = -> [{'pos':1}, {'pos':4}, {'pos':3}, {'pos':5}]
+      move = (i) -> history.push i
+      thisValue = {getItems: getItems, move: move}
+      aetherOptions = {
+        language: 'python'
+      }
+      aether = new Aether aetherOptions
+      code = """
+      x = 5
+      self.getItems
+      """
+      aether.transpile code
+      method = aether.createMethod thisValue
+      aether.run method
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(aether.problems.errors[0].message).toEqual('self.getItems has no effect.')
+      expect(aether.problems.errors[0].hint).toEqual('Is it a method? Those need parentheses: self.getItems()')
+      expect(aether.problems.errors[0].range).toEqual([ { ofs : 6, row : 1, col : 0 }, { ofs : 19, row : 1, col : 13 } ])
+
   describe "parseDammit! & Ranges", ->
     aether = new Aether language: "python"
-    xit "missing )", ->
-      # See: https://github.com/codecombat/aether/issues/99
+    it "missing )", ->
       code = """
       def fn():
         return 45
@@ -309,13 +349,11 @@ describe "Python test suite", ->
       aether.transpile(code)
       expect(aether.problems.errors.length).toEqual(1)
       expect(/Unexpected token/.test(aether.problems.errors[0].message)).toBe(true)
-      #expect(aether.problems.errors[0].range).toEqual([ { ofs : 38, row : 2, col : 7 }, { ofs : 39, row : 2, col : 8 } ])  # Hmm, that's not what I would expect?
-      expect(aether.problems.errors[0].range).toEqual([ { ofs : 29, row : 2, col : 7 }, { ofs : 30, row : 2, col : 8 } ])  # I fixed a bug with function parameter wrapping, and now both the previous ofs and this fail.
+      expect(aether.problems.errors[0].range).toEqual([ { ofs : 29, row : 2, col : 7 }, { ofs : 30, row : 2, col : 8 } ])
       result = aether.run()
       expect(result).toEqual(45)
 
-    xit "bad indent", ->
-      # See: https://github.com/codecombat/aether/issues/99
+    it "bad indent", ->
       code = """
       def fn():
         x = 45
@@ -327,15 +365,14 @@ describe "Python test suite", ->
       result = aether.run()
       expect(aether.problems.errors.length).toEqual(1)
       expect(/Unexpected indent/.test(aether.problems.errors[0].message)).toBe(true)
-      #expect(aether.problems.errors[0].range).toEqual([ { ofs : 33, row : 2, col : 2 }, { ofs : 35, row : 2, col : 4 } ])
-      expect(aether.problems.errors[0].range).toEqual([ { ofs : 20, row : 2, col : 2 }, { ofs : 22, row : 2, col : 4 } ])  # Might not be exact. I fixed a bug with function parameter wrapping, and now both the previous ofs and this fail.
+      expect(aether.problems.errors[0].range).toEqual([ { ofs : 21, row : 2, col : 2 }, { ofs : 23, row : 2, col : 4 } ])
       expect(result).toEqual(50)
 
     it "x() row 0", ->
       code = """x()"""
       aether.transpile(code)
       expect(aether.problems.errors.length).toEqual(1)
-      expect(aether.problems.errors[0].message).toEqual("Missing `this.` keyword; should be `this.x`.")
+      expect(aether.problems.errors[0].message).toEqual("Missing `self` keyword; should be `self.x`.")
       expect(aether.problems.errors[0].range).toEqual([ { ofs: 0, row: 0, col: 0 }, { ofs: 3, row: 0, col: 3 } ])
 
     it "x() row 1", ->
@@ -345,8 +382,8 @@ describe "Python test suite", ->
       """
       aether.transpile(code)
       expect(aether.problems.errors.length).toEqual(1)
-      expect(aether.problems.errors[0].message).toEqual("Missing `this.` keyword; should be `this.x`.")
-      expect(aether.problems.errors[0].range).toEqual([ { ofs: 10, row: 1, col: 0 }, { ofs: 13, row: 1, col: 3 } ])
+      expect(aether.problems.errors[0].message).toEqual("Missing `self` keyword; should be `self.x`.")
+      expect(aether.problems.errors[0].range).toEqual([ { ofs: 6, row: 1, col: 0 }, { ofs: 9, row: 1, col: 3 } ])
 
     it "x() row 3", ->
       code = """
@@ -357,8 +394,8 @@ describe "Python test suite", ->
       """
       aether.transpile(code)
       expect(aether.problems.errors.length).toEqual(1)
-      expect(aether.problems.errors[0].message).toEqual("Missing `this.` keyword; should be `this.x`.")
-      expect(aether.problems.errors[0].range).toEqual([ { ofs: 54, row: 3, col: 2 }, { ofs: 57, row: 3, col: 5 } ])
+      expect(aether.problems.errors[0].message).toEqual("Missing `self` keyword; should be `self.x`.")
+      expect(aether.problems.errors[0].range).toEqual([ { ofs: 42, row: 3, col: 2 }, { ofs: 45, row: 3, col: 5 } ])
 
     it "incomplete string", ->
       code = """
@@ -396,7 +433,8 @@ describe "Python test suite", ->
       aether.transpile(code)
       expect(aether.run()).toEqual(12)
 
-    it "loop  :", ->
+    xit "loop  :", ->
+      # Blocked by https://github.com/codecombat/aether/issues/108
       code = """
       total = 0
       loop  :
@@ -407,7 +445,7 @@ describe "Python test suite", ->
       aether = new Aether language: "python", simpleLoops: true
       aether.transpile(code)
       expect(aether.run()).toEqual(23)
-      
+
     it "Conditional yielding", ->
       aether = new Aether language: "python", yieldConditionally: true, simpleLoops: true
       dude =
@@ -437,6 +475,28 @@ describe "Python test suite", ->
         expect(dude.killCount).toEqual i
       expect(gen.next().done).toEqual true
       expect(dude.killCount).toEqual 6
+
+    it "Conditional yielding empty loop", ->
+      aether = new Aether language: "python", yieldConditionally: true, simpleLoops: true
+      dude =
+        killCount: 0
+        slay: -> 
+          @killCount += 1
+          aether._shouldYield = true
+        getKillCount: -> return @killCount
+      code = """
+        x = 0
+        loop:
+          x += 1
+          if x >= 3:
+            break
+      """
+      aether.transpile code
+      f = aether.createFunction()
+      gen = f.apply dude
+      expect(gen.next().done).toEqual false
+      expect(gen.next().done).toEqual false
+      expect(gen.next().done).toEqual true
 
     it "Conditional yielding mixed loops", ->
       aether = new Aether language: "python", yieldConditionally: true, simpleLoops: true
@@ -502,7 +562,7 @@ describe "Python test suite", ->
           x += 1
           if x >= 3:
             break
-        
+
         # outer yield, inner auto yield
         x = 0
         loop:
@@ -515,7 +575,7 @@ describe "Python test suite", ->
           x += 1
           if x >= 5:
             break
-        
+
         # outer and inner auto yield
         x = 0
         loop:
@@ -527,7 +587,7 @@ describe "Python test suite", ->
           x += 1
           if x >= 7:
             break
-        
+
         # outer and inner yields
         x = 0
         loop:
@@ -545,9 +605,9 @@ describe "Python test suite", ->
       aether.transpile code
       f = aether.createFunction()
       gen = f.apply dude
-      
+
       # NOTE: auto yield loops break before invisible automatic yield
-      
+
       # outer auto yield, inner yield
       for i in [1..3]
         for j in [1..2]
@@ -588,4 +648,3 @@ describe "Python test suite", ->
 
     # TODO: simple loop in a function
     # TODO: blocked by https://github.com/codecombat/aether/issues/48
-    

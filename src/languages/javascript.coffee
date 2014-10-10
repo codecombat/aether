@@ -12,6 +12,8 @@ module.exports = class JavaScript extends Language
   name: 'JavaScript'
   id: 'javascript'
   parserID: 'esprima'
+  thisValue: 'this'
+  thisValueAccess: 'this.'
 
   # Return true if we can very quickly identify a syntax error.
   obviouslyCannotTranspile: (rawCode) ->

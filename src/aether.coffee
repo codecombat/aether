@@ -177,8 +177,8 @@ module.exports = class Aether
     varNames[parameter] = true for parameter in @options.functionParameters
     preNormalizationTransforms = [
       transforms.makeGatherNodeRanges originalNodeRanges, wrappedCode, @language.wrappedCodePrefix
-      transforms.makeCheckThisKeywords @allGlobals, varNames
-      transforms.checkIncompleteMembers
+      transforms.makeCheckThisKeywords @allGlobals, varNames, @language
+      transforms.makeCheckIncompleteMembers @language
     ]
 
     try

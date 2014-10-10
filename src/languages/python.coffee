@@ -12,6 +12,8 @@ module.exports = class Python extends Language
   parserID: 'filbert'
   runtimeGlobals:
     __pythonRuntime: parser.pythonRuntime
+  thisValue: 'self'
+  thisValueAccess: 'self.'
 
   hasChangedASTs: (a, b) ->
     try
@@ -27,12 +29,14 @@ module.exports = class Python extends Language
 
   # Replace 'loop:' with 'while True:'
   replaceLoops: (rawCode, aether) ->
+    # rawCode is pre-wrap
     return [rawCode, []] if rawCode.indexOf('loop:') is -1
     convertedCode = ""
     replacedLoops = []
     rangeIndex = 0
     lines = rawCode.split '\n'
     for line, lineNumber in lines
+      rangeIndex += 4 # + 4 for future wrapped indent
       if line.replace(/^\s+/g, "").indexOf('loop') is 0
         start = line.indexOf 'loop'
         end = start + 4
@@ -44,7 +48,7 @@ module.exports = class Python extends Language
           replacedLoops.push rangeIndex + start
       convertedCode += line
       convertedCode += '\n' unless lineNumber is lines.length - 1
-      rangeIndex += line.length + 1 + 4 # + newline + wrapped indent
+      rangeIndex += line.length + 1 # + 1 for newline
     [convertedCode, replacedLoops]
 
   # Wrap the user code in a function. Store @wrappedCodePrefix and @wrappedCodeSuffix.
@@ -59,17 +63,24 @@ module.exports = class Python extends Language
 
     @wrappedCodePrefix + indentedCode + @wrappedCodeSuffix
 
+  removeWrappedIndent: (range) ->
+    # Assumes range not in @wrappedCodePrefix
+    range = _.cloneDeep range
+    range[0].ofs -= 4 * (range[0].row + 1)
+    range[0].col -= 4
+    range[1].ofs -= 4 * (range[1].row + 1)
+    range[1].col -= 4
+    range
+
   # Using a third-party parser, produce an AST in the standardized Mozilla format.
   parse: (code, aether) ->
     ast = parser.parse code, {locations: false, ranges: true}
-    fixLocations ast
     selfToThis ast
     ast
 
   parseDammit: (code, aether) ->
     try
       ast = parser_loose.parse_dammit code, {locations: false, ranges: true}
-      fixLocations ast
       selfToThis ast
     catch error
       ast = {type: "Program", body:[{"type": "EmptyStatement"}]}
@@ -90,13 +101,6 @@ module.exports = class Python extends Language
     else
       result = cloneFn obj
     result
-
-fixLocations = (ast) ->
-  wrappedCodeIndent = 4
-  estraverse.traverse ast,
-    leave: (node, parent) ->
-      if node.range?
-        node.range = [node.range[0] - wrappedCodeIndent, node.range[1] - wrappedCodeIndent]
 
 # 'this' is not a keyword in Python, so it does not parse to a ThisExpression
 # Instead, we expect the variable 'self', and map it to a ThisExpression

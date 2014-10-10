@@ -9,6 +9,8 @@ module.exports = class CoffeeScript extends Language
   name: 'CoffeeScript'
   id: 'coffeescript'
   parserID: 'csredux'
+  thisValue:'@'
+  thisValueAccess:'@'
 
   # Wrap the user code in a function. Store @wrappedCodePrefix and @wrappedCodeSuffix.
   wrap: (rawCode, aether) ->

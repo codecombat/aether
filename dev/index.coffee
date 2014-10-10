@@ -218,6 +218,28 @@ examples = [
     demoShowOutput(aether);
     '''
 ,
+  name: "Basic Python"
+  code: '''
+    self.sayItLoud('Hi')
+    '''
+
+  aether: '''
+    var thisValue = {
+        sayItLoud: function (s) { console.log(s + '!');}
+    };
+    var aetherOptions = {
+      executionLimit: 1000,
+      problems: {jshint_W040: {level: "ignore"}},
+      language: 'python'
+    };
+    var aether = new Aether(aetherOptions);
+    var code = grabDemoCode();
+    aether.transpile(code);
+    var method = aether.createMethod(thisValue);
+    aether.run(method);
+    demoShowOutput(aether);
+    '''
+,
   name: "Simple loop"
   code: '''
     x = 0

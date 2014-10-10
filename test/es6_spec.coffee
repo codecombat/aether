@@ -596,7 +596,7 @@ describe "JavaScript Test Suite", ->
     it "Conditional yielding infinite loop", ->
       aether = new Aether yieldConditionally: true, simpleLoops: true
       code = """
-        x = 0
+        var x = 0;
         loop {
           x++;
         }
@@ -606,6 +606,28 @@ describe "JavaScript Test Suite", ->
       gen = f()
       for i in [0..100]
         expect(gen.next().done).toEqual false
+
+    it "Conditional yielding empty loop", ->
+      aether = new Aether yieldConditionally: true, simpleLoops: true
+      dude =
+        killCount: 0
+        slay: ->
+          @killCount += 1
+          aether._shouldYield = true
+        getKillCount: -> return @killCount
+      code = """
+        var x = 0;
+        loop {
+          x++;
+          if (x >= 3) break;
+        }
+      """
+      aether.transpile code
+      f = aether.createFunction()
+      gen = f.apply dude
+      expect(gen.next().done).toEqual false
+      expect(gen.next().done).toEqual false
+      expect(gen.next().done).toEqual true
 
     it "Conditional yielding mixed loops", ->
       aether = new Aether yieldConditionally: true, simpleLoops: true
