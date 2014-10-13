@@ -11,6 +11,10 @@ module.exports = class CoffeeScript extends Language
   parserID: 'csredux'
   thisValue:'@'
   thisValueAccess:'@'
+  wrappedCodeIndentLen: 4
+
+  constructor: ->
+    @indent = Array(@wrappedCodeIndentLen + 1).join ' '
 
   # Wrap the user code in a function. Store @wrappedCodePrefix and @wrappedCodeSuffix.
   wrap: (rawCode, aether) ->
@@ -18,11 +22,15 @@ module.exports = class CoffeeScript extends Language
     #{aether.options.functionName or 'foo'} = (#{aether.options.functionParameters.join(', ')}) ->
     \n"""
     @wrappedCodeSuffix ?= '\n'
-
-    # Add indentation of 4 spaces to every line
-    indentedCode = ('    ' + line for line in rawCode.split '\n').join '\n'
-
+    indentedCode = (@indent + line for line in rawCode.split '\n').join '\n'
     @wrappedCodePrefix + indentedCode + @wrappedCodeSuffix
+
+  removeWrappedIndent: (range) ->
+    # Assumes range not in @wrappedCodePrefix
+    range = _.cloneDeep range
+    range[0].ofs -= @wrappedCodeIndentLen * range[0].row
+    range[1].ofs -= @wrappedCodeIndentLen * range[1].row
+    range
 
   # Using a third-party parser, produce an AST in the standardized Mozilla format.
   parse: (code, aether) ->
@@ -33,6 +41,7 @@ module.exports = class CoffeeScript extends Language
 
 
 class StructuredCode
+  # TODO: What does this class do?
   constructor: (code) ->
     [@cursors, @indentations] = @generateOffsets code
     @length = @cursors.length
@@ -71,6 +80,7 @@ class StructuredCode
     { column, line }
 
 fixLocations = (program) ->
+  # TODO: What does this function do?
   structured = new StructuredCode(program.raw)
   estraverse.traverse program,
     leave: (node, parent) ->

@@ -156,17 +156,75 @@ describe "CS test Suite!", ->
       expect(aether.run()).toEqual 'hi'
       expect(aether.problems.errors).toEqual []
 
+  describe "Errors", ->
+    aether = new Aether language: "coffeescript"
+
+    it "Bad indent", ->
+      code = """
+      fn = ->
+        x = 45
+          x += 5
+        return x
+      return fn()
+      """
+      aether.transpile(code)
+      expect(aether.problems.errors.length).toEqual(1)
+      # TODO: No range information for this error
+      # https://github.com/codecombat/aether/issues/114
+      expect(aether.problems.errors[0].message.indexOf("Syntax error on line 1, column 1: unexpected '+'")).toBe(0)
+
+    it "Transpile error, missing )", ->
+      code = """
+      fn = ->
+        return 45
+      x = fn(
+      return x
+      """
+      aether.transpile(code)
+      expect(aether.problems.errors.length).toEqual(1)
+      # TODO: No range information for this error
+      # https://github.com/codecombat/aether/issues/114
+      expect(aether.problems.errors[0].message.indexOf("Unexpected DEDENT")).toBe(0)
+
+    it "Missing @: x() row 0", ->
+      code = """x()"""
+      aether.transpile(code)
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(aether.problems.errors[0].message).toEqual("Missing `@` keyword; should be `@x`.")
+      expect(aether.problems.errors[0].range).toEqual([ { ofs: 0, row: 0, col: 0 }, { ofs: 3, row: 0, col: 3 } ])
+
+    it "Missing @: x() row 1", ->
+      code = """
+      y = 5
+      x()
+      """
+      aether.transpile(code)
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(aether.problems.errors[0].message).toEqual("Missing `@` keyword; should be `@x`.")
+      # https://github.com/codecombat/aether/issues/115
+      # expect(aether.problems.errors[0].range).toEqual([ { ofs: 6, row: 1, col: 0 }, { ofs: 9, row: 1, col: 3 } ])
+
+    it "Missing @: x() row 3", ->
+      code = """
+      y = 5
+      s = 'some other stuff'
+      if y is 5
+        x()
+      """
+      aether.transpile(code)
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(aether.problems.errors[0].message).toEqual("Missing `@` keyword; should be `@x`.")
+      # https://github.com/codecombat/aether/issues/115
+      # expect(aether.problems.errors[0].range).toEqual([ { ofs: 42, row: 3, col: 2 }, { ofs: 45, row: 3, col: 5 } ])
+
     xit "@getItems missing parentheses", ->
+      # https://github.com/codecombat/aether/issues/111
       history = []
       getItems = -> [{'pos':1}, {'pos':4}, {'pos':3}, {'pos':5}]
       move = (i) -> history.push i
       thisValue = {getItems: getItems, move: move}
-      # aetherOptions = {
-      #   language: 'coffeescript'
-      # }
-      # aether = new Aether aetherOptions
       code = """
-        @getItems
+      @getItems
       """
       aether.transpile code
       method = aether.createMethod thisValue
@@ -174,5 +232,46 @@ describe "CS test Suite!", ->
       expect(aether.problems.errors.length).toEqual(1)
       expect(aether.problems.errors[0].message).toEqual('@getItems has no effect.')
       expect(aether.problems.errors[0].hint).toEqual('Is it a method? Those need parentheses: @getItems()')
-      expect(aether.problems.errors[0].range).toEqual([ { ofs : 6, row : 1, col : 0 }, { ofs : 19, row : 1, col : 13 } ])
+      expect(aether.problems.errors[0].range).toEqual([ { ofs : 0, row : 0, col : 0 }, { ofs : 10, row : 0, col : 10 } ])
+
+    xit "@getItems missing parentheses row 1", ->
+      # https://github.com/codecombat/aether/issues/110
+      history = []
+      getItems = -> [{'pos':1}, {'pos':4}, {'pos':3}, {'pos':5}]
+      move = (i) -> history.push i
+      thisValue = {getItems: getItems, move: move}
+      code = """
+      x = 5
+      @getItems
+      y = 6
+      """
+      aether.transpile code
+      method = aether.createMethod thisValue
+      aether.run method
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(aether.problems.errors[0].message).toEqual('@getItems has no effect.')
+      expect(aether.problems.errors[0].hint).toEqual('Is it a method? Those need parentheses: @getItems()')
+      expect(aether.problems.errors[0].range).toEqual([ { ofs : 7, row : 1, col : 0 }, { ofs : 16, row : 1, col : 9 } ])
+
+    it "Incomplete string", ->
+      code = """
+      s = 'hi
+      return s
+      """
+      aether.transpile(code)
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(aether.problems.errors[0].message).toEqual("Unclosed \"'\" at EOF")
+      # https://github.com/codecombat/aether/issues/114
+      # expect(aether.problems.errors[0].range).toEqual([ { ofs : 4, row : 0, col : 4 }, { ofs : 7, row : 0, col : 7 } ])
+
+    it "Runtime ReferenceError", ->
+      code = """
+      x = 5
+      y = x + z
+      """
+      aether.transpile(code)
+      aether.run()
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(/ReferenceError/.test(aether.problems.errors[0].message)).toBe(true)
+      expect(aether.problems.errors[0].range).toEqual([ { ofs : 14, row : 1, col : 8 }, { ofs : 15, row : 1, col : 9 } ])
 

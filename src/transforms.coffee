@@ -428,7 +428,7 @@ module.exports.makeYieldAutomatically = makeYieldAutomatically = ->
       if (fnExpr = getUserFnExpr(userFnMap, node.right)) and possiblyGeneratorifyUserFunction fnExpr
         node.update "var __gen#{node.left.source()} = #{node.right.source()}; while (true) { var __result#{node.left.source()} = __gen#{node.left.source()}.next(); if (__result#{node.left.source()}.done) { #{node.left.source()} = __result#{node.left.source()}.value; break; } yield __result#{node.left.source()}.value;}"
 
-module.exports.makeInstrumentStatements = makeInstrumentStatements = (varNames) ->
+module.exports.makeInstrumentStatements = makeInstrumentStatements = (language, varNames) ->
   # set up any state tracking here
   return (node) ->
     orig = node.originalNode
@@ -449,7 +449,8 @@ module.exports.makeInstrumentStatements = makeInstrumentStatements = (varNames) 
     else if orig.parent?.type is S.VariableDeclarator and orig.parent.parent?.type is S.VariableDeclaration and orig.parent.parent.originalRange
       orig = orig.parent.parent
     # TODO: actually save this into aether.flow, and have it happen before the yield happens
-    safeRange = ranges.stringifyRange orig.originalRange.start, orig.originalRange.end
+    unwrappedRange = language.removeWrappedIndent [orig.originalRange.start, orig.originalRange.end]
+    safeRange = ranges.stringifyRange unwrappedRange[0], unwrappedRange[1]
     prefix = "_aether.logStatementStart(#{safeRange});"
     if varNames
       loggers = ("_aether.vars['#{varName}'] = typeof #{varName} == 'undefined' ? undefined : #{varName};" for varName of varNames)

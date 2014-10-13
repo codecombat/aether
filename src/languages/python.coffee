@@ -14,6 +14,10 @@ module.exports = class Python extends Language
     __pythonRuntime: parser.pythonRuntime
   thisValue: 'self'
   thisValueAccess: 'self.'
+  wrappedCodeIndentLen: 4
+
+  constructor: ->
+    @indent = Array(@wrappedCodeIndentLen + 1).join ' '
 
   hasChangedASTs: (a, b) ->
     try
@@ -36,7 +40,7 @@ module.exports = class Python extends Language
     rangeIndex = 0
     lines = rawCode.split '\n'
     for line, lineNumber in lines
-      rangeIndex += 4 # + 4 for future wrapped indent
+      rangeIndex += @wrappedCodeIndentLen # + 4 for future wrapped indent
       if line.replace(/^\s+/g, "").indexOf('loop') is 0
         start = line.indexOf 'loop'
         end = start + 4
@@ -57,19 +61,16 @@ module.exports = class Python extends Language
     def #{aether.options.functionName or 'foo'}(#{aether.options.functionParameters.join(', ')}):
     \n"""
     @wrappedCodeSuffix ?= "\n"
-
-    # Add indentation of 4 spaces to every line
-    indentedCode = ('    ' + line for line in rawCode.split '\n').join '\n'
-
+    indentedCode = (@indent + line for line in rawCode.split '\n').join '\n'
     @wrappedCodePrefix + indentedCode + @wrappedCodeSuffix
 
   removeWrappedIndent: (range) ->
     # Assumes range not in @wrappedCodePrefix
     range = _.cloneDeep range
-    range[0].ofs -= 4 * (range[0].row + 1)
-    range[0].col -= 4
-    range[1].ofs -= 4 * (range[1].row + 1)
-    range[1].col -= 4
+    range[0].ofs -= @wrappedCodeIndentLen * (range[0].row + 1)
+    range[0].col -= @wrappedCodeIndentLen
+    range[1].ofs -= @wrappedCodeIndentLen * (range[1].row + 1)
+    range[1].col -= @wrappedCodeIndentLen
     range
 
   # Using a third-party parser, produce an AST in the standardized Mozilla format.

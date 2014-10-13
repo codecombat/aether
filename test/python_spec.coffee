@@ -285,75 +285,20 @@ describe "Python test suite", ->
       aetherOptions = {
         language: 'python'
       }
-      aether = new Aether aetherOptions
       code = """
       items = self.getItems()
       for item in items:
         self.move(item['pos'])
       """
+      aether = new Aether aetherOptions
       aether.transpile code
       method = aether.createMethod thisValue
       aether.run method
       expect(history).toEqual([1, 4, 3, 5])
 
-    it "self.getItems missing parentheses", ->
-      history = []
-      getItems = -> [{'pos':1}, {'pos':4}, {'pos':3}, {'pos':5}]
-      move = (i) -> history.push i
-      thisValue = {getItems: getItems, move: move}
-      aetherOptions = {
-        language: 'python'
-      }
-      aether = new Aether aetherOptions
-      code = """
-      self.getItems
-      """
-      aether.transpile code
-      method = aether.createMethod thisValue
-      aether.run method
-      expect(aether.problems.errors.length).toEqual(1)
-      expect(aether.problems.errors[0].message).toEqual('self.getItems has no effect.')
-      expect(aether.problems.errors[0].hint).toEqual('Is it a method? Those need parentheses: self.getItems()')
-      expect(aether.problems.errors[0].range).toEqual([ { ofs : 0, row : 0, col : 0 }, { ofs : 13, row : 0, col : 13 } ])
-
-    it "self.getItems missing parentheses row 1", ->
-      history = []
-      getItems = -> [{'pos':1}, {'pos':4}, {'pos':3}, {'pos':5}]
-      move = (i) -> history.push i
-      thisValue = {getItems: getItems, move: move}
-      aetherOptions = {
-        language: 'python'
-      }
-      aether = new Aether aetherOptions
-      code = """
-      x = 5
-      self.getItems
-      """
-      aether.transpile code
-      method = aether.createMethod thisValue
-      aether.run method
-      expect(aether.problems.errors.length).toEqual(1)
-      expect(aether.problems.errors[0].message).toEqual('self.getItems has no effect.')
-      expect(aether.problems.errors[0].hint).toEqual('Is it a method? Those need parentheses: self.getItems()')
-      expect(aether.problems.errors[0].range).toEqual([ { ofs : 6, row : 1, col : 0 }, { ofs : 19, row : 1, col : 13 } ])
-
   describe "parseDammit! & Ranges", ->
     aether = new Aether language: "python"
-    it "missing )", ->
-      code = """
-      def fn():
-        return 45
-      x = fn(
-      return x
-      """
-      aether.transpile(code)
-      expect(aether.problems.errors.length).toEqual(1)
-      expect(/Unexpected token/.test(aether.problems.errors[0].message)).toBe(true)
-      expect(aether.problems.errors[0].range).toEqual([ { ofs : 29, row : 2, col : 7 }, { ofs : 30, row : 2, col : 8 } ])
-      result = aether.run()
-      expect(result).toEqual(45)
-
-    it "bad indent", ->
+    it "Bad indent", ->
       code = """
       def fn():
         x = 45
@@ -368,14 +313,45 @@ describe "Python test suite", ->
       expect(aether.problems.errors[0].range).toEqual([ { ofs : 21, row : 2, col : 2 }, { ofs : 23, row : 2, col : 4 } ])
       expect(result).toEqual(50)
 
-    it "x() row 0", ->
+    xit "Bad indent after comment", ->
+      # https://github.com/codecombat/aether/issues/116
+      code = """
+      def fn():
+        x = 45
+        # Bummer
+          x += 5
+        return x
+      return fn()
+      """
+      aether.transpile(code)
+      result = aether.run()
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(/Unexpected indent/.test(aether.problems.errors[0].message)).toBe(true)
+      expect(aether.problems.errors[0].range).toEqual([ { ofs : 32, row : 3, col : 2 }, { ofs : 34, row : 3, col : 4 } ])
+      expect(result).toEqual(50)
+
+    it "Transpile error, missing )", ->
+      code = """
+      def fn():
+        return 45
+      x = fn(
+      return x
+      """
+      aether.transpile(code)
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(/Unexpected token/.test(aether.problems.errors[0].message)).toBe(true)
+      expect(aether.problems.errors[0].range).toEqual([ { ofs : 29, row : 2, col : 7 }, { ofs : 30, row : 2, col : 8 } ])
+      result = aether.run()
+      expect(result).toEqual(45)
+
+    it "Missing self: x() row 0", ->
       code = """x()"""
       aether.transpile(code)
       expect(aether.problems.errors.length).toEqual(1)
       expect(aether.problems.errors[0].message).toEqual("Missing `self` keyword; should be `self.x`.")
       expect(aether.problems.errors[0].range).toEqual([ { ofs: 0, row: 0, col: 0 }, { ofs: 3, row: 0, col: 3 } ])
 
-    it "x() row 1", ->
+    it "Missing self: x() row 1", ->
       code = """
       y = 5
       x()
@@ -385,7 +361,7 @@ describe "Python test suite", ->
       expect(aether.problems.errors[0].message).toEqual("Missing `self` keyword; should be `self.x`.")
       expect(aether.problems.errors[0].range).toEqual([ { ofs: 6, row: 1, col: 0 }, { ofs: 9, row: 1, col: 3 } ])
 
-    it "x() row 3", ->
+    it "Missing self: x() row 3", ->
       code = """
       y = 5
       s = 'some other stuff'
@@ -397,7 +373,32 @@ describe "Python test suite", ->
       expect(aether.problems.errors[0].message).toEqual("Missing `self` keyword; should be `self.x`.")
       expect(aether.problems.errors[0].range).toEqual([ { ofs: 42, row: 3, col: 2 }, { ofs: 45, row: 3, col: 5 } ])
 
-    it "incomplete string", ->
+    it "self.getItems missing parentheses", ->
+      code = """
+      self.getItems
+      """
+      aether = new Aether language: 'python'
+      aether.transpile code
+      aether.run()
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(aether.problems.errors[0].message).toEqual('self.getItems has no effect.')
+      expect(aether.problems.errors[0].hint).toEqual('Is it a method? Those need parentheses: self.getItems()')
+      expect(aether.problems.errors[0].range).toEqual([ { ofs : 0, row : 0, col : 0 }, { ofs : 13, row : 0, col : 13 } ])
+
+    it "self.getItems missing parentheses row 1", ->
+      code = """
+      x = 5
+      self.getItems
+      """
+      aether = new Aether language: 'python'
+      aether.transpile code
+      aether.run()
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(aether.problems.errors[0].message).toEqual('self.getItems has no effect.')
+      expect(aether.problems.errors[0].hint).toEqual('Is it a method? Those need parentheses: self.getItems()')
+      expect(aether.problems.errors[0].range).toEqual([ { ofs : 6, row : 1, col : 0 }, { ofs : 19, row : 1, col : 13 } ])
+
+    it "Incomplete string", ->
       code = """
       s = 'hi
       return s
@@ -408,6 +409,17 @@ describe "Python test suite", ->
       expect(aether.problems.errors[0].range).toEqual([ { ofs : 4, row : 0, col : 4 }, { ofs : 7, row : 0, col : 7 } ])
       result = aether.run()
       expect(result).toEqual('hi')
+
+    it "Runtime ReferenceError", ->
+      code = """
+      x = 5
+      y = x + z
+      """
+      aether.transpile(code)
+      aether.run()
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(/ReferenceError/.test(aether.problems.errors[0].message)).toBe(true)
+      expect(aether.problems.errors[0].range).toEqual([ { ofs : 14, row : 1, col : 8 }, { ofs : 15, row : 1, col : 9 } ])
 
   describe "Simple loop", ->
     it "loop:", ->

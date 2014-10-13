@@ -237,9 +237,9 @@ module.exports = class Aether
       postNormalizationTransforms.unshift transforms.makeIndexSimpleLoops()
     postNormalizationTransforms.unshift transforms.makeYieldAutomatically() if @options.yieldAutomatically
     if @options.includeFlow
-      postNormalizationTransforms.unshift transforms.makeInstrumentStatements varNames
+      postNormalizationTransforms.unshift transforms.makeInstrumentStatements @language, varNames
     else if @options.includeMetrics or @options.executionLimit
-      postNormalizationTransforms.unshift transforms.makeInstrumentStatements()
+      postNormalizationTransforms.unshift transforms.makeInstrumentStatements @language
     postNormalizationTransforms.unshift transforms.makeInstrumentCalls() if @options.includeMetrics or @options.includeFlow
     if normalizedSourceMap
       postNormalizationTransforms.unshift transforms.makeFindOriginalNodes originalNodeRanges, @language.wrappedCodePrefix, normalizedSourceMap, normalizedNodeIndex

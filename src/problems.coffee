@@ -103,6 +103,7 @@ extractRuntimeErrorDetails = (options) ->
     options.hint ?= error.hint
     options.level ?= error.level
     options.userInfo ?= error.userInfo
+  # NOTE: lastStatementRange set via instrumentation.logStatementStart(originalNode.originalRange)
   options.range ?= options.aether?.lastStatementRange
   if options.range
     lineNumber = options.range[0].row + 1

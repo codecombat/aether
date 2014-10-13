@@ -1,6 +1,96 @@
 Aether = require '../aether'
 
 describe "JavaScript Test Suite", ->
+  describe "Errors", ->
+    aether = new Aether language: "javascript"
+
+    it "Transpile error, missing )", ->
+      code = """
+      function fn() {
+        return 45;
+      }
+      var x = = fn();
+      """
+      aether.transpile(code)
+      expect(aether.problems.errors.length).toEqual(2)
+      expect(/Expected an identifier and instead/.test(aether.problems.errors[0].message)).toBe(true)
+      # https://github.com/codecombat/aether/issues/113
+      # expect(aether.problems.errors[0].range).toEqual([ { ofs : 39, row : 3, col : 8 }, { ofs : 40, row : 3, col : 9 } ])
+      expect(/Line 4: Unexpected token =/.test(aether.problems.errors[1].message)).toBe(true)
+      expect(aether.problems.errors[1].range).toEqual([ { ofs : 39, row : 3, col : 8 }, { ofs : 40, row : 3, col : 9 } ])
+
+    it "Missing this: x() row 0", ->
+      code = """x();"""
+      aether.transpile(code)
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(aether.problems.errors[0].message).toEqual("Missing `this` keyword; should be `this.x`.")
+      expect(aether.problems.errors[0].range).toEqual([ { ofs: 0, row: 0, col: 0 }, { ofs: 3, row: 0, col: 3 } ])
+
+    it "Missing this: x() row 1", ->
+      code = """
+      var y = 5;
+      x();
+      """
+      aether.transpile(code)
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(aether.problems.errors[0].message).toEqual("Missing `this` keyword; should be `this.x`.")
+      expect(aether.problems.errors[0].range).toEqual([ { ofs: 11, row: 1, col: 0 }, { ofs: 14, row: 1, col: 3 } ])
+
+    it "Missing this: x() row 3", ->
+      code = """
+      var y = 5;
+      var s = 'some other stuff';
+      if (y === 5)
+        x();
+      """
+      aether.transpile(code)
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(aether.problems.errors[0].message).toEqual("Missing `this` keyword; should be `this.x`.")
+      expect(aether.problems.errors[0].range).toEqual([ { ofs: 54, row: 3, col: 2 }, { ofs: 57, row: 3, col: 5 } ])
+
+    it "No effect: this.getItems missing parentheses", ->
+      code = """
+      this.getItems
+      """
+      aether.transpile code
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(aether.problems.errors[0].message).toEqual('this.getItems has no effect.')
+      expect(aether.problems.errors[0].hint).toEqual('Is it a method? Those need parentheses: this.getItems()')
+      expect(aether.problems.errors[0].range).toEqual([ { ofs : 0, row : 0, col : 0 }, { ofs : 13, row : 0, col : 13 } ])
+
+    it "self.getItems missing parentheses row 1", ->
+      code = """
+      var x = 5;
+      self.getItems
+      """
+      aether.transpile code
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(aether.problems.errors[0].message).toEqual('self.getItems has no effect.')
+      expect(aether.problems.errors[0].hint).toEqual('Is it a method? Those need parentheses: self.getItems()')
+      expect(aether.problems.errors[0].range).toEqual([ { ofs : 11, row : 1, col : 0 }, { ofs : 24, row : 1, col : 13 } ])
+
+    it "Incomplete string", ->
+      code = """
+      var s = 'hi
+      return s;
+      """
+      aether.transpile(code)
+      expect(aether.problems.errors.length).toEqual(3)
+      expect(aether.problems.errors[0].message).toEqual("Unclosed string.")
+      # https://github.com/codecombat/aether/issues/113
+      # expect(aether.problems.errors[0].range).toEqual([ { ofs : 8, row : 0, col : 8 }, { ofs : 11, row : 0, col : 11 } ])
+
+    it "Runtime ReferenceError", ->
+      code = """
+      var x = 5;
+      var y = x + z;
+      """
+      aether.transpile(code)
+      aether.run()
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(aether.problems.errors[0].message).toEqual("Line 2: ReferenceError: z is not defined")
+      expect(aether.problems.errors[0].range).toEqual([ { ofs : 23, row : 1, col : 12 }, { ofs : 24, row : 1, col : 13 } ])
+
   describe "Traceur compilation with ES6", ->
     aether = new Aether languageVersion: "ES6"
     it "should compile generator functions", ->
