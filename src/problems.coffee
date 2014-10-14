@@ -1,5 +1,23 @@
 ranges = require './ranges'
 
+# Problem Context (problemContext)
+#
+# Aether accepts a problemContext parameter via the constructor options or directly to createUserCodeProblem
+# This context can be used to craft better errors messages.
+#
+# Example:
+#   Incorrect user code is 'this.attack(Brak);'
+#   Correct user code is 'this.attack("Brak");'
+#   Error: 'Brak is undefined'
+#   If we had a list of expected string references, we could provide a better error message:
+#   'Brak is undefined. Are you missing quotes? Try this.attack("Brak");'
+#
+# Available Context Properties:
+#   stringReferences: values that should be referred to as a string instead of a variable (e.g. "Brak", not Brak)
+#   thisMethods: methods available on the 'this' object
+#   thisProperties: properties available on the 'this' object
+#   
+
 module.exports.createUserCodeProblem = (options) ->
   options ?= {}
   options.aether ?= @  # Can either be called standalone or as an Aether method
@@ -97,10 +115,11 @@ extractTranspileErrorDetails = (options) ->
 
 
 extractRuntimeErrorDetails = (options) ->
+  errorContext = options.problemContext or options.aether?.options?.problemContext
+  languageID = options.aether?.options?.language
   if error = options.error
     options.kind ?= error.name  # I think this will pick up [Error, EvalError, RangeError, ReferenceError, SyntaxError, TypeError, URIError, DOMException]
-    options.message = explainErrorMessage error.message or error.toString()
-    options.hint ?= error.hint
+    [options.message, options.hint] = explainErrorMessage error.message or error.toString(), error.hint, errorContext, languageID
     options.level ?= error.level
     options.userInfo ?= error.userInfo
   # NOTE: lastStatementRange set via instrumentation.logStatementStart(originalNode.originalRange)
@@ -114,22 +133,21 @@ extractRuntimeErrorDetails = (options) ->
 
 module.exports.commonMethods = commonMethods = ['moveRight', 'moveLeft', 'moveUp', 'moveDown', 'attackNearbyEnemy', 'say', 'move', 'attackNearestEnemy', 'shootAt', 'rotateTo', 'shoot', 'distance', 'getNearestEnemy', 'getEnemies', 'attack', 'setAction', 'setTarget', 'getFriends', 'patrol']  # TODO: should be part of user configuration
 
-explainErrorMessage = (m) ->
-  if m is "RangeError: Maximum call stack size exceeded"
-    m += ". (Did you use call a function recursively?)"
+explainErrorMessage = (msg, hint, context, languageID) ->
+  if msg is "RangeError: Maximum call stack size exceeded"
+    msg += ". (Did you use call a function recursively?)"
 
-  missingMethodMatch = m.match /has no method '(.*?)'/
-  if missingMethodMatch
+  if missingMethodMatch = msg.match /has no method '(.*?)'/
     method = missingMethodMatch[1]
     [closestMatch, closestMatchScore] = ['Murgatroyd Kerfluffle', 0]
     explained = false
     for commonMethod in commonMethods
       if method is commonMethod
-        m += ". (#{missingMethodMatch[1]} not available in this challenge.)"
+        msg += ". (#{missingMethodMatch[1]} not available in this challenge.)"
         explained = true
         break
       else if method.toLowerCase() is commonMethod.toLowerCase()
-        m = "#{method} should be #{commonMethod} because JavaScript is case-sensitive."
+        msg = "#{method} should be #{commonMethod} because JavaScript is case-sensitive."
         explained = true
         break
       else
@@ -138,11 +156,24 @@ explainErrorMessage = (m) ->
           [closestMatch, closestMatchScore] = [commonMethod, matchScore]
     unless explained
       if closestMatchScore > 0.25
-        m += ". (Did you mean #{closestMatch}?)"
+        msg += ". (Did you mean #{closestMatch}?)"
+    msg = msg.replace 'TypeError:', 'Error:'
+  
+  else if missingReference = msg.match /ReferenceError: ([^\s]+) is not defined/
+    # Use problemContext to update reference errors
+    # TODO: thisValueAccess should come from the current Aether language
+    thisValueAccess = switch languageID
+      when 'python' then 'self.'
+      when 'cofeescript' then '@'
+      else 'this.'
+    if context?.stringReferences? and missingReference[1] in context.stringReferences
+      hint = "You may need quotes. Did you mean \"#{missingReference[1]}\"?"
+    else if context?.thisMethods? and missingReference[1] in context.thisMethods
+      hint = "Did you mean #{thisValueAccess}#{missingReference[1]}()?"
+    else if context?.thisProperties? and missingReference[1] in context.thisProperties
+      hint = "Did you mean #{thisValueAccess}#{missingReference[1]}?"
 
-    m = m.replace 'TypeError:', 'Error:'
-
-  m
+  [msg, hint]
 
 
 # Esprima Harmony's error messages track V8's

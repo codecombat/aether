@@ -269,7 +269,7 @@ module.exports.makeGatherNodeRanges = makeGatherNodeRanges = (nodeRanges, code, 
   nodeRanges.push node
 
 # Making
-module.exports.makeCheckThisKeywords = makeCheckThisKeywords = (globals, varNames, language) ->
+module.exports.makeCheckThisKeywords = makeCheckThisKeywords = (globals, varNames, language, problemContext) ->
   return (node) ->
     if node.type is S.VariableDeclarator
       varNames[node.id.name] = true
@@ -292,7 +292,7 @@ module.exports.makeCheckThisKeywords = makeCheckThisKeywords = (globals, varName
           varNames[param.name] = true for param in p.params if p.params?
           return if varNames[v] is true
         return if /\$$/.test v  # accum$ in CoffeeScript Redux isn't handled properly
-        # TODO: we need to know whether `this` has this method before saying this...
+        return if problemContext?.thisMethods? and v not in problemContext.thisMethods
         # TODO: '@' in CoffeeScript isn't really a keyword
         message = "Missing `#{language.thisValue}` keyword; should be `#{language.thisValueAccess}#{v}`."
         hint = "There is no function `#{v}`, but `#{language.thisValue}` has a method `#{v}`."

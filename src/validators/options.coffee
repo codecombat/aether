@@ -40,6 +40,8 @@ module.exports = (options) ->
         ]
       problems:
         type: ['object', 'undefined']
+      problemContext:
+        type: 'object'
       includeFlow:
         type: 'boolean'
         default: true

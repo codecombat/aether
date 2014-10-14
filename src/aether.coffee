@@ -156,6 +156,9 @@ module.exports = class Aether
 
   # Create a standard Aether problem object out of some sort of transpile or runtime problem.
   createUserCodeProblem: problems.createUserCodeProblem
+  
+  updateProblemContext: (problemContext) ->
+    @options.problemContext = problemContext
 
   # Add problem to the proper level's array within the given problems object (or @problems).
   addProblem: (problem, problems=null) ->
@@ -177,7 +180,7 @@ module.exports = class Aether
     varNames[parameter] = true for parameter in @options.functionParameters
     preNormalizationTransforms = [
       transforms.makeGatherNodeRanges originalNodeRanges, wrappedCode, @language.wrappedCodePrefix
-      transforms.makeCheckThisKeywords @allGlobals, varNames, @language
+      transforms.makeCheckThisKeywords @allGlobals, varNames, @language, @options.problemContext
       transforms.makeCheckIncompleteMembers @language
     ]
 

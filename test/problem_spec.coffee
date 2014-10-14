@@ -98,3 +98,87 @@ describe "Problem Test Suite", ->
       expect(aether.run()).not.toEqual 'undefinedbar'
       expect(aether.run()).toEqual undefined
       expect(aether.problems.errors).not.toEqual []
+      
+  describe "Context-aware problems", ->
+    it "Brak not defined", ->
+      history = []
+      log = (s) -> history.push s
+      attack = -> history.push 'attack'
+      selfValue = {say: log, attack: attack}
+      code = """
+      self.attack(Brak)
+      """
+      problemContext = stringReferences: ['Brak']
+      aether = new Aether language: "python", problemContext: problemContext
+      aether.transpile code
+      method = aether.createMethod selfValue
+      aether.run method
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: Brak is not defined")
+      expect(aether.problems.errors[0].hint).toEqual("You may need quotes. Did you mean \"Brak\"?")
+
+    it "attack not defined", ->
+      history = []
+      log = (s) -> history.push s
+      attack = -> history.push 'attack'
+      selfValue = {say: log, attack: attack}
+      code = """
+      attack
+      """
+      problemContext = thisMethods: [ 'log', 'attack' ]
+      aether = new Aether language: "python", problemContext: problemContext
+      aether.transpile code
+      method = aether.createMethod selfValue
+      aether.run method
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: attack is not defined")
+      expect(aether.problems.errors[0].hint).toEqual("Did you mean self.attack()?")
+
+    it "buildables not defined", ->
+      history = []
+      log = (s) -> history.push s
+      attack = -> history.push 'attack'
+      selfValue = {say: log, attack: attack}
+      code = """
+      b = buildables
+      """
+      problemContext = thisProperties: [ 'buildables' ]
+      aether = new Aether language: "python", problemContext: problemContext
+      aether.transpile code
+      method = aether.createMethod selfValue
+      aether.run method
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: buildables is not defined")
+      expect(aether.problems.errors[0].hint).toEqual("Did you mean self.buildables?")
+
+    it "Call non-this undefined function x()", ->
+      history = []
+      log = (s) -> history.push s
+      attack = -> history.push 'attack'
+      selfValue = {say: log, attack: attack}
+      code = """x()"""
+      problemContext = thisMethods: [ 'log', 'attack' ]
+      aether = new Aether language: "python", problemContext: problemContext
+      aether.transpile(code)
+      method = aether.createMethod selfValue
+      aether.run method
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: x is not defined")
+      expect(aether.problems.errors[0].range).toEqual([ { ofs: 0, row: 0, col: 0 }, { ofs: 1, row: 0, col: 1 } ])
+
+    it "Call this-defined function attack() without this", ->
+      history = []
+      log = (s) -> history.push s
+      attack = -> history.push 'attack'
+      selfValue = {say: log, attack: attack}
+      code = """attack()"""
+      problemContext = thisMethods: [ 'log', 'attack' ]
+      aether = new Aether language: "python", problemContext: problemContext
+      aether.transpile(code)
+      method = aether.createMethod selfValue
+      aether.run method
+      expect(aether.problems.errors.length).toEqual(2)
+      expect(aether.problems.errors[0].message).toEqual("Missing `self` keyword; should be `self.attack`.")
+      expect(aether.problems.errors[0].range).toEqual([ { ofs: 0, row: 0, col: 0 }, { ofs: 8, row: 0, col: 8 } ])
+      expect(aether.problems.errors[1].message).toEqual("Line 1: ReferenceError: attack is not defined")
+      expect(aether.problems.errors[1].range).toEqual([ { ofs: 0, row: 0, col: 0 }, { ofs: 6, row: 0, col: 6 } ])
