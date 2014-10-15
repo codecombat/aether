@@ -208,7 +208,7 @@ describe "Problem Test Suite", ->
       method = aether.createMethod selfValue
       aether.run method
       expect(aether.problems.errors.length).toEqual(1)
-      expect(aether.problems.errors[0].message).toEqual("self.moveUp is currently unavailable.")
+      expect(aether.problems.errors[0].message).toEqual("self.moveUp is not currently unavailable.")
 
     it "Incomplete 'this' and available method", ->
       selfValue = {}

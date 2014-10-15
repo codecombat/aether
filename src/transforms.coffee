@@ -317,7 +317,7 @@ module.exports.makeCheckIncompleteMembers = makeCheckIncompleteMembers = (langua
           if problemContext?.thisMethods? and exp.property.name in problemContext.thisMethods
             m += " It needs parentheses: #{exp.source()}()"
           else if problemContext?.commonThisMethods? and exp.property.name in problemContext.commonThisMethods
-            m = "#{exp.source()} is currently unavailable."
+            m = "#{exp.source()} is not currently unavailable."
           else
             hint = "Is it a method? Those need parentheses: #{exp.source()}()"
           if node.originalRange
