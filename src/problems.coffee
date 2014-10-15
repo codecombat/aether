@@ -16,6 +16,7 @@ ranges = require './ranges'
 #   stringReferences: values that should be referred to as a string instead of a variable (e.g. "Brak", not Brak)
 #   thisMethods: methods available on the 'this' object
 #   thisProperties: properties available on the 'this' object
+#   commonThisMethods: methods that are available sometimes, but not awlays
 #   
 
 module.exports.createUserCodeProblem = (options) ->
@@ -131,8 +132,6 @@ extractRuntimeErrorDetails = (options) ->
     else
       options.message = "Line #{lineNumber}: #{options.message}"
 
-module.exports.commonMethods = commonMethods = ['moveRight', 'moveLeft', 'moveUp', 'moveDown', 'attackNearbyEnemy', 'say', 'move', 'attackNearestEnemy', 'shootAt', 'rotateTo', 'shoot', 'distance', 'getNearestEnemy', 'getEnemies', 'attack', 'setAction', 'setTarget', 'getFriends', 'patrol']  # TODO: should be part of user configuration
-
 explainErrorMessage = (msg, hint, context, languageID) ->
   if msg is "RangeError: Maximum call stack size exceeded"
     msg += ". (Did you use call a function recursively?)"
@@ -141,13 +140,14 @@ explainErrorMessage = (msg, hint, context, languageID) ->
     method = missingMethodMatch[1]
     [closestMatch, closestMatchScore] = ['Murgatroyd Kerfluffle', 0]
     explained = false
+    commonMethods = if context?.commonThisMethods? then context.commonThisMethods else []
     for commonMethod in commonMethods
       if method is commonMethod
         msg += ". (#{missingMethodMatch[1]} not available in this challenge.)"
         explained = true
         break
       else if method.toLowerCase() is commonMethod.toLowerCase()
-        msg = "#{method} should be #{commonMethod} because JavaScript is case-sensitive."
+        msg = "#{method} should be #{commonMethod} because it is case-sensitive."
         explained = true
         break
       else

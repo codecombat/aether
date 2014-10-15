@@ -58,15 +58,15 @@ describe "JavaScript Test Suite", ->
       expect(aether.problems.errors[0].hint).toEqual('Is it a method? Those need parentheses: this.getItems()')
       expect(aether.problems.errors[0].range).toEqual([ { ofs : 0, row : 0, col : 0 }, { ofs : 13, row : 0, col : 13 } ])
 
-    it "self.getItems missing parentheses row 1", ->
+    it "this.getItems missing parentheses row 1", ->
       code = """
       var x = 5;
-      self.getItems
+      this.getItems
       """
       aether.transpile code
       expect(aether.problems.errors.length).toEqual(1)
-      expect(aether.problems.errors[0].message).toEqual('self.getItems has no effect.')
-      expect(aether.problems.errors[0].hint).toEqual('Is it a method? Those need parentheses: self.getItems()')
+      expect(aether.problems.errors[0].message).toEqual('this.getItems has no effect.')
+      expect(aether.problems.errors[0].hint).toEqual('Is it a method? Those need parentheses: this.getItems()')
       expect(aether.problems.errors[0].range).toEqual([ { ofs : 11, row : 1, col : 0 }, { ofs : 24, row : 1, col : 13 } ])
 
     it "Incomplete string", ->

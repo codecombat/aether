@@ -182,3 +182,44 @@ describe "Problem Test Suite", ->
       expect(aether.problems.errors[0].range).toEqual([ { ofs: 0, row: 0, col: 0 }, { ofs: 8, row: 0, col: 8 } ])
       expect(aether.problems.errors[1].message).toEqual("Line 1: ReferenceError: attack is not defined")
       expect(aether.problems.errors[1].range).toEqual([ { ofs: 0, row: 0, col: 0 }, { ofs: 6, row: 0, col: 6 } ])
+
+    xit "undefined is not a function", ->
+      # TODO: this behaves differently in production
+      selfValue = {}
+      code = """
+      this.attack("Brak");
+      """
+      problemContext = commonThisMethods: ['attack']
+      aether = new Aether problemContext: problemContext
+      aether.transpile code
+      method = aether.createMethod selfValue
+      aether.run method
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(aether.problems.errors[0].message).toEqual("Line 1: undefined is not a function")
+
+    it "Incomplete 'this' and unavailable method", ->
+      selfValue = {}
+      code = """
+      self.moveUp
+      """
+      problemContext = commonThisMethods: ['moveUp']
+      aether = new Aether language: 'python', problemContext: problemContext
+      aether.transpile code
+      method = aether.createMethod selfValue
+      aether.run method
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(aether.problems.errors[0].message).toEqual("self.moveUp is currently unavailable.")
+
+    it "Incomplete 'this' and available method", ->
+      selfValue = {}
+      code = """
+      this.moveUp
+      """
+      problemContext = thisMethods: ['moveUp']
+      aether = new Aether problemContext: problemContext
+      aether.transpile code
+      method = aether.createMethod selfValue
+      aether.run method
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(aether.problems.errors[0].message).toEqual("this.moveUp has no effect. It needs parentheses: this.moveUp()")
+

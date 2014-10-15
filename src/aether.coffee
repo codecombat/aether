@@ -181,7 +181,7 @@ module.exports = class Aether
     preNormalizationTransforms = [
       transforms.makeGatherNodeRanges originalNodeRanges, wrappedCode, @language.wrappedCodePrefix
       transforms.makeCheckThisKeywords @allGlobals, varNames, @language, @options.problemContext
-      transforms.makeCheckIncompleteMembers @language
+      transforms.makeCheckIncompleteMembers @language, @options.problemContext
     ]
 
     try

@@ -4,7 +4,6 @@ S = require('esprima').Syntax
 SourceMap = require 'source-map'
 
 ranges = require './ranges'
-{commonMethods} = require './problems'
 
 statements = [S.EmptyStatement, S.ExpressionStatement, S.BreakStatement, S.ContinueStatement, S.DebuggerStatement, S.DoWhileStatement, S.ForStatement, S.FunctionDeclaration, S.ClassDeclaration, S.IfStatement, S.ReturnStatement, S.SwitchStatement, S.ThrowStatement, S.TryStatement, S.VariableStatement, S.WhileStatement, S.WithStatement, S.VariableDeclaration]
 
@@ -301,7 +300,7 @@ module.exports.makeCheckThisKeywords = makeCheckThisKeywords = (globals, varName
         problem = @createUserCodeProblem type: 'transpile', reporter: 'aether', kind: 'MissingThis', message: message, hint: hint, range: range  # TODO: code/codePrefix?
         @addProblem problem
 
-module.exports.makeCheckIncompleteMembers = makeCheckIncompleteMembers = (language) ->
+module.exports.makeCheckIncompleteMembers = makeCheckIncompleteMembers = (language, problemContext) ->
   return (node) ->
     # console.log 'check incomplete members', node, node.source() if node.source().search('this.') isnt -1
     if node.type is 'ExpressionStatement'
@@ -312,17 +311,19 @@ module.exports.makeCheckIncompleteMembers = makeCheckIncompleteMembers = (langua
           kind = 'IncompleteThis'
           m = "this.what? (Check available spells below.)"
           hint = ''
-        else
+        else if exp.object.source() is language.thisValue
           kind = 'NoEffect'
           m = "#{exp.source()} has no effect."
-          if exp.property.name in commonMethods
+          if problemContext?.thisMethods? and exp.property.name in problemContext.thisMethods
             m += " It needs parentheses: #{exp.source()}()"
+          else if problemContext?.commonThisMethods? and exp.property.name in problemContext.commonThisMethods
+            m = "#{exp.source()} is currently unavailable."
           else
             hint = "Is it a method? Those need parentheses: #{exp.source()}()"
-        if node.originalRange
-          range = language.removeWrappedIndent [node.originalRange.start, node.originalRange.end]
-        problem = @createUserCodeProblem type: 'transpile', reporter: 'aether', message: m, kind: kind, hint: hint, range: range  # TODO: code/codePrefix?
-        @addProblem problem
+          if node.originalRange
+            range = language.removeWrappedIndent [node.originalRange.start, node.originalRange.end]
+          problem = @createUserCodeProblem type: 'transpile', reporter: 'aether', message: m, kind: kind, hint: hint, range: range  # TODO: code/codePrefix?
+          @addProblem problem
 
 ########## After JS_WALA Normalization ##########
 

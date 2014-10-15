@@ -377,12 +377,11 @@ describe "Python test suite", ->
       code = """
       self.getItems
       """
-      aether = new Aether language: 'python'
+      aether = new Aether language: 'python', problemContext: thisMethods: ['getItems']
       aether.transpile code
       aether.run()
       expect(aether.problems.errors.length).toEqual(1)
-      expect(aether.problems.errors[0].message).toEqual('self.getItems has no effect.')
-      expect(aether.problems.errors[0].hint).toEqual('Is it a method? Those need parentheses: self.getItems()')
+      expect(aether.problems.errors[0].message).toEqual('self.getItems has no effect. It needs parentheses: self.getItems()')
       expect(aether.problems.errors[0].range).toEqual([ { ofs : 0, row : 0, col : 0 }, { ofs : 13, row : 0, col : 13 } ])
 
     it "self.getItems missing parentheses row 1", ->
@@ -390,12 +389,11 @@ describe "Python test suite", ->
       x = 5
       self.getItems
       """
-      aether = new Aether language: 'python'
+      aether = new Aether language: 'python', problemContext: thisMethods: ['getItems']
       aether.transpile code
       aether.run()
       expect(aether.problems.errors.length).toEqual(1)
-      expect(aether.problems.errors[0].message).toEqual('self.getItems has no effect.')
-      expect(aether.problems.errors[0].hint).toEqual('Is it a method? Those need parentheses: self.getItems()')
+      expect(aether.problems.errors[0].message).toEqual('self.getItems has no effect. It needs parentheses: self.getItems()')
       expect(aether.problems.errors[0].range).toEqual([ { ofs : 6, row : 1, col : 0 }, { ofs : 19, row : 1, col : 13 } ])
 
     it "Incomplete string", ->
