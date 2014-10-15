@@ -98,7 +98,7 @@ describe "Problem Test Suite", ->
       expect(aether.run()).not.toEqual 'undefinedbar'
       expect(aether.run()).toEqual undefined
       expect(aether.problems.errors).not.toEqual []
-      
+
   describe "Context-aware problems", ->
     it "Brak not defined", ->
       history = []
@@ -208,7 +208,7 @@ describe "Problem Test Suite", ->
       method = aether.createMethod selfValue
       aether.run method
       expect(aether.problems.errors.length).toEqual(1)
-      expect(aether.problems.errors[0].message).toEqual("self.moveUp is not currently unavailable.")
+      expect(aether.problems.errors[0].message).toEqual("self.moveUp is not currently available.")
 
     it "Incomplete 'this' and available method", ->
       selfValue = {}
@@ -222,4 +222,3 @@ describe "Problem Test Suite", ->
       aether.run method
       expect(aether.problems.errors.length).toEqual(1)
       expect(aether.problems.errors[0].message).toEqual("this.moveUp has no effect. It needs parentheses: this.moveUp()")
-

@@ -23,7 +23,7 @@ getImmediateParentOfType = (node, type) ->
   while node
     return node if node.type is type
     node = node.parent
-  
+
 possiblyGeneratorifyAncestorFunction = (node) ->
   node = getImmediateParentOfType node, S.FunctionExpression
   node?.mustBecomeGeneratorFunction = true
@@ -317,7 +317,7 @@ module.exports.makeCheckIncompleteMembers = makeCheckIncompleteMembers = (langua
           if problemContext?.thisMethods? and exp.property.name in problemContext.thisMethods
             m += " It needs parentheses: #{exp.source()}()"
           else if problemContext?.commonThisMethods? and exp.property.name in problemContext.commonThisMethods
-            m = "#{exp.source()} is not currently unavailable."
+            m = "#{exp.source()} is not currently available."
           else
             hint = "Is it a method? Those need parentheses: #{exp.source()}()"
           if node.originalRange
@@ -360,7 +360,7 @@ module.exports.makeYieldConditionally = makeYieldConditionally = (simpleLoops) -
         if simpleLoops and parentWhile = getImmediateParentOfType node, S.WhileStatement
           yieldCountVar = "__yieldCount#{parentWhile.whileIndex}"
           autoYieldStmt = "if (typeof #{yieldCountVar} !== 'undefined' && #{yieldCountVar} !== null) {#{yieldCountVar}++;}"
-        else 
+        else
           autoYieldStmt = ""
         node.update "#{node.source()} if (_aether._shouldYield) { var _yieldValue = _aether._shouldYield; _aether._shouldYield = false; yield _yieldValue; #{autoYieldStmt} }"
       node.yields = true
