@@ -117,6 +117,23 @@ describe "Problem Test Suite", ->
       expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: Brak is not defined")
       expect(aether.problems.errors[0].hint).toEqual("You may need quotes. Did you mean \"Brak\"?")
 
+    it "brak not defined", ->
+      history = []
+      log = (s) -> history.push s
+      attack = -> history.push 'attack'
+      selfValue = {say: log, attack: attack}
+      code = """
+      self.attack(brak)
+      """
+      problemContext = stringReferences: ['Bob', 'Brak', 'Zort']
+      aether = new Aether language: "python", problemContext: problemContext
+      aether.transpile code
+      method = aether.createMethod selfValue
+      aether.run method
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: brak is not defined")
+      expect(aether.problems.errors[0].hint).toEqual("You may need quotes. Did you mean \"Brak\"?")
+
     it "attack not defined", ->
       history = []
       log = (s) -> history.push s
@@ -133,6 +150,65 @@ describe "Problem Test Suite", ->
       expect(aether.problems.errors.length).toEqual(1)
       expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: attack is not defined")
       expect(aether.problems.errors[0].hint).toEqual("Did you mean self.attack()?")
+
+    it "Attack not defined", ->
+      history = []
+      log = (s) -> history.push s
+      attack = -> history.push 'attack'
+      selfValue = {say: log, attack: attack}
+      code = """
+      Attack
+      """
+      problemContext = thisMethods: [ 'log', 'attack', 'tickle' ]
+      aether = new Aether language: "python", problemContext: problemContext
+      aether.transpile code
+      method = aether.createMethod selfValue
+      aether.run method
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: Attack is not defined")
+      expect(aether.problems.errors[0].hint).toEqual("Did you mean self.attack()?")
+
+    it "'moveleft' for thisMethod 'moveLeft'", ->
+      selfValue = {}
+      code = """
+      moveleft
+      """
+      problemContext = thisMethods: ['moveRight', 'moveLeft', 'moveUp', 'moveDown']
+      aether = new Aether language: 'python', problemContext: problemContext
+      aether.transpile code
+      method = aether.createMethod selfValue
+      aether.run method
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: moveleft is not defined")
+      expect(aether.problems.errors[0].hint).toEqual("Did you mean self.moveLeft()?")
+
+    it "'movleft' for thisMethod 'moveLeft'", ->
+      selfValue = {}
+      code = """
+      movleft
+      """
+      problemContext = thisMethods: ['moveRight', 'moveLeft', 'moveUp', 'moveDown']
+      aether = new Aether language: 'python', problemContext: problemContext
+      aether.transpile code
+      method = aether.createMethod selfValue
+      aether.run method
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: movleft is not defined")
+      expect(aether.problems.errors[0].hint).toEqual("Did you mean self.moveLeft()?")
+
+    it "'moveeft' for thisMethod 'moveLeft'", ->
+      selfValue = {}
+      code = """
+      moveeft
+      """
+      problemContext = thisMethods: ['moveRight', 'moveLeft', 'moveUp', 'moveDown']
+      aether = new Aether language: 'python', problemContext: problemContext
+      aether.transpile code
+      method = aether.createMethod selfValue
+      aether.run method
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: moveeft is not defined")
+      expect(aether.problems.errors[0].hint).toEqual("Did you mean self.moveLeft()?")
 
     it "buildables not defined", ->
       history = []
@@ -222,3 +298,18 @@ describe "Problem Test Suite", ->
       aether.run method
       expect(aether.problems.errors.length).toEqual(1)
       expect(aether.problems.errors[0].message).toEqual("this.moveUp has no effect. It needs parentheses: this.moveUp()")
+
+    xit "missing a closing quote: self.attack('Brak)", ->
+      selfValue = {}
+      code = """
+      self.attack('Brak) 
+      """
+      problemContext = thisMethods: ['attack']
+      aether = new Aether language: 'python', problemContext: problemContext
+      aether.transpile code
+      method = aether.createMethod selfValue
+      aether.run method
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(aether.problems.errors[0].message).toEqual("Unterminated string constant")
+      expect(aether.problems.errors[0].hint).toEqual("You may be missing a close quote.  Did you mean self.attack('Brak')?")
+

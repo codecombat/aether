@@ -1,4 +1,5 @@
 ranges = require './ranges'
+string_score = require 'string_score'
 
 # Problem Context (problemContext)
 #
@@ -133,6 +134,18 @@ extractRuntimeErrorDetails = (options) ->
       options.message = "Line #{lineNumber}: #{options.message}"
 
 explainErrorMessage = (msg, hint, context, languageID) ->
+  # Returns updated [msg, hint]
+  
+  # TODO: these should come from the current Aether language
+  thisValue = switch languageID
+    when 'python' then 'self'
+    when 'cofeescript' then '@'
+    else 'this'
+  thisValueAccess = switch languageID
+    when 'python' then 'self.'
+    when 'cofeescript' then '@'
+    else 'this.'
+    
   if msg is "RangeError: Maximum call stack size exceeded"
     msg += ". (Did you use call a function recursively?)"
 
@@ -151,27 +164,71 @@ explainErrorMessage = (msg, hint, context, languageID) ->
         explained = true
         break
       else
-        matchScore = string_score?.score commonMethod, method, 0.5
+        matchScore = commonMethod.score method, 0.5 if string_score?
         if matchScore > closestMatchScore
           [closestMatch, closestMatchScore] = [commonMethod, matchScore]
     unless explained
       if closestMatchScore > 0.25
         msg += ". (Did you mean #{closestMatch}?)"
     msg = msg.replace 'TypeError:', 'Error:'
+
+
+  # Use problemContext to update errors or add hints
   
   else if missingReference = msg.match /ReferenceError: ([^\s]+) is not defined/
-    # Use problemContext to update reference errors
-    # TODO: thisValueAccess should come from the current Aether language
-    thisValueAccess = switch languageID
-      when 'python' then 'self.'
-      when 'cofeescript' then '@'
-      else 'this.'
-    if context?.stringReferences? and missingReference[1] in context.stringReferences
-      hint = "You may need quotes. Did you mean \"#{missingReference[1]}\"?"
-    else if context?.thisMethods? and missingReference[1] in context.thisMethods
-      hint = "Did you mean #{thisValueAccess}#{missingReference[1]}()?"
-    else if context?.thisProperties? and missingReference[1] in context.thisProperties
-      hint = "Did you mean #{thisValueAccess}#{missingReference[1]}?"
+    target = missingReference[1]
+    targetLow = target.toLowerCase()
+
+    # Check for exact match
+    if targetLow is thisValue.toLowerCase()
+      return [msg, "Capitilization is important. Did you mean #{thisValue}?"]
+    if context?.stringReferences? and target in context.stringReferences
+      return [msg, "You may need quotes. Did you mean \"#{target}\"?"]
+    if context?.thisMethods? and target in context.thisMethods
+      return [msg, "Did you mean #{thisValueAccess}#{target}()?"]
+    if context?.thisProperties? and target in context.thisProperties
+      return [msg, "Did you mean #{thisValueAccess}#{target}?"]
+    
+    # Check for case-insensitive match
+    if context?.stringReferences?
+      stringReferencesLow = (s.toLowerCase() for s in context.stringReferences)
+      if targetLow in stringReferencesLow
+        correctTarget = context.stringReferences[stringReferencesLow.indexOf(targetLow)]
+        return [msg, "You may need quotes. Did you mean \"#{correctTarget}\"?"]
+    if context?.thisMethods?
+      thisMethodsLow = (s.toLowerCase() for s in context.thisMethods)
+      if targetLow in thisMethodsLow
+        correctTarget = context.thisMethods[thisMethodsLow.indexOf(targetLow)]
+        return [msg, "Did you mean #{thisValueAccess}#{correctTarget}()?"]
+    if context?.thisProperties?
+      thisPropertiesLow = (s.toLowerCase() for s in context.thisProperties)
+      if targetLow in thisPropertiesLow
+        correctTarget = context.thisProperties[thisPropertiesLow.indexOf(targetLow)]
+        return [msg, "Did you mean #{thisValueAccess}#{correctTarget}?"]
+    
+    
+    # Check for close match
+    return [msg, hint] unless string_score?
+    fuzziness = 0.8
+    acceptMatchThreshold = 0.5
+    [closestMatch, closestScore, closestHint] = ['', 0, '']
+    if context?.stringReferences?
+      for match in context.stringReferences
+        matchScore = match.score target, fuzziness
+        if matchScore > closestScore
+          [closestMatch, closestScore, closestHint] = [match, matchScore, "Did you mean #{match}?"]
+    if context?.thisMethods?
+      for match in context.thisMethods
+        matchScore = match.score target, fuzziness
+        if matchScore > closestScore
+          [closestMatch, closestScore, closestHint] = [match, matchScore, "Did you mean #{thisValueAccess}#{match}()?"]
+    if context?.thisProperties?
+      for match in string.thisProperties
+        matchScore = match.score target, fuzziness
+        if matchScore > closestScore
+          [closestMatch, closestScore, closestHint] = [match, matchScore, "Did you mean #{thisValueAccess}#{match}?"]
+    if closestScore >= acceptMatchThreshold
+      return [msg, closestHint]
 
   [msg, hint]
 
