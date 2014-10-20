@@ -20,6 +20,12 @@ string_score = require 'string_score'
 #   commonThisMethods: methods that are available sometimes, but not awlays
 #
 
+# Esprima Harmony's error messages track V8's
+# https://github.com/ariya/esprima/blob/harmony/esprima.js#L194
+
+# JSHint's error and warning messages
+# https://github.com/jshint/jshint/blob/master/src/messages.js
+
 module.exports.createUserCodeProblem = (options) ->
   options ?= {}
   options.aether ?= @  # Can either be called standalone or as an Aether method
@@ -43,6 +49,8 @@ module.exports.createUserCodeProblem = (options) ->
   p.userInfo = options.userInfo ? {}  # Record extra information with the error here
   p
 
+
+# Transpile Errors
 
 extractTranspileErrorDetails = (options) ->
   code = options.code or ''
@@ -116,16 +124,19 @@ extractTranspileErrorDetails = (options) ->
   options
 
 
+# Runtime Errors
+
 extractRuntimeErrorDetails = (options) ->
   errorContext = options.problemContext or options.aether?.options?.problemContext
   languageID = options.aether?.options?.language
-  if error = options.error
-    options.kind ?= error.name  # I think this will pick up [Error, EvalError, RangeError, ReferenceError, SyntaxError, TypeError, URIError, DOMException]
-    [options.message, options.hint] = explainErrorMessage error.message or error.toString(), error.hint, errorContext, languageID
-    options.level ?= error.level
-    options.userInfo ?= error.userInfo
   # NOTE: lastStatementRange set via instrumentation.logStatementStart(originalNode.originalRange)
   options.range ?= options.aether?.lastStatementRange
+  if error = options.error
+    options.kind ?= error.name  # I think this will pick up [Error, EvalError, RangeError, ReferenceError, SyntaxError, TypeError, URIError, DOMException]
+    options.message = error.message or error.toString()
+    options.hint = error.hint or getHint options.message, errorContext, languageID, options.aether.raw, options.range
+    options.level ?= error.level
+    options.userInfo ?= error.userInfo
   if options.range
     lineNumber = options.range[0].row + 1
     if options.message.search(/^Line \d+/) != -1
@@ -133,108 +144,117 @@ extractRuntimeErrorDetails = (options) ->
     else
       options.message = "Line #{lineNumber}: #{options.message}"
 
-explainErrorMessage = (msg, hint, context, languageID) ->
-  # Returns updated [msg, hint]
+getHint = (msg, context, languageID, code, range) ->
+  # Use problemContext to add hints
+  return "Did you call a function recursively?" if msg is "RangeError: Maximum call stack size exceeded"
+  return unless context?
+  hintCreator = new HintCreator 0.8, 0.5, context, languageID
+  hintCreator.getHint msg, code, range
 
-  # TODO: these should come from the current Aether language
-  thisValue = switch languageID
-    when 'python' then 'self'
-    when 'cofeescript' then '@'
-    else 'this'
-  thisValueAccess = switch languageID
-    when 'python' then 'self.'
-    when 'cofeescript' then '@'
-    else 'this.'
+class HintCreator
+  # Create hints for an error message based on a problem context
+  # TODO: better class name, move this to a separate file
 
-  if msg is "RangeError: Maximum call stack size exceeded"
-    msg += ". (Did you use call a function recursively?)"
+  constructor: (@scoreFuzziness, @acceptMatchThreshold, @context, languageID) ->
+    # TODO: move this language-specific stuff to language-specific code
+    @thisValue = switch languageID
+      when 'python' then 'self'
+      when 'cofeescript' then '@'
+      else 'this'
+    @thisValueAccess = switch languageID
+      when 'python' then 'self.'
+      when 'cofeescript' then '@'
+      else 'this.'
+    @methodRegex = switch languageID
+      when 'python' then new RegExp "self\\.(\\w+)\\("
+      when 'cofeescript' then new RegExp "@(\\w+)\\("
+      else new RegExp "this\\.(\\w+)\\("
 
-  if missingMethodMatch = msg.match /has no method '(.*?)'/
-    method = missingMethodMatch[1]
-    [closestMatch, closestMatchScore] = ['Murgatroyd Kerfluffle', 0]
-    explained = false
-    commonMethods = if context?.commonThisMethods? then context.commonThisMethods else []
-    for commonMethod in commonMethods
-      if method is commonMethod
-        msg += ". (#{missingMethodMatch[1]} not available in this challenge.)"
-        explained = true
-        break
-      else if method.toLowerCase() is commonMethod.toLowerCase()
-        msg = "#{method} should be #{commonMethod} because it is case-sensitive."
-        explained = true
-        break
-      else
-        matchScore = commonMethod.score method, 0.5 if string_score?
-        if matchScore > closestMatchScore
-          [closestMatch, closestMatchScore] = [commonMethod, matchScore]
-    unless explained
-      if closestMatchScore > 0.25
-        msg += ". (Did you mean #{closestMatch}?)"
-    msg = msg.replace 'TypeError:', 'Error:'
+  getHint: (msg, code, range) ->
+    return unless @context?
+    if (missingMethodMatch = msg.match(/has no method '(.*?)'/)) or msg.match(/is not a function/) or msg.match(/has no method/)
+      # NOTE: We only get this for valid thisValue and parens: self.blahblah()
+      # NOTE: We get different error messages for this based on javascript engine:
+      # Chrome: 'undefined is not a function'
+      # Firefox: 'tmp5[tmp6] is not a function'
+      # test framework: 'Line 1: Object #<Object> has no method 'moveright'
+      if missingMethodMatch
+        target = missingMethodMatch[1]
+      else if range?
+        # TODO: this is not covered by any test cases yet, because our test environment throws different errors
+        codeSnippet = code.substring range[0].ofs, range[1].ofs
+        missingMethodMatch = @methodRegex.exec codeSnippet
+        target = missingMethodMatch[1] if missingMethodMatch?
+      hint = if target? then @getNoFunctionHint target
+    else if missingReference = msg.match /ReferenceError: ([^\s]+) is not defined/
+      hint = @getReferenceErrorHint missingReference[1]
+    hint
 
+  getNoFunctionHint: (target) ->
+    # Check thisMethods
+    unless hint? then hint = @getNoCaseMatch target, @context.thisMethods, (match) =>
+      "Did you mean #{@thisValueAccess}#{match}()?"
+    unless hint? then hint = @getScoreMatch target, [candidates: @context.thisMethods, msgFormatFn: (match) =>
+      "Did you mean #{@thisValueAccess}#{match}()?"]
+    # Check commonThisMethods
+    unless hint? then hint = @getExactMatch target, @context.commonThisMethods, (match) ->
+      "#{match} is not available in this challenge."
+    unless hint? then hint = @getNoCaseMatch target, @context.commonThisMethods, (match) ->
+      "Did you mean #{match}? It is not available in this challenge."
+    unless hint? then hint = @getScoreMatch target, [candidates: @context.commonThisMethods, msgFormatFn: (match) ->
+      "Did you mean #{match}? It is not available in this challenge."]
+    hint
 
-  # Use problemContext to update errors or add hints
+  getReferenceErrorHint: (target) ->
+    # Check missing quotes
+    unless hint? then hint = @getExactMatch target, @context.stringReferences, (match) ->
+      "You may need quotes. Did you mean \"#{match}\"?"
+    # Check this props
+    unless hint? then hint = @getExactMatch target, @context.thisMethods, (match) =>
+      "Did you mean #{@thisValueAccess}#{match}()?"
+    unless hint? then hint = @getExactMatch target, @context.thisProperties, (match) =>
+      "Did you mean #{@thisValueAccess}#{match}?"
+    # Check case-insensitive, quotes, this props
+    if not hint? and target.toLowerCase() is @thisValue.toLowerCase()
+      hint = "Capitilization is important. Did you mean #{@thisValue}?"
+    unless hint? then hint = @getNoCaseMatch target, @context.stringReferences, (match) ->
+      "You may need quotes. Did you mean \"#{match}\"?"
+    unless hint? then hint = @getNoCaseMatch target, @context.thisMethods, (match) =>
+      "Did you mean #{@thisValueAccess}#{match}()?"
+    unless hint? then hint = @getNoCaseMatch target, @context.thisProperties, (match) =>
+      "Did you mean #{@thisValueAccess}#{match}?"
+    # Check score match, quotes, this props
+    unless hint? then hint = @getScoreMatch target, [
+      {candidates: [@thisValue], msgFormatFn: (match) -> "Did you mean #{match}?"},
+      {candidates: @context.stringReferences, msgFormatFn: (match) -> "You may need quotes. Did you mean \"#{match}\"?"},
+      {candidates: @context.thisMethods, msgFormatFn: (match) => "Did you mean #{@thisValueAccess}#{match}()?"},
+      {candidates: @context.thisProperties, msgFormatFn: (match) =>"Did you mean #{@thisValueAccess}#{match}?"}]
+    # Check commonThisMethods
+    unless hint? then hint = @getExactMatch target, @context.commonThisMethods, (match) ->
+      "#{match} is not available in this challenge."
+    unless hint? then hint = @getNoCaseMatch target, @context.commonThisMethods, (match) ->
+      "Did you mean #{match}? It is not available in this challenge."
+    unless hint? then hint = @getScoreMatch target, [candidates: @context.commonThisMethods, msgFormatFn: (match) ->
+      "Did you mean #{match}? It is not available in this challenge."]
+    hint
 
-  else if missingReference = msg.match /ReferenceError: ([^\s]+) is not defined/
-    target = missingReference[1]
-    targetLow = target.toLowerCase()
+  getExactMatch: (target, candidates, msgFormatFn) ->
+    return unless candidates?
+    msgFormatFn target if target in candidates
 
-    # Check for exact match
-    if targetLow is thisValue.toLowerCase()
-      return [msg, "Capitilization is important. Did you mean #{thisValue}?"]
-    if context?.stringReferences? and target in context.stringReferences
-      return [msg, "You may need quotes. Did you mean \"#{target}\"?"]
-    if context?.thisMethods? and target in context.thisMethods
-      return [msg, "Did you mean #{thisValueAccess}#{target}()?"]
-    if context?.thisProperties? and target in context.thisProperties
-      return [msg, "Did you mean #{thisValueAccess}#{target}?"]
+  getNoCaseMatch: (target, candidates, msgFormatFn) ->
+    return unless candidates?
+    candidatesLow = (s.toLowerCase() for s in candidates)
+    msgFormatFn candidates[index] if (index = candidatesLow.indexOf target.toLowerCase()) >= 0
 
-    # Check for case-insensitive match
-    if context?.stringReferences?
-      stringReferencesLow = (s.toLowerCase() for s in context.stringReferences)
-      if targetLow in stringReferencesLow
-        correctTarget = context.stringReferences[stringReferencesLow.indexOf(targetLow)]
-        return [msg, "You may need quotes. Did you mean \"#{correctTarget}\"?"]
-    if context?.thisMethods?
-      thisMethodsLow = (s.toLowerCase() for s in context.thisMethods)
-      if targetLow in thisMethodsLow
-        correctTarget = context.thisMethods[thisMethodsLow.indexOf(targetLow)]
-        return [msg, "Did you mean #{thisValueAccess}#{correctTarget}()?"]
-    if context?.thisProperties?
-      thisPropertiesLow = (s.toLowerCase() for s in context.thisProperties)
-      if targetLow in thisPropertiesLow
-        correctTarget = context.thisProperties[thisPropertiesLow.indexOf(targetLow)]
-        return [msg, "Did you mean #{thisValueAccess}#{correctTarget}?"]
-
-
-    # Check for close match
-    return [msg, hint] unless string_score?
-    fuzziness = 0.8
-    acceptMatchThreshold = 0.5
-    [closestMatch, closestScore, closestHint] = ['', 0, '']
-    if context?.stringReferences?
-      for match in context.stringReferences
-        matchScore = match.score target, fuzziness
-        if matchScore > closestScore
-          [closestMatch, closestScore, closestHint] = [match, matchScore, "Did you mean #{match}?"]
-    if context?.thisMethods?
-      for match in context.thisMethods
-        matchScore = match.score target, fuzziness
-        if matchScore > closestScore
-          [closestMatch, closestScore, closestHint] = [match, matchScore, "Did you mean #{thisValueAccess}#{match}()?"]
-    if context?.thisProperties?
-      for match in context.thisProperties
-        matchScore = match.score target, fuzziness
-        if matchScore > closestScore
-          [closestMatch, closestScore, closestHint] = [match, matchScore, "Did you mean #{thisValueAccess}#{match}?"]
-    if closestScore >= acceptMatchThreshold
-      return [msg, closestHint]
-
-  [msg, hint]
-
-
-# Esprima Harmony's error messages track V8's
-# https://github.com/ariya/esprima/blob/harmony/esprima.js#L194
-
-# JSHint's error and warning messages
-# https://github.com/jshint/jshint/blob/master/src/messages.js
+  getScoreMatch: (target, candidatesList) ->
+    # candidatesList is an array of candidates objects. E.g. [{candidates: [], msgFormatFn: ()->}, ...]
+    # This allows a score match across multiple lists of candidates (e.g. thisMethods and thisProperties)
+    return unless string_score?
+    [closestMatch, closestScore, msg] = ['', 0, '']
+    for set in candidatesList
+      if set.candidates?
+        for match in set.candidates
+          matchScore = match.score target, @scoreFuzziness
+          [closestMatch, closestScore, msg] = [match, matchScore, set.msgFormatFn(match)] if matchScore > closestScore
+    msg if closestScore >= @acceptMatchThreshold
