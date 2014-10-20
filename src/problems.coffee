@@ -18,7 +18,7 @@ string_score = require 'string_score'
 #   thisMethods: methods available on the 'this' object
 #   thisProperties: properties available on the 'this' object
 #   commonThisMethods: methods that are available sometimes, but not awlays
-#   
+#
 
 module.exports.createUserCodeProblem = (options) ->
   options ?= {}
@@ -135,7 +135,7 @@ extractRuntimeErrorDetails = (options) ->
 
 explainErrorMessage = (msg, hint, context, languageID) ->
   # Returns updated [msg, hint]
-  
+
   # TODO: these should come from the current Aether language
   thisValue = switch languageID
     when 'python' then 'self'
@@ -145,7 +145,7 @@ explainErrorMessage = (msg, hint, context, languageID) ->
     when 'python' then 'self.'
     when 'cofeescript' then '@'
     else 'this.'
-    
+
   if msg is "RangeError: Maximum call stack size exceeded"
     msg += ". (Did you use call a function recursively?)"
 
@@ -174,7 +174,7 @@ explainErrorMessage = (msg, hint, context, languageID) ->
 
 
   # Use problemContext to update errors or add hints
-  
+
   else if missingReference = msg.match /ReferenceError: ([^\s]+) is not defined/
     target = missingReference[1]
     targetLow = target.toLowerCase()
@@ -188,7 +188,7 @@ explainErrorMessage = (msg, hint, context, languageID) ->
       return [msg, "Did you mean #{thisValueAccess}#{target}()?"]
     if context?.thisProperties? and target in context.thisProperties
       return [msg, "Did you mean #{thisValueAccess}#{target}?"]
-    
+
     # Check for case-insensitive match
     if context?.stringReferences?
       stringReferencesLow = (s.toLowerCase() for s in context.stringReferences)
@@ -205,8 +205,8 @@ explainErrorMessage = (msg, hint, context, languageID) ->
       if targetLow in thisPropertiesLow
         correctTarget = context.thisProperties[thisPropertiesLow.indexOf(targetLow)]
         return [msg, "Did you mean #{thisValueAccess}#{correctTarget}?"]
-    
-    
+
+
     # Check for close match
     return [msg, hint] unless string_score?
     fuzziness = 0.8
@@ -223,7 +223,7 @@ explainErrorMessage = (msg, hint, context, languageID) ->
         if matchScore > closestScore
           [closestMatch, closestScore, closestHint] = [match, matchScore, "Did you mean #{thisValueAccess}#{match}()?"]
     if context?.thisProperties?
-      for match in string.thisProperties
+      for match in context.thisProperties
         matchScore = match.score target, fuzziness
         if matchScore > closestScore
           [closestMatch, closestScore, closestHint] = [match, matchScore, "Did you mean #{thisValueAccess}#{match}?"]
