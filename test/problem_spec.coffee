@@ -35,6 +35,18 @@ describe "Problem Test Suite", ->
       expect(aether.problems.errors[0].message).toEqual("Unterminated string constant")
       expect(aether.problems.errors[0].hint).toEqual("You may be missing a closing quote character. Did you mean ''?")
 
+    it "Unexpected indent", ->
+      code = """
+      x = 5
+        y = 7
+      """
+      aether = new Aether language: 'python'
+      aether.transpile code
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(aether.problems.errors[0].type).toEqual('transpile')
+      expect(aether.problems.errors[0].message).toEqual("Unexpected indent")
+      expect(aether.problems.errors[0].hint).toEqual("Commands lined up vertically? See the highlighted spaces in your code.")
+
     xit "missing a closing quote: s = \"hi", ->
       # https://github.com/codecombat/aether/issues/113
       code = """

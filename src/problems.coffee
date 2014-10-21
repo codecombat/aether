@@ -137,6 +137,8 @@ getTranspileHint = (msg, context, languageID, code, range) ->
       codeSnippet = codeSnippet.slice(1)
       codeSnippet = codeSnippet.substring 0, nonAlphNumMatch.index if nonAlphNumMatch = codeSnippet.match /[^\w]/
       hint = "You may be missing a closing quote character. Did you mean #{quoteCharacter}#{codeSnippet}#{quoteCharacter}?"
+  else if msg is "Unexpected indent"
+    hint = "Commands lined up vertically? See the highlighted spaces in your code."
   hint
 
 # Runtime Errors
