@@ -174,10 +174,44 @@ describe "Problem Test Suite", ->
         method = aether.createMethod selfValue
         aether.run method
         expect(aether.problems.errors.length).toEqual(1)
+        expect(aether.problems.errors[0].type).toEqual("runtime")
         expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: x is not defined")
         expect(aether.problems.errors[0].hint).toEqual("")
         expect(aether.problems.errors[0].range).toEqual([ { ofs: 0, row: 0, col: 0 }, { ofs: 1, row: 0, col: 1 } ])
 
+      it "loop is not defined", ->
+        code = "loop"
+        aether = new Aether language: "python", simpleLoops: true
+        aether.transpile code
+        aether.run()
+        expect(aether.problems.errors.length).toEqual(1)
+        expect(aether.problems.errors[0].type).toEqual("runtime")
+        expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: loop is not defined")
+        expect(aether.problems.errors[0].hint).toEqual("You are missing a `:` after `loop`.")
+
+      it "loop is not defined w/ newline", ->
+        code = """
+        loop
+        x = 5
+        """
+        aether = new Aether language: "python", simpleLoops: true
+        aether.transpile code
+        aether.run()
+        expect(aether.problems.errors.length).toEqual(1)
+        expect(aether.problems.errors[0].type).toEqual("runtime")
+        expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: loop is not defined")
+        expect(aether.problems.errors[0].hint).toEqual("You are missing a `:` after `loop`.")
+
+      it "loop is not defined w/o simpleLoops", ->
+        code = "loop"
+        aether = new Aether language: "python"
+        aether.transpile code
+        method = aether.createMethod
+        aether.run()
+        expect(aether.problems.errors.length).toEqual(1)
+        expect(aether.problems.errors[0].type).toEqual("runtime")
+        expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: loop is not defined")
+        expect(aether.problems.errors[0].hint).toEqual("")
 
     describe "No function", ->
 

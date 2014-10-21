@@ -144,14 +144,12 @@ getTranspileHint = (msg, context, languageID, code, range) ->
 # Runtime Errors
 
 extractRuntimeErrorDetails = (options) ->
-  errorContext = options.problemContext or options.aether?.options?.problemContext
-  languageID = options.aether?.options?.language
   # NOTE: lastStatementRange set via instrumentation.logStatementStart(originalNode.originalRange)
   options.range ?= options.aether?.lastStatementRange
   if error = options.error
     options.kind ?= error.name  # I think this will pick up [Error, EvalError, RangeError, ReferenceError, SyntaxError, TypeError, URIError, DOMException]
     options.message = error.message or error.toString()
-    options.hint = error.hint or getRuntimeHint options.message, errorContext, languageID, options.aether.raw, options.range
+    options.hint = error.hint or getRuntimeHint options
     options.level ?= error.level
     options.userInfo ?= error.userInfo
   if options.range
@@ -161,12 +159,30 @@ extractRuntimeErrorDetails = (options) ->
     else
       options.message = "Line #{lineNumber}: #{options.message}"
 
-getRuntimeHint = (msg, context, languageID, code, range) ->
+getRuntimeHint = (options) ->
+  code = options.aether.raw or ''
+  context = options.problemContext or options.aether.options?.problemContext
+  languageID = options.aether.options?.language
+  simpleLoops = options.aether.options?.simpleLoops
+
+  # Check stack overflow
+  return "Did you call a function recursively?" if options.message is "RangeError: Maximum call stack size exceeded"
+  
+  # Check loop ReferenceError
+  if simpleLoops and languageID is 'python' and /ReferenceError: loop is not defined/.test options.message
+    # TODO: move this language-specific stuff to language-specific code
+    if options.range?
+      index = options.range[1].ofs
+      index++ while index < code.length and /[^\n:]/.test code[index]
+      hint = "You are missing a `:` after `loop`." if index >= code.length or code[index] is '\n'
+    else
+      hint = "Are you missing a `:` after `loop`?"
+    return hint
+
   # Use problemContext to add hints
-  return "Did you call a function recursively?" if msg is "RangeError: Maximum call stack size exceeded"
   return unless context?
   hintCreator = new HintCreator 0.8, 0.5, context, languageID
-  hintCreator.getHint msg, code, range
+  hintCreator.getHint options.message, code, options.range
 
 class HintCreator
   # Create hints for an error message based on a problem context
