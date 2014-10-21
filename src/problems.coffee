@@ -116,6 +116,10 @@ extractTranspileErrorDetails = (options) ->
         start.ofs -= row * 4
         end.ofs -= row * 4
         options.range = [start, end]
+
+        errorContext = options.problemContext or options.aether?.options?.problemContext
+        languageID = options.aether?.options?.language
+        options.hint = error.hint or getTranspileHint options.message, errorContext, languageID, options.aether.raw, options.range
     when 'iota'
       null
     else
@@ -123,6 +127,17 @@ extractTranspileErrorDetails = (options) ->
 
   options
 
+getTranspileHint = (msg, context, languageID, code, range) ->
+  # TODO: JavaScript blocked by jshint range bug: https://github.com/codecombat/aether/issues/113
+  if msg is "Unterminated string constant" and range?
+    codeSnippet = code.substring range[0].ofs, range[1].ofs
+    # Trim codeSnippet so we can construct the correct suggestion with an ending quote
+    if codeSnippet.length > 0 and codeSnippet[0] in ["'", '"']
+      quoteCharacter = codeSnippet[0]
+      codeSnippet = codeSnippet.slice(1)
+      codeSnippet = codeSnippet.substring 0, nonAlphNumMatch.index if nonAlphNumMatch = codeSnippet.match /[^\w]/
+      hint = "You may be missing a closing quote character. Did you mean #{quoteCharacter}#{codeSnippet}#{quoteCharacter}?"
+  hint
 
 # Runtime Errors
 
@@ -134,7 +149,7 @@ extractRuntimeErrorDetails = (options) ->
   if error = options.error
     options.kind ?= error.name  # I think this will pick up [Error, EvalError, RangeError, ReferenceError, SyntaxError, TypeError, URIError, DOMException]
     options.message = error.message or error.toString()
-    options.hint = error.hint or getHint options.message, errorContext, languageID, options.aether.raw, options.range
+    options.hint = error.hint or getRuntimeHint options.message, errorContext, languageID, options.aether.raw, options.range
     options.level ?= error.level
     options.userInfo ?= error.userInfo
   if options.range
@@ -144,7 +159,7 @@ extractRuntimeErrorDetails = (options) ->
     else
       options.message = "Line #{lineNumber}: #{options.message}"
 
-getHint = (msg, context, languageID, code, range) ->
+getRuntimeHint = (msg, context, languageID, code, range) ->
   # Use problemContext to add hints
   return "Did you call a function recursively?" if msg is "RangeError: Maximum call stack size exceeded"
   return unless context?

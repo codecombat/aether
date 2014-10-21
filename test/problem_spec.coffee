@@ -1,6 +1,52 @@
 Aether = require '../aether'
 
 describe "Problem Test Suite", ->
+  describe "Transpile problems", ->
+    it "missing a closing quote: self.attack('Brak)", ->
+      code = """
+      self.attack('Brak) 
+      """
+      aether = new Aether language: 'python'
+      aether.transpile code
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(aether.problems.errors[0].type).toEqual('transpile')
+      expect(aether.problems.errors[0].message).toEqual("Unterminated string constant")
+      expect(aether.problems.errors[0].hint).toEqual("You may be missing a closing quote character. Did you mean 'Brak'?")
+
+    it "missing a closing quote: s = \"hi", ->
+      code = """
+      s = "hi
+      """
+      aether = new Aether language: 'python'
+      aether.transpile code
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(aether.problems.errors[0].type).toEqual('transpile')
+      expect(aether.problems.errors[0].message).toEqual("Unterminated string constant")
+      expect(aether.problems.errors[0].hint).toEqual("You may be missing a closing quote character. Did you mean \"hi\"?")
+
+    it "missing a closing quote: '", ->
+      code = """
+      '
+      """
+      aether = new Aether language: 'python'
+      aether.transpile code
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(aether.problems.errors[0].type).toEqual('transpile')
+      expect(aether.problems.errors[0].message).toEqual("Unterminated string constant")
+      expect(aether.problems.errors[0].hint).toEqual("You may be missing a closing quote character. Did you mean ''?")
+
+    xit "missing a closing quote: s = \"hi", ->
+      # https://github.com/codecombat/aether/issues/113
+      code = """
+      var s = "hi
+      """
+      aether = new Aether
+      aether.transpile code
+      expect(aether.problems.errors.length).toEqual(3)
+      expect(aether.problems.errors[0].type).toEqual('transpile')
+      expect(aether.problems.errors[0].message).toEqual("Unclosed string.")
+      expect(aether.problems.errors[0].hint).toEqual("You may be missing a closing quote character. Did you mean \"hi\"?")
+
   describe "Runtime problems", ->
     it "Should capture runtime problems", ->
       # 0123456789012345678901234567
@@ -517,21 +563,3 @@ describe "Problem Test Suite", ->
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].message).toEqual("this.moveUp has no effect. It needs parentheses: this.moveUp()")
         expect(aether.problems.errors[0].hint).toEqual("")
-
-    describe "Unterminated string constant", ->
-
-      xit "missing a closing quote: self.attack('Brak)", ->
-        selfValue = {}
-        code = """
-        self.attack('Brak) 
-        """
-        problemContext = thisMethods: ['attack']
-        aether = new Aether language: 'python', problemContext: problemContext
-        aether.transpile code
-        method = aether.createMethod selfValue
-        aether.run method
-        expect(aether.problems.errors.length).toEqual(1)
-        expect(aether.problems.errors[0].type).toEqual('runtime')
-        expect(aether.problems.errors[0].message).toEqual("Unterminated string constant")
-        expect(aether.problems.errors[0].hint).toEqual("You may be missing a close quote.  Did you mean self.attack('Brak')?")
-
