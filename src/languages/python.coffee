@@ -32,7 +32,7 @@ module.exports = class Python extends Language
       return true
 
   # Replace 'loop:' with 'while True:'
-  replaceLoops: (rawCode, aether) ->
+  replaceLoops: (rawCode) ->
     # rawCode is pre-wrap
     return [rawCode, []] if rawCode.indexOf('loop:') is -1
     convertedCode = ""
