@@ -362,7 +362,7 @@ module.exports.makeYieldConditionally = makeYieldConditionally = (simpleLoops) -
           autoYieldStmt = "if (typeof #{yieldCountVar} !== 'undefined' && #{yieldCountVar} !== null) {#{yieldCountVar}++;}"
         else
           autoYieldStmt = ""
-        node.update "#{node.source()} if (_aether._shouldYield) { var _yieldValue = _aether._shouldYield; _aether._shouldYield = false; yield _yieldValue; #{autoYieldStmt} }"
+        node.update "#{node.source()} if (_aether._shouldYield) { var _yieldValue = _aether._shouldYield; _aether._shouldYield = false; if (this.onAetherYield) { this.onAetherYield(_yieldValue); } yield _yieldValue; #{autoYieldStmt} }"
       node.yields = true
       possiblyGeneratorifyAncestorFunction node unless node.mustBecomeGeneratorFunction
     else if node.mustBecomeGeneratorFunction
@@ -371,7 +371,7 @@ module.exports.makeYieldConditionally = makeYieldConditionally = (simpleLoops) -
       # Update call to generatorified user function to process yields, and set return result
       userFnMap = getUserFnMap(node) unless userFnMap
       if (fnExpr = getUserFnExpr(userFnMap, node.right)) and possiblyGeneratorifyUserFunction fnExpr
-        node.update "var __gen#{node.left.source()} = #{node.right.source()}; while (true) { var __result#{node.left.source()} = __gen#{node.left.source()}.next(); if (__result#{node.left.source()}.done) { #{node.left.source()} = __result#{node.left.source()}.value; break; } yield __result#{node.left.source()}.value;}"
+        node.update "var __gen#{node.left.source()} = #{node.right.source()}; while (true) { var __result#{node.left.source()} = __gen#{node.left.source()}.next(); if (__result#{node.left.source()}.done) { #{node.left.source()} = __result#{node.left.source()}.value; break; } var _yieldValue = __result#{node.left.source()}.value; if (this.onAetherYield) { this.onAetherYield(_yieldValue); } yield _yieldValue;}"
 
 module.exports.makeSimpleLoopsYieldAutomatically = makeSimpleLoopsYieldAutomatically = (replacedLoops, wrappedCodePrefix) ->
   # Add a yield to the end of simple loops, which executes if no other yields do
@@ -393,7 +393,7 @@ module.exports.makeSimpleLoopsYieldAutomatically = makeSimpleLoopsYieldAutomatic
           else
             console.warn "No source() for", item
             return
-        bodySource += " if (__yieldCount#{node.whileIndex} === 0) {yield 'simple loop...';}"
+        bodySource += " if (this.onAetherYield) { this.onAetherYield('simple loop'); } if (__yieldCount#{node.whileIndex} === 0) { yield 'simple loop...';}"
         node.update "while (#{node.test.source()}) {#{bodySource}}"
         possiblyGeneratorifyAncestorFunction node
 
