@@ -11,7 +11,7 @@ describe "Problem Test Suite", ->
       expect(aether.problems.errors.length).toEqual(1)
       expect(aether.problems.errors[0].type).toEqual('transpile')
       expect(aether.problems.errors[0].message).toEqual("Unterminated string constant")
-      expect(aether.problems.errors[0].hint).toEqual("You may be missing a closing quote character. Did you mean 'Brak'?")
+      expect(aether.problems.errors[0].hint).toEqual("Missing a quote character. Did you mean 'Brak'?")
 
     it "missing a closing quote: s = \"hi", ->
       code = """
@@ -22,7 +22,7 @@ describe "Problem Test Suite", ->
       expect(aether.problems.errors.length).toEqual(1)
       expect(aether.problems.errors[0].type).toEqual('transpile')
       expect(aether.problems.errors[0].message).toEqual("Unterminated string constant")
-      expect(aether.problems.errors[0].hint).toEqual("You may be missing a closing quote character. Did you mean \"hi\"?")
+      expect(aether.problems.errors[0].hint).toEqual("Missing a quote character. Did you mean \"hi\"?")
 
     it "missing a closing quote: '", ->
       code = """
@@ -33,7 +33,7 @@ describe "Problem Test Suite", ->
       expect(aether.problems.errors.length).toEqual(1)
       expect(aether.problems.errors[0].type).toEqual('transpile')
       expect(aether.problems.errors[0].message).toEqual("Unterminated string constant")
-      expect(aether.problems.errors[0].hint).toEqual("You may be missing a closing quote character. Did you mean ''?")
+      expect(aether.problems.errors[0].hint).toEqual("Missing a quote character. Did you mean ''?")
 
     it "Unexpected indent", ->
       code = """
@@ -45,7 +45,7 @@ describe "Problem Test Suite", ->
       expect(aether.problems.errors.length).toEqual(1)
       expect(aether.problems.errors[0].type).toEqual('transpile')
       expect(aether.problems.errors[0].message).toEqual("Unexpected indent")
-      expect(aether.problems.errors[0].hint).toEqual("Commands lined up vertically? See the highlighted spaces in your code.")
+      expect(aether.problems.errors[0].hint).toEqual("Lines need same indentation?")
 
     xit "missing a closing quote: s = \"hi", ->
       # https://github.com/codecombat/aether/issues/113
@@ -58,6 +58,54 @@ describe "Problem Test Suite", ->
       expect(aether.problems.errors[0].type).toEqual('transpile')
       expect(aether.problems.errors[0].message).toEqual("Unclosed string.")
       expect(aether.problems.errors[0].hint).toEqual("You may be missing a closing quote character. Did you mean \"hi\"?")
+
+    it "Unexpected token 'self move'", ->
+      code = """
+      self move
+      """
+      problemContext = thisMethods: [ 'moveUp']
+      aether = new Aether language: "python", problemContext: problemContext
+      aether.transpile(code)
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(aether.problems.errors[0].type).toEqual('transpile')
+      expect(aether.problems.errors[0].message).toEqual("Unexpected token")
+      expect(aether.problems.errors[0].hint).toEqual("Did you mean self.moveUp()?")
+
+    it "Unexpected token 'self self.move'", ->
+      code = """
+      self self.move
+      """
+      problemContext = thisMethods: [ 'moveUp']
+      aether = new Aether language: "python", problemContext: problemContext
+      aether.transpile(code)
+      expect(aether.problems.errors.length).toEqual(2)
+      expect(aether.problems.errors[0].type).toEqual('transpile')
+      expect(aether.problems.errors[0].message).toEqual("Unexpected token")
+      expect(aether.problems.errors[0].hint).toEqual("Remove extra self")
+
+    it "Unexpected token 'self.moveUp())'", ->
+      code = """
+      self.moveUp())
+      """
+      problemContext = thisMethods: [ 'moveUp']
+      aether = new Aether language: "python", problemContext: problemContext
+      aether.transpile(code)
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(aether.problems.errors[0].type).toEqual('transpile')
+      expect(aether.problems.errors[0].message).toEqual("Unexpected token")
+      expect(aether.problems.errors[0].hint).toEqual("Remove extra )")
+
+    it "Unexpected token 'self.moveUp()self.moveDown()'", ->
+      code = """
+      self.moveUp()self.moveDown()
+      """
+      problemContext = thisMethods: [ 'moveUp', 'moveDown']
+      aether = new Aether language: "python", problemContext: problemContext
+      aether.transpile(code)
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(aether.problems.errors[0].type).toEqual('transpile')
+      expect(aether.problems.errors[0].message).toEqual("Unexpected token")
+      expect(aether.problems.errors[0].hint).toEqual("Put each command on a separate line")
 
   describe "Runtime problems", ->
     it "Should capture runtime problems", ->
@@ -339,7 +387,7 @@ describe "Problem Test Suite", ->
         aether.run method
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: Brak is not defined")
-        expect(aether.problems.errors[0].hint).toEqual("You may need quotes. Did you mean \"Brak\"?")
+        expect(aether.problems.errors[0].hint).toEqual("Missing quotes. Try \"Brak\"")
 
       it "Exact thisMethods", ->
         selfValue = {}
@@ -404,7 +452,7 @@ describe "Problem Test Suite", ->
         aether.run method
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: sElf is not defined")
-        expect(aether.problems.errors[0].hint).toEqual("Capitilization is important. Did you mean self?")
+        expect(aether.problems.errors[0].hint).toEqual("Capitilization problem? Try self")
 
       it "Case stringReferences", ->
         history = []
@@ -421,7 +469,7 @@ describe "Problem Test Suite", ->
         aether.run method
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: brak is not defined")
-        expect(aether.problems.errors[0].hint).toEqual("You may need quotes. Did you mean \"Brak\"?")
+        expect(aether.problems.errors[0].hint).toEqual("Missing quotes.  Try \"Brak\"")
 
       it "Case thisMethods", ->
         selfValue = {}
@@ -436,7 +484,7 @@ describe "Problem Test Suite", ->
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].type).toEqual("runtime")
         expect(aether.problems.errors[0].message).toEqual("Line 1: Object #<Object> has no method 'moveright'")
-        expect(aether.problems.errors[0].hint).toEqual("Did you mean this.moveRight()?")
+        expect(aether.problems.errors[0].hint).toEqual("Capitilization problem? Try this.moveRight()")
 
       it "Case thisProperties", ->
         history = []
@@ -487,7 +535,7 @@ describe "Problem Test Suite", ->
         aether.run method
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: brOk is not defined")
-        expect(aether.problems.errors[0].hint).toEqual("You may need quotes. Did you mean \"Brak\"?")
+        expect(aether.problems.errors[0].hint).toEqual("Missing quotes. Try \"Brak\"")
 
       it "Score thisMethods", ->
         selfValue = {}
@@ -593,6 +641,22 @@ describe "Problem Test Suite", ->
         expect(aether.problems.errors[0].type).toEqual('runtime')
         expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: atac is not defined")
         expect(aether.problems.errors[0].hint).toEqual("Did you mean attack? It is not available in this challenge.")
+
+    describe "Missing property", ->
+      it "self.self.moveUp()", ->
+        selfValue = {}
+        code = """
+        self.self.moveUp()
+        """
+        problemContext = thisMethods: ['moveUp'], commonThisMethods: ['attack']
+        aether = new Aether problemContext: problemContext, language: 'python'
+        aether.transpile code
+        method = aether.createMethod selfValue
+        aether.run method
+        expect(aether.problems.errors.length).toEqual(1)
+        expect(aether.problems.errors[0].type).toEqual('runtime')
+        expect(aether.problems.errors[0].message).toEqual("Line 1: Cannot call method 'moveUp' of undefined")
+        expect(aether.problems.errors[0].hint).toEqual("Did you mean self.moveUp()?")
 
     describe "transforms.makeCheckIncompleteMembers", ->
 

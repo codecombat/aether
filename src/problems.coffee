@@ -26,6 +26,9 @@ string_score = require 'string_score'
 # JSHint's error and warning messages
 # https://github.com/jshint/jshint/blob/master/src/messages.js
 
+scoreFuzziness = 0.8
+acceptMatchThreshold = 0.5
+
 module.exports.createUserCodeProblem = (options) ->
   options ?= {}
   options.aether ?= @  # Can either be called standalone or as an Aether method
@@ -128,6 +131,7 @@ extractTranspileErrorDetails = (options) ->
   options
 
 getTranspileHint = (msg, context, languageID, code, range) ->
+  # TODO: Only used by Python currently
   # TODO: JavaScript blocked by jshint range bug: https://github.com/codecombat/aether/issues/113
   if msg is "Unterminated string constant" and range?
     codeSnippet = code.substring range[0].ofs, range[1].ofs
@@ -136,9 +140,33 @@ getTranspileHint = (msg, context, languageID, code, range) ->
       quoteCharacter = codeSnippet[0]
       codeSnippet = codeSnippet.slice(1)
       codeSnippet = codeSnippet.substring 0, nonAlphNumMatch.index if nonAlphNumMatch = codeSnippet.match /[^\w]/
-      hint = "You may be missing a closing quote character. Did you mean #{quoteCharacter}#{codeSnippet}#{quoteCharacter}?"
+      hint = "Missing a quote character. Did you mean #{quoteCharacter}#{codeSnippet}#{quoteCharacter}?"
   else if msg is "Unexpected indent"
-    hint = "Commands lined up vertically? See the highlighted spaces in your code."
+    hint = "Lines need same indentation?"
+  else if msg.indexOf("Unexpected token") >= 0 and context?
+    codeSnippet = code.substring range[0].ofs, range[1].ofs
+
+    # Check for extra thisValue + space at beginning of line
+    lineStart = code.substring range[0].ofs - range[0].col, range[0].ofs
+    hintCreator = new HintCreator context, languageID
+    if lineStart.indexOf(hintCreator.thisValue) is 0 and lineStart.trim().length < lineStart.length
+      # TODO: update error range so this extra bit is highlighted
+      if codeSnippet.indexOf(hintCreator.thisValue) is 0
+        hint = "Remove extra #{hintCreator.thisValue}"
+      else
+        hint = hintCreator.getReferenceErrorHint codeSnippet
+    
+    # Check for two commands on a single line with no semi-colon
+    # E.g. "self.moveRight()self.moveDown()"
+    unless hint?
+      prevIndex = range[0].ofs - 1
+      prevIndex-- while prevIndex >= 0 and /[\t ]/.test(code[prevIndex])
+      if prevIndex >= 0 and code[prevIndex] is ')'
+        if codeSnippet is ')'
+          hint = "Remove extra )"
+        else
+          hint = "Put each command on a separate line"
+
   hint
 
 # Runtime Errors
@@ -181,14 +209,14 @@ getRuntimeHint = (options) ->
 
   # Use problemContext to add hints
   return unless context?
-  hintCreator = new HintCreator 0.8, 0.5, context, languageID
+  hintCreator = new HintCreator context, languageID
   hintCreator.getHint options.message, code, options.range
 
 class HintCreator
   # Create hints for an error message based on a problem context
   # TODO: better class name, move this to a separate file
 
-  constructor: (@scoreFuzziness, @acceptMatchThreshold, @context, languageID) ->
+  constructor: (@context, languageID) ->
     # TODO: move this language-specific stuff to language-specific code
     @thisValue = switch languageID
       when 'python' then 'self'
@@ -199,8 +227,8 @@ class HintCreator
       when 'cofeescript' then '@'
       else 'this.'
     @methodRegex = switch languageID
-      when 'python' then new RegExp "self\\.(\\w+)\\("
-      when 'cofeescript' then new RegExp "@(\\w+)\\("
+      when 'python' then new RegExp "self\\.(\\w+)\\s*\\("
+      when 'cofeescript' then new RegExp "@(\\w+)\\s*\\("
       else new RegExp "this\\.(\\w+)\\("
 
   getHint: (msg, code, range) ->
@@ -221,12 +249,16 @@ class HintCreator
       hint = if target? then @getNoFunctionHint target
     else if missingReference = msg.match /ReferenceError: ([^\s]+) is not defined/
       hint = @getReferenceErrorHint missingReference[1]
+    else if missingProperty = msg.match /Cannot (?:read|call) (?:property|method) '([\w]+)' of undefined/
+      # Chrome: "Cannot read property 'moveUp' of undefined"
+      # TODO: Firefox: "tmp5 is undefined"
+      hint = @getReferenceErrorHint missingProperty[1]
     hint
 
   getNoFunctionHint: (target) ->
     # Check thisMethods
     unless hint? then hint = @getNoCaseMatch target, @context.thisMethods, (match) =>
-      "Did you mean #{@thisValueAccess}#{match}()?"
+      "Capitilization problem? Try #{@thisValueAccess}#{match}()"
     unless hint? then hint = @getScoreMatch target, [candidates: @context.thisMethods, msgFormatFn: (match) =>
       "Did you mean #{@thisValueAccess}#{match}()?"]
     # Check commonThisMethods
@@ -241,7 +273,7 @@ class HintCreator
   getReferenceErrorHint: (target) ->
     # Check missing quotes
     unless hint? then hint = @getExactMatch target, @context.stringReferences, (match) ->
-      "You may need quotes. Did you mean \"#{match}\"?"
+      "Missing quotes. Try \"#{match}\""
     # Check this props
     unless hint? then hint = @getExactMatch target, @context.thisMethods, (match) =>
       "Did you mean #{@thisValueAccess}#{match}()?"
@@ -249,9 +281,9 @@ class HintCreator
       "Did you mean #{@thisValueAccess}#{match}?"
     # Check case-insensitive, quotes, this props
     if not hint? and target.toLowerCase() is @thisValue.toLowerCase()
-      hint = "Capitilization is important. Did you mean #{@thisValue}?"
+      hint = "Capitilization problem? Try #{@thisValue}"
     unless hint? then hint = @getNoCaseMatch target, @context.stringReferences, (match) ->
-      "You may need quotes. Did you mean \"#{match}\"?"
+      "Missing quotes.  Try \"#{match}\""
     unless hint? then hint = @getNoCaseMatch target, @context.thisMethods, (match) =>
       "Did you mean #{@thisValueAccess}#{match}()?"
     unless hint? then hint = @getNoCaseMatch target, @context.thisProperties, (match) =>
@@ -259,7 +291,7 @@ class HintCreator
     # Check score match, quotes, this props
     unless hint? then hint = @getScoreMatch target, [
       {candidates: [@thisValue], msgFormatFn: (match) -> "Did you mean #{match}?"},
-      {candidates: @context.stringReferences, msgFormatFn: (match) -> "You may need quotes. Did you mean \"#{match}\"?"},
+      {candidates: @context.stringReferences, msgFormatFn: (match) -> "Missing quotes. Try \"#{match}\""},
       {candidates: @context.thisMethods, msgFormatFn: (match) => "Did you mean #{@thisValueAccess}#{match}()?"},
       {candidates: @context.thisProperties, msgFormatFn: (match) =>"Did you mean #{@thisValueAccess}#{match}?"}]
     # Check commonThisMethods
@@ -288,6 +320,6 @@ class HintCreator
     for set in candidatesList
       if set.candidates?
         for match in set.candidates
-          matchScore = match.score target, @scoreFuzziness
+          matchScore = match.score target, scoreFuzziness
           [closestMatch, closestScore, msg] = [match, matchScore, set.msgFormatFn(match)] if matchScore > closestScore
-    msg if closestScore >= @acceptMatchThreshold
+    msg if closestScore >= acceptMatchThreshold
