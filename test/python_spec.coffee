@@ -656,5 +656,16 @@ describe "Python test suite", ->
       expect(gen.next().done).toEqual true
       expect(dude.killCount).toEqual 91
 
+    it "Empty loop", ->
+      code = """
+loop:
+x = 5
+      """
+      aether = new Aether language: "python", simpleLoops: true
+      aether.transpile code
+      expect(aether.problems.warnings.length).toEqual(1)
+      expect(aether.problems.warnings[0].type).toEqual('transpile')
+      expect(aether.problems.warnings[0].message).toEqual("Empty loop. Don't forget indentation.")
+
     # TODO: simple loop in a function
     # TODO: blocked by https://github.com/codecombat/aether/issues/48

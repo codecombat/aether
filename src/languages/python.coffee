@@ -36,7 +36,7 @@ module.exports = class Python extends Language
     # rawCode is pre-wrap
     return [rawCode, []] if rawCode.indexOf('loop:') is -1
     convertedCode = ""
-    replacedLoops = []
+    @replacedLoops = []
     rangeIndex = 0
     lines = rawCode.split '\n'
     for line, lineNumber in lines
@@ -49,11 +49,53 @@ module.exports = class Python extends Language
           a = line.split("")
           a[start..end] = 'while True:'.split ""
           line = a.join("")
-          replacedLoops.push rangeIndex + start
+          @replacedLoops.push rangeIndex + start
       convertedCode += line
       convertedCode += '\n' unless lineNumber is lines.length - 1
       rangeIndex += line.length + 1 # + 1 for newline
-    [convertedCode, replacedLoops]
+    [convertedCode, @replacedLoops]
+
+  # Return an array of UserCodeProblems detected during linting.
+  lint: (rawCode, aether) ->
+    problems = []
+
+    # Check for empty loop
+    # Assumes if @replacedLoops exists, it's for the same rawCode
+    if @replacedLoops?.length > 0
+      try
+        ast = parser.parse rawCode, locations: true, ranges: true
+
+        # TODO: Only difference from traversal.walkAST is last line 'fn node'
+        walkAST = (node, fn) ->
+          for key, child of node
+            if _.isArray child
+              for grandchild in child
+                walkAST grandchild, fn if _.isString grandchild?.type
+            else if _.isString child?.type
+              walkAST child, fn
+          fn node 
+
+        walkAST ast, (node) =>
+          return unless node.type is "WhileStatement"
+          return unless node.loc.start.line * @wrappedCodeIndentLen + node.range[0] in @replacedLoops
+          return unless node.body.body.length is 0
+          # Craft an warning for empty loop
+          problems.push
+            type: 'transpile'
+            reporter: 'aether'
+            level: 'warning'
+            message: "Empty loop. Don't forget indentation."
+            range: [
+                ofs: node.range[0]
+                row: node.loc.start.line - 1
+                col: node.loc.start.column
+              ,
+                ofs: node.range[1]
+                row: node.loc.end.line - 1
+                col: node.loc.end.column
+            ]
+      catch error
+    problems
 
   # Wrap the user code in a function. Store @wrappedCodePrefix and @wrappedCodeSuffix.
   wrap: (rawCode, aether) ->
