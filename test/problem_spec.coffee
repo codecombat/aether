@@ -107,6 +107,19 @@ describe "Problem Test Suite", ->
       expect(aether.problems.errors[0].message).toEqual("Unexpected token")
       expect(aether.problems.errors[0].hint).toEqual("Put each command on a separate line")
 
+    it "Capitilzed loop", ->
+      code = """
+      Loop:
+        x = 5
+      """
+      problemContext = thisMethods: [ 'moveUp', 'moveDown']
+      aether = new Aether language: "python", problemContext: problemContext, simpleLoops: true
+      aether.transpile code
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(aether.problems.errors[0].type).toEqual('transpile')
+      expect(aether.problems.errors[0].message).toEqual("Unexpected token")
+      expect(aether.problems.errors[0].hint).toEqual("Capitilization problem? Try loop")
+
   describe "Runtime problems", ->
     it "Should capture runtime problems", ->
       # 0123456789012345678901234567

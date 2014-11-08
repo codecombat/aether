@@ -122,7 +122,7 @@ extractTranspileErrorDetails = (options) ->
 
         errorContext = options.problemContext or options.aether?.options?.problemContext
         languageID = options.aether?.options?.language
-        options.hint = error.hint or getTranspileHint options.message, errorContext, languageID, options.aether.raw, options.range
+        options.hint = error.hint or getTranspileHint options.message, errorContext, languageID, options.aether.raw, options.range, options.aether.options?.simpleLoops
     when 'iota'
       null
     else
@@ -130,7 +130,7 @@ extractTranspileErrorDetails = (options) ->
 
   options
 
-getTranspileHint = (msg, context, languageID, code, range) ->
+getTranspileHint = (msg, context, languageID, code, range, simpleLoops=false) ->
   # TODO: Only used by Python currently
   # TODO: JavaScript blocked by jshint range bug: https://github.com/codecombat/aether/issues/113
   if msg is "Unterminated string constant" and range?
@@ -145,9 +145,9 @@ getTranspileHint = (msg, context, languageID, code, range) ->
     hint = "Lines need same indentation?"
   else if msg.indexOf("Unexpected token") >= 0 and context?
     codeSnippet = code.substring range[0].ofs, range[1].ofs
+    lineStart = code.substring range[0].ofs - range[0].col, range[0].ofs
 
     # Check for extra thisValue + space at beginning of line
-    lineStart = code.substring range[0].ofs - range[0].col, range[0].ofs
     hintCreator = new HintCreator context, languageID
     if lineStart.indexOf(hintCreator.thisValue) is 0 and lineStart.trim().length < lineStart.length
       # TODO: update error range so this extra bit is highlighted
@@ -166,6 +166,11 @@ getTranspileHint = (msg, context, languageID, code, range) ->
           hint = "Remove extra )"
         else
           hint = "Put each command on a separate line"
+
+    # Check for bad loop
+    # TODO: Should get 'loop' from problem context
+    if simpleLoops and not hint? and codeSnippet is ':' and lineStart.toLowerCase() is 'loop'
+      hint = "Capitilization problem? Try loop" 
 
   hint
 
