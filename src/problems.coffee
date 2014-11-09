@@ -69,6 +69,12 @@ extractTranspileErrorDetails = (options) ->
     when 'jshint'
       options.message ?= error.reason
       options.kind ?= error.code
+
+      # TODO: Put this transpile error hint creation somewhere reasonable
+      if doubleVar = options.message.match /'([\w]+)' is already defined\./
+        # TODO: Check that it's a var and not a function
+        options.hint = "Don't use the 'var' keyword for '#{doubleVar[1]}' the second time."
+
       unless options.level
         options.level = {E: 'error', W: 'warning', I: 'info'}[error.code[0]]
       line = error.line - codePrefix.split('\n').length

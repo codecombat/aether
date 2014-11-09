@@ -120,6 +120,18 @@ describe "Problem Test Suite", ->
       expect(aether.problems.errors[0].message).toEqual("Unexpected token")
       expect(aether.problems.errors[0].hint).toEqual("Capitilization problem? Try loop")
 
+    it "Double var", ->
+      code = """
+      var enemy = 'Bob';
+      var enemy = 'Sue';
+      """
+      aether = new Aether()
+      aether.transpile code
+      expect(aether.problems.warnings.length).toEqual(1)
+      expect(aether.problems.warnings[0].type).toEqual('transpile')
+      expect(aether.problems.warnings[0].message).toEqual("'enemy' is already defined.")
+      expect(aether.problems.warnings[0].hint).toEqual("Don't use the 'var' keyword for 'enemy' the second time.")
+
   describe "Runtime problems", ->
     it "Should capture runtime problems", ->
       # 0123456789012345678901234567
