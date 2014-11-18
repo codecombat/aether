@@ -237,7 +237,6 @@ describe "Problem Test Suite", ->
       problemContext = {}
       aether = new Aether language: "python", problemContext: problemContext
       aether.transpile code
-      console.log aether.problems
       expect(aether.problems.errors.length).toEqual(1)
       expect(aether.problems.errors[0].type).toEqual('transpile')
       expect(aether.problems.errors[0].message).toEqual("Unexpected token")
@@ -250,7 +249,6 @@ describe "Problem Test Suite", ->
       problemContext = {}
       aether = new Aether language: "python", problemContext: problemContext
       aether.transpile code
-      console.log aether.problems
       expect(aether.problems.errors.length).toEqual(1)
       expect(aether.problems.errors[0].type).toEqual('transpile')
       expect(aether.problems.errors[0].message).toEqual("Unexpected token")
@@ -630,6 +628,20 @@ describe "Problem Test Suite", ->
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: moveeft is not defined")
         expect(aether.problems.errors[0].hint).toEqual("Try self.moveLeft()")
+
+      it "Score thisMethods #4", ->
+        selfValue = {}
+        code = """
+        selfmoveright
+        """
+        problemContext = thisMethods: ['moveRight', 'moveLeft', 'moveUp', 'moveDown']
+        aether = new Aether language: 'python', problemContext: problemContext
+        aether.transpile code
+        method = aether.createMethod selfValue
+        aether.run method
+        expect(aether.problems.errors.length).toEqual(1)
+        expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: selfmoveright is not defined")
+        expect(aether.problems.errors[0].hint).toEqual("Try self.moveRight()")
 
       it "Score thisProperties", ->
         history = []

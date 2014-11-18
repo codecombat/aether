@@ -320,6 +320,13 @@ class HintCreator
       "Did you mean #{match}? You do not have that skill."
     unless hint? then hint = @getScoreMatch target, [candidates: @context.commonThisMethods, msgFormatFn: (match) ->
       "Did you mean #{match}? You do not have that skill."]
+    
+    # Try score match with this value prefixed
+    # E.g. target = 'selfmoveright', try 'self.moveRight()''
+    unless hint?
+      thisPrefixed = (@thisValueAccess + method for method in @context.thisMethods)
+      hint = @getScoreMatch target, [candidates: thisPrefixed, msgFormatFn: (match) ->
+        "Try #{match}()"]
     hint
 
   getExactMatch: (target, candidates, msgFormatFn) ->
