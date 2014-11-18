@@ -154,6 +154,7 @@ getTranspileHint = (msg, context, languageID, code, range, simpleLoops=false) ->
     lineStart = code.substring range[0].ofs - range[0].col, range[0].ofs
 
     # Check for extra thisValue + space at beginning of line
+    # E.g. 'self self.moveRight()'
     hintCreator = new HintCreator context, languageID
     if lineStart.indexOf(hintCreator.thisValue) is 0 and lineStart.trim().length < lineStart.length
       # TODO: update error range so this extra bit is highlighted
@@ -164,14 +165,21 @@ getTranspileHint = (msg, context, languageID, code, range, simpleLoops=false) ->
     
     # Check for two commands on a single line with no semi-colon
     # E.g. "self.moveRight()self.moveDown()"
+    # Check for problems following a ')'
     unless hint?
       prevIndex = range[0].ofs - 1
       prevIndex-- while prevIndex >= 0 and /[\t ]/.test(code[prevIndex])
       if prevIndex >= 0 and code[prevIndex] is ')'
         if codeSnippet is ')'
           hint = "Delete extra )"
-        else
+        else if not /^\s*$/.test(codeSnippet)
           hint = "Put each command on a separate line"
+
+    # Check mismatched parentheses
+    unless hint?
+      parens = 0
+      parens += (if c is '(' then 1 else if c is ')' then -1 else 0) for c in lineStart
+      hint = "Your parentheses must match." unless parens is 0
 
     # Check for bad loop
     # TODO: Should get 'loop' from problem context

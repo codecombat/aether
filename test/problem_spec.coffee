@@ -230,6 +230,32 @@ describe "Problem Test Suite", ->
       expect(aether.run()).toEqual undefined
       expect(aether.problems.errors).not.toEqual []
 
+    it "self.moveRight(", ->
+      code = """
+      self.moveRight(
+      """
+      problemContext = {}
+      aether = new Aether language: "python", problemContext: problemContext
+      aether.transpile code
+      console.log aether.problems
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(aether.problems.errors[0].type).toEqual('transpile')
+      expect(aether.problems.errors[0].message).toEqual("Unexpected token")
+      expect(aether.problems.errors[0].hint).toEqual("Your parentheses must match.")
+
+    it "self.moveRight(()", ->
+      code = """
+      self.moveRight(()
+      """
+      problemContext = {}
+      aether = new Aether language: "python", problemContext: problemContext
+      aether.transpile code
+      console.log aether.problems
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(aether.problems.errors[0].type).toEqual('transpile')
+      expect(aether.problems.errors[0].message).toEqual("Unexpected token")
+      expect(aether.problems.errors[0].hint).toEqual("Your parentheses must match.")
+
   describe "problemContext", ->
     # NOTE: the problemContext tests are roughly in the order they're checked in the code
 
