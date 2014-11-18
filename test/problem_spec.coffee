@@ -11,7 +11,7 @@ describe "Problem Test Suite", ->
       expect(aether.problems.errors.length).toEqual(1)
       expect(aether.problems.errors[0].type).toEqual('transpile')
       expect(aether.problems.errors[0].message).toEqual("Unterminated string constant")
-      expect(aether.problems.errors[0].hint).toEqual("Missing a quote character. Did you mean 'Brak'?")
+      expect(aether.problems.errors[0].hint).toEqual("Missing a quotation mark. Try 'Brak'")
 
     it "missing a closing quote: s = \"hi", ->
       code = """
@@ -22,7 +22,7 @@ describe "Problem Test Suite", ->
       expect(aether.problems.errors.length).toEqual(1)
       expect(aether.problems.errors[0].type).toEqual('transpile')
       expect(aether.problems.errors[0].message).toEqual("Unterminated string constant")
-      expect(aether.problems.errors[0].hint).toEqual("Missing a quote character. Did you mean \"hi\"?")
+      expect(aether.problems.errors[0].hint).toEqual("Missing a quotation mark. Try \"hi\"")
 
     it "missing a closing quote: '", ->
       code = """
@@ -33,7 +33,7 @@ describe "Problem Test Suite", ->
       expect(aether.problems.errors.length).toEqual(1)
       expect(aether.problems.errors[0].type).toEqual('transpile')
       expect(aether.problems.errors[0].message).toEqual("Unterminated string constant")
-      expect(aether.problems.errors[0].hint).toEqual("Missing a quote character. Did you mean ''?")
+      expect(aether.problems.errors[0].hint).toEqual("Missing a quotation mark. Try ''")
 
     it "Unexpected indent", ->
       code = """
@@ -45,7 +45,7 @@ describe "Problem Test Suite", ->
       expect(aether.problems.errors.length).toEqual(1)
       expect(aether.problems.errors[0].type).toEqual('transpile')
       expect(aether.problems.errors[0].message).toEqual("Unexpected indent")
-      expect(aether.problems.errors[0].hint).toEqual("Lines need same indentation?")
+      expect(aether.problems.errors[0].hint).toEqual("Code needs to line up.")
 
     xit "missing a closing quote: s = \"hi", ->
       # https://github.com/codecombat/aether/issues/113
@@ -57,7 +57,7 @@ describe "Problem Test Suite", ->
       expect(aether.problems.errors.length).toEqual(3)
       expect(aether.problems.errors[0].type).toEqual('transpile')
       expect(aether.problems.errors[0].message).toEqual("Unclosed string.")
-      expect(aether.problems.errors[0].hint).toEqual("You may be missing a closing quote character. Did you mean \"hi\"?")
+      expect(aether.problems.errors[0].hint).toEqual("You may be missing a closing quotation mark. Try \"hi\"")
 
     it "Unexpected token 'self move'", ->
       code = """
@@ -69,7 +69,7 @@ describe "Problem Test Suite", ->
       expect(aether.problems.errors.length).toEqual(1)
       expect(aether.problems.errors[0].type).toEqual('transpile')
       expect(aether.problems.errors[0].message).toEqual("Unexpected token")
-      expect(aether.problems.errors[0].hint).toEqual("Did you mean self.moveUp()?")
+      expect(aether.problems.errors[0].hint).toEqual("Try self.moveUp()")
 
     it "Unexpected token 'self self.move'", ->
       code = """
@@ -81,7 +81,7 @@ describe "Problem Test Suite", ->
       expect(aether.problems.errors.length).toEqual(2)
       expect(aether.problems.errors[0].type).toEqual('transpile')
       expect(aether.problems.errors[0].message).toEqual("Unexpected token")
-      expect(aether.problems.errors[0].hint).toEqual("Remove extra self")
+      expect(aether.problems.errors[0].hint).toEqual("Delete extra self")
 
     it "Unexpected token 'self.moveUp())'", ->
       code = """
@@ -93,7 +93,7 @@ describe "Problem Test Suite", ->
       expect(aether.problems.errors.length).toEqual(1)
       expect(aether.problems.errors[0].type).toEqual('transpile')
       expect(aether.problems.errors[0].message).toEqual("Unexpected token")
-      expect(aether.problems.errors[0].hint).toEqual("Remove extra )")
+      expect(aether.problems.errors[0].hint).toEqual("Delete extra )")
 
     it "Unexpected token 'self.moveUp()self.moveDown()'", ->
       code = """
@@ -303,7 +303,7 @@ describe "Problem Test Suite", ->
         aether.run method
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: attack is not defined")
-        expect(aether.problems.errors[0].hint).toEqual("Did you mean self.attack()?")
+        expect(aether.problems.errors[0].hint).toEqual("Try self.attack()")
 
       it "Case thisMethods", ->
         history = []
@@ -320,7 +320,7 @@ describe "Problem Test Suite", ->
         aether.run method
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: Attack is not defined")
-        expect(aether.problems.errors[0].hint).toEqual("Did you mean self.attack()?")
+        expect(aether.problems.errors[0].hint).toEqual("Try self.attack()")
 
       it "Exact commonThisMethods", ->
         selfValue = {}
@@ -334,7 +334,7 @@ describe "Problem Test Suite", ->
         aether.run method
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].message).toEqual("Line 1: Object #<Object> has no method 'attack'")
-        expect(aether.problems.errors[0].hint).toEqual("attack is not available in this challenge.")
+        expect(aether.problems.errors[0].hint).toEqual("You do not have the attack skill.")
 
       it "Exact commonThisMethods #2", ->
         selfValue = {}
@@ -349,7 +349,7 @@ describe "Problem Test Suite", ->
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].type).toEqual("runtime")
         expect(aether.problems.errors[0].message).toEqual("Line 1: Object #<Object> has no method 'moveRight'")
-        expect(aether.problems.errors[0].hint).toEqual("moveRight is not available in this challenge.")
+        expect(aether.problems.errors[0].hint).toEqual("You do not have the moveRight skill.")
 
       it "Case commonThisMethods", ->
         selfValue = {}
@@ -363,7 +363,7 @@ describe "Problem Test Suite", ->
         aether.run method
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].message).toEqual("Line 1: Object #<Object> has no method 'moveup'")
-        expect(aether.problems.errors[0].hint).toEqual("Did you mean moveUp? It is not available in this challenge.")
+        expect(aether.problems.errors[0].hint).toEqual("Did you mean moveUp? You do not have that skill.")
 
       it "Score commonThisMethods", ->
         selfValue = {}
@@ -378,7 +378,7 @@ describe "Problem Test Suite", ->
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].type).toEqual("runtime")
         expect(aether.problems.errors[0].message).toEqual("Line 1: Object #<Object> has no method 'movright'")
-        expect(aether.problems.errors[0].hint).toEqual("Did you mean moveRight? It is not available in this challenge.")
+        expect(aether.problems.errors[0].hint).toEqual("Did you mean moveRight? You do not have that skill.")
 
       it "Score commonThisMethods #2", ->
         selfValue = {}
@@ -393,7 +393,7 @@ describe "Problem Test Suite", ->
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].type).toEqual("runtime")
         expect(aether.problems.errors[0].message).toEqual("Line 1: Object #<Object> has no method 'movright'")
-        expect(aether.problems.errors[0].hint).toEqual("Did you mean moveRight? It is not available in this challenge.")
+        expect(aether.problems.errors[0].hint).toEqual("Did you mean moveRight? You do not have that skill.")
 
     describe "ReferenceError", ->
 
@@ -426,7 +426,7 @@ describe "Problem Test Suite", ->
         aether.run method
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: moveleft is not defined")
-        expect(aether.problems.errors[0].hint).toEqual("Did you mean self.moveLeft()?")
+        expect(aether.problems.errors[0].hint).toEqual("Try self.moveLeft()")
 
       it "Exact thisMethods with range checks", ->
         history = []
@@ -460,7 +460,7 @@ describe "Problem Test Suite", ->
         aether.run method
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: buildables is not defined")
-        expect(aether.problems.errors[0].hint).toEqual("Did you mean self.buildables?")
+        expect(aether.problems.errors[0].hint).toEqual("Try self.buildables")
 
       it "Case this value", ->
         history = []
@@ -526,7 +526,7 @@ describe "Problem Test Suite", ->
         aether.run method
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: Buildables is not defined")
-        expect(aether.problems.errors[0].hint).toEqual("Did you mean self.buildables?")
+        expect(aether.problems.errors[0].hint).toEqual("Try self.buildables")
 
       it "Score this value", ->
         history = []
@@ -543,7 +543,7 @@ describe "Problem Test Suite", ->
         aether.run method
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: elf is not defined")
-        expect(aether.problems.errors[0].hint).toEqual("Did you mean self?")
+        expect(aether.problems.errors[0].hint).toEqual("Try self")
 
       it "Score stringReferences", ->
         history = []
@@ -575,7 +575,7 @@ describe "Problem Test Suite", ->
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].type).toEqual("runtime")
         expect(aether.problems.errors[0].message).toEqual("Line 1: Object #<Object> has no method 'moveEight'")
-        expect(aether.problems.errors[0].hint).toEqual("Did you mean self.moveRight()?")
+        expect(aether.problems.errors[0].hint).toEqual("Try self.moveRight()")
 
       it "Score thisMethods #2", ->
         selfValue = {}
@@ -589,7 +589,7 @@ describe "Problem Test Suite", ->
         aether.run method
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: movleft is not defined")
-        expect(aether.problems.errors[0].hint).toEqual("Did you mean self.moveLeft()?")
+        expect(aether.problems.errors[0].hint).toEqual("Try self.moveLeft()")
 
       it "Score thisMethods #3", ->
         selfValue = {}
@@ -603,7 +603,7 @@ describe "Problem Test Suite", ->
         aether.run method
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: moveeft is not defined")
-        expect(aether.problems.errors[0].hint).toEqual("Did you mean self.moveLeft()?")
+        expect(aether.problems.errors[0].hint).toEqual("Try self.moveLeft()")
 
       it "Score thisProperties", ->
         history = []
@@ -620,7 +620,7 @@ describe "Problem Test Suite", ->
         aether.run method
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: Bildaables is not defined")
-        expect(aether.problems.errors[0].hint).toEqual("Did you mean self.buildables?")
+        expect(aether.problems.errors[0].hint).toEqual("Try self.buildables")
 
       it "Exact commonThisMethods", ->
         selfValue = {}
@@ -635,7 +635,7 @@ describe "Problem Test Suite", ->
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].type).toEqual('runtime')
         expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: attack is not defined")
-        expect(aether.problems.errors[0].hint).toEqual("attack is not available in this challenge.")
+        expect(aether.problems.errors[0].hint).toEqual("You do not have the attack skill.")
 
       it "Case commonThisMethods", ->
         selfValue = {}
@@ -650,7 +650,7 @@ describe "Problem Test Suite", ->
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].type).toEqual('runtime')
         expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: ATTACK is not defined")
-        expect(aether.problems.errors[0].hint).toEqual("Did you mean attack? It is not available in this challenge.")
+        expect(aether.problems.errors[0].hint).toEqual("Did you mean attack? You do not have that skill.")
 
       it "Score commonThisMethods", ->
         selfValue = {}
@@ -665,7 +665,7 @@ describe "Problem Test Suite", ->
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].type).toEqual('runtime')
         expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: atac is not defined")
-        expect(aether.problems.errors[0].hint).toEqual("Did you mean attack? It is not available in this challenge.")
+        expect(aether.problems.errors[0].hint).toEqual("Did you mean attack? You do not have that skill.")
 
     describe "Missing property", ->
       it "self.self.moveUp()", ->
@@ -681,7 +681,7 @@ describe "Problem Test Suite", ->
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].type).toEqual('runtime')
         expect(aether.problems.errors[0].message).toEqual("Line 1: Cannot call method 'moveUp' of undefined")
-        expect(aether.problems.errors[0].hint).toEqual("Did you mean self.moveUp()?")
+        expect(aether.problems.errors[0].hint).toEqual("Try self.moveUp()")
 
     describe "transforms.makeCheckIncompleteMembers", ->
 

@@ -146,9 +146,9 @@ getTranspileHint = (msg, context, languageID, code, range, simpleLoops=false) ->
       quoteCharacter = codeSnippet[0]
       codeSnippet = codeSnippet.slice(1)
       codeSnippet = codeSnippet.substring 0, nonAlphNumMatch.index if nonAlphNumMatch = codeSnippet.match /[^\w]/
-      hint = "Missing a quote character. Did you mean #{quoteCharacter}#{codeSnippet}#{quoteCharacter}?"
+      hint = "Missing a quotation mark. Try #{quoteCharacter}#{codeSnippet}#{quoteCharacter}"
   else if msg is "Unexpected indent"
-    hint = "Lines need same indentation?"
+    hint = "Code needs to line up."
   else if msg.indexOf("Unexpected token") >= 0 and context?
     codeSnippet = code.substring range[0].ofs, range[1].ofs
     lineStart = code.substring range[0].ofs - range[0].col, range[0].ofs
@@ -158,7 +158,7 @@ getTranspileHint = (msg, context, languageID, code, range, simpleLoops=false) ->
     if lineStart.indexOf(hintCreator.thisValue) is 0 and lineStart.trim().length < lineStart.length
       # TODO: update error range so this extra bit is highlighted
       if codeSnippet.indexOf(hintCreator.thisValue) is 0
-        hint = "Remove extra #{hintCreator.thisValue}"
+        hint = "Delete extra #{hintCreator.thisValue}"
       else
         hint = hintCreator.getReferenceErrorHint codeSnippet
     
@@ -169,7 +169,7 @@ getTranspileHint = (msg, context, languageID, code, range, simpleLoops=false) ->
       prevIndex-- while prevIndex >= 0 and /[\t ]/.test(code[prevIndex])
       if prevIndex >= 0 and code[prevIndex] is ')'
         if codeSnippet is ')'
-          hint = "Remove extra )"
+          hint = "Delete extra )"
         else
           hint = "Put each command on a separate line"
 
@@ -271,14 +271,14 @@ class HintCreator
     unless hint? then hint = @getNoCaseMatch target, @context.thisMethods, (match) =>
       "Capitilization problem? Try #{@thisValueAccess}#{match}()"
     unless hint? then hint = @getScoreMatch target, [candidates: @context.thisMethods, msgFormatFn: (match) =>
-      "Did you mean #{@thisValueAccess}#{match}()?"]
+      "Try #{@thisValueAccess}#{match}()"]
     # Check commonThisMethods
     unless hint? then hint = @getExactMatch target, @context.commonThisMethods, (match) ->
-      "#{match} is not available in this challenge."
+      "You do not have the #{match} skill."
     unless hint? then hint = @getNoCaseMatch target, @context.commonThisMethods, (match) ->
-      "Did you mean #{match}? It is not available in this challenge."
+      "Did you mean #{match}? You do not have that skill."
     unless hint? then hint = @getScoreMatch target, [candidates: @context.commonThisMethods, msgFormatFn: (match) ->
-      "Did you mean #{match}? It is not available in this challenge."]
+      "Did you mean #{match}? You do not have that skill."]
     hint
 
   getReferenceErrorHint: (target) ->
@@ -287,31 +287,31 @@ class HintCreator
       "Missing quotes. Try \"#{match}\""
     # Check this props
     unless hint? then hint = @getExactMatch target, @context.thisMethods, (match) =>
-      "Did you mean #{@thisValueAccess}#{match}()?"
+      "Try #{@thisValueAccess}#{match}()"
     unless hint? then hint = @getExactMatch target, @context.thisProperties, (match) =>
-      "Did you mean #{@thisValueAccess}#{match}?"
+      "Try #{@thisValueAccess}#{match}"
     # Check case-insensitive, quotes, this props
     if not hint? and target.toLowerCase() is @thisValue.toLowerCase()
       hint = "Capitilization problem? Try #{@thisValue}"
     unless hint? then hint = @getNoCaseMatch target, @context.stringReferences, (match) ->
       "Missing quotes.  Try \"#{match}\""
     unless hint? then hint = @getNoCaseMatch target, @context.thisMethods, (match) =>
-      "Did you mean #{@thisValueAccess}#{match}()?"
+      "Try #{@thisValueAccess}#{match}()"
     unless hint? then hint = @getNoCaseMatch target, @context.thisProperties, (match) =>
-      "Did you mean #{@thisValueAccess}#{match}?"
+      "Try #{@thisValueAccess}#{match}"
     # Check score match, quotes, this props
     unless hint? then hint = @getScoreMatch target, [
-      {candidates: [@thisValue], msgFormatFn: (match) -> "Did you mean #{match}?"},
+      {candidates: [@thisValue], msgFormatFn: (match) -> "Try #{match}"},
       {candidates: @context.stringReferences, msgFormatFn: (match) -> "Missing quotes. Try \"#{match}\""},
-      {candidates: @context.thisMethods, msgFormatFn: (match) => "Did you mean #{@thisValueAccess}#{match}()?"},
-      {candidates: @context.thisProperties, msgFormatFn: (match) =>"Did you mean #{@thisValueAccess}#{match}?"}]
+      {candidates: @context.thisMethods, msgFormatFn: (match) => "Try #{@thisValueAccess}#{match}()"},
+      {candidates: @context.thisProperties, msgFormatFn: (match) =>"Try #{@thisValueAccess}#{match}"}]
     # Check commonThisMethods
     unless hint? then hint = @getExactMatch target, @context.commonThisMethods, (match) ->
-      "#{match} is not available in this challenge."
+      "You do not have the #{match} skill."
     unless hint? then hint = @getNoCaseMatch target, @context.commonThisMethods, (match) ->
-      "Did you mean #{match}? It is not available in this challenge."
+      "Did you mean #{match}? You do not have that skill."
     unless hint? then hint = @getScoreMatch target, [candidates: @context.commonThisMethods, msgFormatFn: (match) ->
-      "Did you mean #{match}? It is not available in this challenge."]
+      "Did you mean #{match}? You do not have that skill."]
     hint
 
   getExactMatch: (target, candidates, msgFormatFn) ->
