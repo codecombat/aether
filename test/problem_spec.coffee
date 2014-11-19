@@ -11,7 +11,7 @@ describe "Problem Test Suite", ->
       expect(aether.problems.errors.length).toEqual(1)
       expect(aether.problems.errors[0].type).toEqual('transpile')
       expect(aether.problems.errors[0].message).toEqual("Unterminated string constant")
-      expect(aether.problems.errors[0].hint).toEqual("Missing a quotation mark. Try 'Brak'")
+      expect(aether.problems.errors[0].hint).toEqual("Missing a quotation mark. Try `'Brak'`")
 
     it "missing a closing quote: s = \"hi", ->
       code = """
@@ -22,7 +22,7 @@ describe "Problem Test Suite", ->
       expect(aether.problems.errors.length).toEqual(1)
       expect(aether.problems.errors[0].type).toEqual('transpile')
       expect(aether.problems.errors[0].message).toEqual("Unterminated string constant")
-      expect(aether.problems.errors[0].hint).toEqual("Missing a quotation mark. Try \"hi\"")
+      expect(aether.problems.errors[0].hint).toEqual("Missing a quotation mark. Try `\"hi\"`")
 
     it "missing a closing quote: '", ->
       code = """
@@ -33,7 +33,7 @@ describe "Problem Test Suite", ->
       expect(aether.problems.errors.length).toEqual(1)
       expect(aether.problems.errors[0].type).toEqual('transpile')
       expect(aether.problems.errors[0].message).toEqual("Unterminated string constant")
-      expect(aether.problems.errors[0].hint).toEqual("Missing a quotation mark. Try ''")
+      expect(aether.problems.errors[0].hint).toEqual("Missing a quotation mark. Try `''`")
 
     it "Unexpected indent", ->
       code = """
@@ -57,7 +57,7 @@ describe "Problem Test Suite", ->
       expect(aether.problems.errors.length).toEqual(3)
       expect(aether.problems.errors[0].type).toEqual('transpile')
       expect(aether.problems.errors[0].message).toEqual("Unclosed string.")
-      expect(aether.problems.errors[0].hint).toEqual("You may be missing a closing quotation mark. Try \"hi\"")
+      expect(aether.problems.errors[0].hint).toEqual("You may be missing a closing quotation mark. Try `\"hi\"`")
 
     it "Unexpected token 'self move'", ->
       code = """
@@ -69,7 +69,7 @@ describe "Problem Test Suite", ->
       expect(aether.problems.errors.length).toEqual(1)
       expect(aether.problems.errors[0].type).toEqual('transpile')
       expect(aether.problems.errors[0].message).toEqual("Unexpected token")
-      expect(aether.problems.errors[0].hint).toEqual("Try self.moveUp()")
+      expect(aether.problems.errors[0].hint).toEqual("Try `self.moveUp()`")
 
     it "Unexpected token 'self self.move'", ->
       code = """
@@ -81,7 +81,7 @@ describe "Problem Test Suite", ->
       expect(aether.problems.errors.length).toEqual(2)
       expect(aether.problems.errors[0].type).toEqual('transpile')
       expect(aether.problems.errors[0].message).toEqual("Unexpected token")
-      expect(aether.problems.errors[0].hint).toEqual("Delete extra self")
+      expect(aether.problems.errors[0].hint).toEqual("Delete extra `self`")
 
     it "Unexpected token 'self.moveUp())'", ->
       code = """
@@ -93,7 +93,7 @@ describe "Problem Test Suite", ->
       expect(aether.problems.errors.length).toEqual(1)
       expect(aether.problems.errors[0].type).toEqual('transpile')
       expect(aether.problems.errors[0].message).toEqual("Unexpected token")
-      expect(aether.problems.errors[0].hint).toEqual("Delete extra )")
+      expect(aether.problems.errors[0].hint).toEqual("Delete extra `)`")
 
     it "Unexpected token 'self.moveUp()self.moveDown()'", ->
       code = """
@@ -118,7 +118,7 @@ describe "Problem Test Suite", ->
       expect(aether.problems.errors.length).toEqual(1)
       expect(aether.problems.errors[0].type).toEqual('transpile')
       expect(aether.problems.errors[0].message).toEqual("Unexpected token")
-      expect(aether.problems.errors[0].hint).toEqual("Should be lowercase. Try loop")
+      expect(aether.problems.errors[0].hint).toEqual("Should be lowercase. Try `loop`")
 
     it "Double var", ->
       code = """
@@ -143,7 +143,7 @@ describe "Problem Test Suite", ->
       expect(aether.problems.errors.length).toEqual(1)
       expect(aether.problems.errors[0].type).toEqual('transpile')
       expect(aether.problems.errors[0].message).toEqual("Unexpected token")
-      expect(aether.problems.errors[0].hint).toEqual("You are missing a ':' after 'if True'. Try if True:")
+      expect(aether.problems.errors[0].hint).toEqual("You are missing a ':' after 'if True'. Try `if True:`")
 
     it "if without test clause", ->
       code = """
@@ -156,7 +156,7 @@ describe "Problem Test Suite", ->
       expect(aether.problems.errors.length).toEqual(1)
       expect(aether.problems.errors[0].type).toEqual('transpile')
       expect(aether.problems.errors[0].message).toEqual("Unexpected token")
-      expect(aether.problems.errors[0].hint).toEqual("Your if statement is missing a test clause.  Try if True:")
+      expect(aether.problems.errors[0].hint).toEqual("Your if statement is missing a test clause. Try `if True:`")
 
   describe "Runtime problems", ->
     it "Should capture runtime problems", ->
@@ -310,7 +310,7 @@ describe "Problem Test Suite", ->
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].type).toEqual("runtime")
         expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: loop is not defined")
-        expect(aether.problems.errors[0].hint).toEqual("You are missing a `:` after `loop`.")
+        expect(aether.problems.errors[0].hint).toEqual("You are missing a ':' after 'loop'. Try `loop:`")
 
       it "loop is not defined w/ newline", ->
         code = """
@@ -323,7 +323,7 @@ describe "Problem Test Suite", ->
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].type).toEqual("runtime")
         expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: loop is not defined")
-        expect(aether.problems.errors[0].hint).toEqual("You are missing a `:` after `loop`.")
+        expect(aether.problems.errors[0].hint).toEqual("You are missing a ':' after 'loop'. Try `loop:`")
 
       it "loop is not defined w/o simpleLoops", ->
         code = "loop"
@@ -353,7 +353,7 @@ describe "Problem Test Suite", ->
         aether.run method
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: attack is not defined")
-        expect(aether.problems.errors[0].hint).toEqual("Try self.attack()")
+        expect(aether.problems.errors[0].hint).toEqual("Try `self.attack()`")
 
       it "Case thisMethods", ->
         history = []
@@ -370,7 +370,7 @@ describe "Problem Test Suite", ->
         aether.run method
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: Attack is not defined")
-        expect(aether.problems.errors[0].hint).toEqual("Try self.attack()")
+        expect(aether.problems.errors[0].hint).toEqual("Try `self.attack()`")
 
       it "Exact commonThisMethods", ->
         selfValue = {}
@@ -462,7 +462,7 @@ describe "Problem Test Suite", ->
         aether.run method
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: Brak is not defined")
-        expect(aether.problems.errors[0].hint).toEqual("Missing quotes. Try \"Brak\"")
+        expect(aether.problems.errors[0].hint).toEqual("Missing quotes. Try `\"Brak\"`")
 
       it "Exact thisMethods", ->
         selfValue = {}
@@ -476,7 +476,7 @@ describe "Problem Test Suite", ->
         aether.run method
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: moveleft is not defined")
-        expect(aether.problems.errors[0].hint).toEqual("Try self.moveLeft()")
+        expect(aether.problems.errors[0].hint).toEqual("Try `self.moveLeft()`")
 
       it "Exact thisMethods with range checks", ->
         history = []
@@ -510,7 +510,7 @@ describe "Problem Test Suite", ->
         aether.run method
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: buildables is not defined")
-        expect(aether.problems.errors[0].hint).toEqual("Try self.buildables")
+        expect(aether.problems.errors[0].hint).toEqual("Try `self.buildables`")
 
       it "Case this value", ->
         history = []
@@ -527,7 +527,7 @@ describe "Problem Test Suite", ->
         aether.run method
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: sElf is not defined")
-        expect(aether.problems.errors[0].hint).toEqual("Uppercase or lowercase problem. Try self")
+        expect(aether.problems.errors[0].hint).toEqual("Uppercase or lowercase problem. Try `self`")
 
       it "Case stringReferences", ->
         history = []
@@ -544,7 +544,7 @@ describe "Problem Test Suite", ->
         aether.run method
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: brak is not defined")
-        expect(aether.problems.errors[0].hint).toEqual("Missing quotes.  Try \"Brak\"")
+        expect(aether.problems.errors[0].hint).toEqual("Missing quotes.  Try `\"Brak\"`")
 
       it "Case thisMethods", ->
         selfValue = {}
@@ -559,7 +559,7 @@ describe "Problem Test Suite", ->
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].type).toEqual("runtime")
         expect(aether.problems.errors[0].message).toEqual("Line 1: Object #<Object> has no method 'moveright'")
-        expect(aether.problems.errors[0].hint).toEqual("Uppercase or lowercase problem. Try this.moveRight()")
+        expect(aether.problems.errors[0].hint).toEqual("Uppercase or lowercase problem. Try `this.moveRight()`")
 
       it "Case thisProperties", ->
         history = []
@@ -576,7 +576,7 @@ describe "Problem Test Suite", ->
         aether.run method
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: Buildables is not defined")
-        expect(aether.problems.errors[0].hint).toEqual("Try self.buildables")
+        expect(aether.problems.errors[0].hint).toEqual("Try `self.buildables`")
 
       it "Score this value", ->
         history = []
@@ -593,7 +593,7 @@ describe "Problem Test Suite", ->
         aether.run method
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: elf is not defined")
-        expect(aether.problems.errors[0].hint).toEqual("Try self")
+        expect(aether.problems.errors[0].hint).toEqual("Try `self`")
 
       it "Score stringReferences", ->
         history = []
@@ -610,7 +610,7 @@ describe "Problem Test Suite", ->
         aether.run method
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: brOk is not defined")
-        expect(aether.problems.errors[0].hint).toEqual("Missing quotes. Try \"Brak\"")
+        expect(aether.problems.errors[0].hint).toEqual("Missing quotes. Try `\"Brak\"`")
 
       it "Score thisMethods", ->
         selfValue = {}
@@ -625,7 +625,7 @@ describe "Problem Test Suite", ->
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].type).toEqual("runtime")
         expect(aether.problems.errors[0].message).toEqual("Line 1: Object #<Object> has no method 'moveEight'")
-        expect(aether.problems.errors[0].hint).toEqual("Try self.moveRight()")
+        expect(aether.problems.errors[0].hint).toEqual("Try `self.moveRight()`")
 
       it "Score thisMethods #2", ->
         selfValue = {}
@@ -639,7 +639,7 @@ describe "Problem Test Suite", ->
         aether.run method
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: movleft is not defined")
-        expect(aether.problems.errors[0].hint).toEqual("Try self.moveLeft()")
+        expect(aether.problems.errors[0].hint).toEqual("Try `self.moveLeft()`")
 
       it "Score thisMethods #3", ->
         selfValue = {}
@@ -653,7 +653,7 @@ describe "Problem Test Suite", ->
         aether.run method
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: moveeft is not defined")
-        expect(aether.problems.errors[0].hint).toEqual("Try self.moveLeft()")
+        expect(aether.problems.errors[0].hint).toEqual("Try `self.moveLeft()`")
 
       it "Score thisMethods #4", ->
         selfValue = {}
@@ -667,7 +667,7 @@ describe "Problem Test Suite", ->
         aether.run method
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: selfmoveright is not defined")
-        expect(aether.problems.errors[0].hint).toEqual("Try self.moveRight()")
+        expect(aether.problems.errors[0].hint).toEqual("Try `self.moveRight()`")
 
       it "Score thisProperties", ->
         history = []
@@ -684,7 +684,7 @@ describe "Problem Test Suite", ->
         aether.run method
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: Bildaables is not defined")
-        expect(aether.problems.errors[0].hint).toEqual("Try self.buildables")
+        expect(aether.problems.errors[0].hint).toEqual("Try `self.buildables`")
 
       it "Exact commonThisMethods", ->
         selfValue = {}
@@ -745,7 +745,7 @@ describe "Problem Test Suite", ->
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].type).toEqual('runtime')
         expect(aether.problems.errors[0].message).toEqual("Line 1: Cannot call method 'moveUp' of undefined")
-        expect(aether.problems.errors[0].hint).toEqual("Try self.moveUp()")
+        expect(aether.problems.errors[0].hint).toEqual("Try `self.moveUp()`")
 
     describe "transforms.makeCheckIncompleteMembers", ->
 

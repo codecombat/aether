@@ -1,6 +1,13 @@
 ranges = require './ranges'
 string_score = require 'string_score'
 
+# Problems #################################
+#
+# Error messages and hints:
+#   Processed by markdown
+#   In general, put correct replacement code in a markdown code span.  E.g. "Try `self.moveRight()`"
+#
+#
 # Problem Context (problemContext)
 #
 # Aether accepts a problemContext parameter via the constructor options or directly to createUserCodeProblem
@@ -146,7 +153,7 @@ getTranspileHint = (msg, context, languageID, code, range, simpleLoops=false) ->
       quoteCharacter = codeSnippet[0]
       codeSnippet = codeSnippet.slice(1)
       codeSnippet = codeSnippet.substring 0, nonAlphNumMatch.index if nonAlphNumMatch = codeSnippet.match /[^\w]/
-      hint = "Missing a quotation mark. Try #{quoteCharacter}#{codeSnippet}#{quoteCharacter}"
+      hint = "Missing a quotation mark. Try `#{quoteCharacter}#{codeSnippet}#{quoteCharacter}`"
   else if msg is "Unexpected indent"
     hint = "Code needs to line up."
   else if msg.indexOf("Unexpected token") >= 0 and context?
@@ -161,7 +168,7 @@ getTranspileHint = (msg, context, languageID, code, range, simpleLoops=false) ->
     if lineStart.indexOf(hintCreator.thisValue) is 0 and lineStart.trim().length < lineStart.length
       # TODO: update error range so this extra bit is highlighted
       if codeSnippet.indexOf(hintCreator.thisValue) is 0
-        hint = "Delete extra #{hintCreator.thisValue}"
+        hint = "Delete extra `#{hintCreator.thisValue}`"
       else
         hint = hintCreator.getReferenceErrorHint codeSnippet
     
@@ -173,7 +180,7 @@ getTranspileHint = (msg, context, languageID, code, range, simpleLoops=false) ->
       prevIndex-- while prevIndex >= 0 and /[\t ]/.test(code[prevIndex])
       if prevIndex >= 0 and code[prevIndex] is ')'
         if codeSnippet is ')'
-          hint = "Delete extra )"
+          hint = "Delete extra `)`"
         else if not /^\s*$/.test(codeSnippet)
           hint = "Put each command on a separate line"
 
@@ -186,15 +193,15 @@ getTranspileHint = (msg, context, languageID, code, range, simpleLoops=false) ->
     # Check for uppercase loop
     # TODO: Should get 'loop' from problem context
     if simpleLoops and not hint? and codeSnippet is ':' and lineStart isnt lineStartLow and lineStartLow is 'loop'
-      hint = "Should be lowercase. Try loop" 
+      hint = "Should be lowercase. Try `loop`" 
 
     # Check for malformed if statements
     if not hint? and lineStart.indexOf('if ') is 0
       if codeSnippet is ':'
-        hint = "Your if statement is missing a test clause.  Try if True:"
+        hint = "Your if statement is missing a test clause. Try `if True:`"
       else if /^\s*$/.test(codeSnippet)
         # TODO: Upate error range to be around lineStart in this case
-        hint = "You are missing a ':' after '#{lineStart}'. Try #{lineStart}:"
+        hint = "You are missing a ':' after '#{lineStart}'. Try `#{lineStart}:`"
 
     # Catchall hint for 'Unexpected token' error
     if not hint? and /Unexpected token/.test(msg)
@@ -234,9 +241,9 @@ getRuntimeHint = (options) ->
     if options.range?
       index = options.range[1].ofs
       index++ while index < code.length and /[^\n:]/.test code[index]
-      hint = "You are missing a `:` after `loop`." if index >= code.length or code[index] is '\n'
+      hint = "You are missing a ':' after 'loop'. Try `loop:`" if index >= code.length or code[index] is '\n'
     else
-      hint = "Are you missing a `:` after `loop`?"
+      hint = "Are you missing a ':' after 'loop'? Try `loop:`"
     return hint
 
   # Use problemContext to add hints
@@ -290,9 +297,13 @@ class HintCreator
   getNoFunctionHint: (target) ->
     # Check thisMethods
     unless hint? then hint = @getNoCaseMatch target, @context.thisMethods, (match) =>
-      "Uppercase or lowercase problem. Try #{@thisValueAccess}#{match}()"
+      # TODO: Remove these format tests someday.
+      # "Uppercase or lowercase problem. Try #{@thisValueAccess}#{match}()"
+      # "Uppercase or lowercase problem.  \n  \n\tTry: #{@thisValueAccess}#{match}()  \n\tHad: #{codeSnippet}"
+      # "Uppercase or lowercase problem.  \n  \nTry:  \n`#{@thisValueAccess}#{match}()`  \n  \nInstead of:  \n`#{codeSnippet}`"
+      "Uppercase or lowercase problem. Try `#{@thisValueAccess}#{match}()`"
     unless hint? then hint = @getScoreMatch target, [candidates: @context.thisMethods, msgFormatFn: (match) =>
-      "Try #{@thisValueAccess}#{match}()"]
+      "Try `#{@thisValueAccess}#{match}()`"]
     # Check commonThisMethods
     unless hint? then hint = @getExactMatch target, @context.commonThisMethods, (match) ->
       "You do not have the #{match} skill."
@@ -305,27 +316,27 @@ class HintCreator
   getReferenceErrorHint: (target) ->
     # Check missing quotes
     unless hint? then hint = @getExactMatch target, @context.stringReferences, (match) ->
-      "Missing quotes. Try \"#{match}\""
+      "Missing quotes. Try `\"#{match}\"`"
     # Check this props
     unless hint? then hint = @getExactMatch target, @context.thisMethods, (match) =>
-      "Try #{@thisValueAccess}#{match}()"
+      "Try `#{@thisValueAccess}#{match}()`"
     unless hint? then hint = @getExactMatch target, @context.thisProperties, (match) =>
-      "Try #{@thisValueAccess}#{match}"
+      "Try `#{@thisValueAccess}#{match}`"
     # Check case-insensitive, quotes, this props
     if not hint? and target.toLowerCase() is @thisValue.toLowerCase()
-      hint = "Uppercase or lowercase problem. Try #{@thisValue}"
+      hint = "Uppercase or lowercase problem. Try `#{@thisValue}`"
     unless hint? then hint = @getNoCaseMatch target, @context.stringReferences, (match) ->
-      "Missing quotes.  Try \"#{match}\""
+      "Missing quotes.  Try `\"#{match}\"`"
     unless hint? then hint = @getNoCaseMatch target, @context.thisMethods, (match) =>
-      "Try #{@thisValueAccess}#{match}()"
+      "Try `#{@thisValueAccess}#{match}()`"
     unless hint? then hint = @getNoCaseMatch target, @context.thisProperties, (match) =>
-      "Try #{@thisValueAccess}#{match}"
+      "Try `#{@thisValueAccess}#{match}`"
     # Check score match, quotes, this props
     unless hint? then hint = @getScoreMatch target, [
-      {candidates: [@thisValue], msgFormatFn: (match) -> "Try #{match}"},
-      {candidates: @context.stringReferences, msgFormatFn: (match) -> "Missing quotes. Try \"#{match}\""},
-      {candidates: @context.thisMethods, msgFormatFn: (match) => "Try #{@thisValueAccess}#{match}()"},
-      {candidates: @context.thisProperties, msgFormatFn: (match) =>"Try #{@thisValueAccess}#{match}"}]
+      {candidates: [@thisValue], msgFormatFn: (match) -> "Try `#{match}`"},
+      {candidates: @context.stringReferences, msgFormatFn: (match) -> "Missing quotes. Try `\"#{match}\"`"},
+      {candidates: @context.thisMethods, msgFormatFn: (match) => "Try `#{@thisValueAccess}#{match}()`"},
+      {candidates: @context.thisProperties, msgFormatFn: (match) =>"Try `#{@thisValueAccess}#{match}`"}]
     # Check commonThisMethods
     unless hint? then hint = @getExactMatch target, @context.commonThisMethods, (match) ->
       "You do not have the #{match} skill."
@@ -339,7 +350,7 @@ class HintCreator
     unless hint?
       thisPrefixed = (@thisValueAccess + method for method in @context.thisMethods)
       hint = @getScoreMatch target, [candidates: thisPrefixed, msgFormatFn: (match) ->
-        "Try #{match}()"]
+        "Try `#{match}()`"]
     hint
 
   getExactMatch: (target, candidates, msgFormatFn) ->
