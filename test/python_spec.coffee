@@ -665,7 +665,18 @@ x = 5
       aether.transpile code
       expect(aether.problems.warnings.length).toEqual(1)
       expect(aether.problems.warnings[0].type).toEqual('transpile')
-      expect(aether.problems.warnings[0].message).toEqual("Empty loop. Don't forget indentation.")
+      expect(aether.problems.warnings[0].message).toEqual("Empty loop. Put 4 spaces in front of statements inside loops.")
+
+    it "Empty if", ->
+      code = """
+if True:
+x = 5
+      """
+      aether = new Aether language: "python", simpleLoops: true
+      aether.transpile code
+      expect(aether.problems.warnings.length).toEqual(1)
+      expect(aether.problems.warnings[0].type).toEqual('transpile')
+      expect(aether.problems.warnings[0].message).toEqual("Empty if statement. Put 4 spaces in front of statements inside the if statement.")
 
     # TODO: simple loop in a function
     # TODO: blocked by https://github.com/codecombat/aether/issues/48

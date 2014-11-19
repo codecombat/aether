@@ -132,6 +132,32 @@ describe "Problem Test Suite", ->
       expect(aether.problems.warnings[0].message).toEqual("'enemy' is already defined.")
       expect(aether.problems.warnings[0].hint).toEqual("Don't use the 'var' keyword for 'enemy' the second time.")
 
+    it "if without :", ->
+      code = """
+      if True
+        x = 5
+      """
+      problemContext = thisMethods: [ 'moveUp', 'moveDown']
+      aether = new Aether language: "python", problemContext: problemContext
+      aether.transpile code
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(aether.problems.errors[0].type).toEqual('transpile')
+      expect(aether.problems.errors[0].message).toEqual("Unexpected token")
+      expect(aether.problems.errors[0].hint).toEqual("You are missing a ':' after 'if True'. Try if True:")
+
+    it "if without test clause", ->
+      code = """
+      if :
+        x = 5
+      """
+      problemContext = thisMethods: [ 'moveUp', 'moveDown']
+      aether = new Aether language: "python", problemContext: problemContext
+      aether.transpile code
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(aether.problems.errors[0].type).toEqual('transpile')
+      expect(aether.problems.errors[0].message).toEqual("Unexpected token")
+      expect(aether.problems.errors[0].hint).toEqual("Your if statement is missing a test clause.  Try if True:")
+
   describe "Runtime problems", ->
     it "Should capture runtime problems", ->
       # 0123456789012345678901234567

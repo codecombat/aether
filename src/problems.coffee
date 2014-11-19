@@ -152,6 +152,8 @@ getTranspileHint = (msg, context, languageID, code, range, simpleLoops=false) ->
   else if msg.indexOf("Unexpected token") >= 0 and context?
     codeSnippet = code.substring range[0].ofs, range[1].ofs
     lineStart = code.substring range[0].ofs - range[0].col, range[0].ofs
+    lineStartLow = lineStart.toLowerCase()
+    # console.log "Aether transpile problem codeSnippet='#{codeSnippet}' lineStart='#{lineStart}'"
 
     # Check for extra thisValue + space at beginning of line
     # E.g. 'self self.moveRight()'
@@ -181,11 +183,18 @@ getTranspileHint = (msg, context, languageID, code, range, simpleLoops=false) ->
       parens += (if c is '(' then 1 else if c is ')' then -1 else 0) for c in lineStart
       hint = "Your parentheses must match." unless parens is 0
 
-    # Check for bad loop
+    # Check for uppercase loop
     # TODO: Should get 'loop' from problem context
-    lineStartLow = lineStart.toLowerCase()
     if simpleLoops and not hint? and codeSnippet is ':' and lineStart isnt lineStartLow and lineStartLow is 'loop'
       hint = "Should be lowercase. Try loop" 
+
+    # Check for malformed if statements
+    if not hint? and lineStart.indexOf('if ') is 0
+      if codeSnippet is ':'
+        hint = "Your if statement is missing a test clause.  Try if True:"
+      else if /^\s*$/.test(codeSnippet)
+        # TODO: Upate error range to be around lineStart in this case
+        hint = "You are missing a ':' after '#{lineStart}'. Try #{lineStart}:"
 
   hint
 
