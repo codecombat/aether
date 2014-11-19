@@ -196,6 +196,9 @@ getTranspileHint = (msg, context, languageID, code, range, simpleLoops=false) ->
         # TODO: Upate error range to be around lineStart in this case
         hint = "You are missing a ':' after '#{lineStart}'. Try #{lineStart}:"
 
+    # Catchall hint for 'Unexpected token' error
+    if not hint? and /Unexpected token/.test(msg)
+      hint = "Please double-check your code carefully."
   hint
 
 # Runtime Errors
