@@ -183,8 +183,9 @@ getTranspileHint = (msg, context, languageID, code, range, simpleLoops=false) ->
 
     # Check for bad loop
     # TODO: Should get 'loop' from problem context
-    if simpleLoops and not hint? and codeSnippet is ':' and lineStart.toLowerCase() is 'loop'
-      hint = "Capitilization problem? Try loop" 
+    lineStartLow = lineStart.toLowerCase()
+    if simpleLoops and not hint? and codeSnippet is ':' and lineStart isnt lineStartLow and lineStartLow is 'loop'
+      hint = "Should be lowercase. Try loop" 
 
   hint
 
@@ -277,7 +278,7 @@ class HintCreator
   getNoFunctionHint: (target) ->
     # Check thisMethods
     unless hint? then hint = @getNoCaseMatch target, @context.thisMethods, (match) =>
-      "Capitilization problem? Try #{@thisValueAccess}#{match}()"
+      "Uppercase or lowercase problem. Try #{@thisValueAccess}#{match}()"
     unless hint? then hint = @getScoreMatch target, [candidates: @context.thisMethods, msgFormatFn: (match) =>
       "Try #{@thisValueAccess}#{match}()"]
     # Check commonThisMethods
@@ -300,7 +301,7 @@ class HintCreator
       "Try #{@thisValueAccess}#{match}"
     # Check case-insensitive, quotes, this props
     if not hint? and target.toLowerCase() is @thisValue.toLowerCase()
-      hint = "Capitilization problem? Try #{@thisValue}"
+      hint = "Uppercase or lowercase problem. Try #{@thisValue}"
     unless hint? then hint = @getNoCaseMatch target, @context.stringReferences, (match) ->
       "Missing quotes.  Try \"#{match}\""
     unless hint? then hint = @getNoCaseMatch target, @context.thisMethods, (match) =>

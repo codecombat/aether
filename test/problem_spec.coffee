@@ -107,7 +107,7 @@ describe "Problem Test Suite", ->
       expect(aether.problems.errors[0].message).toEqual("Unexpected token")
       expect(aether.problems.errors[0].hint).toEqual("Put each command on a separate line")
 
-    it "Capitilzed loop", ->
+    it "Capitalized loop", ->
       code = """
       Loop:
         x = 5
@@ -118,7 +118,7 @@ describe "Problem Test Suite", ->
       expect(aether.problems.errors.length).toEqual(1)
       expect(aether.problems.errors[0].type).toEqual('transpile')
       expect(aether.problems.errors[0].message).toEqual("Unexpected token")
-      expect(aether.problems.errors[0].hint).toEqual("Capitilization problem? Try loop")
+      expect(aether.problems.errors[0].hint).toEqual("Should be lowercase. Try loop")
 
     it "Double var", ->
       code = """
@@ -501,7 +501,7 @@ describe "Problem Test Suite", ->
         aether.run method
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: sElf is not defined")
-        expect(aether.problems.errors[0].hint).toEqual("Capitilization problem? Try self")
+        expect(aether.problems.errors[0].hint).toEqual("Uppercase or lowercase problem. Try self")
 
       it "Case stringReferences", ->
         history = []
@@ -533,7 +533,7 @@ describe "Problem Test Suite", ->
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].type).toEqual("runtime")
         expect(aether.problems.errors[0].message).toEqual("Line 1: Object #<Object> has no method 'moveright'")
-        expect(aether.problems.errors[0].hint).toEqual("Capitilization problem? Try this.moveRight()")
+        expect(aether.problems.errors[0].hint).toEqual("Uppercase or lowercase problem. Try this.moveRight()")
 
       it "Case thisProperties", ->
         history = []
