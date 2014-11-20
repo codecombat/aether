@@ -255,7 +255,7 @@ class HintCreator
   # Create hints for an error message based on a problem context
   # TODO: better class name, move this to a separate file
 
-  constructor: (@context, languageID) ->
+  constructor: (context, languageID) ->
     # TODO: move this language-specific stuff to language-specific code
     @thisValue = switch languageID
       when 'python' then 'self'
@@ -269,6 +269,7 @@ class HintCreator
       when 'python' then new RegExp "self\\.(\\w+)\\s*\\("
       when 'cofeescript' then new RegExp "@(\\w+)\\s*\\("
       else new RegExp "this\\.(\\w+)\\("
+    @context = context ? {}
 
   getHint: (msg, code, range) ->
     return unless @context?
@@ -288,10 +289,21 @@ class HintCreator
       hint = if target? then @getNoFunctionHint target
     else if missingReference = msg.match /ReferenceError: ([^\s]+) is not defined/
       hint = @getReferenceErrorHint missingReference[1]
-    else if missingProperty = msg.match /Cannot (?:read|call) (?:property|method) '([\w]+)' of undefined/
+    else if missingProperty = msg.match /Cannot (?:read|call) (?:property|method) '([\w]+)' of (?:undefined|null)/
       # Chrome: "Cannot read property 'moveUp' of undefined"
       # TODO: Firefox: "tmp5 is undefined"
       hint = @getReferenceErrorHint missingProperty[1]
+
+      # Chrome: "Cannot read property 'pos' of null"
+      # TODO: Firefox: "tmp10 is null"
+      # TODO: range is pretty busted, but row seems ok so we'll use that.
+      # TODO: Should we use a different message if object was 'undefined' instead of 'null'?
+      if not hint? and range?
+        line = code.substring range[0].ofs - range[0].col, code.indexOf('\n', range[1].ofs)
+        nullObjRegex = new RegExp "(\\w+)\\.#{missingProperty[1]}"
+        if nullObjMatch = nullObjRegex.exec line
+          hint = "'#{nullObjMatch[1]}' was null. Use a null check before accessing properties. Try `if #{nullObjMatch[1]}:`"
+
     hint
 
   getNoFunctionHint: (target) ->
@@ -347,7 +359,7 @@ class HintCreator
     
     # Try score match with this value prefixed
     # E.g. target = 'selfmoveright', try 'self.moveRight()''
-    unless hint?
+    if not hint? and @context?.thisMethods?
       thisPrefixed = (@thisValueAccess + method for method in @context.thisMethods)
       hint = @getScoreMatch target, [candidates: thisPrefixed, msgFormatFn: (match) ->
         "Try `#{match}()`"]

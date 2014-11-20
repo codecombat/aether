@@ -158,6 +158,30 @@ describe "Problem Test Suite", ->
       expect(aether.problems.errors[0].message).toEqual("Unexpected token")
       expect(aether.problems.errors[0].hint).toEqual("Your if statement is missing a test clause. Try `if True:`")
 
+    it "self.moveRight(", ->
+      code = """
+      self.moveRight(
+      """
+      problemContext = {}
+      aether = new Aether language: "python", problemContext: problemContext
+      aether.transpile code
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(aether.problems.errors[0].type).toEqual('transpile')
+      expect(aether.problems.errors[0].message).toEqual("Unexpected token")
+      expect(aether.problems.errors[0].hint).toEqual("Your parentheses must match.")
+
+    it "self.moveRight(()", ->
+      code = """
+      self.moveRight(()
+      """
+      problemContext = {}
+      aether = new Aether language: "python", problemContext: problemContext
+      aether.transpile code
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(aether.problems.errors[0].type).toEqual('transpile')
+      expect(aether.problems.errors[0].message).toEqual("Unexpected token")
+      expect(aether.problems.errors[0].hint).toEqual("Your parentheses must match.")
+
   describe "Runtime problems", ->
     it "Should capture runtime problems", ->
       # 0123456789012345678901234567
@@ -256,29 +280,26 @@ describe "Problem Test Suite", ->
       expect(aether.run()).toEqual undefined
       expect(aether.problems.errors).not.toEqual []
 
-    it "self.moveRight(", ->
+    it "Access prop on null", ->
       code = """
-      self.moveRight(
+      def findFlag():
+        return None
+      flag = findFlag()
+      x = flag.pos
+      return x
       """
       problemContext = {}
       aether = new Aether language: "python", problemContext: problemContext
+      console.log 'Test transpiling'
       aether.transpile code
+      console.log 'Test running'
+      expect(aether.run()).toEqual null
+      expect(aether.problems.errors).not.toEqual []
+      console.log 'Test problems', aether.problems
       expect(aether.problems.errors.length).toEqual(1)
-      expect(aether.problems.errors[0].type).toEqual('transpile')
-      expect(aether.problems.errors[0].message).toEqual("Unexpected token")
-      expect(aether.problems.errors[0].hint).toEqual("Your parentheses must match.")
-
-    it "self.moveRight(()", ->
-      code = """
-      self.moveRight(()
-      """
-      problemContext = {}
-      aether = new Aether language: "python", problemContext: problemContext
-      aether.transpile code
-      expect(aether.problems.errors.length).toEqual(1)
-      expect(aether.problems.errors[0].type).toEqual('transpile')
-      expect(aether.problems.errors[0].message).toEqual("Unexpected token")
-      expect(aether.problems.errors[0].hint).toEqual("Your parentheses must match.")
+      expect(aether.problems.errors[0].type).toEqual('runtime')
+      expect(aether.problems.errors[0].message).toEqual("Line 4: Cannot read property 'pos' of null")
+      expect(aether.problems.errors[0].hint).toEqual("'flag' was null. Use a null check before accessing properties. Try `if flag:`")
 
   describe "problemContext", ->
     # NOTE: the problemContext tests are roughly in the order they're checked in the code
