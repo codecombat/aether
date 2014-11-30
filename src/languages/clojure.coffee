@@ -1,8 +1,8 @@
 Language = require './language'
-closer = require 'closer'
+parserHolder = {}
 
 callParser = (code, aether, loose) ->
-  ast = closer.parse code,
+  ast = parserHolder.closer.parse code,
     loc: true
     range: true
     loose: loose
@@ -25,12 +25,13 @@ module.exports = class Clojure extends Language
   name: 'Clojure'
   id: 'clojure'
   parserID: 'closer'
-  runtimeGlobals:
-    closerCore: closer.core
-    closerAssertions: closer.assertions
 
-  constructor: (version) ->
-    super version
+  constructor: ->
+    super arguments...
+    parserHolder.closer ?= require 'closer'
+    @runtimeGlobals =
+      closerCore: parserHolder.closer.core
+      closerAssertions: parserHolder.closer.assertions
 
   wrap: (rawCode, aether) ->
     @wrappedCodePrefix = """(defn #{aether.options.functionName or 'foo'} [#{aether.options.functionParameters.join(', ')}]\n

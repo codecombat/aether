@@ -11,6 +11,16 @@ module.exports = (grunt) ->
         src: 'build/<%= pkg.name %>.js'
         dest: 'build/<%= pkg.name %>.min.js'
 
+      parsers:
+        files: [
+          {src: 'build/python.js', dest: 'build/python.min.js'}
+          {src: 'build/clojure.js', dest: 'build/clojure.min.js'}
+          {src: 'build/lua.js', dest: 'build/lua.min.js'}
+          {src: 'build/io.js', dest: 'build/io.min.js'}
+          {src: 'build/coffeescript.js', dest: 'build/coffeescript.min.js'}
+          {src: 'build/javascript.js', dest: 'build/javascript.min.js'}
+        ]
+
     coffeelint:
         app: ['src/*.coffee', 'test/*.coffee', 'dev/*.coffee']
         options:
@@ -71,7 +81,16 @@ module.exports = (grunt) ->
         dest: 'build/<%= pkg.name %>.js'
         options:
           #standalone: "Aether"  # can't figure out how to get this to work
-          ignore: ['lodash', 'traceur']
+          ignore: ['lodash', 'traceur', 'closer', 'filbert', 'filbert/filbert_loose', 'lua2js', 'iota-compiler', 'coffee-script-redux', 'jshint']
+      parsers:
+        files: [
+          {src: 'parsers/python.js', dest: 'build/python.js'}
+          {src: 'parsers/clojure.js', dest: 'build/clojure.js'}
+          {src: 'parsers/lua.js', dest: 'build/lua.js'}
+          {src: 'parsers/io.js', dest: 'build/io.js'}
+          {src: 'parsers/coffeescript.js', dest: 'build/coffeescript.js'}
+          {src: 'parsers/javascript.js', dest: 'build/javascript.js'}
+        ]
       #test:  # We're not using jasmine but now jasmine_node, so we don't need to browserify the tests
       #  src: ['lib/test/*.js']
       #  dest: 'build/test/<%= pkg.name %>_specs.js'
@@ -137,6 +156,7 @@ module.exports = (grunt) ->
         dir: "coverage/reports"
         print: "detail"
 
+
   # Load the plugin that provides the "uglify" task.
   grunt.loadNpmTasks 'grunt-contrib-uglify'
   #grunt.loadNpmTasks 'grunt-contrib-jasmine'
@@ -159,4 +179,5 @@ module.exports = (grunt) ->
   grunt.registerTask 'travis', ['coffeelint', 'coffee', 'jasmine_node:run']
   grunt.registerTask 'test', ['coffee', 'jasmine_node:run']
   grunt.registerTask 'coverage', ['coffee', 'instrument', 'copy:tests', 'jasmine_node:runCoverage', 'storeCoverage', 'makeReport']
-  grunt.registerTask 'build', ['coffeelint', 'coffee', 'browserify', 'concat', 'jade', 'sass', 'uglify']
+  grunt.registerTask 'build', ['coffeelint', 'coffee', 'browserify:src', 'concat', 'jade', 'sass', 'uglify:build']
+  grunt.registerTask 'parsers', ['browserify:parsers', 'uglify:parsers']

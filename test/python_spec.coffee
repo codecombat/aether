@@ -460,7 +460,7 @@ describe "Python test suite", ->
       aether = new Aether language: "python", yieldConditionally: true, simpleLoops: true
       dude =
         killCount: 0
-        slay: -> 
+        slay: ->
           @killCount += 1
           aether._shouldYield = true
         getKillCount: -> return @killCount
@@ -479,7 +479,7 @@ describe "Python test suite", ->
       aether.transpile code
       f = aether.createFunction()
       gen = f.apply dude
-      
+
       for i in [1..6]
         expect(gen.next().done).toEqual false
         expect(dude.killCount).toEqual i
@@ -490,7 +490,7 @@ describe "Python test suite", ->
       aether = new Aether language: "python", yieldConditionally: true, simpleLoops: true
       dude =
         killCount: 0
-        slay: -> 
+        slay: ->
           @killCount += 1
           aether._shouldYield = true
         getKillCount: -> return @killCount
@@ -512,7 +512,7 @@ describe "Python test suite", ->
       aether = new Aether language: "python", yieldConditionally: true, simpleLoops: true
       dude =
         killCount: 0
-        slay: -> 
+        slay: ->
           @killCount += 1
           aether._shouldYield = true
         getKillCount: -> return @killCount
@@ -555,7 +555,7 @@ describe "Python test suite", ->
       aether = new Aether language: "python", yieldConditionally: true, simpleLoops: true
       dude =
         killCount: 0
-        slay: -> 
+        slay: ->
           @killCount += 1
           aether._shouldYield = true
         getKillCount: -> return @killCount
@@ -635,7 +635,7 @@ describe "Python test suite", ->
         expect(dude.killCount).toEqual i + killOffset
       expect(dude.killCount).toEqual 6 + 5
 
-      # outer and inner auto yield 
+      # outer and inner auto yield
       killOffset = dude.killCount
       for i in [1..7]
         for j in [1..5]

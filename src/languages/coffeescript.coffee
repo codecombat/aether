@@ -1,6 +1,6 @@
 _ = window?._ ? self?._ ? global?._ ? require 'lodash'  # rely on lodash existing, since it busts CodeCombat to browserify it--TODO
 
-csredux = require 'coffee-script-redux'
+parserHolder = {}
 estraverse = require 'estraverse'
 
 Language = require './language'
@@ -14,7 +14,9 @@ module.exports = class CoffeeScript extends Language
   wrappedCodeIndentLen: 4
 
   constructor: ->
+    super arguments...
     @indent = Array(@wrappedCodeIndentLen + 1).join ' '
+    parserHolder.csredux ?= require 'coffee-script-redux'
 
   # Wrap the user code in a function. Store @wrappedCodePrefix and @wrappedCodeSuffix.
   wrap: (rawCode, aether) ->
@@ -34,8 +36,8 @@ module.exports = class CoffeeScript extends Language
 
   # Using a third-party parser, produce an AST in the standardized Mozilla format.
   parse: (code, aether) ->
-    csAST = csredux.parse code, {optimise: false, raw: true}
-    jsAST = csredux.compile csAST, {bare: true}
+    csAST = parserHolder.csredux.parse code, {optimise: false, raw: true}
+    jsAST = parserHolder.csredux.compile csAST, {bare: true}
     fixLocations jsAST
     jsAST
 

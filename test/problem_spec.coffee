@@ -4,7 +4,7 @@ describe "Problem Test Suite", ->
   describe "Transpile problems", ->
     it "missing a closing quote: self.attack('Brak)", ->
       code = """
-      self.attack('Brak) 
+      self.attack('Brak)
       """
       aether = new Aether language: 'python'
       aether.transpile code

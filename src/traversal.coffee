@@ -4,7 +4,6 @@ _ = window?._ ? self?._ ? global?._ ? require 'lodash'  # rely on lodash existin
 
 esprima = require 'esprima'  # getting our Esprima Harmony
 acorn_loose = require 'acorn/acorn_loose'  # for if Esprima dies. Note it can't do ES6.
-csredux = require 'coffee-script-redux'
 
 # TODO: see about consolidating
 module.exports.walkAST = walkAST = (node, fn) ->

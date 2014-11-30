@@ -1,6 +1,6 @@
 Language = require './language'
-lua2js = require 'lua2js'
 ranges = require '../ranges'
+parserHolder = {}
 
 module.exports = class Lua extends Language
   name: 'Lua'
@@ -8,11 +8,16 @@ module.exports = class Lua extends Language
   parserID: 'lua2js'
   runtimeGlobals: require('lua2js').stdlib
 
+  constructor: ->
+    super arguments...
+    parserHolder.lua2js ?= require 'lua2js'
+    @runtimeGlobals = parserHolder.lua2js.stdlib
+
   obviouslyCannotTranspile: (rawCode) ->
     false
 
   callParser: (code, loose) ->
-    ast = lua2js.parse code, {loose: loose, forceVar: false, decorateLuaObjects: true, luaCalls: true, luaOperators: true, encloseWithFunctions: false }
+    ast = parserHolder.lua2js.parse code, {loose: loose, forceVar: false, decorateLuaObjects: true, luaCalls: true, luaOperators: true, encloseWithFunctions: false }
     ast
 
   # Return an array of problems detected during linting.
@@ -23,7 +28,7 @@ module.exports = class Lua extends Language
       ast = @callParser rawCode, true
     catch e
       return []
-      return [aether.createUserCodeProblem type: 'transpile', reporter:'lua2js', error: e, code:rawCode, codePrefix: ""]
+      return [aether.createUserCodeProblem type: 'transpile', reporter: 'lua2js', error: e, code:rawCode, codePrefix: ""]
     for error in ast.errors
       rng = ranges.offsetsToRange(error.range[0], error.range[1], rawCode, '')
       lintProblems.push aether.createUserCodeProblem type: 'transpile', reporter: 'lua2js', message: error.msg, code: rawCode, codePrefix: "", range: [rng.start, rng.end]

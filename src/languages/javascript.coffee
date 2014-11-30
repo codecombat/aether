@@ -1,6 +1,6 @@
 _ = window?._ ? self?._ ? global?._ ? require 'lodash'  # rely on lodash existing, since it busts CodeCombat to browserify it--TODO
 
-jshint = require('jshint').JSHINT
+jshintHolder = {}
 esprima = require 'esprima'  # getting our Esprima Harmony
 acorn_loose = require 'acorn/acorn_loose'  # for if Esprima dies. Note it can't do ES6.
 escodegen = require 'escodegen'
@@ -14,6 +14,10 @@ module.exports = class JavaScript extends Language
   parserID: 'esprima'
   thisValue: 'this'
   thisValueAccess: 'this.'
+
+  constructor: ->
+    super arguments...
+    jshintHolder.jshint ?= require('jshint').JSHINT
 
   # Return true if we can very quickly identify a syntax error.
   obviouslyCannotTranspile: (rawCode) ->
@@ -83,10 +87,10 @@ module.exports = class JavaScript extends Language
     #  console.log 'gotta ignore', problem, '-' + problemID.replace('jshint_', '')
     #  jshintOptions['-' + problemID.replace('jshint_', '')] = true
     try
-      jshintSuccess = jshint(wrappedCode, jshintOptions, jshintGlobals)
+      jshintSuccess = jshintHolder.jshint(wrappedCode, jshintOptions, jshintGlobals)
     catch e
       console.warn "JSHint died with error", e  #, "on code\n", wrappedCode
-    for error in jshint.errors
+    for error in jshintHolder.jshint.errors
       lintProblems.push aether.createUserCodeProblem type: 'transpile', reporter: 'jshint', error: error, code: wrappedCode, codePrefix: @wrappedCodePrefix
 
     lintProblems

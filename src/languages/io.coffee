@@ -1,12 +1,16 @@
 Language = require './language'
-iota = require 'iota-compiler'
+parserHolder = {}
 esprima = require 'esprima'
 
 module.exports = class Io extends Language
   name: 'Io'
   id: 'io'
   parserID: 'iota'
-  runtimeGlobals: {"_io": iota.lib}
+
+  constructor: ->
+    super arguments...
+    parserHolder.iota ?= require 'iota-compiler'
+    @runtimeGlobals = _io: parserHolder.iota.lib
 
   obviouslyCannotTranspile: (rawCode) ->
     false
@@ -18,7 +22,7 @@ module.exports = class Io extends Language
 
   parse: (code, aether) ->
 
-    wrappedCode = iota.compile(code,
+    wrappedCode = parserHolder.iota.compile(code,
       wrapWithFunction: true,
       functionName: aether.options.functionName or 'foo',
       useProxy: true

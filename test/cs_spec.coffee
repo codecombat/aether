@@ -74,7 +74,7 @@ describe "CS test Suite!", ->
     xit "Should Map", ->
       # See: https://github.com/codecombat/aether/issues/97
       code = "return (num for num in [10..1])"
-    
+
       aether.transpile(code)
       expect(aether.canTranspile(code)).toEqual true
       expect(aether.run()).toEqual [10, 9, 8, 7, 6, 5, 4, 3, 2, 1]
@@ -274,4 +274,3 @@ describe "CS test Suite!", ->
       expect(aether.problems.errors.length).toEqual(1)
       expect(/ReferenceError/.test(aether.problems.errors[0].message)).toBe(true)
       expect(aether.problems.errors[0].range).toEqual([ { ofs : 14, row : 1, col : 8 }, { ofs : 15, row : 1, col : 9 } ])
-

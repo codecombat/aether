@@ -1,7 +1,6 @@
 ﻿_ = window?._ ? self?._ ? global?._ ? require 'lodash'  # rely on lodash existing, since it busts CodeCombat to browserify it--TODO
 
-parser = require 'filbert'
-parser_loose = require 'filbert/filbert_loose'
+parserHolder = {}
 estraverse = require 'estraverse'
 
 Language = require './language'
@@ -10,21 +9,24 @@ module.exports = class Python extends Language
   name: 'Python'
   id: 'python'
   parserID: 'filbert'
-  runtimeGlobals:
-    __pythonRuntime: parser.pythonRuntime
   thisValue: 'self'
   thisValueAccess: 'self.'
   wrappedCodeIndentLen: 4
 
   constructor: ->
+    super arguments...
     @indent = Array(@wrappedCodeIndentLen + 1).join ' '
+    parserHolder.parser ?= require 'filbert'
+    parserHolder.parserLoose ?= require 'filbert/filbert_loose'
+    @runtimeGlobals =
+      __pythonRuntime: parserHolder.parser.pythonRuntime
 
   hasChangedASTs: (a, b) ->
     try
       [aAST, bAST] = [null, null]
       options = {locations: false, ranges: false}
-      aAST = parser_loose.parse_dammit a, options
-      bAST = parser_loose.parse_dammit b, options
+      aAST = parserHolder.parserLoose.parse_dammit a, options
+      bAST = parserHolder.parserLoose.parse_dammit b, options
       unless aAST and bAST
         return true
       return not _.isEqual(aAST, bAST)
@@ -67,10 +69,10 @@ module.exports = class Python extends Language
             walkAST grandchild, fn if _.isString grandchild?.type
         else if _.isString child?.type
           walkAST child, fn
-      fn node 
+      fn node
 
     try
-      ast = parser.parse rawCode, locations: true, ranges: true
+      ast = parserHolder.parser.parse rawCode, locations: true, ranges: true
 
       # Check for empty loop
       # Assumes if @replacedLoops exists, it's for the same rawCode
@@ -96,7 +98,7 @@ module.exports = class Python extends Language
                 col: node.loc.end.column
             ]
 
-      # Check for empty if  
+      # Check for empty if
       if problems.length is 0
         walkAST ast, (node) =>
           return unless node.type is "IfStatement"
@@ -142,29 +144,29 @@ module.exports = class Python extends Language
 
   # Using a third-party parser, produce an AST in the standardized Mozilla format.
   parse: (code, aether) ->
-    ast = parser.parse code, {locations: false, ranges: true}
+    ast = parserHolder.parser.parse code, {locations: false, ranges: true}
     selfToThis ast
     ast
 
   parseDammit: (code, aether) ->
     try
-      ast = parser_loose.parse_dammit code, {locations: false, ranges: true}
+      ast = parserHolder.parserLoose.parse_dammit code, {locations: false, ranges: true}
       selfToThis ast
     catch error
       ast = {type: "Program", body:[{"type": "EmptyStatement"}]}
     ast
 
   convertToNativeType: (obj) ->
-    return parser.pythonRuntime.utils.createList(obj) if not obj?._isPython and _.isArray obj
-    return parser.pythonRuntime.utils.createDict(obj) if not obj?._isPython and _.isObject obj
+    return parserHolder.parser.pythonRuntime.utils.createList(obj) if not obj?._isPython and _.isArray obj
+    return parserHolder.parser.pythonRuntime.utils.createDict(obj) if not obj?._isPython and _.isObject obj
     obj
 
   cloneObj: (obj, cloneFn=(o) -> o) ->
     if _.isArray obj
-      result = new parser.pythonRuntime.objects.list()
+      result = new parserHolder.parser.pythonRuntime.objects.list()
       result.append(cloneFn v) for v in obj
     else if _.isObject obj
-      result = new parser.pythonRuntime.objects.dict()
+      result = new parserHolder.parser.pythonRuntime.objects.dict()
       result[k] = cloneFn v for k, v of obj
     else
       result = cloneFn obj
