@@ -60374,6 +60374,6 @@ exports.yui = {
 
 
 },{}],19:[function(require,module,exports){
-require('jshint');
+window.aetherJSHint = require('jshint');
 
 },{"jshint":12}]},{},[19]);

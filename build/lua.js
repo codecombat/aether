@@ -7551,6 +7551,6 @@ for ( var idx in env ) this[idx] = env[idx];
 
 
 },{}],4:[function(require,module,exports){
-require('lua2js');
+window.aetherLua2JS = require('lua2js');
 
 },{"lua2js":1}]},{},[4]);

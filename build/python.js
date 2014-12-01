@@ -4369,7 +4369,7 @@
 });
 
 },{"./filbert":1}],3:[function(require,module,exports){
-require('filbert');
-require('filbert/filbert_loose');
+window.aetherFilbert = require('filbert');
+window.aetherFilbertLoose = require('filbert/filbert_loose');
 
 },{"filbert":1,"filbert/filbert_loose":2}]},{},[3]);

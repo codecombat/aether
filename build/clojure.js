@@ -13939,6 +13939,6 @@ process.chdir = function (dir) {
 };
 
 },{}],187:[function(require,module,exports){
-require('closer');
+window.aetherCloser = require('closer');
 
 },{"closer":4}]},{},[187]);

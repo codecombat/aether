@@ -28,7 +28,7 @@ module.exports = class Clojure extends Language
 
   constructor: ->
     super arguments...
-    parserHolder.closer ?= require 'closer'
+    parserHolder.closer ?= self?.aetherCloser ? require 'closer'
     @runtimeGlobals =
       closerCore: parserHolder.closer.core
       closerAssertions: parserHolder.closer.assertions

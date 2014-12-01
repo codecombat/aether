@@ -20795,12 +20795,24 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 (function (global){
 (function() {
-  var Aether, defaults, escodegen, esprima, execution, instrumentation, languages, normalizer, optionsValidator, problems, protectAPI, protectBuiltins, traceur, transforms, traversal, _, _ref, _ref1, _ref2, _ref3, _ref4, _ref5,
+  var Aether, defaults, escodegen, esprima, execution, instrumentation, languages, normalizer, optionsValidator, problems, protectAPI, protectBuiltins, self, traceur, transforms, traversal, _, _ref, _ref1, _ref2, _ref3, _ref4, _ref5,
     __slice = [].slice;
 
-  _ = (_ref = (_ref1 = (_ref2 = typeof window !== "undefined" && window !== null ? window._ : void 0) != null ? _ref2 : typeof self !== "undefined" && self !== null ? self._ : void 0) != null ? _ref1 : typeof global !== "undefined" && global !== null ? global._ : void 0) != null ? _ref : require('lodash');
+  if ((typeof window !== "undefined" && window !== null) && (typeof self === "undefined" || self === null)) {
+    self = window;
+  }
 
-  traceur = (_ref3 = (_ref4 = (_ref5 = typeof window !== "undefined" && window !== null ? window.traceur : void 0) != null ? _ref5 : typeof self !== "undefined" && self !== null ? self.traceur : void 0) != null ? _ref4 : typeof global !== "undefined" && global !== null ? global.traceur : void 0) != null ? _ref3 : require('traceur');
+  if ((typeof global !== "undefined" && global !== null) && (self == null)) {
+    self = global;
+  }
+
+  if (self.self == null) {
+    self.self = self;
+  }
+
+  _ = (_ref = (_ref1 = (_ref2 = typeof window !== "undefined" && window !== null ? window._ : void 0) != null ? _ref2 : self != null ? self._ : void 0) != null ? _ref1 : typeof global !== "undefined" && global !== null ? global._ : void 0) != null ? _ref : require('lodash');
+
+  traceur = (_ref3 = (_ref4 = (_ref5 = typeof window !== "undefined" && window !== null ? window.traceur : void 0) != null ? _ref5 : self != null ? self.traceur : void 0) != null ? _ref4 : typeof global !== "undefined" && global !== null ? global.traceur : void 0) != null ? _ref3 : require('traceur');
 
   esprima = require('esprima');
 
@@ -21349,7 +21361,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
 
   })();
 
-  if (typeof self !== "undefined" && self !== null) {
+  if (self != null) {
     self.Aether = Aether;
   }
 
@@ -21357,7 +21369,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
     window.Aether = Aether;
   }
 
-  if (typeof self !== "undefined" && self !== null) {
+  if (self != null) {
     if (self.esprima == null) {
       self.esprima = esprima;
     }
@@ -21686,9 +21698,10 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
     Clojure.prototype.parserID = 'closer';
 
     function Clojure() {
+      var _ref;
       Clojure.__super__.constructor.apply(this, arguments);
       if (parserHolder.closer == null) {
-        parserHolder.closer = require('closer');
+        parserHolder.closer = (_ref = typeof self !== "undefined" && self !== null ? self.aetherCloser : void 0) != null ? _ref : require('closer');
       }
       this.runtimeGlobals = {
         closerCore: parserHolder.closer.core,
@@ -21768,10 +21781,11 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
     CoffeeScript.prototype.wrappedCodeIndentLen = 4;
 
     function CoffeeScript() {
+      var _ref3;
       CoffeeScript.__super__.constructor.apply(this, arguments);
       this.indent = Array(this.wrappedCodeIndentLen + 1).join(' ');
       if (parserHolder.csredux == null) {
-        parserHolder.csredux = require('coffee-script-redux');
+        parserHolder.csredux = (_ref3 = typeof self !== "undefined" && self !== null ? self.aetherCoffeeScriptRedux : void 0) != null ? _ref3 : require('coffee-script-redux');
       }
     }
 
@@ -21982,9 +21996,10 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
     Io.prototype.parserID = 'iota';
 
     function Io() {
+      var _ref;
       Io.__super__.constructor.apply(this, arguments);
       if (parserHolder.iota == null) {
-        parserHolder.iota = require('iota-compiler');
+        parserHolder.iota = (_ref = typeof self !== "undefined" && self !== null ? self.aetherIotaCompiler : void 0) != null ? _ref : require('iota-compiler');
       }
       this.runtimeGlobals = {
         _io: parserHolder.iota.lib
@@ -22054,9 +22069,10 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
     JavaScript.prototype.thisValueAccess = 'this.';
 
     function JavaScript() {
+      var _ref3;
       JavaScript.__super__.constructor.apply(this, arguments);
       if (jshintHolder.jshint == null) {
-        jshintHolder.jshint = require('jshint').JSHINT;
+        jshintHolder.jshint = (_ref3 = typeof self !== "undefined" && self !== null ? self.aetherJSHint : void 0) != null ? _ref3 : require('jshint').JSHINT;
       }
     }
 
@@ -22429,12 +22445,11 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
 
     Lua.prototype.parserID = 'lua2js';
 
-    Lua.prototype.runtimeGlobals = require('lua2js').stdlib;
-
     function Lua() {
+      var _ref;
       Lua.__super__.constructor.apply(this, arguments);
       if (parserHolder.lua2js == null) {
-        parserHolder.lua2js = require('lua2js');
+        parserHolder.lua2js = (_ref = typeof self !== "undefined" && self !== null ? self.aetherLua2JS : void 0) != null ? _ref : require('lua2js');
       }
       this.runtimeGlobals = parserHolder.lua2js.stdlib;
     }
@@ -22599,13 +22614,14 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
     Python.prototype.wrappedCodeIndentLen = 4;
 
     function Python() {
+      var _ref3, _ref4;
       Python.__super__.constructor.apply(this, arguments);
       this.indent = Array(this.wrappedCodeIndentLen + 1).join(' ');
       if (parserHolder.parser == null) {
-        parserHolder.parser = require('filbert');
+        parserHolder.parser = (_ref3 = typeof self !== "undefined" && self !== null ? self.aetherFilbert : void 0) != null ? _ref3 : require('filbert');
       }
       if (parserHolder.parserLoose == null) {
-        parserHolder.parserLoose = require('filbert/filbert_loose');
+        parserHolder.parserLoose = (_ref4 = typeof self !== "undefined" && self !== null ? self.aetherFilbertLoose : void 0) != null ? _ref4 : require('filbert/filbert_loose');
       }
       this.runtimeGlobals = {
         __pythonRuntime: parserHolder.parser.pythonRuntime

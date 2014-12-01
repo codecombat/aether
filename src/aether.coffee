@@ -1,3 +1,7 @@
+self = window if window? and not self?
+self = global if global? and not self?
+self.self ?= self
+
 _ = window?._ ? self?._ ? global?._ ? require 'lodash'  # rely on lodash existing, since it busts CodeCombat to browserify it--TODO
 traceur = window?.traceur ? self?.traceur ? global?.traceur ? require 'traceur'  # rely on traceur existing, since it busts CodeCombat to browserify it--TODO
 
@@ -156,7 +160,7 @@ module.exports = class Aether
 
   # Create a standard Aether problem object out of some sort of transpile or runtime problem.
   createUserCodeProblem: problems.createUserCodeProblem
-  
+
   updateProblemContext: (problemContext) ->
     @options.problemContext = problemContext
 

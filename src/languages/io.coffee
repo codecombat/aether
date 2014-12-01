@@ -9,7 +9,7 @@ module.exports = class Io extends Language
 
   constructor: ->
     super arguments...
-    parserHolder.iota ?= require 'iota-compiler'
+    parserHolder.iota ?= self?.aetherIotaCompiler ? require 'iota-compiler'
     @runtimeGlobals = _io: parserHolder.iota.lib
 
   obviouslyCannotTranspile: (rawCode) ->

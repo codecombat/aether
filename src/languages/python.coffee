@@ -16,8 +16,8 @@ module.exports = class Python extends Language
   constructor: ->
     super arguments...
     @indent = Array(@wrappedCodeIndentLen + 1).join ' '
-    parserHolder.parser ?= require 'filbert'
-    parserHolder.parserLoose ?= require 'filbert/filbert_loose'
+    parserHolder.parser ?= self?.aetherFilbert ? require 'filbert'
+    parserHolder.parserLoose ?= self?.aetherFilbertLoose ? require 'filbert/filbert_loose'
     @runtimeGlobals =
       __pythonRuntime: parserHolder.parser.pythonRuntime
 

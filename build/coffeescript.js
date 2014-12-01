@@ -31751,6 +31751,6 @@ module.exports = amdefine;
 
 }).call(this,require("JkpR2F"),"/../node_modules/source-map/node_modules/amdefine/amdefine.js")
 },{"JkpR2F":23,"path":22}],34:[function(require,module,exports){
-require('coffee-script-redux');
+window.aetherCoffeeScriptRedux = require('coffee-script-redux');
 
 },{"coffee-script-redux":5}]},{},[34]);

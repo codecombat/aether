@@ -1,1 +1,1 @@
-require('iota-compiler');
+window.aetherIotaCompiler = require('iota-compiler');

@@ -1,1 +1,1 @@
-require('jshint');
+window.aetherJSHint = require('jshint');

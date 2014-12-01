@@ -16,7 +16,7 @@ module.exports = class CoffeeScript extends Language
   constructor: ->
     super arguments...
     @indent = Array(@wrappedCodeIndentLen + 1).join ' '
-    parserHolder.csredux ?= require 'coffee-script-redux'
+    parserHolder.csredux ?= self?.aetherCoffeeScriptRedux ? require 'coffee-script-redux'
 
   # Wrap the user code in a function. Store @wrappedCodePrefix and @wrappedCodeSuffix.
   wrap: (rawCode, aether) ->

@@ -7749,6 +7749,6 @@ module.exports = amdefine;
 
 }).call(this,require("JkpR2F"),"/../node_modules/source-map/node_modules/amdefine/amdefine.js")
 },{"JkpR2F":9,"path":8}],25:[function(require,module,exports){
-require('iota-compiler');
+window.aetherIotaCompiler = require('iota-compiler');
 
 },{"iota-compiler":10}]},{},[25]);

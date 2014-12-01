@@ -6,11 +6,10 @@ module.exports = class Lua extends Language
   name: 'Lua'
   id: 'lua'
   parserID: 'lua2js'
-  runtimeGlobals: require('lua2js').stdlib
 
   constructor: ->
     super arguments...
-    parserHolder.lua2js ?= require 'lua2js'
+    parserHolder.lua2js ?= self?.aetherLua2JS ? require 'lua2js'
     @runtimeGlobals = parserHolder.lua2js.stdlib
 
   obviouslyCannotTranspile: (rawCode) ->
