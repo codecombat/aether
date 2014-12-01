@@ -22072,7 +22072,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
       var _ref3;
       JavaScript.__super__.constructor.apply(this, arguments);
       if (jshintHolder.jshint == null) {
-        jshintHolder.jshint = (_ref3 = typeof self !== "undefined" && self !== null ? self.aetherJSHint : void 0) != null ? _ref3 : require('jshint').JSHINT;
+        jshintHolder.jshint = ((_ref3 = typeof self !== "undefined" && self !== null ? self.aetherJSHint : void 0) != null ? _ref3 : require('jshint')).JSHINT;
       }
     }
 
