@@ -17,7 +17,7 @@ module.exports = class JavaScript extends Language
 
   constructor: ->
     super arguments...
-    jshintHolder.jshint ?= self?.aetherJSHint ? require('jshint').JSHINT
+    jshintHolder.jshint ?= (self?.aetherJSHint ? require('jshint')).JSHINT
 
   # Return true if we can very quickly identify a syntax error.
   obviouslyCannotTranspile: (rawCode) ->
