@@ -75,6 +75,7 @@ module.exports = class JavaScript extends Language
   # Return an array of problems detected during linting.
   lint: (rawCode, aether) ->
     lintProblems = []
+    return lintProblems unless jshintHolder.jshint
     wrappedCode = @wrap rawCode, aether
 
     # Run it through JSHint first, because that doesn't rely on Esprima

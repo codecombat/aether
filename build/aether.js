@@ -22164,6 +22164,9 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
     JavaScript.prototype.lint = function(rawCode, aether) {
       var e, error, g, jshintGlobals, jshintOptions, jshintSuccess, lintProblems, wrappedCode, _i, _len, _ref3;
       lintProblems = [];
+      if (!jshintHolder.jshint) {
+        return lintProblems;
+      }
       wrappedCode = this.wrap(rawCode, aether);
       jshintOptions = {
         browser: false,
