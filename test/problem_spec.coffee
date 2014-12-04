@@ -145,6 +145,20 @@ describe "Problem Test Suite", ->
       expect(aether.problems.errors[0].message).toEqual("Unexpected token")
       expect(aether.problems.errors[0].hint).toEqual("You are missing a ':' after 'if True'. Try `if True:`")
 
+    it "indented if without :", ->
+      code = """
+      if True:
+        if True
+          x = 5
+      """
+      problemContext = thisMethods: [ 'moveUp', 'moveDown']
+      aether = new Aether language: "python", problemContext: problemContext
+      aether.transpile code
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(aether.problems.errors[0].type).toEqual('transpile')
+      expect(aether.problems.errors[0].message).toEqual("Unexpected token")
+      expect(aether.problems.errors[0].hint).toEqual("You are missing a ':' after '  if True'. Try `  if True:`")
+
     it "if without test clause", ->
       code = """
       if :
@@ -157,6 +171,68 @@ describe "Problem Test Suite", ->
       expect(aether.problems.errors[0].type).toEqual('transpile')
       expect(aether.problems.errors[0].message).toEqual("Unexpected token")
       expect(aether.problems.errors[0].hint).toEqual("Your if statement is missing a test clause. Try `if True:`")
+
+    it "else without : #1", ->
+      code = """
+      if False:
+        x = 5
+      else
+        x = 7
+      """
+      problemContext = thisMethods: [ 'moveUp', 'moveDown']
+      aether = new Aether language: "python", problemContext: problemContext
+      aether.transpile code
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(aether.problems.errors[0].type).toEqual('transpile')
+      expect(aether.problems.errors[0].message).toEqual("Unexpected indent")
+      expect(aether.problems.errors[0].hint).toEqual("You are missing a ':' after 'else'. Try `else:`")
+
+    xit "else without : #2", ->
+      # https://github.com/differentmatt/filbert/issues/44
+      code = """
+      if False:
+        x = 5
+      else
+      x = 7
+      """
+      problemContext = thisMethods: [ 'moveUp', 'moveDown']
+      aether = new Aether language: "python", problemContext: problemContext
+      aether.transpile code
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(aether.problems.errors[0].type).toEqual('transpile')
+      expect(aether.problems.errors[0].message).toEqual("Unexpected indent")
+      expect(aether.problems.errors[0].hint).toEqual("You are missing a ':' after 'else'. Try `else:`")
+
+    xit "else without : #3", ->
+      # https://github.com/differentmatt/filbert/issues/44
+      code = """
+      if False:
+        x = 5
+      else x = 7
+      """
+      problemContext = thisMethods: [ 'moveUp', 'moveDown']
+      aether = new Aether language: "python", problemContext: problemContext
+      aether.transpile code
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(aether.problems.errors[0].type).toEqual('transpile')
+      expect(aether.problems.errors[0].message).toEqual("Unexpected indent")
+      expect(aether.problems.errors[0].hint).toEqual("You are missing a ':' after 'else'. Try `else:`")
+
+    it "else without : #4", ->
+      code = """
+      if True:
+        if False:
+          x = 7
+        else
+          x = 59
+      """
+      problemContext = thisMethods: [ 'moveUp', 'moveDown']
+      aether = new Aether language: "python", problemContext: problemContext
+      aether.transpile code
+      expect(aether.problems.errors.length).toEqual(1)
+      expect(aether.problems.errors[0].type).toEqual('transpile')
+      expect(aether.problems.errors[0].message).toEqual("Unexpected indent")
+      expect(aether.problems.errors[0].hint).toEqual("You are missing a ':' after 'else'. Try `else:`")
 
     it "self.moveRight(", ->
       code = """
@@ -290,12 +366,9 @@ describe "Problem Test Suite", ->
       """
       problemContext = {}
       aether = new Aether language: "python", problemContext: problemContext
-      console.log 'Test transpiling'
       aether.transpile code
-      console.log 'Test running'
       expect(aether.run()).toEqual null
       expect(aether.problems.errors).not.toEqual []
-      console.log 'Test problems', aether.problems
       expect(aether.problems.errors.length).toEqual(1)
       expect(aether.problems.errors[0].type).toEqual('runtime')
       expect(aether.problems.errors[0].message).toEqual("Line 4: Cannot read property 'pos' of null")

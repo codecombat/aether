@@ -155,7 +155,12 @@ getTranspileHint = (msg, context, languageID, code, range, simpleLoops=false) ->
       codeSnippet = codeSnippet.substring 0, nonAlphNumMatch.index if nonAlphNumMatch = codeSnippet.match /[^\w]/
       hint = "Missing a quotation mark. Try `#{quoteCharacter}#{codeSnippet}#{quoteCharacter}`"
   else if msg is "Unexpected indent"
-    hint = "Code needs to line up."
+    if range?
+      index = range[0].ofs
+      index-- while index > 0 and /\s/.test(code[index])
+      if index >= 3 and /else/.test(code.substring(index - 3, index + 1))
+        hint = "You are missing a ':' after 'else'. Try `else:`"
+    hint = "Code needs to line up." unless hint?
   else if msg.indexOf("Unexpected token") >= 0 and context?
     codeSnippet = code.substring range[0].ofs, range[1].ofs
     lineStart = code.substring range[0].ofs - range[0].col, range[0].ofs
@@ -196,7 +201,7 @@ getTranspileHint = (msg, context, languageID, code, range, simpleLoops=false) ->
       hint = "Should be lowercase. Try `loop`" 
 
     # Check for malformed if statements
-    if not hint? and lineStart.indexOf('if ') is 0
+    if not hint? and /^\s*if /.test(lineStart)
       if codeSnippet is ':'
         hint = "Your if statement is missing a test clause. Try `if True:`"
       else if /^\s*$/.test(codeSnippet)
