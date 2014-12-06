@@ -94,6 +94,43 @@ module.exports = class JavaScript extends Language
     for error in jshintHolder.jshint.errors
       lintProblems.push aether.createUserCodeProblem type: 'transpile', reporter: 'jshint', error: error, code: wrappedCode, codePrefix: @wrappedCodePrefix
 
+    # Check for stray semi-colon on 1st line of if statement
+    # E.g. "if (parsely);"
+    # TODO: Does not handle stray semi-colons on following lines: "if (parsely)\n;"
+    if _.isEmpty lintProblems
+      lines = rawCode.split /\r\n|[\n\r\u2028\u2029]/g
+      offset = 0
+      for line, row in lines
+        if /^\s*if /.test(line)
+          # Have an if statement
+          if (firstParen = line.indexOf('(')) >= 0
+            parenCount = 1
+            for c, i in line[firstParen + 1..line.length]
+              parenCount++ if c is '('
+              parenCount-- if c is ')'
+              break if parenCount is 0
+            # parenCount should be zero at the end of the if (test)
+            i += firstParen + 1 + 1
+            if parenCount is 0 and /^[ \t]*;/.test(line[i..line.length])
+              # And it's followed immediately by a semi-colon
+              firstSemiColon = line.indexOf(';')
+              lintProblems.push
+                type: 'transpile'
+                reporter: 'aether'
+                level: 'warning'
+                message: "Don't put a ';' after an if statement."
+                range: [
+                    ofs: offset + firstSemiColon
+                    row: row
+                    col: firstSemiColon
+                  ,
+                    ofs: offset + firstSemiColon + 1
+                    row: row
+                    col: firstSemiColon + 1
+                ]
+              break
+        # TODO: this may be off by 1*row if linebreak was \r\n
+        offset += line.length + 1
     lintProblems
 
   # Return a beautified representation of the code (cleaning up indentation, etc.)

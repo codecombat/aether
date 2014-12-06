@@ -91,6 +91,21 @@ describe "JavaScript Test Suite", ->
       expect(aether.problems.errors[0].message).toEqual("Line 2: ReferenceError: z is not defined")
       expect(aether.problems.errors[0].range).toEqual([ { ofs : 23, row : 1, col : 12 }, { ofs : 24, row : 1, col : 13 } ])
 
+  describe "Warning", ->
+    aether = new Aether language: "javascript"
+
+    it "if (x == 5);", ->
+      code = """
+      var x = 5;
+      if (x == 6) foo();
+      if (x == 5);
+        x++;
+      """
+      aether.transpile(code)
+      expect(aether.problems.warnings.length).toEqual(1)
+      expect(aether.problems.warnings[0].message).toEqual("Don't put a ';' after an if statement.")
+      expect(aether.problems.warnings[0].range).toEqual([ { ofs : 41, row : 2, col : 11 }, { ofs : 42, row : 2, col : 12 } ])
+  
   describe "Traceur compilation with ES6", ->
     aether = new Aether languageVersion: "ES6"
     it "should compile generator functions", ->
