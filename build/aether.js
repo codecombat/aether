@@ -22162,7 +22162,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
     };
 
     JavaScript.prototype.lint = function(rawCode, aether) {
-      var e, error, g, jshintGlobals, jshintOptions, jshintSuccess, lintProblems, wrappedCode, _i, _len, _ref3;
+      var c, e, error, firstParen, firstSemiColon, g, i, jshintGlobals, jshintOptions, jshintSuccess, line, lines, lintProblems, offset, parenCount, row, wrappedCode, _i, _j, _k, _len, _len1, _len2, _ref3, _ref4;
       lintProblems = [];
       if (!jshintHolder.jshint) {
         return lintProblems;
@@ -22210,6 +22210,54 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
           code: wrappedCode,
           codePrefix: this.wrappedCodePrefix
         }));
+      }
+      if (_.isEmpty(lintProblems)) {
+        lines = rawCode.split(/\r\n|[\n\r\u2028\u2029]/g);
+        offset = 0;
+        for (row = _j = 0, _len1 = lines.length; _j < _len1; row = ++_j) {
+          line = lines[row];
+          if (/^\s*if /.test(line)) {
+            if ((firstParen = line.indexOf('(')) >= 0) {
+              parenCount = 1;
+              _ref4 = line.slice(firstParen + 1, +line.length + 1 || 9e9);
+              for (i = _k = 0, _len2 = _ref4.length; _k < _len2; i = ++_k) {
+                c = _ref4[i];
+                if (c === '(') {
+                  parenCount++;
+                }
+                if (c === ')') {
+                  parenCount--;
+                }
+                if (parenCount === 0) {
+                  break;
+                }
+              }
+              i += firstParen + 1 + 1;
+              if (parenCount === 0 && /^[ \t]*;/.test(line.slice(i, +line.length + 1 || 9e9))) {
+                firstSemiColon = line.indexOf(';');
+                lintProblems.push({
+                  type: 'transpile',
+                  reporter: 'aether',
+                  level: 'warning',
+                  message: "Don't put a ';' after an if statement.",
+                  range: [
+                    {
+                      ofs: offset + firstSemiColon,
+                      row: row,
+                      col: firstSemiColon
+                    }, {
+                      ofs: offset + firstSemiColon + 1,
+                      row: row,
+                      col: firstSemiColon + 1
+                    }
+                  ]
+                });
+                break;
+              }
+            }
+          }
+          offset += line.length + 1;
+        }
       }
       return lintProblems;
     };
@@ -23035,7 +23083,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
   };
 
   getTranspileHint = function(msg, context, languageID, code, range, simpleLoops) {
-    var c, codeSnippet, hint, hintCreator, lineStart, lineStartLow, nonAlphNumMatch, parens, prevIndex, quoteCharacter, _i, _len, _ref;
+    var c, codeSnippet, hint, hintCreator, index, lineStart, lineStartLow, nonAlphNumMatch, parens, prevIndex, quoteCharacter, _i, _len, _ref;
     if (simpleLoops == null) {
       simpleLoops = false;
     }
@@ -23050,7 +23098,18 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
         hint = "Missing a quotation mark. Try `" + quoteCharacter + codeSnippet + quoteCharacter + "`";
       }
     } else if (msg === "Unexpected indent") {
-      hint = "Code needs to line up.";
+      if (range != null) {
+        index = range[0].ofs;
+        while (index > 0 && /\s/.test(code[index])) {
+          index--;
+        }
+        if (index >= 3 && /else/.test(code.substring(index - 3, index + 1))) {
+          hint = "You are missing a ':' after 'else'. Try `else:`";
+        }
+      }
+      if (hint == null) {
+        hint = "Code needs to line up.";
+      }
     } else if (msg.indexOf("Unexpected token") >= 0 && (context != null)) {
       codeSnippet = code.substring(range[0].ofs, range[1].ofs);
       lineStart = code.substring(range[0].ofs - range[0].col, range[0].ofs);
@@ -23089,7 +23148,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
       if (simpleLoops && (hint == null) && codeSnippet === ':' && lineStart !== lineStartLow && lineStartLow === 'loop') {
         hint = "Should be lowercase. Try `loop`";
       }
-      if ((hint == null) && lineStart.indexOf('if ') === 0) {
+      if ((hint == null) && /^\s*if /.test(lineStart)) {
         if (codeSnippet === ':') {
           hint = "Your if statement is missing a test clause. Try `if True:`";
         } else if (/^\s*$/.test(codeSnippet)) {
@@ -25565,7 +25624,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
                                     [new ast.ExpressionStatement(new ast.AssignmentExpression('=', new ast.Identifier(tmp3), new ast.Literal('ReferenceError'))),
                                      new ast.ExpressionStatement(new ast.AssignmentExpression('=', new ast.Identifier(tmp4), new ast.MemberExpression(new ast.Identifier('__global'), new ast.Identifier(tmp3), true))),
                                      new ast.ExpressionStatement(new ast.AssignmentExpression('=', new ast.Identifier(tmp5), new ast.NewExpression(new ast.Identifier(tmp4), [new ast.BinaryExpression('+', new ast.Literal('ReferenceError: '), new ast.BinaryExpression('+', new ast.Identifier(tmp), new ast.Literal(' is not defined')))]))),
-                                     inheritPosition(new ast.ThrowStatement(new ast.Identifier(tmp5)), nd)]));
+                                     new ast.ThrowStatement(new ast.Identifier(tmp5))]));
             }
           } else {
             // locals are easy: target = x;
