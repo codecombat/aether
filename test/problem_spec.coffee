@@ -478,7 +478,7 @@ describe "Problem Test Suite", ->
         aether.run method
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].message).toEqual("Line 1: Object #<Object> has no method 'attack'")
-        expect(aether.problems.errors[0].hint).toEqual("You do not have the attack skill.")
+        expect(aether.problems.errors[0].hint).toEqual("You do not have an item equipped with the attack skill.")
 
       it "Exact commonThisMethods #2", ->
         selfValue = {}
@@ -493,7 +493,7 @@ describe "Problem Test Suite", ->
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].type).toEqual("runtime")
         expect(aether.problems.errors[0].message).toEqual("Line 1: Object #<Object> has no method 'moveRight'")
-        expect(aether.problems.errors[0].hint).toEqual("You do not have the moveRight skill.")
+        expect(aether.problems.errors[0].hint).toEqual("You do not have an item equipped with the moveRight skill.")
 
       it "Case commonThisMethods", ->
         selfValue = {}
@@ -507,7 +507,7 @@ describe "Problem Test Suite", ->
         aether.run method
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].message).toEqual("Line 1: Object #<Object> has no method 'moveup'")
-        expect(aether.problems.errors[0].hint).toEqual("Did you mean moveUp? You do not have that skill.")
+        expect(aether.problems.errors[0].hint).toEqual("Did you mean moveUp? You do not have an item equipped with that skill.")
 
       it "Score commonThisMethods", ->
         selfValue = {}
@@ -522,7 +522,7 @@ describe "Problem Test Suite", ->
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].type).toEqual("runtime")
         expect(aether.problems.errors[0].message).toEqual("Line 1: Object #<Object> has no method 'movright'")
-        expect(aether.problems.errors[0].hint).toEqual("Did you mean moveRight? You do not have that skill.")
+        expect(aether.problems.errors[0].hint).toEqual("Did you mean moveRight? You do not have an item equipped with that skill.")
 
       it "Score commonThisMethods #2", ->
         selfValue = {}
@@ -537,7 +537,7 @@ describe "Problem Test Suite", ->
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].type).toEqual("runtime")
         expect(aether.problems.errors[0].message).toEqual("Line 1: Object #<Object> has no method 'movright'")
-        expect(aether.problems.errors[0].hint).toEqual("Did you mean moveRight? You do not have that skill.")
+        expect(aether.problems.errors[0].hint).toEqual("Did you mean moveRight? You do not have an item equipped with that skill.")
 
     describe "ReferenceError", ->
 
@@ -793,7 +793,7 @@ describe "Problem Test Suite", ->
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].type).toEqual('runtime')
         expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: attack is not defined")
-        expect(aether.problems.errors[0].hint).toEqual("You do not have the attack skill.")
+        expect(aether.problems.errors[0].hint).toEqual("You do not have an item equipped with the attack skill.")
 
       it "Case commonThisMethods", ->
         selfValue = {}
@@ -808,7 +808,7 @@ describe "Problem Test Suite", ->
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].type).toEqual('runtime')
         expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: ATTACK is not defined")
-        expect(aether.problems.errors[0].hint).toEqual("Did you mean attack? You do not have that skill.")
+        expect(aether.problems.errors[0].hint).toEqual("Did you mean attack? You do not have an item equipped with that skill.")
 
       it "Score commonThisMethods", ->
         selfValue = {}
@@ -823,7 +823,7 @@ describe "Problem Test Suite", ->
         expect(aether.problems.errors.length).toEqual(1)
         expect(aether.problems.errors[0].type).toEqual('runtime')
         expect(aether.problems.errors[0].message).toEqual("Line 1: ReferenceError: atac is not defined")
-        expect(aether.problems.errors[0].hint).toEqual("Did you mean attack? You do not have that skill.")
+        expect(aether.problems.errors[0].hint).toEqual("Did you mean attack? You do not have an item equipped with that skill.")
 
     describe "Missing property", ->
       it "self.self.moveUp()", ->

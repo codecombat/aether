@@ -323,11 +323,11 @@ class HintCreator
       "Try `#{@thisValueAccess}#{match}()`"]
     # Check commonThisMethods
     unless hint? then hint = @getExactMatch target, @context.commonThisMethods, (match) ->
-      "You do not have the #{match} skill."
+      "You do not have an item equipped with the #{match} skill."
     unless hint? then hint = @getNoCaseMatch target, @context.commonThisMethods, (match) ->
-      "Did you mean #{match}? You do not have that skill."
+      "Did you mean #{match}? You do not have an item equipped with that skill."
     unless hint? then hint = @getScoreMatch target, [candidates: @context.commonThisMethods, msgFormatFn: (match) ->
-      "Did you mean #{match}? You do not have that skill."]
+      "Did you mean #{match}? You do not have an item equipped with that skill."]
     hint
 
   getReferenceErrorHint: (target) ->
@@ -356,11 +356,11 @@ class HintCreator
       {candidates: @context.thisProperties, msgFormatFn: (match) =>"Try `#{@thisValueAccess}#{match}`"}]
     # Check commonThisMethods
     unless hint? then hint = @getExactMatch target, @context.commonThisMethods, (match) ->
-      "You do not have the #{match} skill."
+      "You do not have an item equipped with the #{match} skill."
     unless hint? then hint = @getNoCaseMatch target, @context.commonThisMethods, (match) ->
-      "Did you mean #{match}? You do not have that skill."
+      "Did you mean #{match}? You do not have an item equipped with that skill."
     unless hint? then hint = @getScoreMatch target, [candidates: @context.commonThisMethods, msgFormatFn: (match) ->
-      "Did you mean #{match}? You do not have that skill."]
+      "Did you mean #{match}? You do not have an item equipped with that skill."]
     
     # Try score match with this value prefixed
     # E.g. target = 'selfmoveright', try 'self.moveRight()''
