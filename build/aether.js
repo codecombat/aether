@@ -23308,12 +23308,12 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
       }
       if (hint == null) {
         hint = this.getExactMatch(target, this.context.commonThisMethods, function(match) {
-          return "You do not have the " + match + " skill.";
+          return "You do not have an item equipped with the " + match + " skill.";
         });
       }
       if (hint == null) {
         hint = this.getNoCaseMatch(target, this.context.commonThisMethods, function(match) {
-          return "Did you mean " + match + "? You do not have that skill.";
+          return "Did you mean " + match + "? You do not have an item equipped with that skill.";
         });
       }
       if (hint == null) {
@@ -23321,7 +23321,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
           {
             candidates: this.context.commonThisMethods,
             msgFormatFn: function(match) {
-              return "Did you mean " + match + "? You do not have that skill.";
+              return "Did you mean " + match + "? You do not have an item equipped with that skill.";
             }
           }
         ]);
@@ -23392,12 +23392,12 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
       }
       if (hint == null) {
         hint = this.getExactMatch(target, this.context.commonThisMethods, function(match) {
-          return "You do not have the " + match + " skill.";
+          return "You do not have an item equipped with the " + match + " skill.";
         });
       }
       if (hint == null) {
         hint = this.getNoCaseMatch(target, this.context.commonThisMethods, function(match) {
-          return "Did you mean " + match + "? You do not have that skill.";
+          return "Did you mean " + match + "? You do not have an item equipped with that skill.";
         });
       }
       if (hint == null) {
@@ -23405,7 +23405,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
           {
             candidates: this.context.commonThisMethods,
             msgFormatFn: function(match) {
-              return "Did you mean " + match + "? You do not have that skill.";
+              return "Did you mean " + match + "? You do not have an item equipped with that skill.";
             }
           }
         ]);
