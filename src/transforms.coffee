@@ -134,6 +134,8 @@ getUserFnMap = (startNode) ->
 
       if fn.body?.body?
         for key, child of fn.body.body
+          if child.body?.body?
+            buildScope scope, child
           continue if key is 'parent' or key is 'leadingComments' or key is 'originalNode'
           if child?.type is S.ExpressionStatement and child.expression?.type is S.AssignmentExpression
             if child.expression.right?.type is S.FunctionExpression
