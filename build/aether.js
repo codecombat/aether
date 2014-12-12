@@ -24223,7 +24223,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
         return _results;
       };
       buildScope = function(scope, fn) {
-        var child, childScope, key, _ref3, _ref4, _ref5, _ref6, _results;
+        var child, childScope, key, _ref3, _ref4, _ref5, _ref6, _ref7, _results;
         buildVarMap(scope.varMap, fn);
         buildCallMap(scope.calls, fn);
         if (((_ref3 = fn.body) != null ? _ref3.body : void 0) != null) {
@@ -24231,11 +24231,14 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
           _results = [];
           for (key in _ref4) {
             child = _ref4[key];
+            if (((_ref5 = child.body) != null ? _ref5.body : void 0) != null) {
+              buildScope(scope, child);
+            }
             if (key === 'parent' || key === 'leadingComments' || key === 'originalNode') {
               continue;
             }
-            if ((child != null ? child.type : void 0) === S.ExpressionStatement && ((_ref5 = child.expression) != null ? _ref5.type : void 0) === S.AssignmentExpression) {
-              if (((_ref6 = child.expression.right) != null ? _ref6.type : void 0) === S.FunctionExpression) {
+            if ((child != null ? child.type : void 0) === S.ExpressionStatement && ((_ref6 = child.expression) != null ? _ref6.type : void 0) === S.AssignmentExpression) {
+              if (((_ref7 = child.expression.right) != null ? _ref7.type : void 0) === S.FunctionExpression) {
                 childScope = {
                   children: [],
                   varMap: [],
@@ -25624,7 +25627,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
                                     [new ast.ExpressionStatement(new ast.AssignmentExpression('=', new ast.Identifier(tmp3), new ast.Literal('ReferenceError'))),
                                      new ast.ExpressionStatement(new ast.AssignmentExpression('=', new ast.Identifier(tmp4), new ast.MemberExpression(new ast.Identifier('__global'), new ast.Identifier(tmp3), true))),
                                      new ast.ExpressionStatement(new ast.AssignmentExpression('=', new ast.Identifier(tmp5), new ast.NewExpression(new ast.Identifier(tmp4), [new ast.BinaryExpression('+', new ast.Literal('ReferenceError: '), new ast.BinaryExpression('+', new ast.Identifier(tmp), new ast.Literal(' is not defined')))]))),
-                                     new ast.ThrowStatement(new ast.Identifier(tmp5))]));
+                                     inheritPosition(new ast.ThrowStatement(new ast.Identifier(tmp5)), nd)]));
             }
           } else {
             // locals are easy: target = x;
@@ -33020,11 +33023,20 @@ parseYieldExpression: true
         tmp = pattern;
         if (flags.indexOf('u') >= 0) {
             // Replace each astral symbol and every Unicode code point
-            // escape sequence that represents such a symbol with a single
-            // ASCII symbol to avoid throwing on regular expressions that
-            // are only valid in combination with the `/u` flag.
+            // escape sequence with a single ASCII symbol to avoid throwing on
+            // regular expressions that are only valid in combination with the
+            // `/u` flag.
+            // Note: replacing with the ASCII symbol `x` might cause false
+            // negatives in unlikely scenarios. For example, `[\u{61}-b]` is a
+            // perfectly valid pattern that is equivalent to `[a-b]`, but it
+            // would be replaced by `[x-b]` which throws an error.
             tmp = tmp
-                .replace(/\\u\{([0-9a-fA-F]{5,6})\}/g, 'x')
+                .replace(/\\u\{([0-9a-fA-F]+)\}/g, function ($0, $1) {
+                    if (parseInt($1, 16) <= 0x10FFFF) {
+                        return 'x';
+                    }
+                    throwError({}, Messages.InvalidRegExp);
+                })
                 .replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, 'x');
         }
 
@@ -35316,10 +35328,12 @@ parseYieldExpression: true
         }
 
         expect('{');
-        do {
-            isExportFromIdentifier = isExportFromIdentifier || matchKeyword('default');
-            specifiers.push(parseExportSpecifier());
-        } while (match(',') && lex());
+        if (!match('}')) {
+            do {
+                isExportFromIdentifier = isExportFromIdentifier || matchKeyword('default');
+                specifiers.push(parseExportSpecifier());
+            } while (match(',') && lex());
+        }
         expect('}');
 
         if (matchContextualKeyword('from')) {
@@ -35360,9 +35374,11 @@ parseYieldExpression: true
         var specifiers = [];
         // {foo, bar as bas}
         expect('{');
-        do {
-            specifiers.push(parseImportSpecifier());
-        } while (match(',') && lex());
+        if (!match('}')) {
+            do {
+                specifiers.push(parseImportSpecifier());
+            } while (match(',') && lex());
+        }
         expect('}');
         return specifiers;
     }
