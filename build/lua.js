@@ -6789,6 +6789,10 @@ this.parser = (function() {
         },
         encloseDecls: function(body /*, decls...*/) {
             var decls = Array.prototype.slice.call(arguments, 1);
+            return bhelper.encloseDeclsEx.apply(this, [body, opt("encloseWithFunctions", true) ].concat(decls));
+        },
+        encloseDeclsEx: function(body, enclose /*, decls...*/) {
+            var decls = Array.prototype.slice.call(arguments, 2);
             var vals = [];
             var names = [];
             for ( var k in decls ) {
@@ -6797,7 +6801,7 @@ this.parser = (function() {
                 names.push(v.id);
             }
 
-            if ( opt("encloseWithFunctions", true) ) {
+            if ( enclose ) {
                 return {
                     expression: builder.callExpression(
                         builder.functionExpression(null, names, bhelper.blockStatement(body)),
@@ -6910,15 +6914,17 @@ this.parser = (function() {
                         return bhelper.luaOperator.apply(bhelper, ["call", flagso , rcallee, callee.object, helper].concat(args));
 
                     } else {
-                        var tmp = bhelper.tempVar(callee.object);
+                        var tmp = bhelper.tempVar(bhelper.translateExpressionIfNeeded(callee.object));
                         
                         var rexpr = builder.memberExpression(tmp.id, callee.property, callee.computed);
                         var rcallee = bhelper.translateExpressionIfNeeded(rexpr);
-                        return bhelper.encloseDecls([
+                        var expr = bhelper.luaOperator.apply(bhelper, ["call", flagso, rcallee, tmp.id, helper].concat(args));
+                        return result = bhelper.encloseDeclsEx([
                             builder.returnStatement(
-                                bhelper.luaOperator.apply(bhelper, ["call", flagso, rcallee, tmp.id, helper].concat(args))
+                                expr
                             )
-                        ], tmp).expression;
+                        ], true, tmp).expression;
+
                     }
                 } else {
                     var rcallee = bhelper.translateExpressionIfNeeded(callee)
@@ -7019,7 +7025,7 @@ var __lua = (function() {
 
 	function add(a,b) {
 		
-		var mtf = lookupMetaTable(a, "__add");
+		var mtf = lookupMetaTableBin(a, b, "__add");
 		if ( mtf !== null ) return mtf(a,b);
 
 		return numberForArith(a) + numberForArith(b); 
@@ -7027,7 +7033,7 @@ var __lua = (function() {
 
 	function sub(a,b) { 
 
-		var mtf = lookupMetaTable(a, "__sub");
+		var mtf = lookupMetaTableBin(a, b, "__sub");
 		if ( mtf !== null ) return mtf(a,b);
 
 		return numberForArith(a) - numberForArith(b);
@@ -7035,7 +7041,7 @@ var __lua = (function() {
 
 	function mul(a,b) { 
 
-		var mtf = lookupMetaTable(a, "__mul");
+		var mtf = lookupMetaTableBin(a, b, "__mul");
 		if ( mtf !== null ) return mtf(a,b);
 
 		return numberForArith(a) * numberForArith(b);
@@ -7044,10 +7050,26 @@ var __lua = (function() {
 
 	function pow(a,b) { return Math.pow(numberForArith(a),numberForArith(b)); }
 
-	function concat(a,b) { return "" + a + b; }
+	function concat(a,b) { 
+		var mtf = lookupMetaTableBin(a, b, "__concat");
+		if ( mtf !== null ) return mtf(a,b);
 
-	function lte(a,b) { return a <= b; }
-	function lt(a,b) { return a < b; }
+		return "" + a + b; 
+	}
+
+	function lte(a,b) { 
+		var mtf = lookupMetaTableBin(a, b, "__le");
+		if ( mtf !== null ) return mtf(a,b);
+
+		return a <= b; 
+	}
+
+	function lt(a,b) {
+		var mtf = lookupMetaTableBin(a, b, "__lt");
+		if ( mtf !== null ) return mtf(a,b);
+
+		return a < b; 
+	}
 
 	function gte(a,b) { return lte(b,a); }
 	function gt(a,b) { return lt(b,a); }
@@ -7168,6 +7190,12 @@ var __lua = (function() {
 		}
 
 		return null;
+	}
+
+	function lookupMetaTableBin(a, b, entry) {
+		var mt = lookupMetaTable(a, entry);
+		if ( mt == null ) return lookupMetaTable(b, entry);
+		return mt;
 	}
 
 	function index(table, prop, helper) {
@@ -7415,6 +7443,10 @@ env.tonumber = function(n) {
 	return parseInt(n);
 }
 
+env.tostring = function(n) {
+	return "" + n;
+}
+
 env.os = {
 	clock: null,
 	date: null,
@@ -7537,6 +7569,7 @@ env.math = Math;
 env.setmetatable = function setmetatable(target, meta) {
 
 	Object.defineProperty(target, "__metatable", {value: meta, enumerable: false, configurable: true });
+	return target;
 }
 
 env.getmetatable = function getmetatable(taget, meta) {
