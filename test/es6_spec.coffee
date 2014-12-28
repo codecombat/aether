@@ -14,8 +14,7 @@ describe "JavaScript Test Suite", ->
       aether.transpile(code)
       expect(aether.problems.errors.length).toEqual(2)
       expect(/Expected an identifier and instead/.test(aether.problems.errors[0].message)).toBe(true)
-      # https://github.com/codecombat/aether/issues/113
-      # expect(aether.problems.errors[0].range).toEqual([ { ofs : 39, row : 3, col : 8 }, { ofs : 40, row : 3, col : 9 } ])
+      expect(aether.problems.errors[0].range).toEqual([ { ofs : 31, row : 3, col : 0 }, { ofs : 46, row : 3, col : 15 } ])
       expect(/Line 4: Unexpected token =/.test(aether.problems.errors[1].message)).toBe(true)
       expect(aether.problems.errors[1].range).toEqual([ { ofs : 39, row : 3, col : 8 }, { ofs : 40, row : 3, col : 9 } ])
 
