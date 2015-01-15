@@ -51,6 +51,7 @@
     "grunt-gh-pages": "~0.9.0",
     "grunt-istanbul": "^0.2.5",
     "grunt-jasmine-node": "~0.1.0",
+    "grunt-newer": "^1.1.0",
     "grunt-notify": "~0.2.7",
     "grunt-push-release": "~0.1.1",
     "jasmine-node": "~1.11.0"
