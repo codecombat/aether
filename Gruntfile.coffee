@@ -22,15 +22,16 @@ module.exports = (grunt) ->
         ]
 
     coffeelint:
-        app: ['src/*.coffee', 'test/*.coffee', 'dev/*.coffee']
-        options:
-          no_trailing_whitespace:
-            level: 'ignore'  # PyCharm can't just autostrip for .coffee, needed for .jade
-          max_line_length:
-            level: 'ignore'
-          line_endings:
-            value: "unix"
-            level: "error"
+      app: ['src/*.coffee', 'test/*.coffee', 'dev/*.coffee']
+      options:
+        no_trailing_whitespace:
+          # PyCharm can't just autostrip for .coffee, needed for .jade
+          level: 'ignore'
+        max_line_length:
+          level: 'ignore'
+        line_endings:
+          value: "unix"
+          level: "error"
 
     watch:
       files: ['src/**/*', 'test/**/*.coffee', 'dev/**/*.coffee']
@@ -47,7 +48,7 @@ module.exports = (grunt) ->
     #    options:
     #      specs: ['']
 
-    "jasmine_node":
+    jasmine_node:
       run:
         spec: "lib/test/"
       runCoverage:
@@ -81,7 +82,9 @@ module.exports = (grunt) ->
         dest: 'build/<%= pkg.name %>.js'
         options:
           #standalone: "Aether"  # can't figure out how to get this to work
-          ignore: ['lodash', 'traceur', 'closer', 'filbert', 'filbert/filbert_loose', 'lua2js', 'iota-compiler', 'coffee-script-redux', 'jshint']
+          ignore: ['lodash', 'traceur', 'closer', 'filbert',
+            'filbert/filbert_loose', 'lua2js', 'iota-compiler',
+            'coffee-script-redux', 'jshint']
       parsers:
         files: [
           {src: 'parsers/python.js', dest: 'build/python.js'}
@@ -91,7 +94,9 @@ module.exports = (grunt) ->
           {src: 'parsers/coffeescript.js', dest: 'build/coffeescript.js'}
           {src: 'parsers/javascript.js', dest: 'build/javascript.js'}
         ]
-      #test:  # We're not using jasmine but now jasmine_node, so we don't need to browserify the tests
+      # We're not using jasmine but now jasmine_node,
+      # so we don't need to browserify the tests
+      #test:
       #  src: ['lib/test/*.js']
       #  dest: 'build/test/<%= pkg.name %>_specs.js'
 
@@ -126,7 +131,8 @@ module.exports = (grunt) ->
       dev:
         options:
           trace: true
-          #sourcemap: true  # no need to depend on sass gem 3.3.0 before it's out
+          # no need to depend on sass gem 3.3.0 before it's out
+          #sourcemap: true
           unixNewlines: true
           noCache: true
         files:
@@ -176,9 +182,22 @@ module.exports = (grunt) ->
   grunt.loadNpmTasks 'grunt-contrib-copy'
 
   # Default task(s).
-  grunt.registerTask 'default', ['coffeelint', 'coffee', 'browserify', 'concat', 'jasmine_node:run', 'jade', 'sass'] #, 'uglify']
+  grunt.registerTask 'default', ['coffeelint', 'coffee', 'browserify', 'concat',
+    'jasmine_node:run', 'jade', 'sass'] #, 'uglify']
   grunt.registerTask 'travis', ['coffeelint', 'coffee', 'jasmine_node:run']
   grunt.registerTask 'test', ['newer:coffee', 'jasmine_node:run']
-  grunt.registerTask 'coverage', ['coffee', 'instrument', 'copy:tests', 'jasmine_node:runCoverage', 'storeCoverage', 'makeReport']
-  grunt.registerTask 'build', ['coffeelint', 'coffee', 'browserify:src', 'concat', 'jade', 'sass', 'uglify:build']
+  grunt.registerTask 'coverage', ['coffee', 'instrument', 'copy:tests',
+    'jasmine_node:runCoverage', 'storeCoverage', 'makeReport']
+  grunt.registerTask 'build', ['coffeelint', 'coffee', 'browserify:src',
+    'concat', 'jade', 'sass', 'uglify:build']
   grunt.registerTask 'parsers', ['browserify:parsers', 'uglify:parsers']
+
+  # Run a single test with `grunt spec:filename`.
+  # For example, `grunt spec:io` will run tests in io_spec.coffee
+  grunt.registerTask 'spec', 'Run jasmine_node test on a specified file', (filename) ->
+    grunt.task.run 'newer:coffee'
+    grunt.config.set 'jasmine_node.match', filename
+    grunt.config.set 'jasmine_node.matchAll', false
+    grunt.config.set 'jasmine_node.specNameMatcher', '_spec'
+    grunt.task.run 'jasmine_node:run'
+
