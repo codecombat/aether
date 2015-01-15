@@ -160,6 +160,7 @@ module.exports = (grunt) ->
   # Load the plugin that provides the "uglify" task.
   grunt.loadNpmTasks 'grunt-contrib-uglify'
   #grunt.loadNpmTasks 'grunt-contrib-jasmine'
+  grunt.loadNpmTasks 'grunt-newer'
   grunt.loadNpmTasks 'grunt-jasmine-node'
   grunt.loadNpmTasks 'grunt-coffeelint'
   grunt.loadNpmTasks 'grunt-contrib-coffee'
@@ -171,13 +172,13 @@ module.exports = (grunt) ->
   grunt.loadNpmTasks 'grunt-push-release'
   grunt.loadNpmTasks 'grunt-contrib-jade'
   grunt.loadNpmTasks 'grunt-contrib-sass'
-  grunt.loadNpmTasks('grunt-istanbul')
-  grunt.loadNpmTasks('grunt-contrib-copy')
+  grunt.loadNpmTasks 'grunt-istanbul'
+  grunt.loadNpmTasks 'grunt-contrib-copy'
 
   # Default task(s).
   grunt.registerTask 'default', ['coffeelint', 'coffee', 'browserify', 'concat', 'jasmine_node:run', 'jade', 'sass'] #, 'uglify']
   grunt.registerTask 'travis', ['coffeelint', 'coffee', 'jasmine_node:run']
-  grunt.registerTask 'test', ['coffee', 'jasmine_node:run']
+  grunt.registerTask 'test', ['newer:coffee', 'jasmine_node:run']
   grunt.registerTask 'coverage', ['coffee', 'instrument', 'copy:tests', 'jasmine_node:runCoverage', 'storeCoverage', 'makeReport']
   grunt.registerTask 'build', ['coffeelint', 'coffee', 'browserify:src', 'concat', 'jade', 'sass', 'uglify:build']
   grunt.registerTask 'parsers', ['browserify:parsers', 'uglify:parsers']
