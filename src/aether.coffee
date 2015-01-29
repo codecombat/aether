@@ -102,8 +102,8 @@ module.exports = class Aether
 
   # Determine whether two strings of code produce different lint problems.
   hasChangedLintProblems: (a, b) ->
-    aLintProblems = [p.id, p.message, p.hint] for p in @getAllProblems @lint a
-    bLintProblems = [p.id, p.message, p.hint] for p in @getAllProblems @lint b
+    aLintProblems = ([p.id, p.message, p.hint] for p in @getAllProblems @lint a)
+    bLintProblems = ([p.id, p.message, p.hint] for p in @getAllProblems @lint b)
     return not _.isEqual aLintProblems, bLintProblems
 
   # Return a beautified representation of the code (cleaning up indentation, etc.)

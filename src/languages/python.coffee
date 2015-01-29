@@ -157,8 +157,8 @@ module.exports = class Python extends Language
     ast
 
   convertToNativeType: (obj) ->
-    return parserHolder.parser.pythonRuntime.utils.createList(obj) if not obj?._isPython and _.isArray obj
-    return parserHolder.parser.pythonRuntime.utils.createDict(obj) if not obj?._isPython and _.isObject obj
+    parserHolder.parser.pythonRuntime.utils.convertToList(obj) if not obj?._isPython and _.isArray obj
+    parserHolder.parser.pythonRuntime.utils.convertToDict(obj) if not obj?._isPython and _.isObject obj
     obj
 
   cloneObj: (obj, cloneFn=(o) -> o) ->

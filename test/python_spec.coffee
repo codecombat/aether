@@ -678,5 +678,22 @@ x = 5
       expect(aether.problems.warnings[0].type).toEqual('transpile')
       expect(aether.problems.warnings[0].message).toEqual("Empty if statement. Put 4 spaces in front of statements inside the if statement.")
 
+    it "convertToNativeType", ->
+      globals =
+        foo: ->
+          o = p1: 34, p2: 'Bob'
+          Object.defineProperty o, 'health', value: 42
+      code = """
+        myObj = self.foo()
+        return myObj.health
+      """
+      aether = new Aether language: "python", simpleLoops: true, yieldConditionally: true
+      aether.transpile code
+      f = aether.createFunction()
+      gen = f.apply globals
+      result = gen.next()
+      expect(aether.problems.errors.length).toEqual(0)
+      expect(result.value).toEqual(42)
+
     # TODO: simple loop in a function
     # TODO: blocked by https://github.com/codecombat/aether/issues/48
