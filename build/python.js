@@ -2726,6 +2726,97 @@
     },
 
     utils: {
+      convertToDict: function (dict) {
+        if (!dict.hasOwnProperty("_type")) {
+          Object.defineProperty(dict, "_type",
+          {
+            get: function () { return 'dict';},
+            enumerable: false
+          });
+        }
+        if (!dict.hasOwnProperty("_isPython")) {
+          Object.defineProperty(dict, "_isPython",
+          {
+            get: function () { return true; },
+            enumerable: false
+          });
+        }
+        if (!dict.hasOwnProperty("items")) {
+          Object.defineProperty(dict, "items",
+          {
+            value: function () {
+              var items = new pythonRuntime.objects.list();
+              for (var k in this) items.append(new pythonRuntime.objects.tuple(k, this[k]));
+              return items;
+            },
+            enumerable: false
+          });
+        }
+        if (!dict.hasOwnProperty("length")) {
+          Object.defineProperty(dict, "length",
+          {
+            get: function () {
+              return Object.keys(this).length;
+            },
+            enumerable: false
+          });
+        }
+        if (!dict.hasOwnProperty("clear")) {
+          Object.defineProperty(dict, "clear",
+          {
+            value: function () {
+              for (var i in this) delete this[i];
+            },
+            enumerable: false
+          });
+        }
+        if (!dict.hasOwnProperty("get")) {
+          Object.defineProperty(dict, "get",
+          {
+            value: function (key, def) {
+              if (key in this) return this[key];
+              else if (def !== undefined) return def;
+              return null;
+            },
+            enumerable: false
+          });
+        }
+        if (!dict.hasOwnProperty("keys")) {
+          Object.defineProperty(dict, "keys",
+          {
+            value: function () {
+              return Object.keys(this);
+            },
+            enumerable: false
+          });
+        }
+        if (!dict.hasOwnProperty("pop")) {
+          Object.defineProperty(dict, "pop",
+          {
+            value: function (key, def) {
+              var value;
+              if (key in this) {
+                value = this[key];
+                delete this[key];
+              } else if (def !== undefined) value = def;
+              else return new Error("KeyError");
+              return value;
+            },
+            enumerable: false
+          });
+        }
+        if (!dict.hasOwnProperty("values")) {
+          Object.defineProperty(dict, "values",
+          {
+            value: function () {
+              var values = new pythonRuntime.objects.list();
+              for (var key in this) values.append(this[key]);
+              return values;
+            },
+            enumerable: false
+          });
+        }
+      },
       createDict: function () {
         var ret = new pythonRuntime.objects.dict();
         if (arguments.length === 1 && arguments[0] instanceof Object)
@@ -2739,13 +2830,214 @@
         // Out: {formals:[expr, expr, ...], keywords:{id:expr, id:expr, ...}}
         var params = { formals: new pythonRuntime.objects.list(), keywords: new pythonRuntime.objects.dict() };
         for (var i = 0; i < arguments.length; i++) {
-          if (arguments[i].__kwp === true) {
+          if (arguments[i] && arguments[i].__kwp === true) {
             for (var k in arguments[i])
               if (k !== '__kwp') params.keywords[k] = arguments[i][k];
           }
           else params.formals.push(arguments[i]);
         }
         return params;
+      },
+      convertToList: function (list) {
+        if (!list.hasOwnProperty("_type")) {
+          Object.defineProperty(list, "_type",
+          {
+            get: function () { return 'list'; },
+            enumerable: false
+          });
+        }
+        if (!list.hasOwnProperty("_isPython")) {
+          Object.defineProperty(list, "_isPython",
+          {
+            get: function () { return true; },
+            enumerable: false
+          });
+        }
+        if (!list.hasOwnProperty("append")) {
+          Object.defineProperty(list, "append",
+          {
+            value: function (x) {
+              this.push(x);
+            },
+            enumerable: false
+          });
+        }
+        if (!list.hasOwnProperty("clear")) {
+          Object.defineProperty(list, "clear",
+          {
+            value: function () {
+              this.splice(0, this.length);
+            },
+            enumerable: false
+          });
+        }
+        if (!list.hasOwnProperty("copy")) {
+          Object.defineProperty(list, "copy",
+          {
+            value: function () {
+              return this.slice(0);
+            },
+            enumerable: false
+          });
+        }
+        if (!list.hasOwnProperty("count")) {
+          Object.defineProperty(list, "count",
+          {
+            value: function (x) {
+              var c = 0;
+              for (var i = 0; i < this.length; i++)
+                if (this[i] === x) c++;
+              return c;
+            },
+            enumerable: false
+          });
+        }
+        if (!list.hasOwnProperty("equals")) {
+          Object.defineProperty(list, "equals",
+          {
+            value: function (x) {
+              try {
+                if (this.length !== x.length) return false;
+                for (var i = 0; i < this.length; i++) {
+                  if (this[i].hasOwnProperty("equals")) {
+                    if (!this[i].equals(x[i])) return false;
+                  } else if (this[i] !== x[i]) return false;
+                }
+                return true;
+              }
+              catch (e) { }
+              return false;
+            },
+            enumerable: false
+          });
+        }
+        if (!list.hasOwnProperty("extend")) {
+          Object.defineProperty(list, "extend",
+          {
+            value: function (L) {
+              for (var i = 0; i < L.length; i++) this.push(L[i]);
+            },
+            enumerable: false
+          });
+        }
+        if (!list.hasOwnProperty("index")) {
+          Object.defineProperty(list, "index",
+          {
+            value: function (x) {
+              return this.indexOf(x);
+            },
+            enumerable: false
+          });
+        }
+        if (!list.hasOwnProperty("indexOf")) {
+          Object.defineProperty(list, "indexOf",
+          {
+            value: function (x, fromIndex) {
+              try {
+                for (var i = fromIndex ? fromIndex : 0; i < this.length; i++) {
+                  if (this[i].hasOwnProperty("equals")) {
+                    if (this[i].equals(x)) return i;
+                  } else if (this[i] === x) return i;
+                }
+              }
+              catch (e) { }
+              return -1;
+            },
+            enumerable: false
+          });
+        }
+        if (!list.hasOwnProperty("insert")) {
+          Object.defineProperty(list, "insert",
+          {
+            value: function (i, x) {
+              this.splice(i, 0, x);
+            },
+            enumerable: false
+          });
+        }
+        if (!list.hasOwnProperty("pop")) {
+          Object.defineProperty(list, "pop",
+          {
+            value: function (i) {
+              if (!i)
+                i = this.length - 1;
+              var item = this[i];
+              this.splice(i, 1);
+              return item;
+            },
+            enumerable: false
+          });
+        }
+        if (!list.hasOwnProperty("_pySlice")) {
+          Object.defineProperty(list, "_pySlice",
+          {
+            value: function (start, end, step) {
+              return pythonRuntime.internal.slice(this, start, end, step);
+            },
+            enumerable: false
+          });
+        }
+        if (!list.hasOwnProperty("remove")) {
+          Object.defineProperty(list, "remove",
+          {
+            value: function (x) {
+              this.splice(this.indexOf(x), 1);
+            },
+            enumerable: false
+          });
+        }
+        if (!list.hasOwnProperty("sort")) {
+          Object.defineProperty(list, "sort",
+          {
+            value: function(x, reverse) {
+              var list2 = this.slice(0);
+              var apply_key = function(a, numerical) {
+                var list3 = list2.map(x);
+                // construct a dict that maps the listay before and after the map
+                var mapping = {}
+                for(var i in list3) mapping[list3[i]] = list2[i];
+                if(numerical)
+                  list3.sort(function(a, b) { return a - b; });
+                else
+                  list3.sort()
+                for(var i in a) a[i] = mapping[list3[i]];
+              }
+              for(var i in this) {
+                if(typeof this[i] !== 'number' || !isFinite(this[i])) {
+                  if(typeof x != 'undefined') {
+                    apply_key(this, false);
+                  }
+                  else {
+                    list2.sort();
+                    for (var j in this) this[j] = list2[j];
+                  }
+                  if(reverse)
+                    this.reverse();
+                  return;
+                }
+              }
+              if(typeof x != 'undefined') {
+                apply_key(this, true);
+              }
+              else {
+                list2.sort(function(a, b) { return a - b; });
+                for(var i in this) this[i] = list2[i];
+              }
+              if(reverse)
+                this.reverse();
+            },
+            enumerable: false
+          });
+        }
+        if (!list.hasOwnProperty("toString")) {
+          Object.defineProperty(list, "toString",
+          {
+            value: function () {
+              return '[' + this.join(', ') + ']';
+            },
+            enumerable: false
+          });
+        }
       },
       createList: function () {
         var ret = new pythonRuntime.objects.list();
@@ -2811,249 +3103,13 @@
       dict: function () {
         var obj = {};
         for (var i in arguments) obj[arguments[i][0]] = arguments[i][1];
-        Object.defineProperty(obj, "_type",
-        {
-          get: function () { return 'dict';},
-          enumerable: false
-        });
-        Object.defineProperty(obj, "_isPython",
-        {
-          get: function () { return true; },
-          enumerable: false
-        });
-        Object.defineProperty(obj, "items",
-        {
-          value: function () {
-            var items = new pythonRuntime.objects.list();
-            for (var k in this) items.append(new pythonRuntime.objects.tuple(k, this[k]));
-            return items;
-          },
-          enumerable: false
-        });
-        Object.defineProperty(obj, "length",
-        {
-          get: function () {
-            return Object.keys(this).length;
-          },
-          enumerable: false
-        });
-        Object.defineProperty(obj, "clear",
-        {
-          value: function () {
-            for (var i in this) delete this[i];
-          },
-          enumerable: false
-        });
-        Object.defineProperty(obj, "get",
-        {
-          value: function (key, def) {
-            if (key in this) return this[key];
-            else if (def !== undefined) return def;
-            return null;
-          },
-          enumerable: false
-        });
-        Object.defineProperty(obj, "keys",
-        {
-          value: function () {
-            return Object.keys(this);
-          },
-          enumerable: false
-        });
-        Object.defineProperty(obj, "pop",
-        {
-          value: function (key, def) {
-            var value;
-            if (key in this) {
-              value = this[key];
-              delete this[key];
-            } else if (def !== undefined) value = def;
-            else return new Error("KeyError");
-            return value;
-          },
-          enumerable: false
-        });
-        Object.defineProperty(obj, "values",
-        {
-          value: function () {
-            var values = new pythonRuntime.objects.list();
-            for (var key in this) values.append(this[key]);
-            return values;
-          },
-          enumerable: false
-        });
+        pythonRuntime.utils.convertToDict(obj);
         return obj;
       },
       list: function () {
         var arr = [];
         arr.push.apply(arr, arguments);
-        Object.defineProperty(arr, "_type",
-        {
-          get: function () { return 'list'; },
-          enumerable: false
-        });
-        Object.defineProperty(arr, "_isPython",
-        {
-          get: function () { return true; },
-          enumerable: false
-        });
-        Object.defineProperty(arr, "append",
-        {
-          value: function (x) {
-            this.push(x);
-          },
-          enumerable: false
-        });
-        Object.defineProperty(arr, "clear",
-        {
-          value: function () {
-            this.splice(0, this.length);
-          },
-          enumerable: false
-        });
-        Object.defineProperty(arr, "copy",
-        {
-          value: function () {
-            return this.slice(0);
-          },
-          enumerable: false
-        });
-        Object.defineProperty(arr, "count",
-        {
-          value: function (x) {
-            var c = 0;
-            for (var i = 0; i < this.length; i++)
-              if (this[i] === x) c++;
-            return c;
-          },
-          enumerable: false
-        });
-        Object.defineProperty(arr, "equals",
-        {
-          value: function (x) {
-            try {
-              if (this.length !== x.length) return false;
-              for (var i = 0; i < this.length; i++) {
-                if (this[i].hasOwnProperty("equals")) {
-                  if (!this[i].equals(x[i])) return false;
-                } else if (this[i] !== x[i]) return false;
-              }
-              return true;
-            }
-            catch (e) { }
-            return false;
-          },
-          enumerable: false
-        });
-        Object.defineProperty(arr, "extend",
-        {
-          value: function (L) {
-            for (var i = 0; i < L.length; i++) this.push(L[i]);
-          },
-          enumerable: false
-        });
-        Object.defineProperty(arr, "index",
-        {
-          value: function (x) {
-            return this.indexOf(x);
-          },
-          enumerable: false
-        });
-        Object.defineProperty(arr, "indexOf",
-        {
-          value: function (x, fromIndex) {
-            try {
-              for (var i = fromIndex ? fromIndex : 0; i < this.length; i++) {
-                if (this[i].hasOwnProperty("equals")) {
-                  if (this[i].equals(x)) return i;
-                } else if (this[i] === x) return i;
-              }
-            }
-            catch (e) { }
-            return -1;
-          },
-          enumerable: false
-        });
-        Object.defineProperty(arr, "insert",
-        {
-          value: function (i, x) {
-            this.splice(i, 0, x);
-          },
-          enumerable: false
-        });
-        Object.defineProperty(arr, "pop",
-        {
-          value: function (i) {
-            if (!i)
-              i = this.length - 1;
-            var item = this[i];
-            this.splice(i, 1);
-            return item;
-          },
-          enumerable: false
-        });
-        Object.defineProperty(arr, "_pySlice",
-        {
-          value: function (start, end, step) {
-            return pythonRuntime.internal.slice(this, start, end, step);
-          },
-          enumerable: false
-        });
-        Object.defineProperty(arr, "remove",
-        {
-          value: function (x) {
-            this.splice(this.indexOf(x), 1);
-          },
-          enumerable: false
-        });
-        Object.defineProperty(arr, "sort",
-        {
-          value: function(x, reverse) {
-            var arr2 = this.slice(0);
-            var apply_key = function(a, numerical) {
-              var arr3 = arr2.map(x);
-              // construct a dict that maps the array before and after the map
-              var mapping = {}
-              for(var i in arr3) mapping[arr3[i]] = arr2[i];
-              if(numerical)
-                arr3.sort(function(a, b) { return a - b; });
-              else
-                arr3.sort()
-              for(var i in a) a[i] = mapping[arr3[i]];
-            }
-            for(var i in this) {
-              if(typeof this[i] !== 'number' || !isFinite(this[i])) {
-                if(typeof x != 'undefined') {
-                  apply_key(this, false);
-                }
-                else {
-                  arr2.sort();
-                  for (var j in this) this[j] = arr2[j];
-                }
-                if(reverse)
-                  this.reverse();
-                return;
-              }
-            }
-            if(typeof x != 'undefined') {
-              apply_key(this, true);
-            }
-            else {
-              arr2.sort(function(a, b) { return a - b; });
-              for(var i in this) this[i] = arr2[i];
-            }
-            if(reverse)
-              this.reverse();
-          },
-          enumerable: false
-        });
-        Object.defineProperty(arr, "toString",
-        {
-          value: function () {
-            return '[' + this.join(', ') + ']';
-          },
-          enumerable: false
-        });
+        pythonRuntime.utils.convertToList(arr);
         return arr;
       },
       tuple: function () {

@@ -28381,7 +28381,7 @@ module.exports={
     "shasum": "09de7967791cc958b7f89a2ddb6d23451af327e1",
     "tarball": "http://registry.npmjs.org/escodegen/-/escodegen-1.2.0.tgz"
   },
-  "_from": "escodegen@~1.2.0",
+  "_from": "escodegen@>=1.2.0 <1.3.0",
   "_npmVersion": "1.3.21",
   "_npmUser": {
     "name": "constellation",
@@ -28459,8 +28459,8 @@ module.exports={
   "readmeFilename": "README.md",
   "_id": "coffee-script-redux@2.0.0-beta9-dev",
   "_shasum": "75fa62f8d41c26e6b7b31b90c943a94db17df453",
-  "_from": "https://github.com/michaelficarra/CoffeeScriptRedux/tarball/master",
-  "_resolved": "https://github.com/michaelficarra/CoffeeScriptRedux/tarball/master"
+  "_resolved": "https://github.com/michaelficarra/CoffeeScriptRedux/tarball/master",
+  "_from": "https://github.com/michaelficarra/CoffeeScriptRedux/tarball/master"
 }
 
 },{}],20:[function(require,module,exports){

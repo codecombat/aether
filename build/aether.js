@@ -20963,17 +20963,27 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
     };
 
     Aether.prototype.hasChangedLintProblems = function(a, b) {
-      var aLintProblems, bLintProblems, p, _i, _j, _len, _len1, _ref6, _ref7;
-      _ref6 = this.getAllProblems(this.lint(a));
-      for (_i = 0, _len = _ref6.length; _i < _len; _i++) {
-        p = _ref6[_i];
-        aLintProblems = [p.id, p.message, p.hint];
-      }
-      _ref7 = this.getAllProblems(this.lint(b));
-      for (_j = 0, _len1 = _ref7.length; _j < _len1; _j++) {
-        p = _ref7[_j];
-        bLintProblems = [p.id, p.message, p.hint];
-      }
+      var aLintProblems, bLintProblems, p;
+      aLintProblems = (function() {
+        var _i, _len, _ref6, _results;
+        _ref6 = this.getAllProblems(this.lint(a));
+        _results = [];
+        for (_i = 0, _len = _ref6.length; _i < _len; _i++) {
+          p = _ref6[_i];
+          _results.push([p.id, p.message, p.hint]);
+        }
+        return _results;
+      }).call(this);
+      bLintProblems = (function() {
+        var _i, _len, _ref6, _results;
+        _ref6 = this.getAllProblems(this.lint(b));
+        _results = [];
+        for (_i = 0, _len = _ref6.length; _i < _len; _i++) {
+          p = _ref6[_i];
+          _results.push([p.id, p.message, p.hint]);
+        }
+        return _results;
+      }).call(this);
       return !_.isEqual(aLintProblems, bLintProblems);
     };
 
@@ -22887,10 +22897,10 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
 
     Python.prototype.convertToNativeType = function(obj) {
       if (!(obj != null ? obj._isPython : void 0) && _.isArray(obj)) {
-        return parserHolder.parser.pythonRuntime.utils.createList(obj);
+        parserHolder.parser.pythonRuntime.utils.convertToList(obj);
       }
       if (!(obj != null ? obj._isPython : void 0) && _.isObject(obj)) {
-        return parserHolder.parser.pythonRuntime.utils.createDict(obj);
+        parserHolder.parser.pythonRuntime.utils.convertToDict(obj);
       }
       return obj;
     };
@@ -25627,7 +25637,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
                                     [new ast.ExpressionStatement(new ast.AssignmentExpression('=', new ast.Identifier(tmp3), new ast.Literal('ReferenceError'))),
                                      new ast.ExpressionStatement(new ast.AssignmentExpression('=', new ast.Identifier(tmp4), new ast.MemberExpression(new ast.Identifier('__global'), new ast.Identifier(tmp3), true))),
                                      new ast.ExpressionStatement(new ast.AssignmentExpression('=', new ast.Identifier(tmp5), new ast.NewExpression(new ast.Identifier(tmp4), [new ast.BinaryExpression('+', new ast.Literal('ReferenceError: '), new ast.BinaryExpression('+', new ast.Identifier(tmp), new ast.Literal(' is not defined')))]))),
-                                     inheritPosition(new ast.ThrowStatement(new ast.Identifier(tmp5)), nd)]));
+                                     new ast.ThrowStatement(new ast.Identifier(tmp5))]));
             }
           } else {
             // locals are easy: target = x;
