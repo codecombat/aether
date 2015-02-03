@@ -21023,7 +21023,10 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
     Aether.prototype.createFunction = function() {
       var fn;
       fn = protectBuiltins.createSandboxedFunction(this.options.functionName || 'foo', this.pure, this);
-      return protectBuiltins.wrapWithSandbox(this, fn);
+      if (this.options.protectBuiltins) {
+        fn = protectBuiltins.wrapWithSandbox(this, fn);
+      }
+      return fn;
     };
 
     Aether.prototype.createMethod = function(thisValue) {
@@ -21417,7 +21420,8 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
     includeFlow: true,
     includeMetrics: true,
     includeStyle: true,
-    protectAPI: false
+    protectAPI: false,
+    protectBuiltins: true
   };
 
 }).call(this);
@@ -25016,6 +25020,11 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
           type: 'boolean',
           "default": false,
           description: "Whether simple loops will be supported, per language.  E.g. 'loop()' will be transpiled as 'while(true)'."
+        },
+        protectBuiltins: {
+          type: 'boolean',
+          "default": true,
+          description: 'Whether builtins will be protected and restored for enhanced security.'
         }
       }
     });
@@ -25637,7 +25646,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
                                     [new ast.ExpressionStatement(new ast.AssignmentExpression('=', new ast.Identifier(tmp3), new ast.Literal('ReferenceError'))),
                                      new ast.ExpressionStatement(new ast.AssignmentExpression('=', new ast.Identifier(tmp4), new ast.MemberExpression(new ast.Identifier('__global'), new ast.Identifier(tmp3), true))),
                                      new ast.ExpressionStatement(new ast.AssignmentExpression('=', new ast.Identifier(tmp5), new ast.NewExpression(new ast.Identifier(tmp4), [new ast.BinaryExpression('+', new ast.Literal('ReferenceError: '), new ast.BinaryExpression('+', new ast.Identifier(tmp), new ast.Literal(' is not defined')))]))),
-                                     new ast.ThrowStatement(new ast.Identifier(tmp5))]));
+                                     inheritPosition(new ast.ThrowStatement(new ast.Identifier(tmp5)), nd)]));
             }
           } else {
             // locals are easy: target = x;

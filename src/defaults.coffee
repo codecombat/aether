@@ -16,3 +16,4 @@ module.exports = defaults =
   includeMetrics: true
   includeStyle: true
   protectAPI: false
+  protectBuiltins: true

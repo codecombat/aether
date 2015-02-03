@@ -63,3 +63,7 @@ module.exports = (options) ->
         type: 'boolean'
         default: false
         description: "Whether simple loops will be supported, per language.  E.g. 'loop()' will be transpiled as 'while(true)'."
+      protectBuiltins:
+        type: 'boolean'
+        default: true
+        description: 'Whether builtins will be protected and restored for enhanced security.'
