@@ -130,7 +130,9 @@ module.exports = class Aether
   # Return a ready-to-execute, instrumented, sandboxed function from the purified code.
   createFunction: ->
     fn = protectBuiltins.createSandboxedFunction @options.functionName or 'foo', @pure, @
-    protectBuiltins.wrapWithSandbox @, fn
+    if @options.protectBuiltins
+      fn = protectBuiltins.wrapWithSandbox @, fn
+    fn
 
   # Like createFunction, but binds method to thisValue.
   createMethod: (thisValue) ->
