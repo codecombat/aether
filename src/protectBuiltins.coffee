@@ -109,7 +109,7 @@ module.exports.wrapWithSandbox = wrapWithSandbox = (self, fn) ->
       result = fn.apply @, arguments
     finally
       self.depth--
-      if self.depth <= 0
+      if self.depth <= 0 && self.options.restoreBuiltins
         # Shouldn't ever be less than 0
         # Should we throw an exception if it is?
         restoreBuiltins()
