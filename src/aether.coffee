@@ -141,8 +141,10 @@ module.exports = class Aether
   # If you want to sandbox a generator each time it's called, then call result of createFunction and hand to this.
   sandboxGenerator: (fn) ->
     oldNext = fn.next
-    fn.next = protectBuiltins.wrapWithSandbox @, ->
+    fn.next = ->
       oldNext.apply fn, arguments
+    if @options.protectBuiltins
+      fn.next = protectBuiltins.wrapWithSandbox @, fn.next
     fn
 
   # Convenience wrapper for running the compiled function with default error handling
