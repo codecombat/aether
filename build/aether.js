@@ -21036,9 +21036,12 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
     Aether.prototype.sandboxGenerator = function(fn) {
       var oldNext;
       oldNext = fn.next;
-      fn.next = protectBuiltins.wrapWithSandbox(this, function() {
+      fn.next = function() {
         return oldNext.apply(fn, arguments);
-      });
+      };
+      if (this.options.protectBuiltins) {
+        fn.next = protectBuiltins.wrapWithSandbox(this, fn.next);
+      }
       return fn;
     };
 
