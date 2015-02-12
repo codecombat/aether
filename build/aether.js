@@ -22682,14 +22682,17 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
     Python.prototype.wrappedCodeIndentLen = 4;
 
     function Python() {
-      var _ref3, _ref4;
+      var _ref3, _ref4, _ref5;
       Python.__super__.constructor.apply(this, arguments);
       this.indent = Array(this.wrappedCodeIndentLen + 1).join(' ');
-      if (parserHolder.parser == null) {
-        parserHolder.parser = (_ref3 = typeof self !== "undefined" && self !== null ? self.aetherFilbert : void 0) != null ? _ref3 : require('filbert');
+      if (((_ref3 = parserHolder.parser) != null ? _ref3.pythonRuntime : void 0) == null) {
+        if (parserHolder.parser != null) {
+          console.log('Aether python parser ONLY missing pythonRuntime');
+        }
+        parserHolder.parser = (_ref4 = typeof self !== "undefined" && self !== null ? self.aetherFilbert : void 0) != null ? _ref4 : require('filbert');
       }
       if (parserHolder.parserLoose == null) {
-        parserHolder.parserLoose = (_ref4 = typeof self !== "undefined" && self !== null ? self.aetherFilbertLoose : void 0) != null ? _ref4 : require('filbert/filbert_loose');
+        parserHolder.parserLoose = (_ref5 = typeof self !== "undefined" && self !== null ? self.aetherFilbertLoose : void 0) != null ? _ref5 : require('filbert/filbert_loose');
       }
       this.runtimeGlobals = {
         __pythonRuntime: parserHolder.parser.pythonRuntime

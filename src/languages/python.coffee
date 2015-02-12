@@ -16,7 +16,10 @@ module.exports = class Python extends Language
   constructor: ->
     super arguments...
     @indent = Array(@wrappedCodeIndentLen + 1).join ' '
-    parserHolder.parser ?= self?.aetherFilbert ? require 'filbert'
+    unless parserHolder.parser?.pythonRuntime?
+      if parserHolder.parser?
+        console.log 'Aether python parser ONLY missing pythonRuntime'
+      parserHolder.parser = self?.aetherFilbert ? require 'filbert'
     parserHolder.parserLoose ?= self?.aetherFilbertLoose ? require 'filbert/filbert_loose'
     @runtimeGlobals =
       __pythonRuntime: parserHolder.parser.pythonRuntime
