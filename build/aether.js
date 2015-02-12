@@ -24995,7 +24995,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
           type: ['object', 'undefined']
         },
         problemContext: {
-          type: ['object', 'undefined']
+          type: ['object', 'null', 'undefined']
         },
         includeFlow: {
           type: 'boolean',
