@@ -22690,6 +22690,9 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
           console.log('Aether python parser ONLY missing pythonRuntime');
         }
         parserHolder.parser = (_ref4 = typeof self !== "undefined" && self !== null ? self.aetherFilbert : void 0) != null ? _ref4 : require('filbert');
+        if (!parserHolder.parser.pythonRuntime) {
+          console.error("Couldn't import Python runtime; our filbert import only gave us", parserHolder.parser);
+        }
       }
       if (parserHolder.parserLoose == null) {
         parserHolder.parserLoose = (_ref5 = typeof self !== "undefined" && self !== null ? self.aetherFilbertLoose : void 0) != null ? _ref5 : require('filbert/filbert_loose');
@@ -35363,17 +35366,11 @@ module.exports={
     }
 
     function parseExportDeclaration() {
-        var backtrackToken, id, declaration = null,
+        var declaration = null,
+            possibleIdentifierToken, sourceElement,
             isExportFromIdentifier,
             src = null, specifiers = [],
             marker = markerCreate();
-
-        function rewind(token) {
-            index = token.range[0];
-            lineNumber = token.lineNumber;
-            lineStart = token.lineStart;
-            lookahead = token;
-        }
 
         expectKeyword('export');
 
@@ -35382,20 +35379,17 @@ module.exports={
             // export default ...
             lex();
             if (matchKeyword('function') || matchKeyword('class')) {
-                backtrackToken = lookahead;
-                lex();
-                if (isIdentifierName(lookahead)) {
+                possibleIdentifierToken = lookahead2();
+                if (isIdentifierName(possibleIdentifierToken)) {
                     // covers:
                     // export default function foo () {}
                     // export default class foo {}
-                    id = parseNonComputedProperty();
-                    rewind(backtrackToken);
-                    return markerApply(marker, delegate.createExportDeclaration(true, parseSourceElement(), [id], null));
+                    sourceElement = parseSourceElement();
+                    return markerApply(marker, delegate.createExportDeclaration(true, sourceElement, [sourceElement.id], null));
                 }
                 // covers:
                 // export default function () {}
                 // export default class {}
-                rewind(backtrackToken);
                 switch (lookahead.value) {
                 case 'class':
                     return markerApply(marker, delegate.createExportDeclaration(true, parseClassExpression(), [], null));

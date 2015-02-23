@@ -6873,8 +6873,11 @@ this.parser = (function() {
             if ( opt("luaOperators", false) ) {
                 var map = {"+": "add", "-": "sub", "*": "mul", "/": "div", "^": "pow", "%":"mod",
                     "..": "concat", "==": "eq", "<": "lt", "<=": "lte", ">": "gt", ">=": "gte", "~=": "ne",
-                    "and": "and", "or": "or"
+                    "and": "andss", "or": "orss"
                 };
+                if ( op == "and" || op == "or" ) {
+                    b = bhelper.valueProvdier(b);
+                }
                 return bhelper.luaOperator(map[op], a, b);
             } else {
 
@@ -6975,6 +6978,11 @@ this.parser = (function() {
                         )
                     }
                  ]));
+        },
+        valueProvdier: function(statement) {
+            return builder.functionExpression(null, [], bhelper.blockStatement([
+                builder.returnStatement(statement)
+            ]));
         }
       }
 
@@ -7003,6 +7011,9 @@ this.parser = (function() {
 var env = {};
 var __lua = (function() {
 
+	// Yoinked from underscore.
+	var isJSArray = Array.isArray || function(obj) { return toString.call(obj) === '[object Array]'; };
+
 	function type(what) {
 		if ( what === null || what === undefined ) return "nil";
 		if ( isNaN(what) ) return "number";
@@ -7015,16 +7026,26 @@ var __lua = (function() {
 		if ( type(n) == "number" ) return n;
 		else if ( typeof n == "string" ) {
 			n = parseInt(n);
-		} else {
-			n = NaN;
+			if ( !isNaN(n) ) return n;
+
 		}
 
-		if ( isNaN(n) ) throw "attempt to perform arithmetic on a " +  type(n) + " value";
-		return n;
+		throw "attempt to perform arithmetic on a " +  type(n) + " value: " + n;
+	}
+
+	function makeString(a) { 
+		a = oneValue(a);
+
+		var mtf = lookupMetaTable(a, "__tostring");
+		if ( mtf !== null ) return mtf(a);
+
+		if ( a === undefined || a === null ) return "nil";
+		return "" + a;
 	}
 
 	function add(a,b) {
-		
+		a = oneValue(a); b = oneValue(b);
+
 		var mtf = lookupMetaTableBin(a, b, "__add");
 		if ( mtf !== null ) return mtf(a,b);
 
@@ -7032,6 +7053,7 @@ var __lua = (function() {
 	}
 
 	function sub(a,b) { 
+		a = oneValue(a); b = oneValue(b);
 
 		var mtf = lookupMetaTableBin(a, b, "__sub");
 		if ( mtf !== null ) return mtf(a,b);
@@ -7040,6 +7062,7 @@ var __lua = (function() {
 	}
 
 	function mul(a,b) { 
+		a = oneValue(a); b = oneValue(b);
 
 		var mtf = lookupMetaTableBin(a, b, "__mul");
 		if ( mtf !== null ) return mtf(a,b);
@@ -7048,16 +7071,39 @@ var __lua = (function() {
 
 	}
 
-	function pow(a,b) { return Math.pow(numberForArith(a),numberForArith(b)); }
+	function div(a,b) { 
+		a = oneValue(a); b = oneValue(b);
 
-	function concat(a,b) { 
-		var mtf = lookupMetaTableBin(a, b, "__concat");
+		var mtf = lookupMetaTableBin(a, b, "__dic");
 		if ( mtf !== null ) return mtf(a,b);
 
-		return "" + a + b; 
+		return numberForArith(a) / numberForArith(b);
+
 	}
 
-	function lte(a,b) { 
+
+	function pow(a,b) { 
+		a = oneValue(a); b = oneValue(b);
+
+		var mtf = lookupMetaTableBin(a, b, "__pow");
+		if ( mtf !== null ) return mtf(a,b);
+
+		return Math.pow(numberForArith(a),numberForArith(b)); 
+	}
+
+	function concat(a,b) { 
+		a = oneValue(a); b = oneValue(b);
+
+		var mtf = lookupMetaTableBin(a, b, "__concat");
+		if ( mtf !== null ) return mtf(a,b);
+		if ( a === null || a === undefined || b === null || b === undefined ) throw "attempt to concatenate a nil value";
+
+		return  makeString(a) + makeString(b); 
+	}
+
+	function lte(a,b) {
+		a = oneValue(a); b = oneValue(b);
+
 		var mtf = lookupMetaTableBin(a, b, "__le");
 		if ( mtf !== null ) return mtf(a,b);
 
@@ -7065,6 +7111,8 @@ var __lua = (function() {
 	}
 
 	function lt(a,b) {
+		a = oneValue(a); b = oneValue(b);
+
 		var mtf = lookupMetaTableBin(a, b, "__lt");
 		if ( mtf !== null ) return mtf(a,b);
 
@@ -7083,6 +7131,12 @@ var __lua = (function() {
 
 	
 	function eq(a,b) { 
+		a = oneValue(a); b = oneValue(b);
+
+		var mtf = lookupMetaTableBin(a, b, "__eq");
+		if ( mtf !== null ) return mtf(a,b);
+
+
 		if ( a === null || a === undefined ) {
 			return ( b === null || b === undefined );
 		}
@@ -7104,7 +7158,14 @@ var __lua = (function() {
 	function and(a,b) { return a && b; }
 	function or(a,b) { return a || b; }
 
-	function div(a,b) { return a / b; }
+	function andss(a,b) { 
+		return a && b(); 
+	}
+	
+	function orss(a,b) { 
+		return a || b(); 
+	}
+	
 
 	function call(flags, what, that, helper /*, args... */ ) {
 		var injectSelf = !!(flags & 1); 
@@ -7205,9 +7266,7 @@ var __lua = (function() {
 			} else {
 				throw "attempt to index '" + helper + "' (a " + type(table) + " value)";
 			}
-		}
-
-		if ( table instanceof LuaTable ) {
+		} else if ( table instanceof LuaTable ) {
 			var val;
 			if ( typeof prop == "number") val = table.numeric[prop-1];
 			else val = table.hash[prop];
@@ -7219,6 +7278,8 @@ var __lua = (function() {
 
 			if ( typeof idx == "function" ) return oneValue(idx(table, prop));
 			return index(idx, prop);
+		} else if ( isJSArray(table) ) {
+			return table[prop - 1];
 		} else if ( typeof table == "string" ) {
 			return this.string[prop];
 		} else {
@@ -7273,8 +7334,12 @@ var __lua = (function() {
 
 		} else if ( typeof table == "string" ) { 
 			throw "attempt to index string value"
+		} else if ( isJSArray(table) ) {
+			table[prop-1] = value;
+			return true;
 		} else {
-			return false;
+			table[prop] = value;
+			return true;
 		}
 	}
 
@@ -7355,6 +7420,8 @@ var __lua = (function() {
 		count: count,
 		and: and,
 		or: or,
+		andss: andss,
+		orss: orss,
 		expand: expand,
 		rest: rest,
 		pcall: pcall,
@@ -7362,7 +7429,8 @@ var __lua = (function() {
 		pow: pow,
 		isTable: isTable,
 		mark: mark,
-		forcomp: forcomp
+		forcomp: forcomp,
+		makeString: makeString
 	}
 
 
@@ -7444,7 +7512,7 @@ env.tonumber = function(n) {
 }
 
 env.tostring = function(n) {
-	return "" + n;
+	return __lua.makeString(n);
 }
 
 env.os = {
