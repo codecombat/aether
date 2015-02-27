@@ -11,6 +11,7 @@ module.exports = class Lua extends Language
     super arguments...
     parserHolder.lua2js ?= self?.aetherLua2JS ? require 'lua2js'
     @runtimeGlobals = parserHolder.lua2js.stdlib
+    @fidMap = {}
 
   obviouslyCannotTranspile: (rawCode) ->
     false
@@ -18,6 +19,27 @@ module.exports = class Lua extends Language
   callParser: (code, loose) ->
     ast = parserHolder.lua2js.parse code, {loose: loose, forceVar: false, decorateLuaObjects: true, luaCalls: true, luaOperators: true, encloseWithFunctions: false }
     ast
+
+
+  # Replace instances of 'loop' with 'while true do}'
+  # Assuming 'loop' is on a single line, only preceded by whitespace
+  replaceLoops: (rawCode) ->
+    return [rawCode, []] if rawCode.indexOf('loop') is -1
+    convertedCode = ""
+    replacedLoops = []
+    rangeIndex = 0
+    lines = rawCode.split '\n'
+    for line, lineNumber in lines
+      if line.replace(/^\s+/g, "").indexOf('loop') is 0
+        start = line.indexOf 'loop'
+        a = line.split("")
+        a[start..start + 3] = 'while true do'.split ""
+        line = a.join("")
+        replacedLoops.push rangeIndex + start
+      convertedCode += line
+      convertedCode += '\n' unless lineNumber is lines.length - 1
+      rangeIndex += line.length + 1 # + newline
+    [convertedCode, replacedLoops]
 
   # Return an array of problems detected during linting.
   lint: (rawCode, aether) ->
@@ -52,3 +74,22 @@ module.exports = class Lua extends Language
       return Lua.prototype.wrapResult (Lua.prototype.callParser code, true), aether.options.functionName, aether.options.functionParameters
     catch error
       return {"type": "BlockStatement": body:[{type: "EmptyStatement"}]}
+
+  pryOpenCall: (call, val, finder) ->
+    node = call.right
+    if val[1] != "__lua"
+      return null
+
+    if val[2] == "call"
+      target = node.arguments[1]
+      #if @fidMap[target.name]
+      #  return @fidMap[target]
+      return finder(target)
+
+    if val[2] == "makeFunction"
+        @fidMap[node.arguments[0].name] = finder(call.left)
+
+    return null
+
+  rewriteFunctionID: (fid) ->
+    @fidMap[fid] or fid

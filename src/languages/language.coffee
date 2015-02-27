@@ -86,3 +86,9 @@ module.exports = class Language
     else
       result = cloneFn obj
     result
+
+  pryOpenCall: (call, val, finder) ->
+    null
+
+  rewriteFunctionID: (fid) ->
+    fid

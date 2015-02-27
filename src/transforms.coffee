@@ -48,7 +48,7 @@ possiblyGeneratorifyUserFunction = (fnExpr, node) ->
       return true if possiblyGeneratorifyUserFunction fnExpr, child
   false
 
-getUserFnMap = (startNode) ->
+getUserFnMap = (startNode, language) ->
   # Return map of CallExpressions to user defined FunctionExpressions
   # Parses whole AST, given any startNode in user code
   # Assumes normalized AST, and morphAST helpers
@@ -219,6 +219,12 @@ getUserFnMap = (startNode) ->
     for call in scope.calls
       val = parseVal call.right.callee
       val = resolveVal scope, scope.varMap, val
+
+      pried = language.pryOpenCall call, val, (x) => resolveVal scope, scope.varMap, parseVal(x)
+
+      if pried && _.isArray(pried)
+        val = pried
+
       calls.push [call.right, val]
     resolveCalls childScope, calls for childScope in scope.children
 
@@ -238,6 +244,7 @@ getUserFnMap = (startNode) ->
 
     for [call, callVal] in resolvedCalls
       for [fn, fnVal] in resolvedFunctions
+        fnVal = language.rewriteFunctionID fnVal
         if _.isEqual(callVal, fnVal)
           userFnMap.push [call, fn]
           break
@@ -356,7 +363,7 @@ module.exports.makeYieldConditionally = makeYieldConditionally = (simpleLoops) -
       # Because we have a wrapper function which shouldn't yield, we only yield inside nested functions.
       # Don't yield after calls to generatorified inner functions, because their yields are passed upwards
       return unless getFunctionNestingLevel(node) > 1
-      userFnMap = getUserFnMap(node) unless userFnMap
+      userFnMap = getUserFnMap(node, @language) unless userFnMap
       unless getUserFnExpr(userFnMap, node.expression.right)?.mustBecomeGeneratorFunction
         # Track conditional yields executed if supporting simple loops
         if simpleLoops and parentWhile = getImmediateParentOfType node, S.WhileStatement
@@ -371,7 +378,7 @@ module.exports.makeYieldConditionally = makeYieldConditionally = (simpleLoops) -
       node.update node.source().replace /^function \(/, 'function* ('
     else if node.type is S.AssignmentExpression and node.right?.type is S.CallExpression
       # Update call to generatorified user function to process yields, and set return result
-      userFnMap = getUserFnMap(node) unless userFnMap
+      userFnMap = getUserFnMap(node, @language) unless userFnMap
       if (fnExpr = getUserFnExpr(userFnMap, node.right)) and possiblyGeneratorifyUserFunction fnExpr
         node.update "var __gen#{node.left.source()} = #{node.right.source()}; while (true) { var __result#{node.left.source()} = __gen#{node.left.source()}.next(); if (__result#{node.left.source()}.done) { #{node.left.source()} = __result#{node.left.source()}.value; break; } var _yieldValue = __result#{node.left.source()}.value; if (this.onAetherYield) { this.onAetherYield(_yieldValue); } yield _yieldValue;}"
 
@@ -416,7 +423,7 @@ module.exports.makeYieldAutomatically = makeYieldAutomatically = ->
       # Don't yield after calls to generatorified inner functions, because their yields are passed upwards
       return unless getFunctionNestingLevel(node) > 1
       if node.type is S.ExpressionStatement and node.expression.right?.type is S.CallExpression
-        userFnMap = getUserFnMap(node) unless userFnMap
+        userFnMap = getUserFnMap(node, @language) unless userFnMap
         unless getUserFnExpr(userFnMap, node.expression.right)?.mustBecomeGeneratorFunction
           node.update "#{node.source()} yield 'waiting...';"
       else
@@ -427,7 +434,7 @@ module.exports.makeYieldAutomatically = makeYieldAutomatically = ->
       node.update node.source().replace /^function \(/, 'function* ('
     else if node.type is S.AssignmentExpression and node.right?.type is S.CallExpression
       # Update call to generatorified user function to process yields, and set return result
-      userFnMap = getUserFnMap(node) unless userFnMap
+      userFnMap = getUserFnMap(node, @language) unless userFnMap
       if (fnExpr = getUserFnExpr(userFnMap, node.right)) and possiblyGeneratorifyUserFunction fnExpr
         node.update "var __gen#{node.left.source()} = #{node.right.source()}; while (true) { var __result#{node.left.source()} = __gen#{node.left.source()}.next(); if (__result#{node.left.source()}.done) { #{node.left.source()} = __result#{node.left.source()}.value; break; } yield __result#{node.left.source()}.value;}"
 

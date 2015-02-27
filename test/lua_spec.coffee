@@ -1,4 +1,5 @@
 Aether = require '../aether'
+lodash = require 'lodash'
 
 language = 'lua'
 aether = new Aether language: language
@@ -203,3 +204,53 @@ describe "#{language} Test suite", ->
       expect(end.row).toEqual 1
       expect(end.col).toEqual 17
       expect(problem.message).toMatch /Line 2/
+
+
+  describe "Yielding", ->
+    it "Conditional yielding returns are correct", ->
+      aether = new Aether language: "lua", yieldConditionally: true
+      result = null
+      dude =
+        killCount: 0
+        say: (v) -> result = v
+        slay: ->
+          @killCount += 1
+          aether._shouldYield = true
+        getKillCount: -> return @killCount
+      code = """
+        function add(a,b) return a + b end
+        self:slay()
+        self:slay()
+        local tosay = add(2,3)
+        self:say(tosay)
+        self:slay()
+      """
+      aether.transpile code
+      f = aether.createFunction()
+      gen = f.apply dude
+
+      for i in [1..3]
+        expect(gen.next().done).toEqual false
+        expect(dude.killCount).toEqual i
+      expect(gen.next().done).toEqual true
+      expect(result).toEqual 5
+
+    it "Likes Simple Loops", ->
+      aether = new Aether language: "lua", yieldConditionally: true, simpleLoops: true
+      result = null
+      dude =
+        x: 0
+      code = """
+        loop
+           self.x = self.x + 1
+        end
+      """
+      aether.transpile code
+      f = aether.createFunction()
+      gen = f.apply dude
+
+      for i in [1..3]
+        expect(gen.next().done).toEqual false
+        expect(dude.x).toEqual i
+
+      expect(gen.next().done).toEqual false

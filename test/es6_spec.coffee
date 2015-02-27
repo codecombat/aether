@@ -1,4 +1,5 @@
 Aether = require '../aether'
+lodash = require 'lodash'
 
 describe "JavaScript Test Suite", ->
   describe "Errors", ->
@@ -921,3 +922,19 @@ describe "JavaScript Test Suite", ->
       while (true)
         if gen.next().done then break
       expect(dude.killCount).toEqual 6
+    it "Lowdash", ->
+      aether = new Aether language: "javascript", yieldConditionally: true, simpleLoops: true
+      save: (x) -> this.result = x
+      result = null
+      dude =
+        lodash: lodash
+
+      code = """
+        var fn = function(x) { var w = x*x; return w; };
+        return this.result = this.lodash.map([1,2,3,4], fn)
+      """
+      aether.transpile code
+      f = aether.createFunction()
+      gen = f.apply dude
+      expect(gen.next().done).toEqual true
+      expect(dude.result).toEqual [1,4,9,16]
