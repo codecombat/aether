@@ -22472,6 +22472,14 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
       return result;
     };
 
+    Language.prototype.pryOpenCall = function(call, val, finder) {
+      return null;
+    };
+
+    Language.prototype.rewriteFunctionID = function(fid) {
+      return fid;
+    };
+
     return Language;
 
   })();
@@ -22520,6 +22528,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
         parserHolder.lua2js = (_ref = typeof self !== "undefined" && self !== null ? self.aetherLua2JS : void 0) != null ? _ref : require('lua2js');
       }
       this.runtimeGlobals = parserHolder.lua2js.stdlib;
+      this.fidMap = {};
     }
 
     Lua.prototype.obviouslyCannotTranspile = function(rawCode) {
@@ -22537,6 +22546,33 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
         encloseWithFunctions: false
       });
       return ast;
+    };
+
+    Lua.prototype.replaceLoops = function(rawCode) {
+      var a, convertedCode, line, lineNumber, lines, rangeIndex, replacedLoops, start, _i, _len, _ref;
+      if (rawCode.indexOf('loop') === -1) {
+        return [rawCode, []];
+      }
+      convertedCode = "";
+      replacedLoops = [];
+      rangeIndex = 0;
+      lines = rawCode.split('\n');
+      for (lineNumber = _i = 0, _len = lines.length; _i < _len; lineNumber = ++_i) {
+        line = lines[lineNumber];
+        if (line.replace(/^\s+/g, "").indexOf('loop') === 0) {
+          start = line.indexOf('loop');
+          a = line.split("");
+          [].splice.apply(a, [start, (start + 3) - start + 1].concat(_ref = 'while true do'.split(""))), _ref;
+          line = a.join("");
+          replacedLoops.push(rangeIndex + start);
+        }
+        convertedCode += line;
+        if (lineNumber !== lines.length - 1) {
+          convertedCode += '\n';
+        }
+        rangeIndex += line.length + 1;
+      }
+      return [convertedCode, replacedLoops];
     };
 
     Lua.prototype.lint = function(rawCode, aether) {
@@ -22642,6 +22678,26 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
           }
         };
       }
+    };
+
+    Lua.prototype.pryOpenCall = function(call, val, finder) {
+      var node, target;
+      node = call.right;
+      if (val[1] !== "__lua") {
+        return null;
+      }
+      if (val[2] === "call") {
+        target = node["arguments"][1];
+        return finder(target);
+      }
+      if (val[2] === "makeFunction") {
+        this.fidMap[node["arguments"][0].name] = finder(call.left);
+      }
+      return null;
+    };
+
+    Lua.prototype.rewriteFunctionID = function(fid) {
+      return this.fidMap[fid] || fid;
     };
 
     return Lua;
@@ -24122,7 +24178,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
     return false;
   };
 
-  getUserFnMap = function(startNode) {
+  getUserFnMap = function(startNode, language) {
     var call, callVal, error, findCall, fn, fnVal, getRootScope, parseVal, resolveCalls, resolveFunctions, resolveVal, resolvedCalls, resolvedFunctions, rootScope, updateVal, userFnMap, _i, _j, _len, _len1, _ref3, _ref4;
     parseVal = function(node) {
       var _ref3, _ref4;
@@ -24376,12 +24432,18 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
       return _results;
     };
     resolveCalls = function(scope, calls) {
-      var call, childScope, val, _i, _j, _len, _len1, _ref3, _ref4, _results;
+      var call, childScope, pried, val, _i, _j, _len, _len1, _ref3, _ref4, _results;
       _ref3 = scope.calls;
       for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
         call = _ref3[_i];
         val = parseVal(call.right.callee);
         val = resolveVal(scope, scope.varMap, val);
+        pried = language.pryOpenCall(call, val, function(x) {
+          return resolveVal(scope, scope.varMap, parseVal(x));
+        });
+        if (pried && _.isArray(pried)) {
+          val = pried;
+        }
         calls.push([call.right, val]);
       }
       _ref4 = scope.children;
@@ -24403,6 +24465,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
         _ref3 = resolvedCalls[_i], call = _ref3[0], callVal = _ref3[1];
         for (_j = 0, _len1 = resolvedFunctions.length; _j < _len1; _j++) {
           _ref4 = resolvedFunctions[_j], fn = _ref4[0], fnVal = _ref4[1];
+          fnVal = language.rewriteFunctionID(fnVal);
           if (_.isEqual(callVal, fnVal)) {
             userFnMap.push([call, fn]);
             break;
@@ -24590,7 +24653,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
           return;
         }
         if (!userFnMap) {
-          userFnMap = getUserFnMap(node);
+          userFnMap = getUserFnMap(node, this.language);
         }
         if (!((_ref4 = getUserFnExpr(userFnMap, node.expression.right)) != null ? _ref4.mustBecomeGeneratorFunction : void 0)) {
           if (simpleLoops && (parentWhile = getImmediateParentOfType(node, S.WhileStatement))) {
@@ -24609,7 +24672,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
         return node.update(node.source().replace(/^function \(/, 'function* ('));
       } else if (node.type === S.AssignmentExpression && ((_ref5 = node.right) != null ? _ref5.type : void 0) === S.CallExpression) {
         if (!userFnMap) {
-          userFnMap = getUserFnMap(node);
+          userFnMap = getUserFnMap(node, this.language);
         }
         if ((fnExpr = getUserFnExpr(userFnMap, node.right)) && possiblyGeneratorifyUserFunction(fnExpr)) {
           return node.update("var __gen" + (node.left.source()) + " = " + (node.right.source()) + "; while (true) { var __result" + (node.left.source()) + " = __gen" + (node.left.source()) + ".next(); if (__result" + (node.left.source()) + ".done) { " + (node.left.source()) + " = __result" + (node.left.source()) + ".value; break; } var _yieldValue = __result" + (node.left.source()) + ".value; if (this.onAetherYield) { this.onAetherYield(_yieldValue); } yield _yieldValue;}");
@@ -24675,7 +24738,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
         }
         if (node.type === S.ExpressionStatement && ((_ref4 = node.expression.right) != null ? _ref4.type : void 0) === S.CallExpression) {
           if (!userFnMap) {
-            userFnMap = getUserFnMap(node);
+            userFnMap = getUserFnMap(node, this.language);
           }
           if (!((_ref5 = getUserFnExpr(userFnMap, node.expression.right)) != null ? _ref5.mustBecomeGeneratorFunction : void 0)) {
             node.update("" + (node.source()) + " yield 'waiting...';");
@@ -24691,7 +24754,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
         return node.update(node.source().replace(/^function \(/, 'function* ('));
       } else if (node.type === S.AssignmentExpression && ((_ref6 = node.right) != null ? _ref6.type : void 0) === S.CallExpression) {
         if (!userFnMap) {
-          userFnMap = getUserFnMap(node);
+          userFnMap = getUserFnMap(node, this.language);
         }
         if ((fnExpr = getUserFnExpr(userFnMap, node.right)) && possiblyGeneratorifyUserFunction(fnExpr)) {
           return node.update("var __gen" + (node.left.source()) + " = " + (node.right.source()) + "; while (true) { var __result" + (node.left.source()) + " = __gen" + (node.left.source()) + ".next(); if (__result" + (node.left.source()) + ".done) { " + (node.left.source()) + " = __result" + (node.left.source()) + ".value; break; } yield __result" + (node.left.source()) + ".value;}");

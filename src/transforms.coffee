@@ -220,7 +220,7 @@ getUserFnMap = (startNode, language) ->
       val = parseVal call.right.callee
       val = resolveVal scope, scope.varMap, val
 
-      pried = language.pryOpenCall call, val, (x) => resolveVal scope, scope.varMap, parseVal(x)
+      pried = language.pryOpenCall call, val, (x) -> resolveVal scope, scope.varMap, parseVal(x)
 
       if pried && _.isArray(pried)
         val = pried
