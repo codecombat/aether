@@ -21099,7 +21099,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
     };
 
     Aether.prototype.purifyCode = function(rawCode) {
-      var error, error2, instrumentedCode, interceptThis, normalized, normalizedAST, normalizedCode, normalizedNodeIndex, normalizedSourceMap, originalNodeRanges, parameter, postNormalizationTransforms, preNormalizationTransforms, preprocessedCode, problemOptions, purifiedCode, transformedAST, transformedCode, varNames, wrappedCode, _i, _len, _ref6, _ref7, _ref8;
+      var error, error2, instrumentedCode, interceptThis, normalized, normalizedAST, normalizedCode, normalizedNodeIndex, normalizedSourceMap, originalNodeRanges, parameter, postNormalizationTransforms, preNormalizationTransforms, preprocessedCode, problemOptions, purifiedCode, transformedAST, transformedCode, varNames, varNamesToRecord, wrappedCode, _i, _len, _ref6, _ref7, _ref8;
       preprocessedCode = this.language.hackCommonMistakes(rawCode, this);
       wrappedCode = this.language.wrap(preprocessedCode, this);
       originalNodeRanges = [];
@@ -21220,7 +21220,8 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
         postNormalizationTransforms.unshift(transforms.makeYieldAutomatically());
       }
       if (this.options.includeFlow) {
-        postNormalizationTransforms.unshift(transforms.makeInstrumentStatements(this.language, varNames));
+        varNamesToRecord = this.options.noVariablesInFlow ? null : varNames;
+        postNormalizationTransforms.unshift(transforms.makeInstrumentStatements(this.language, varNamesToRecord, true));
       } else if (this.options.includeMetrics || this.options.executionLimit) {
         postNormalizationTransforms.unshift(transforms.makeInstrumentStatements(this.language));
       }
@@ -21420,6 +21421,8 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
     yieldConditionally: false,
     executionCosts: {},
     noSerializationInFlow: false,
+    noVariablesInFlow: false,
+    skipDuplicateUserInfoInFlow: false,
     includeFlow: true,
     includeMetrics: true,
     includeStyle: true,
@@ -21571,17 +21574,11 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
     this.lastStatementRange = lastStatementRange;
   };
 
-  module.exports.logStatement = logStatement = function(range, source, userInfo, captureFlow) {
-    var call, error, flopt, m, name, state, value, variables, _base, _base1, _base2, _base3, _name, _ref3;
-    if (!_.isString(source)) {
-      captureFlow = userInfo;
-      userInfo = source;
-    }
+  module.exports.logStatement = logStatement = function(range, userInfo, captureFlow) {
+    var call, duplicate, error, flopt, lastStatement, m, name, state, value, variables, _base, _base1, _base2, _base3, _name, _ref3, _ref4;
     this.lastStatementRange = null;
     if (this.options.includeMetrics || this.options.executionLimit) {
-      m = (_base = ((_base1 = this.metrics).statements != null ? (_base1 = this.metrics).statements : _base1.statements = {}))[_name = range[0].ofs + "-" + range[1].ofs] != null ? (_base = ((_base2 = this.metrics).statements != null ? (_base2 = this.metrics).statements : _base2.statements = {}))[_name = range[0].ofs + "-" + range[1].ofs] : _base[_name] = {
-        source: source
-      };
+      m = (_base = ((_base1 = this.metrics).statements != null ? (_base1 = this.metrics).statements : _base1.statements = {}))[_name = range[0].ofs + "-" + range[1].ofs] != null ? (_base = ((_base2 = this.metrics).statements != null ? (_base2 = this.metrics).statements : _base2.statements = {}))[_name = range[0].ofs + "-" + range[1].ofs] : _base[_name] = {};
       if (m.executions == null) {
         m.executions = 0;
       }
@@ -21602,24 +21599,36 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
       call = _.last(this.callStack);
       ++call.statementsExecuted;
       if (captureFlow) {
-        variables = {};
-        _ref3 = this.vars;
-        for (name in _ref3) {
-          value = _ref3[name];
-          if (captureFlow) {
+        if (this.options.skipDuplicateUserInfoInFlow) {
+          if (lastStatement = _.last(call.statements)) {
+            if (((_ref3 = lastStatement.userInfo) != null ? _ref3.time : void 0) != null) {
+              duplicate = userInfo.time === lastStatement.userInfo.time;
+            } else {
+              duplicate = _.isEqual(lastStatement.userInfo, userInfo);
+            }
+            if (duplicate) {
+              lastStatement.range = range;
+              return;
+            }
+          }
+        }
+        state = {
+          range: range,
+          userInfo: _.clone(userInfo)
+        };
+        if (!this.options.noVariablesInFlow) {
+          variables = {};
+          _ref4 = this.vars;
+          for (name in _ref4) {
+            value = _ref4[name];
             if (this.options.noSerializationInFlow) {
               variables[name] = value;
             } else {
               variables[name] = serializeVariableValue(value);
             }
           }
+          state.variables = variables;
         }
-        state = {
-          range: range,
-          source: source,
-          variables: variables,
-          userInfo: _.cloneDeep(userInfo)
-        };
         return call.statements.push(state);
       }
     }
@@ -24763,7 +24772,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
     };
   };
 
-  module.exports.makeInstrumentStatements = makeInstrumentStatements = function(language, varNames) {
+  module.exports.makeInstrumentStatements = makeInstrumentStatements = function(language, varNames, includeFlow) {
     return function(node) {
       var blockSource, blockStatement, inner, loggers, logging, orig, prefix, safeRange, source, suffix, unwrappedRange, varName, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8;
       orig = node.originalNode;
@@ -24811,7 +24820,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
       } else {
         logging = '';
       }
-      suffix = " _aether.logStatement(" + safeRange + ", _aether._userInfo, " + (varNames ? '!_aether._shouldSkipFlow' : 'false') + ");";
+      suffix = " _aether.logStatement(" + safeRange + ", _aether._userInfo, " + (includeFlow ? '!_aether._shouldSkipFlow' : 'false') + ");";
       if (blockStatement) {
         blockSource = node.source();
         inner = blockSource.substring(blockSource.indexOf('{') + 2, blockSource.lastIndexOf('}'));
@@ -25073,7 +25082,18 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
         },
         noSerializationInFlow: {
           type: 'boolean',
-          "default": false
+          "default": false,
+          description: "Whether to skip serializing variable values when recording variables in flow."
+        },
+        noVariablesInFlow: {
+          type: 'boolean',
+          "default": false,
+          description: "Whether to skip capturing variable values at all when instrumenting flow."
+        },
+        skipDuplicateUserInfoInFlow: {
+          type: 'boolean',
+          "default": false,
+          description: "Whether to skip recording calls with the same userInfo as the previous call when instrumenting flow."
         },
         includeMetrics: {
           type: 'boolean',
@@ -40597,31 +40617,34 @@ module.exports = amdefine;
 }).call(this,require("JkpR2F"),"/../node_modules/source-map/node_modules/amdefine/amdefine.js")
 },{"JkpR2F":38,"path":37}],50:[function(require,module,exports){
 /*!
- * string_score.js: String Scoring Algorithm 0.1.20 
+ * string_score.js: String Scoring Algorithm 0.1.22
  *
  * http://joshaven.com/string_score
  * https://github.com/joshaven/string_score
  *
- * Copyright (C) 2009-2011 Joshaven Potter <yourtech@gmail.com>
+ * Copyright (C) 2009-2014 Joshaven Potter <yourtech@gmail.com>
  * Special thanks to all of the contributors listed here https://github.com/joshaven/string_score
- * MIT license: http://www.opensource.org/licenses/mit-license.php
+ * MIT License: http://opensource.org/licenses/MIT
  *
  * Date: Tue Mar 1 2011
- * Updated: Tue Jun 11 2013
+ * Updated: Tue Mar 10 2015
 */
+
+/*jslint nomen:true, white:true, browser:true,devel:true */
 
 /**
  * Scores a string against another string.
- *  'Hello World'.score('he');     //=> 0.5931818181818181
- *  'Hello World'.score('Hello');  //=> 0.7318181818181818
+ *    'Hello World'.score('he');         //=> 0.5931818181818181
+ *    'Hello World'.score('Hello');    //=> 0.7318181818181818
  */
-String.prototype.score = function(word, fuzziness) {
+String.prototype.score = function (word, fuzziness) {
+  'use strict';
 
   // If the string is equal to the word, perfect match.
-  if (this == word) return 1;
+  if (this === word) { return 1; }
 
   //if it's not a perfect match and is empty return 0
-  if( word == "") return 0;
+  if (word === "") { return 0; }
 
   var runningScore = 0,
       charScore,
@@ -40634,69 +40657,67 @@ String.prototype.score = function(word, fuzziness) {
       idxOf,
       startAt = 0,
       fuzzies = 1,
-      fuzzyFactor;
-  
+      fuzzyFactor,
+      i;
+
   // Cache fuzzyFactor for speed increase
-  if (fuzziness) fuzzyFactor = 1 - fuzziness;
+  if (fuzziness) { fuzzyFactor = 1 - fuzziness; }
 
   // Walk through word and add up scores.
   // Code duplication occurs to prevent checking fuzziness inside for loop
   if (fuzziness) {
-    for (var i = 0; i < wordLength; ++i) {
+    for (i = 0; i < wordLength; i+=1) {
 
       // Find next first case-insensitive match of a character.
       idxOf = lString.indexOf(lWord[i], startAt);
-      
-      if (-1 === idxOf) {
-        fuzzies += fuzzyFactor;
-        continue;
-      } else if (startAt === idxOf) {
-        // Consecutive letter & start-of-string Bonus
-        charScore = 0.7;
-      } else {
-        charScore = 0.1;
 
-        // Acronym Bonus
-        // Weighing Logic: Typing the first character of an acronym is as if you
-        // preceded it with two perfect character matches.
-        if (string[idxOf - 1] === ' ') charScore += 0.8;
+      if (idxOf === -1) {
+        fuzzies += fuzzyFactor;
+      } else {
+        if (startAt === idxOf) {
+          // Consecutive letter & start-of-string Bonus
+          charScore = 0.7;
+        } else {
+          charScore = 0.1;
+
+          // Acronym Bonus
+          // Weighing Logic: Typing the first character of an acronym is as if you
+          // preceded it with two perfect character matches.
+          if (string[idxOf - 1] === ' ') { charScore += 0.8; }
+        }
+
+        // Same case bonus.
+        if (string[idxOf] === word[i]) { charScore += 0.1; }
+
+        // Update scores and startAt position for next round of indexOf
+        runningScore += charScore;
+        startAt = idxOf + 1;
       }
-      
-      // Same case bonus.
-      if (string[idxOf] === word[i]) charScore += 0.1; 
-      
-      // Update scores and startAt position for next round of indexOf
-      runningScore += charScore;
-      startAt = idxOf + 1;
     }
   } else {
-    for (var i = 0; i < wordLength; ++i) {
-    
+    for (i = 0; i < wordLength; i+=1) {
       idxOf = lString.indexOf(lWord[i], startAt);
-      
-      if (-1 === idxOf) {
-        return 0;
-      } else if (startAt === idxOf) {
+      if (-1 === idxOf) { return 0; }
+
+      if (startAt === idxOf) {
         charScore = 0.7;
       } else {
         charScore = 0.1;
-        if (string[idxOf - 1] === ' ') charScore += 0.8;
+        if (string[idxOf - 1] === ' ') { charScore += 0.8; }
       }
-
-      if (string[idxOf] === word[i]) charScore += 0.1; 
-      
+      if (string[idxOf] === word[i]) { charScore += 0.1; }
       runningScore += charScore;
       startAt = idxOf + 1;
     }
   }
 
   // Reduce penalty for longer strings.
-  finalScore = 0.5 * (runningScore / strLength  + runningScore / wordLength) / fuzzies;
-  
+  finalScore = 0.5 * (runningScore / strLength    + runningScore / wordLength) / fuzzies;
+
   if ((lWord[0] === lString[0]) && (finalScore < 0.85)) {
     finalScore += 0.15;
   }
-  
+
   return finalScore;
 };
 

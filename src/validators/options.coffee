@@ -49,6 +49,15 @@ module.exports = (options) ->
       noSerializationInFlow:
         type: 'boolean'
         default: false
+        description: "Whether to skip serializing variable values when recording variables in flow."
+      noVariablesInFlow:
+        type: 'boolean'
+        default: false
+        description: "Whether to skip capturing variable values at all when instrumenting flow."
+      skipDuplicateUserInfoInFlow:
+        type: 'boolean'
+        default: false
+        description: "Whether to skip recording calls with the same userInfo as the previous call when instrumenting flow."
       includeMetrics:
         type: 'boolean'
         default: true

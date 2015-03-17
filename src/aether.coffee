@@ -248,7 +248,8 @@ module.exports = class Aether
       postNormalizationTransforms.unshift transforms.makeIndexSimpleLoops()
     postNormalizationTransforms.unshift transforms.makeYieldAutomatically() if @options.yieldAutomatically
     if @options.includeFlow
-      postNormalizationTransforms.unshift transforms.makeInstrumentStatements @language, varNames
+      varNamesToRecord = if @options.noVariablesInFlow then null else varNames
+      postNormalizationTransforms.unshift transforms.makeInstrumentStatements @language, varNamesToRecord, true
     else if @options.includeMetrics or @options.executionLimit
       postNormalizationTransforms.unshift transforms.makeInstrumentStatements @language
     postNormalizationTransforms.unshift transforms.makeInstrumentCalls() if @options.includeMetrics or @options.includeFlow

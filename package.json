@@ -27,7 +27,7 @@
     "esprima": "https://github.com/ariya/esprima/tarball/harmony",
     "estraverse": "~1.5.0",
     "filbert": "~0.1.13",
-    "iota-compiler": "^0.2.1",
+    "iota-compiler": "https://github.com/genko/iota/tarball/master",
     "jshint": "~2.3.0",
     "lodash": "~2.4.1",
     "lua2js": "~0.0.7",

@@ -28,14 +28,10 @@ serializeVariableValue = (value, depth=0) ->
 
 module.exports.logStatementStart = logStatementStart = (@lastStatementRange) ->
 
-module.exports.logStatement = logStatement = (range, source, userInfo, captureFlow) ->
-  # Source is not used, but we're in the middle of migrating it.
-  unless _.isString source
-    captureFlow = userInfo
-    userInfo = source
+module.exports.logStatement = logStatement = (range, userInfo, captureFlow) ->
   @lastStatementRange = null
   if @options.includeMetrics or @options.executionLimit
-    m = (@metrics.statements ?= {})[range[0].ofs + "-" + range[1].ofs] ?= {source: source}
+    m = (@metrics.statements ?= {})[range[0].ofs + "-" + range[1].ofs] ?= {}
     m.executions ?= 0
     ++m.executions
     @metrics.statementsExecuted ?= 0
@@ -50,18 +46,29 @@ module.exports.logStatement = logStatement = (range, source, userInfo, captureFl
     call = _.last @callStack
     ++call.statementsExecuted
     if captureFlow
-      variables = {}
-      for name, value of @vars when captureFlow
-        # TODO: We should probably only store changes, not full copies every time.
-        if @options.noSerializationInFlow
-          variables[name] = value
-        else
-          variables[name] = serializeVariableValue value
+      if @options.skipDuplicateUserInfoInFlow
+        # Mad hackery to only track the latest statement called in a frame, especially if the userInfo is just like, {time: 1.5}
+        if lastStatement = _.last call.statements
+          if lastStatement.userInfo?.time?
+            duplicate = userInfo.time is lastStatement.userInfo.time
+          else
+            duplicate = _.isEqual lastStatement.userInfo, userInfo
+          if duplicate
+            lastStatement.range = range
+            return
       state =
         range: range
-        source: source
-        variables: variables
-        userInfo: _.cloneDeep userInfo
+        #userInfo: _.cloneDeep userInfo  # Slower
+        userInfo: _.clone userInfo  # Less robust, but faster; so far we only do single-level, like {time: 1.5}
+      unless @options.noVariablesInFlow
+        variables = {}
+        for name, value of @vars
+          # TODO: We should probably only store changes, not full copies every time.
+          if @options.noSerializationInFlow
+            variables[name] = value
+          else
+            variables[name] = serializeVariableValue value
+        state.variables = variables
       call.statements.push state
   #console.log "Logged statement", range, "'#{source}'", "with userInfo", userInfo#, "and now have metrics", @metrics
 

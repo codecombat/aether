@@ -438,7 +438,7 @@ module.exports.makeYieldAutomatically = makeYieldAutomatically = ->
       if (fnExpr = getUserFnExpr(userFnMap, node.right)) and possiblyGeneratorifyUserFunction fnExpr
         node.update "var __gen#{node.left.source()} = #{node.right.source()}; while (true) { var __result#{node.left.source()} = __gen#{node.left.source()}.next(); if (__result#{node.left.source()}.done) { #{node.left.source()} = __result#{node.left.source()}.value; break; } yield __result#{node.left.source()}.value;}"
 
-module.exports.makeInstrumentStatements = makeInstrumentStatements = (language, varNames) ->
+module.exports.makeInstrumentStatements = makeInstrumentStatements = (language, varNames, includeFlow) ->
   # set up any state tracking here
   return (node) ->
     orig = node.originalNode
@@ -467,7 +467,7 @@ module.exports.makeInstrumentStatements = makeInstrumentStatements = (language, 
       logging = " if (!_aether._shouldSkipFlow) { #{loggers.join ' '} }"
     else
       logging = ''
-    suffix = " _aether.logStatement(#{safeRange}, _aether._userInfo, #{if varNames then '!_aether._shouldSkipFlow' else 'false'});"
+    suffix = " _aether.logStatement(#{safeRange}, _aether._userInfo, #{if includeFlow then '!_aether._shouldSkipFlow' else 'false'});"
     if blockStatement
       blockSource = node.source()
       inner = blockSource.substring(blockSource.indexOf('{') + 2, blockSource.lastIndexOf('}'))
