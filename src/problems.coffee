@@ -176,7 +176,7 @@ getTranspileHint = (msg, context, languageID, code, range, simpleLoops=false) ->
         hint = "Delete extra `#{hintCreator.thisValue}`"
       else
         hint = hintCreator.getReferenceErrorHint codeSnippet
-    
+
     # Check for two commands on a single line with no semi-colon
     # E.g. "self.moveRight()self.moveDown()"
     # Check for problems following a ')'
@@ -198,7 +198,7 @@ getTranspileHint = (msg, context, languageID, code, range, simpleLoops=false) ->
     # Check for uppercase loop
     # TODO: Should get 'loop' from problem context
     if simpleLoops and not hint? and codeSnippet is ':' and lineStart isnt lineStartLow and lineStartLow is 'loop'
-      hint = "Should be lowercase. Try `loop`" 
+      hint = "Should be lowercase. Try `loop`"
 
     # Check for malformed if statements
     if not hint? and /^\s*if /.test(lineStart)
@@ -239,7 +239,7 @@ getRuntimeHint = (options) ->
 
   # Check stack overflow
   return "Did you call a function recursively?" if options.message is "RangeError: Maximum call stack size exceeded"
-  
+
   # Check loop ReferenceError
   if simpleLoops and languageID is 'python' and /ReferenceError: loop is not defined/.test options.message
     # TODO: move this language-specific stuff to language-specific code
@@ -308,60 +308,60 @@ class HintCreator
         nullObjRegex = new RegExp "(\\w+)\\.#{missingProperty[1]}"
         if nullObjMatch = nullObjRegex.exec line
           hint = "'#{nullObjMatch[1]}' was null. Use a null check before accessing properties. Try `if #{nullObjMatch[1]}:`"
-
     hint
 
   getNoFunctionHint: (target) ->
     # Check thisMethods
-    unless hint? then hint = @getNoCaseMatch target, @context.thisMethods, (match) =>
+    hint = @getNoCaseMatch target, @context.thisMethods, (match) =>
       # TODO: Remove these format tests someday.
       # "Uppercase or lowercase problem. Try #{@thisValueAccess}#{match}()"
       # "Uppercase or lowercase problem.  \n  \n\tTry: #{@thisValueAccess}#{match}()  \n\tHad: #{codeSnippet}"
       # "Uppercase or lowercase problem.  \n  \nTry:  \n`#{@thisValueAccess}#{match}()`  \n  \nInstead of:  \n`#{codeSnippet}`"
       "Uppercase or lowercase problem. Try `#{@thisValueAccess}#{match}()`"
-    unless hint? then hint = @getScoreMatch target, [candidates: @context.thisMethods, msgFormatFn: (match) =>
+    hint ?= @getScoreMatch target, [candidates: @context.thisMethods, msgFormatFn: (match) =>
       "Try `#{@thisValueAccess}#{match}()`"]
     # Check commonThisMethods
-    unless hint? then hint = @getExactMatch target, @context.commonThisMethods, (match) ->
+    hint ?= @getExactMatch target, @context.commonThisMethods, (match) ->
       "You do not have an item equipped with the #{match} skill."
-    unless hint? then hint = @getNoCaseMatch target, @context.commonThisMethods, (match) ->
+    hint ?= @getNoCaseMatch target, @context.commonThisMethods, (match) ->
       "Did you mean #{match}? You do not have an item equipped with that skill."
-    unless hint? then hint = @getScoreMatch target, [candidates: @context.commonThisMethods, msgFormatFn: (match) ->
+    hint ?= @getScoreMatch target, [candidates: @context.commonThisMethods, msgFormatFn: (match) ->
       "Did you mean #{match}? You do not have an item equipped with that skill."]
+    hint ?= "You don't have a `#{target}` method."
     hint
 
   getReferenceErrorHint: (target) ->
     # Check missing quotes
-    unless hint? then hint = @getExactMatch target, @context.stringReferences, (match) ->
+    hint = @getExactMatch target, @context.stringReferences, (match) ->
       "Missing quotes. Try `\"#{match}\"`"
     # Check this props
-    unless hint? then hint = @getExactMatch target, @context.thisMethods, (match) =>
+    hint ?= @getExactMatch target, @context.thisMethods, (match) =>
       "Try `#{@thisValueAccess}#{match}()`"
-    unless hint? then hint = @getExactMatch target, @context.thisProperties, (match) =>
+    hint ?= @getExactMatch target, @context.thisProperties, (match) =>
       "Try `#{@thisValueAccess}#{match}`"
     # Check case-insensitive, quotes, this props
     if not hint? and target.toLowerCase() is @thisValue.toLowerCase()
       hint = "Uppercase or lowercase problem. Try `#{@thisValue}`"
-    unless hint? then hint = @getNoCaseMatch target, @context.stringReferences, (match) ->
+    hint ?= @getNoCaseMatch target, @context.stringReferences, (match) ->
       "Missing quotes.  Try `\"#{match}\"`"
-    unless hint? then hint = @getNoCaseMatch target, @context.thisMethods, (match) =>
+    hint ?= @getNoCaseMatch target, @context.thisMethods, (match) =>
       "Try `#{@thisValueAccess}#{match}()`"
-    unless hint? then hint = @getNoCaseMatch target, @context.thisProperties, (match) =>
+    hint ?= @getNoCaseMatch target, @context.thisProperties, (match) =>
       "Try `#{@thisValueAccess}#{match}`"
     # Check score match, quotes, this props
-    unless hint? then hint = @getScoreMatch target, [
+    hint ?= @getScoreMatch target, [
       {candidates: [@thisValue], msgFormatFn: (match) -> "Try `#{match}`"},
       {candidates: @context.stringReferences, msgFormatFn: (match) -> "Missing quotes. Try `\"#{match}\"`"},
       {candidates: @context.thisMethods, msgFormatFn: (match) => "Try `#{@thisValueAccess}#{match}()`"},
-      {candidates: @context.thisProperties, msgFormatFn: (match) =>"Try `#{@thisValueAccess}#{match}`"}]
+      {candidates: @context.thisProperties, msgFormatFn: (match) => "Try `#{@thisValueAccess}#{match}`"}]
     # Check commonThisMethods
-    unless hint? then hint = @getExactMatch target, @context.commonThisMethods, (match) ->
+    hint ?= @getExactMatch target, @context.commonThisMethods, (match) ->
       "You do not have an item equipped with the #{match} skill."
-    unless hint? then hint = @getNoCaseMatch target, @context.commonThisMethods, (match) ->
+    hint ?= @getNoCaseMatch target, @context.commonThisMethods, (match) ->
       "Did you mean #{match}? You do not have an item equipped with that skill."
-    unless hint? then hint = @getScoreMatch target, [candidates: @context.commonThisMethods, msgFormatFn: (match) ->
+    hint ?= @getScoreMatch target, [candidates: @context.commonThisMethods, msgFormatFn: (match) ->
       "Did you mean #{match}? You do not have an item equipped with that skill."]
-    
+
     # Try score match with this value prefixed
     # E.g. target = 'selfmoveright', try 'self.moveRight()''
     if not hint? and @context?.thisMethods?

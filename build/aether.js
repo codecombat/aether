@@ -23379,11 +23379,9 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
     HintCreator.prototype.getNoFunctionHint = function(target) {
       var hint,
         _this = this;
-      if (typeof hint === "undefined" || hint === null) {
-        hint = this.getNoCaseMatch(target, this.context.thisMethods, function(match) {
-          return "Uppercase or lowercase problem. Try `" + _this.thisValueAccess + match + "()`";
-        });
-      }
+      hint = this.getNoCaseMatch(target, this.context.thisMethods, function(match) {
+        return "Uppercase or lowercase problem. Try `" + _this.thisValueAccess + match + "()`";
+      });
       if (hint == null) {
         hint = this.getScoreMatch(target, [
           {
@@ -23414,17 +23412,18 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
           }
         ]);
       }
+      if (hint == null) {
+        hint = "You don't have a `" + target + "` method.";
+      }
       return hint;
     };
 
     HintCreator.prototype.getReferenceErrorHint = function(target) {
       var hint, method, thisPrefixed, _ref,
         _this = this;
-      if (typeof hint === "undefined" || hint === null) {
-        hint = this.getExactMatch(target, this.context.stringReferences, function(match) {
-          return "Missing quotes. Try `\"" + match + "\"`";
-        });
-      }
+      hint = this.getExactMatch(target, this.context.stringReferences, function(match) {
+        return "Missing quotes. Try `\"" + match + "\"`";
+      });
       if (hint == null) {
         hint = this.getExactMatch(target, this.context.thisMethods, function(match) {
           return "Try `" + _this.thisValueAccess + match + "()`";
@@ -25738,7 +25737,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
                                     [new ast.ExpressionStatement(new ast.AssignmentExpression('=', new ast.Identifier(tmp3), new ast.Literal('ReferenceError'))),
                                      new ast.ExpressionStatement(new ast.AssignmentExpression('=', new ast.Identifier(tmp4), new ast.MemberExpression(new ast.Identifier('__global'), new ast.Identifier(tmp3), true))),
                                      new ast.ExpressionStatement(new ast.AssignmentExpression('=', new ast.Identifier(tmp5), new ast.NewExpression(new ast.Identifier(tmp4), [new ast.BinaryExpression('+', new ast.Literal('ReferenceError: '), new ast.BinaryExpression('+', new ast.Identifier(tmp), new ast.Literal(' is not defined')))]))),
-                                     inheritPosition(new ast.ThrowStatement(new ast.Identifier(tmp5)), nd)]));
+                                     new ast.ThrowStatement(new ast.Identifier(tmp5))]));
             }
           } else {
             // locals are easy: target = x;
