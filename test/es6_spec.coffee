@@ -105,7 +105,7 @@ describe "JavaScript Test Suite", ->
       expect(aether.problems.warnings.length).toEqual(1)
       expect(aether.problems.warnings[0].message).toEqual("Don't put a ';' after an if statement.")
       expect(aether.problems.warnings[0].range).toEqual([ { ofs : 41, row : 2, col : 11 }, { ofs : 42, row : 2, col : 12 } ])
-  
+
   describe "Traceur compilation with ES6", ->
     aether = new Aether languageVersion: "ES6"
     it "should compile generator functions", ->
@@ -640,6 +640,46 @@ describe "JavaScript Test Suite", ->
     #  expect(gen.next().done).toEqual false
     #  expect(gen.next().done).toEqual true
     #  expect(dude.enemy).toEqual "slain!"
+
+    it "Resolve user method call on function parameter", ->
+      dude =
+        slay: -> @enemy = "slain!"
+        hesitate: -> aether._shouldYield = true
+      code = """
+        this.chooseTarget = function(friend) {
+            friend.slay();
+        };
+        this.commandFriend = function() {
+            this.chooseTarget(this);
+        };
+        this.commandFriend();
+      """
+      aether.transpile code
+      f = aether.createFunction()
+      gen = f.apply dude
+      expect(gen.next().done).toEqual true
+      expect(dude.enemy).toEqual "slain!"
+
+    it "Resolve multiple user method calls on function parameter", ->
+      dude =
+        slay: -> @enemy = "slain!"
+        hesitate: -> aether._shouldYield = true
+      code = """
+        function fn1(arg1) {
+            arg1.hesitate();
+        }
+        function fn2(arg2) {
+            arg2.slay();
+        }
+        fn1(this);
+        fn2(this);
+      """
+      aether.transpile code
+      f = aether.createFunction()
+      gen = f.apply dude
+      expect(gen.next().done).toEqual false
+      expect(gen.next().done).toEqual true
+      expect(dude.enemy).toEqual "slain!"
 
   describe "Simple loop", ->
     it "loop{", ->

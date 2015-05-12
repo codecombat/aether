@@ -163,36 +163,42 @@ getUserFnMap = (startNode, language) ->
     buildScope scope, wrapperFn if wrapperFn
     scope
 
-  findCall = (scope, fnVal) ->
+  findCall = (scope, fnVal, scopesToSkip={}) ->
     # Find a CallExpression that resolves to fnVal
+    # Called when resolving a value
     return [null, null] unless fnVal
     for c in scope.calls
       cVal = parseVal c.right.callee
-      cVal = resolveVal scope, scope.varMap, cVal
+      cVal = resolveVal scope, cVal, scopesToSkip
       return [scope, c.right] if _.isEqual(cVal, fnVal)
     for childScope in scope.children
       if childScope.current
         childFn = parseVal childScope.current.left
-        if childFn isnt fnVal
-          return call if call = findCall childScope, fnVal
+        unless _.isEqual childFn, fnVal
+          [newScope, callExpr] = findCall childScope, fnVal, scopesToSkip
+          return [newScope, callExpr] if newScope? and callExpr?
     [null, null]
 
-  resolveVal = (scope, vm, val) ->
+  resolveVal = (scope, val, scopesToSkip={}) ->
     # Resolve value based on assignments in this scope
     # E.g. a = tmp1; tmp1 = tmp2; resolveVal(tmp2) resturns 'a'
     return unless val
+    vm = scope.varMap
     # Look locally
     if vm.length > 0
       for i in [vm.length-1..0]
         val = updateVal val, vm[i][0], vm[i][1]
+    # Track current lookup so it isn't recursed later via findCall
+    return val if _.isEqual scopesToSkip[val], scope
+    scopesToSkip[val] = scope
     # Look in params if in a function
     if scope.current?.right?.type is S.FunctionExpression and scope.current.right.params.length > 0
       for i in [0..scope.current.right.params.length-1]
         pVal = parseVal scope.current.right.params[i]
         if (_.isArray val) and val[0] is pVal or val is pVal
           fnVal = parseVal scope.current.left
-          fnVal = resolveVal scope, scope.varMap, fnVal
-          [newScope, callExpr] = findCall rootScope, fnVal
+          fnVal = resolveVal scope, fnVal
+          [newScope, callExpr] = findCall rootScope, fnVal, scopesToSkip
           if newScope and callExpr
             # Update val based on passed in argument, and resolve from new scope
             argVal = parseVal callExpr.arguments[i]
@@ -200,17 +206,17 @@ getUserFnMap = (startNode, language) ->
               val[0] = argVal
             else
               val = argVal
-            val = resolveVal newScope, newScope.varMap, val
+            val = resolveVal newScope, val
           break
     # Look in parent
-    val = resolveVal scope.parent, scope.parent.varMap, val if scope.parent
+    val = resolveVal scope.parent, val if scope.parent
     val
 
   resolveFunctions = (scope, fns) ->
     # Resolve all FunctionExpression nodes
     if scope?.current?.right?.type is S.FunctionExpression
       fnVal = parseVal scope.current.left
-      fnVal = resolveVal scope, scope.varMap, fnVal
+      fnVal = resolveVal scope, fnVal
       fns.push [scope.current.right, fnVal]
     resolveFunctions childScope, fns for childScope in scope.children
 
@@ -218,9 +224,9 @@ getUserFnMap = (startNode, language) ->
     # Resolve all CallExpression nodes
     for call in scope.calls
       val = parseVal call.right.callee
-      val = resolveVal scope, scope.varMap, val
+      val = resolveVal scope, val
 
-      pried = language.pryOpenCall call, val, (x) -> resolveVal scope, scope.varMap, parseVal(x)
+      pried = language.pryOpenCall call, val, (x) -> resolveVal scope, parseVal(x)
 
       if pried && _.isArray(pried)
         val = pried
@@ -236,11 +242,12 @@ getUserFnMap = (startNode, language) ->
 
     resolvedFunctions = []
     resolveFunctions rootScope, resolvedFunctions
-    #console.log 'resolvedFunctions', resolvedFunctions
+    # console.log 'resolvedFunctions', resolvedFunctions
 
+    # TODO: this is dying here
     resolvedCalls = []
     resolveCalls rootScope, resolvedCalls
-    #console.log 'resolvedCalls', resolvedCalls
+    # console.log 'resolvedCalls', resolvedCalls
 
     for [call, callVal] in resolvedCalls
       for [fn, fnVal] in resolvedFunctions
@@ -251,7 +258,7 @@ getUserFnMap = (startNode, language) ->
         else if (_.isArray callVal) and callVal[0] is fnVal
           userFnMap.push [call, fn]
           break
-    #console.log 'userFnMap', userFnMap
+    # console.log 'userFnMap', userFnMap
   catch error
     console.log 'ERROR in transforms.getUserFnMap', error
   userFnMap
