@@ -24361,8 +24361,11 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
       }
       return scope;
     };
-    findCall = function(scope, fnVal) {
-      var c, cVal, call, childFn, childScope, _i, _j, _len, _len1, _ref3, _ref4;
+    findCall = function(scope, fnVal, scopesToSkip) {
+      var c, cVal, callExpr, childFn, childScope, newScope, _i, _j, _len, _len1, _ref3, _ref4, _ref5;
+      if (scopesToSkip == null) {
+        scopesToSkip = {};
+      }
       if (!fnVal) {
         return [null, null];
       }
@@ -24370,7 +24373,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
       for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
         c = _ref3[_i];
         cVal = parseVal(c.right.callee);
-        cVal = resolveVal(scope, scope.varMap, cVal);
+        cVal = resolveVal(scope, cVal, scopesToSkip);
         if (_.isEqual(cVal, fnVal)) {
           return [scope, c.right];
         }
@@ -24380,32 +24383,41 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
         childScope = _ref4[_j];
         if (childScope.current) {
           childFn = parseVal(childScope.current.left);
-          if (childFn !== fnVal) {
-            if (call = findCall(childScope, fnVal)) {
-              return call;
+          if (!_.isEqual(childFn, fnVal)) {
+            _ref5 = findCall(childScope, fnVal, scopesToSkip), newScope = _ref5[0], callExpr = _ref5[1];
+            if ((newScope != null) && (callExpr != null)) {
+              return [newScope, callExpr];
             }
           }
         }
       }
       return [null, null];
     };
-    resolveVal = function(scope, vm, val) {
-      var argVal, callExpr, fnVal, i, newScope, pVal, _i, _j, _ref3, _ref4, _ref5, _ref6, _ref7;
+    resolveVal = function(scope, val, scopesToSkip) {
+      var argVal, callExpr, fnVal, i, newScope, pVal, vm, _i, _j, _ref3, _ref4, _ref5, _ref6, _ref7;
+      if (scopesToSkip == null) {
+        scopesToSkip = {};
+      }
       if (!val) {
         return;
       }
+      vm = scope.varMap;
       if (vm.length > 0) {
         for (i = _i = _ref3 = vm.length - 1; _ref3 <= 0 ? _i <= 0 : _i >= 0; i = _ref3 <= 0 ? ++_i : --_i) {
           val = updateVal(val, vm[i][0], vm[i][1]);
         }
       }
+      if (_.isEqual(scopesToSkip[val], scope)) {
+        return val;
+      }
+      scopesToSkip[val] = scope;
       if (((_ref4 = scope.current) != null ? (_ref5 = _ref4.right) != null ? _ref5.type : void 0 : void 0) === S.FunctionExpression && scope.current.right.params.length > 0) {
         for (i = _j = 0, _ref6 = scope.current.right.params.length - 1; 0 <= _ref6 ? _j <= _ref6 : _j >= _ref6; i = 0 <= _ref6 ? ++_j : --_j) {
           pVal = parseVal(scope.current.right.params[i]);
           if ((_.isArray(val)) && val[0] === pVal || val === pVal) {
             fnVal = parseVal(scope.current.left);
-            fnVal = resolveVal(scope, scope.varMap, fnVal);
-            _ref7 = findCall(rootScope, fnVal), newScope = _ref7[0], callExpr = _ref7[1];
+            fnVal = resolveVal(scope, fnVal);
+            _ref7 = findCall(rootScope, fnVal, scopesToSkip), newScope = _ref7[0], callExpr = _ref7[1];
             if (newScope && callExpr) {
               argVal = parseVal(callExpr["arguments"][i]);
               if (_.isArray(val)) {
@@ -24413,14 +24425,14 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
               } else {
                 val = argVal;
               }
-              val = resolveVal(newScope, newScope.varMap, val);
+              val = resolveVal(newScope, val);
             }
             break;
           }
         }
       }
       if (scope.parent) {
-        val = resolveVal(scope.parent, scope.parent.varMap, val);
+        val = resolveVal(scope.parent, val);
       }
       return val;
     };
@@ -24428,7 +24440,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
       var childScope, fnVal, _i, _len, _ref3, _ref4, _ref5, _results;
       if ((scope != null ? (_ref3 = scope.current) != null ? (_ref4 = _ref3.right) != null ? _ref4.type : void 0 : void 0 : void 0) === S.FunctionExpression) {
         fnVal = parseVal(scope.current.left);
-        fnVal = resolveVal(scope, scope.varMap, fnVal);
+        fnVal = resolveVal(scope, fnVal);
         fns.push([scope.current.right, fnVal]);
       }
       _ref5 = scope.children;
@@ -24445,9 +24457,9 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
       for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
         call = _ref3[_i];
         val = parseVal(call.right.callee);
-        val = resolveVal(scope, scope.varMap, val);
+        val = resolveVal(scope, val);
         pried = language.pryOpenCall(call, val, function(x) {
-          return resolveVal(scope, scope.varMap, parseVal(x));
+          return resolveVal(scope, parseVal(x));
         });
         if (pried && _.isArray(pried)) {
           val = pried;
