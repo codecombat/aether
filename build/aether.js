@@ -24416,7 +24416,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
           pVal = parseVal(scope.current.right.params[i]);
           if ((_.isArray(val)) && val[0] === pVal || val === pVal) {
             fnVal = parseVal(scope.current.left);
-            fnVal = resolveVal(scope, fnVal);
+            fnVal = resolveVal(scope, fnVal, scopesToSkip);
             _ref7 = findCall(rootScope, fnVal, scopesToSkip), newScope = _ref7[0], callExpr = _ref7[1];
             if (newScope && callExpr) {
               argVal = parseVal(callExpr["arguments"][i]);
@@ -24425,14 +24425,14 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
               } else {
                 val = argVal;
               }
-              val = resolveVal(newScope, val);
+              val = resolveVal(newScope, val, scopesToSkip);
             }
             break;
           }
         }
       }
       if (scope.parent) {
-        val = resolveVal(scope.parent, val);
+        val = resolveVal(scope.parent, val, scopesToSkip);
       }
       return val;
     };
