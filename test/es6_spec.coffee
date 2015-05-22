@@ -681,6 +681,31 @@ describe "JavaScript Test Suite", ->
       expect(gen.next().done).toEqual true
       expect(dude.enemy).toEqual "slain!"
 
+    it "Resolve user defined function that has no call to it", ->
+      dude =
+        slay: -> @enemy = "slain!"
+        hesitate: -> aether._shouldYield = true
+      code = """
+        this.getPriorityTarget = function(who) {
+            who.getNearest();
+        };
+        this.commandSoldier = function(soldier) {
+            this.getPriorityTarget(soldier);
+        };
+        // First two user functions should not break user function lookup required for doStuff to yield properly
+        this.doStuff = function() {
+          this.hesitate();
+        }
+        this.doStuff();
+        this.slay();
+      """
+      aether.transpile code
+      f = aether.createFunction()
+      gen = f.apply dude
+      expect(gen.next().done).toEqual false
+      expect(gen.next().done).toEqual true
+      expect(dude.enemy).toEqual "slain!"
+
   describe "Simple loop", ->
     it "loop{", ->
       code = """

@@ -167,6 +167,7 @@ getUserFnMap = (startNode, language) ->
     # Find a CallExpression that resolves to fnVal
     # Called when resolving a value
     return [null, null] unless fnVal
+    # console.log 'findCall', scope, fnVal, scopesToSkip
     for c in scope.calls
       cVal = parseVal c.right.callee
       cVal = resolveVal scope, cVal, scopesToSkip
@@ -183,12 +184,13 @@ getUserFnMap = (startNode, language) ->
     # Resolve value based on assignments in this scope
     # E.g. a = tmp1; tmp1 = tmp2; resolveVal(tmp2) resturns 'a'
     return unless val
+    # console.log 'resolveVal', scope, val, scopesToSkip
     vm = scope.varMap
     # Look locally
     if vm.length > 0
       for i in [vm.length-1..0]
         val = updateVal val, vm[i][0], vm[i][1]
-    # Track current lookup so it isn't recursed later via findCall
+    # Track current lookup so it isn't recursed later
     return val if _.isEqual scopesToSkip[val], scope
     scopesToSkip[val] = scope
     # Look in params if in a function
@@ -197,7 +199,7 @@ getUserFnMap = (startNode, language) ->
         pVal = parseVal scope.current.right.params[i]
         if (_.isArray val) and val[0] is pVal or val is pVal
           fnVal = parseVal scope.current.left
-          fnVal = resolveVal scope, fnVal
+          fnVal = resolveVal scope, fnVal, scopesToSkip
           [newScope, callExpr] = findCall rootScope, fnVal, scopesToSkip
           if newScope and callExpr
             # Update val based on passed in argument, and resolve from new scope
@@ -206,10 +208,10 @@ getUserFnMap = (startNode, language) ->
               val[0] = argVal
             else
               val = argVal
-            val = resolveVal newScope, val
+            val = resolveVal newScope, val, scopesToSkip
           break
     # Look in parent
-    val = resolveVal scope.parent, val if scope.parent
+    val = resolveVal scope.parent, val, scopesToSkip if scope.parent
     val
 
   resolveFunctions = (scope, fns) ->
@@ -244,7 +246,6 @@ getUserFnMap = (startNode, language) ->
     resolveFunctions rootScope, resolvedFunctions
     # console.log 'resolvedFunctions', resolvedFunctions
 
-    # TODO: this is dying here
     resolvedCalls = []
     resolveCalls rootScope, resolvedCalls
     # console.log 'resolvedCalls', resolvedCalls
