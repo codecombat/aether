@@ -27,7 +27,7 @@ Object.freeze Error  # https://github.com/codecombat/aether/issues/81
 
 getOwnPropertyNames = Object.getOwnPropertyNames  # Grab all properties, including non-enumerable ones.
 copy = (source, target) ->
-  target[name] = source[name] for name in getOwnPropertyNames source
+  target[name] = source[name] for name in getOwnPropertyNames source when name isnt 'caller' and name isnt 'arguments'
   target
 
 cloneBuiltin = (obj) ->

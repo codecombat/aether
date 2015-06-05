@@ -23826,7 +23826,9 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
     _ref3 = getOwnPropertyNames(source);
     for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
       name = _ref3[_i];
-      target[name] = source[name];
+      if (name !== 'caller' && name !== 'arguments') {
+        target[name] = source[name];
+      }
     }
     return target;
   };

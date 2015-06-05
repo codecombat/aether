@@ -1,5 +1,5 @@
 Aether = require '../aether'
-###
+
 aether = new Aether language: "io"
 
 ioEval = (code, that) ->
@@ -70,4 +70,3 @@ describe "Io test suite", ->
       #expect(end.row).toEqual 1
       #expect(end.col).toEqual 10
       #expect(problem.message).toMatch /Line 2/
-###
