@@ -21099,7 +21099,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
     };
 
     Aether.prototype.purifyCode = function(rawCode) {
-      var error, error2, instrumentedCode, interceptThis, normalized, normalizedAST, normalizedCode, normalizedNodeIndex, normalizedSourceMap, originalNodeRanges, parameter, postNormalizationTransforms, preNormalizationTransforms, preprocessedCode, problemOptions, purifiedCode, transformedAST, transformedCode, varNames, wrappedCode, _i, _len, _ref6, _ref7, _ref8;
+      var error, error2, instrumentedCode, interceptThis, normalized, normalizedAST, normalizedCode, normalizedNodeIndex, normalizedSourceMap, originalNodeRanges, parameter, postNormalizationTransforms, preNormalizationTransforms, preprocessedCode, problemOptions, purifiedCode, transformedAST, transformedCode, varNames, varNamesToRecord, wrappedCode, _i, _len, _ref6, _ref7, _ref8;
       preprocessedCode = this.language.hackCommonMistakes(rawCode, this);
       wrappedCode = this.language.wrap(preprocessedCode, this);
       originalNodeRanges = [];
@@ -21220,7 +21220,8 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
         postNormalizationTransforms.unshift(transforms.makeYieldAutomatically());
       }
       if (this.options.includeFlow) {
-        postNormalizationTransforms.unshift(transforms.makeInstrumentStatements(this.language, varNames));
+        varNamesToRecord = this.options.noVariablesInFlow ? null : varNames;
+        postNormalizationTransforms.unshift(transforms.makeInstrumentStatements(this.language, varNamesToRecord, true));
       } else if (this.options.includeMetrics || this.options.executionLimit) {
         postNormalizationTransforms.unshift(transforms.makeInstrumentStatements(this.language));
       }
@@ -21420,6 +21421,8 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
     yieldConditionally: false,
     executionCosts: {},
     noSerializationInFlow: false,
+    noVariablesInFlow: false,
+    skipDuplicateUserInfoInFlow: false,
     includeFlow: true,
     includeMetrics: true,
     includeStyle: true,
@@ -21571,17 +21574,11 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
     this.lastStatementRange = lastStatementRange;
   };
 
-  module.exports.logStatement = logStatement = function(range, source, userInfo, captureFlow) {
-    var call, error, flopt, m, name, state, value, variables, _base, _base1, _base2, _base3, _name, _ref3;
-    if (!_.isString(source)) {
-      captureFlow = userInfo;
-      userInfo = source;
-    }
+  module.exports.logStatement = logStatement = function(range, userInfo, captureFlow) {
+    var call, duplicate, error, flopt, lastStatement, m, name, state, value, variables, _base, _base1, _base2, _base3, _name, _ref3, _ref4;
     this.lastStatementRange = null;
     if (this.options.includeMetrics || this.options.executionLimit) {
-      m = (_base = ((_base1 = this.metrics).statements != null ? (_base1 = this.metrics).statements : _base1.statements = {}))[_name = range[0].ofs + "-" + range[1].ofs] != null ? (_base = ((_base2 = this.metrics).statements != null ? (_base2 = this.metrics).statements : _base2.statements = {}))[_name = range[0].ofs + "-" + range[1].ofs] : _base[_name] = {
-        source: source
-      };
+      m = (_base = ((_base1 = this.metrics).statements != null ? (_base1 = this.metrics).statements : _base1.statements = {}))[_name = range[0].ofs + "-" + range[1].ofs] != null ? (_base = ((_base2 = this.metrics).statements != null ? (_base2 = this.metrics).statements : _base2.statements = {}))[_name = range[0].ofs + "-" + range[1].ofs] : _base[_name] = {};
       if (m.executions == null) {
         m.executions = 0;
       }
@@ -21602,24 +21599,36 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
       call = _.last(this.callStack);
       ++call.statementsExecuted;
       if (captureFlow) {
-        variables = {};
-        _ref3 = this.vars;
-        for (name in _ref3) {
-          value = _ref3[name];
-          if (captureFlow) {
+        if (this.options.skipDuplicateUserInfoInFlow) {
+          if (lastStatement = _.last(call.statements)) {
+            if (((_ref3 = lastStatement.userInfo) != null ? _ref3.time : void 0) != null) {
+              duplicate = userInfo.time === lastStatement.userInfo.time;
+            } else {
+              duplicate = _.isEqual(lastStatement.userInfo, userInfo);
+            }
+            if (duplicate) {
+              lastStatement.range = range;
+              return;
+            }
+          }
+        }
+        state = {
+          range: range,
+          userInfo: _.clone(userInfo)
+        };
+        if (!this.options.noVariablesInFlow) {
+          variables = {};
+          _ref4 = this.vars;
+          for (name in _ref4) {
+            value = _ref4[name];
             if (this.options.noSerializationInFlow) {
               variables[name] = value;
             } else {
               variables[name] = serializeVariableValue(value);
             }
           }
+          state.variables = variables;
         }
-        state = {
-          range: range,
-          source: source,
-          variables: variables,
-          userInfo: _.cloneDeep(userInfo)
-        };
         return call.statements.push(state);
       }
     }
@@ -22472,6 +22481,14 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
       return result;
     };
 
+    Language.prototype.pryOpenCall = function(call, val, finder) {
+      return null;
+    };
+
+    Language.prototype.rewriteFunctionID = function(fid) {
+      return fid;
+    };
+
     return Language;
 
   })();
@@ -22520,6 +22537,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
         parserHolder.lua2js = (_ref = typeof self !== "undefined" && self !== null ? self.aetherLua2JS : void 0) != null ? _ref : require('lua2js');
       }
       this.runtimeGlobals = parserHolder.lua2js.stdlib;
+      this.fidMap = {};
     }
 
     Lua.prototype.obviouslyCannotTranspile = function(rawCode) {
@@ -22537,6 +22555,33 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
         encloseWithFunctions: false
       });
       return ast;
+    };
+
+    Lua.prototype.replaceLoops = function(rawCode) {
+      var a, convertedCode, line, lineNumber, lines, rangeIndex, replacedLoops, start, _i, _len, _ref;
+      if (rawCode.indexOf('loop') === -1) {
+        return [rawCode, []];
+      }
+      convertedCode = "";
+      replacedLoops = [];
+      rangeIndex = 0;
+      lines = rawCode.split('\n');
+      for (lineNumber = _i = 0, _len = lines.length; _i < _len; lineNumber = ++_i) {
+        line = lines[lineNumber];
+        if (line.replace(/^\s+/g, "").indexOf('loop') === 0) {
+          start = line.indexOf('loop');
+          a = line.split("");
+          [].splice.apply(a, [start, (start + 3) - start + 1].concat(_ref = 'while true do'.split(""))), _ref;
+          line = a.join("");
+          replacedLoops.push(rangeIndex + start);
+        }
+        convertedCode += line;
+        if (lineNumber !== lines.length - 1) {
+          convertedCode += '\n';
+        }
+        rangeIndex += line.length + 1;
+      }
+      return [convertedCode, replacedLoops];
     };
 
     Lua.prototype.lint = function(rawCode, aether) {
@@ -22642,6 +22687,26 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
           }
         };
       }
+    };
+
+    Lua.prototype.pryOpenCall = function(call, val, finder) {
+      var node, target;
+      node = call.right;
+      if (val[1] !== "__lua") {
+        return null;
+      }
+      if (val[2] === "call") {
+        target = node["arguments"][1];
+        return finder(target);
+      }
+      if (val[2] === "makeFunction") {
+        this.fidMap[node["arguments"][0].name] = finder(call.left);
+      }
+      return null;
+    };
+
+    Lua.prototype.rewriteFunctionID = function(fid) {
+      return this.fidMap[fid] || fid;
     };
 
     return Lua;
@@ -23314,11 +23379,9 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
     HintCreator.prototype.getNoFunctionHint = function(target) {
       var hint,
         _this = this;
-      if (typeof hint === "undefined" || hint === null) {
-        hint = this.getNoCaseMatch(target, this.context.thisMethods, function(match) {
-          return "Uppercase or lowercase problem. Try `" + _this.thisValueAccess + match + "()`";
-        });
-      }
+      hint = this.getNoCaseMatch(target, this.context.thisMethods, function(match) {
+        return "Uppercase or lowercase problem. Try `" + _this.thisValueAccess + match + "()`";
+      });
       if (hint == null) {
         hint = this.getScoreMatch(target, [
           {
@@ -23349,17 +23412,18 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
           }
         ]);
       }
+      if (hint == null) {
+        hint = "You don't have a `" + target + "` method.";
+      }
       return hint;
     };
 
     HintCreator.prototype.getReferenceErrorHint = function(target) {
       var hint, method, thisPrefixed, _ref,
         _this = this;
-      if (typeof hint === "undefined" || hint === null) {
-        hint = this.getExactMatch(target, this.context.stringReferences, function(match) {
-          return "Missing quotes. Try `\"" + match + "\"`";
-        });
-      }
+      hint = this.getExactMatch(target, this.context.stringReferences, function(match) {
+        return "Missing quotes. Try `\"" + match + "\"`";
+      });
       if (hint == null) {
         hint = this.getExactMatch(target, this.context.thisMethods, function(match) {
           return "Try `" + _this.thisValueAccess + match + "()`";
@@ -23762,7 +23826,9 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
     _ref3 = getOwnPropertyNames(source);
     for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
       name = _ref3[_i];
-      target[name] = source[name];
+      if (name !== 'caller' && name !== 'arguments') {
+        target[name] = source[name];
+      }
     }
     return target;
   };
@@ -24122,7 +24188,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
     return false;
   };
 
-  getUserFnMap = function(startNode) {
+  getUserFnMap = function(startNode, language) {
     var call, callVal, error, findCall, fn, fnVal, getRootScope, parseVal, resolveCalls, resolveFunctions, resolveVal, resolvedCalls, resolvedFunctions, rootScope, updateVal, userFnMap, _i, _j, _len, _len1, _ref3, _ref4;
     parseVal = function(node) {
       var _ref3, _ref4;
@@ -24297,8 +24363,11 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
       }
       return scope;
     };
-    findCall = function(scope, fnVal) {
-      var c, cVal, call, childFn, childScope, _i, _j, _len, _len1, _ref3, _ref4;
+    findCall = function(scope, fnVal, scopesToSkip) {
+      var c, cVal, callExpr, childFn, childScope, newScope, _i, _j, _len, _len1, _ref3, _ref4, _ref5;
+      if (scopesToSkip == null) {
+        scopesToSkip = {};
+      }
       if (!fnVal) {
         return [null, null];
       }
@@ -24306,7 +24375,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
       for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
         c = _ref3[_i];
         cVal = parseVal(c.right.callee);
-        cVal = resolveVal(scope, scope.varMap, cVal);
+        cVal = resolveVal(scope, cVal, scopesToSkip);
         if (_.isEqual(cVal, fnVal)) {
           return [scope, c.right];
         }
@@ -24316,32 +24385,41 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
         childScope = _ref4[_j];
         if (childScope.current) {
           childFn = parseVal(childScope.current.left);
-          if (childFn !== fnVal) {
-            if (call = findCall(childScope, fnVal)) {
-              return call;
+          if (!_.isEqual(childFn, fnVal)) {
+            _ref5 = findCall(childScope, fnVal, scopesToSkip), newScope = _ref5[0], callExpr = _ref5[1];
+            if ((newScope != null) && (callExpr != null)) {
+              return [newScope, callExpr];
             }
           }
         }
       }
       return [null, null];
     };
-    resolveVal = function(scope, vm, val) {
-      var argVal, callExpr, fnVal, i, newScope, pVal, _i, _j, _ref3, _ref4, _ref5, _ref6, _ref7;
+    resolveVal = function(scope, val, scopesToSkip) {
+      var argVal, callExpr, fnVal, i, newScope, pVal, vm, _i, _j, _ref3, _ref4, _ref5, _ref6, _ref7;
+      if (scopesToSkip == null) {
+        scopesToSkip = {};
+      }
       if (!val) {
         return;
       }
+      vm = scope.varMap;
       if (vm.length > 0) {
         for (i = _i = _ref3 = vm.length - 1; _ref3 <= 0 ? _i <= 0 : _i >= 0; i = _ref3 <= 0 ? ++_i : --_i) {
           val = updateVal(val, vm[i][0], vm[i][1]);
         }
       }
+      if (_.isEqual(scopesToSkip[val], scope)) {
+        return val;
+      }
+      scopesToSkip[val] = scope;
       if (((_ref4 = scope.current) != null ? (_ref5 = _ref4.right) != null ? _ref5.type : void 0 : void 0) === S.FunctionExpression && scope.current.right.params.length > 0) {
         for (i = _j = 0, _ref6 = scope.current.right.params.length - 1; 0 <= _ref6 ? _j <= _ref6 : _j >= _ref6; i = 0 <= _ref6 ? ++_j : --_j) {
           pVal = parseVal(scope.current.right.params[i]);
           if ((_.isArray(val)) && val[0] === pVal || val === pVal) {
             fnVal = parseVal(scope.current.left);
-            fnVal = resolveVal(scope, scope.varMap, fnVal);
-            _ref7 = findCall(rootScope, fnVal), newScope = _ref7[0], callExpr = _ref7[1];
+            fnVal = resolveVal(scope, fnVal, scopesToSkip);
+            _ref7 = findCall(rootScope, fnVal, scopesToSkip), newScope = _ref7[0], callExpr = _ref7[1];
             if (newScope && callExpr) {
               argVal = parseVal(callExpr["arguments"][i]);
               if (_.isArray(val)) {
@@ -24349,14 +24427,14 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
               } else {
                 val = argVal;
               }
-              val = resolveVal(newScope, newScope.varMap, val);
+              val = resolveVal(newScope, val, scopesToSkip);
             }
             break;
           }
         }
       }
       if (scope.parent) {
-        val = resolveVal(scope.parent, scope.parent.varMap, val);
+        val = resolveVal(scope.parent, val, scopesToSkip);
       }
       return val;
     };
@@ -24364,7 +24442,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
       var childScope, fnVal, _i, _len, _ref3, _ref4, _ref5, _results;
       if ((scope != null ? (_ref3 = scope.current) != null ? (_ref4 = _ref3.right) != null ? _ref4.type : void 0 : void 0 : void 0) === S.FunctionExpression) {
         fnVal = parseVal(scope.current.left);
-        fnVal = resolveVal(scope, scope.varMap, fnVal);
+        fnVal = resolveVal(scope, fnVal);
         fns.push([scope.current.right, fnVal]);
       }
       _ref5 = scope.children;
@@ -24376,12 +24454,18 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
       return _results;
     };
     resolveCalls = function(scope, calls) {
-      var call, childScope, val, _i, _j, _len, _len1, _ref3, _ref4, _results;
+      var call, childScope, pried, val, _i, _j, _len, _len1, _ref3, _ref4, _results;
       _ref3 = scope.calls;
       for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
         call = _ref3[_i];
         val = parseVal(call.right.callee);
-        val = resolveVal(scope, scope.varMap, val);
+        val = resolveVal(scope, val);
+        pried = language.pryOpenCall(call, val, function(x) {
+          return resolveVal(scope, parseVal(x));
+        });
+        if (pried && _.isArray(pried)) {
+          val = pried;
+        }
         calls.push([call.right, val]);
       }
       _ref4 = scope.children;
@@ -24403,6 +24487,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
         _ref3 = resolvedCalls[_i], call = _ref3[0], callVal = _ref3[1];
         for (_j = 0, _len1 = resolvedFunctions.length; _j < _len1; _j++) {
           _ref4 = resolvedFunctions[_j], fn = _ref4[0], fnVal = _ref4[1];
+          fnVal = language.rewriteFunctionID(fnVal);
           if (_.isEqual(callVal, fnVal)) {
             userFnMap.push([call, fn]);
             break;
@@ -24590,7 +24675,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
           return;
         }
         if (!userFnMap) {
-          userFnMap = getUserFnMap(node);
+          userFnMap = getUserFnMap(node, this.language);
         }
         if (!((_ref4 = getUserFnExpr(userFnMap, node.expression.right)) != null ? _ref4.mustBecomeGeneratorFunction : void 0)) {
           if (simpleLoops && (parentWhile = getImmediateParentOfType(node, S.WhileStatement))) {
@@ -24609,7 +24694,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
         return node.update(node.source().replace(/^function \(/, 'function* ('));
       } else if (node.type === S.AssignmentExpression && ((_ref5 = node.right) != null ? _ref5.type : void 0) === S.CallExpression) {
         if (!userFnMap) {
-          userFnMap = getUserFnMap(node);
+          userFnMap = getUserFnMap(node, this.language);
         }
         if ((fnExpr = getUserFnExpr(userFnMap, node.right)) && possiblyGeneratorifyUserFunction(fnExpr)) {
           return node.update("var __gen" + (node.left.source()) + " = " + (node.right.source()) + "; while (true) { var __result" + (node.left.source()) + " = __gen" + (node.left.source()) + ".next(); if (__result" + (node.left.source()) + ".done) { " + (node.left.source()) + " = __result" + (node.left.source()) + ".value; break; } var _yieldValue = __result" + (node.left.source()) + ".value; if (this.onAetherYield) { this.onAetherYield(_yieldValue); } yield _yieldValue;}");
@@ -24675,7 +24760,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
         }
         if (node.type === S.ExpressionStatement && ((_ref4 = node.expression.right) != null ? _ref4.type : void 0) === S.CallExpression) {
           if (!userFnMap) {
-            userFnMap = getUserFnMap(node);
+            userFnMap = getUserFnMap(node, this.language);
           }
           if (!((_ref5 = getUserFnExpr(userFnMap, node.expression.right)) != null ? _ref5.mustBecomeGeneratorFunction : void 0)) {
             node.update("" + (node.source()) + " yield 'waiting...';");
@@ -24691,7 +24776,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
         return node.update(node.source().replace(/^function \(/, 'function* ('));
       } else if (node.type === S.AssignmentExpression && ((_ref6 = node.right) != null ? _ref6.type : void 0) === S.CallExpression) {
         if (!userFnMap) {
-          userFnMap = getUserFnMap(node);
+          userFnMap = getUserFnMap(node, this.language);
         }
         if ((fnExpr = getUserFnExpr(userFnMap, node.right)) && possiblyGeneratorifyUserFunction(fnExpr)) {
           return node.update("var __gen" + (node.left.source()) + " = " + (node.right.source()) + "; while (true) { var __result" + (node.left.source()) + " = __gen" + (node.left.source()) + ".next(); if (__result" + (node.left.source()) + ".done) { " + (node.left.source()) + " = __result" + (node.left.source()) + ".value; break; } yield __result" + (node.left.source()) + ".value;}");
@@ -24700,7 +24785,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
     };
   };
 
-  module.exports.makeInstrumentStatements = makeInstrumentStatements = function(language, varNames) {
+  module.exports.makeInstrumentStatements = makeInstrumentStatements = function(language, varNames, includeFlow) {
     return function(node) {
       var blockSource, blockStatement, inner, loggers, logging, orig, prefix, safeRange, source, suffix, unwrappedRange, varName, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8;
       orig = node.originalNode;
@@ -24748,7 +24833,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
       } else {
         logging = '';
       }
-      suffix = " _aether.logStatement(" + safeRange + ", _aether._userInfo, " + (varNames ? '!_aether._shouldSkipFlow' : 'false') + ");";
+      suffix = " _aether.logStatement(" + safeRange + ", _aether._userInfo, " + (includeFlow ? '!_aether._shouldSkipFlow' : 'false') + ");";
       if (blockStatement) {
         blockSource = node.source();
         inner = blockSource.substring(blockSource.indexOf('{') + 2, blockSource.lastIndexOf('}'));
@@ -25010,7 +25095,18 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
         },
         noSerializationInFlow: {
           type: 'boolean',
-          "default": false
+          "default": false,
+          description: "Whether to skip serializing variable values when recording variables in flow."
+        },
+        noVariablesInFlow: {
+          type: 'boolean',
+          "default": false,
+          description: "Whether to skip capturing variable values at all when instrumenting flow."
+        },
+        skipDuplicateUserInfoInFlow: {
+          type: 'boolean',
+          "default": false,
+          description: "Whether to skip recording calls with the same userInfo as the previous call when instrumenting flow."
         },
         includeMetrics: {
           type: 'boolean',
@@ -25655,7 +25751,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
                                     [new ast.ExpressionStatement(new ast.AssignmentExpression('=', new ast.Identifier(tmp3), new ast.Literal('ReferenceError'))),
                                      new ast.ExpressionStatement(new ast.AssignmentExpression('=', new ast.Identifier(tmp4), new ast.MemberExpression(new ast.Identifier('__global'), new ast.Identifier(tmp3), true))),
                                      new ast.ExpressionStatement(new ast.AssignmentExpression('=', new ast.Identifier(tmp5), new ast.NewExpression(new ast.Identifier(tmp4), [new ast.BinaryExpression('+', new ast.Literal('ReferenceError: '), new ast.BinaryExpression('+', new ast.Identifier(tmp), new ast.Literal(' is not defined')))]))),
-                                     inheritPosition(new ast.ThrowStatement(new ast.Identifier(tmp5)), nd)]));
+                                     new ast.ThrowStatement(new ast.Identifier(tmp5))]));
             }
           } else {
             // locals are easy: target = x;
@@ -40534,31 +40630,34 @@ module.exports = amdefine;
 }).call(this,require("JkpR2F"),"/../node_modules/source-map/node_modules/amdefine/amdefine.js")
 },{"JkpR2F":38,"path":37}],50:[function(require,module,exports){
 /*!
- * string_score.js: String Scoring Algorithm 0.1.20 
+ * string_score.js: String Scoring Algorithm 0.1.22
  *
  * http://joshaven.com/string_score
  * https://github.com/joshaven/string_score
  *
- * Copyright (C) 2009-2011 Joshaven Potter <yourtech@gmail.com>
+ * Copyright (C) 2009-2014 Joshaven Potter <yourtech@gmail.com>
  * Special thanks to all of the contributors listed here https://github.com/joshaven/string_score
- * MIT license: http://www.opensource.org/licenses/mit-license.php
+ * MIT License: http://opensource.org/licenses/MIT
  *
  * Date: Tue Mar 1 2011
- * Updated: Tue Jun 11 2013
+ * Updated: Tue Mar 10 2015
 */
+
+/*jslint nomen:true, white:true, browser:true,devel:true */
 
 /**
  * Scores a string against another string.
- *  'Hello World'.score('he');     //=> 0.5931818181818181
- *  'Hello World'.score('Hello');  //=> 0.7318181818181818
+ *    'Hello World'.score('he');         //=> 0.5931818181818181
+ *    'Hello World'.score('Hello');    //=> 0.7318181818181818
  */
-String.prototype.score = function(word, fuzziness) {
+String.prototype.score = function (word, fuzziness) {
+  'use strict';
 
   // If the string is equal to the word, perfect match.
-  if (this == word) return 1;
+  if (this === word) { return 1; }
 
   //if it's not a perfect match and is empty return 0
-  if( word == "") return 0;
+  if (word === "") { return 0; }
 
   var runningScore = 0,
       charScore,
@@ -40571,69 +40670,67 @@ String.prototype.score = function(word, fuzziness) {
       idxOf,
       startAt = 0,
       fuzzies = 1,
-      fuzzyFactor;
-  
+      fuzzyFactor,
+      i;
+
   // Cache fuzzyFactor for speed increase
-  if (fuzziness) fuzzyFactor = 1 - fuzziness;
+  if (fuzziness) { fuzzyFactor = 1 - fuzziness; }
 
   // Walk through word and add up scores.
   // Code duplication occurs to prevent checking fuzziness inside for loop
   if (fuzziness) {
-    for (var i = 0; i < wordLength; ++i) {
+    for (i = 0; i < wordLength; i+=1) {
 
       // Find next first case-insensitive match of a character.
       idxOf = lString.indexOf(lWord[i], startAt);
-      
-      if (-1 === idxOf) {
-        fuzzies += fuzzyFactor;
-        continue;
-      } else if (startAt === idxOf) {
-        // Consecutive letter & start-of-string Bonus
-        charScore = 0.7;
-      } else {
-        charScore = 0.1;
 
-        // Acronym Bonus
-        // Weighing Logic: Typing the first character of an acronym is as if you
-        // preceded it with two perfect character matches.
-        if (string[idxOf - 1] === ' ') charScore += 0.8;
+      if (idxOf === -1) {
+        fuzzies += fuzzyFactor;
+      } else {
+        if (startAt === idxOf) {
+          // Consecutive letter & start-of-string Bonus
+          charScore = 0.7;
+        } else {
+          charScore = 0.1;
+
+          // Acronym Bonus
+          // Weighing Logic: Typing the first character of an acronym is as if you
+          // preceded it with two perfect character matches.
+          if (string[idxOf - 1] === ' ') { charScore += 0.8; }
+        }
+
+        // Same case bonus.
+        if (string[idxOf] === word[i]) { charScore += 0.1; }
+
+        // Update scores and startAt position for next round of indexOf
+        runningScore += charScore;
+        startAt = idxOf + 1;
       }
-      
-      // Same case bonus.
-      if (string[idxOf] === word[i]) charScore += 0.1; 
-      
-      // Update scores and startAt position for next round of indexOf
-      runningScore += charScore;
-      startAt = idxOf + 1;
     }
   } else {
-    for (var i = 0; i < wordLength; ++i) {
-    
+    for (i = 0; i < wordLength; i+=1) {
       idxOf = lString.indexOf(lWord[i], startAt);
-      
-      if (-1 === idxOf) {
-        return 0;
-      } else if (startAt === idxOf) {
+      if (-1 === idxOf) { return 0; }
+
+      if (startAt === idxOf) {
         charScore = 0.7;
       } else {
         charScore = 0.1;
-        if (string[idxOf - 1] === ' ') charScore += 0.8;
+        if (string[idxOf - 1] === ' ') { charScore += 0.8; }
       }
-
-      if (string[idxOf] === word[i]) charScore += 0.1; 
-      
+      if (string[idxOf] === word[i]) { charScore += 0.1; }
       runningScore += charScore;
       startAt = idxOf + 1;
     }
   }
 
   // Reduce penalty for longer strings.
-  finalScore = 0.5 * (runningScore / strLength  + runningScore / wordLength) / fuzzies;
-  
+  finalScore = 0.5 * (runningScore / strLength    + runningScore / wordLength) / fuzzies;
+
   if ((lWord[0] === lString[0]) && (finalScore < 0.85)) {
     finalScore += 0.15;
   }
-  
+
   return finalScore;
 };
 

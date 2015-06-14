@@ -1,335 +1,4 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-
-},{}],2:[function(require,module,exports){
-(function (process){
-// Copyright Joyent, Inc. and other Node contributors.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a
-// copy of this software and associated documentation files (the
-// "Software"), to deal in the Software without restriction, including
-// without limitation the rights to use, copy, modify, merge, publish,
-// distribute, sublicense, and/or sell copies of the Software, and to permit
-// persons to whom the Software is furnished to do so, subject to the
-// following conditions:
-//
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-// USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-// resolves . and .. elements in a path array with directory names there
-// must be no slashes, empty elements, or device names (c:\) in the array
-// (so also no leading and trailing slashes - it does not distinguish
-// relative and absolute paths)
-function normalizeArray(parts, allowAboveRoot) {
-  // if the path tries to go above the root, `up` ends up > 0
-  var up = 0;
-  for (var i = parts.length - 1; i >= 0; i--) {
-    var last = parts[i];
-    if (last === '.') {
-      parts.splice(i, 1);
-    } else if (last === '..') {
-      parts.splice(i, 1);
-      up++;
-    } else if (up) {
-      parts.splice(i, 1);
-      up--;
-    }
-  }
-
-  // if the path is allowed to go above the root, restore leading ..s
-  if (allowAboveRoot) {
-    for (; up--; up) {
-      parts.unshift('..');
-    }
-  }
-
-  return parts;
-}
-
-// Split a filename into [root, dir, basename, ext], unix version
-// 'root' is just a slash, or nothing.
-var splitPathRe =
-    /^(\/?|)([\s\S]*?)((?:\.{1,2}|[^\/]+?|)(\.[^.\/]*|))(?:[\/]*)$/;
-var splitPath = function(filename) {
-  return splitPathRe.exec(filename).slice(1);
-};
-
-// path.resolve([from ...], to)
-// posix version
-exports.resolve = function() {
-  var resolvedPath = '',
-      resolvedAbsolute = false;
-
-  for (var i = arguments.length - 1; i >= -1 && !resolvedAbsolute; i--) {
-    var path = (i >= 0) ? arguments[i] : process.cwd();
-
-    // Skip empty and invalid entries
-    if (typeof path !== 'string') {
-      throw new TypeError('Arguments to path.resolve must be strings');
-    } else if (!path) {
-      continue;
-    }
-
-    resolvedPath = path + '/' + resolvedPath;
-    resolvedAbsolute = path.charAt(0) === '/';
-  }
-
-  // At this point the path should be resolved to a full absolute path, but
-  // handle relative paths to be safe (might happen when process.cwd() fails)
-
-  // Normalize the path
-  resolvedPath = normalizeArray(filter(resolvedPath.split('/'), function(p) {
-    return !!p;
-  }), !resolvedAbsolute).join('/');
-
-  return ((resolvedAbsolute ? '/' : '') + resolvedPath) || '.';
-};
-
-// path.normalize(path)
-// posix version
-exports.normalize = function(path) {
-  var isAbsolute = exports.isAbsolute(path),
-      trailingSlash = substr(path, -1) === '/';
-
-  // Normalize the path
-  path = normalizeArray(filter(path.split('/'), function(p) {
-    return !!p;
-  }), !isAbsolute).join('/');
-
-  if (!path && !isAbsolute) {
-    path = '.';
-  }
-  if (path && trailingSlash) {
-    path += '/';
-  }
-
-  return (isAbsolute ? '/' : '') + path;
-};
-
-// posix version
-exports.isAbsolute = function(path) {
-  return path.charAt(0) === '/';
-};
-
-// posix version
-exports.join = function() {
-  var paths = Array.prototype.slice.call(arguments, 0);
-  return exports.normalize(filter(paths, function(p, index) {
-    if (typeof p !== 'string') {
-      throw new TypeError('Arguments to path.join must be strings');
-    }
-    return p;
-  }).join('/'));
-};
-
-
-// path.relative(from, to)
-// posix version
-exports.relative = function(from, to) {
-  from = exports.resolve(from).substr(1);
-  to = exports.resolve(to).substr(1);
-
-  function trim(arr) {
-    var start = 0;
-    for (; start < arr.length; start++) {
-      if (arr[start] !== '') break;
-    }
-
-    var end = arr.length - 1;
-    for (; end >= 0; end--) {
-      if (arr[end] !== '') break;
-    }
-
-    if (start > end) return [];
-    return arr.slice(start, end - start + 1);
-  }
-
-  var fromParts = trim(from.split('/'));
-  var toParts = trim(to.split('/'));
-
-  var length = Math.min(fromParts.length, toParts.length);
-  var samePartsLength = length;
-  for (var i = 0; i < length; i++) {
-    if (fromParts[i] !== toParts[i]) {
-      samePartsLength = i;
-      break;
-    }
-  }
-
-  var outputParts = [];
-  for (var i = samePartsLength; i < fromParts.length; i++) {
-    outputParts.push('..');
-  }
-
-  outputParts = outputParts.concat(toParts.slice(samePartsLength));
-
-  return outputParts.join('/');
-};
-
-exports.sep = '/';
-exports.delimiter = ':';
-
-exports.dirname = function(path) {
-  var result = splitPath(path),
-      root = result[0],
-      dir = result[1];
-
-  if (!root && !dir) {
-    // No dirname whatsoever
-    return '.';
-  }
-
-  if (dir) {
-    // It has a dirname, strip trailing slash
-    dir = dir.substr(0, dir.length - 1);
-  }
-
-  return root + dir;
-};
-
-
-exports.basename = function(path, ext) {
-  var f = splitPath(path)[2];
-  // TODO: make this comparison case-insensitive on windows?
-  if (ext && f.substr(-1 * ext.length) === ext) {
-    f = f.substr(0, f.length - ext.length);
-  }
-  return f;
-};
-
-
-exports.extname = function(path) {
-  return splitPath(path)[3];
-};
-
-function filter (xs, f) {
-    if (xs.filter) return xs.filter(f);
-    var res = [];
-    for (var i = 0; i < xs.length; i++) {
-        if (f(xs[i], i, xs)) res.push(xs[i]);
-    }
-    return res;
-}
-
-// String.prototype.substr - negative index don't work in IE8
-var substr = 'ab'.substr(-1) === 'b'
-    ? function (str, start, len) { return str.substr(start, len) }
-    : function (str, start, len) {
-        if (start < 0) start = str.length + start;
-        return str.substr(start, len);
-    }
-;
-
-}).call(this,require("JkpR2F"))
-},{"JkpR2F":3}],3:[function(require,module,exports){
-// shim for using process in browser
-
-var process = module.exports = {};
-
-process.nextTick = (function () {
-    var canSetImmediate = typeof window !== 'undefined'
-    && window.setImmediate;
-    var canPost = typeof window !== 'undefined'
-    && window.postMessage && window.addEventListener
-    ;
-
-    if (canSetImmediate) {
-        return function (f) { return window.setImmediate(f) };
-    }
-
-    if (canPost) {
-        var queue = [];
-        window.addEventListener('message', function (ev) {
-            var source = ev.source;
-            if ((source === window || source === null) && ev.data === 'process-tick') {
-                ev.stopPropagation();
-                if (queue.length > 0) {
-                    var fn = queue.shift();
-                    fn();
-                }
-            }
-        }, true);
-
-        return function nextTick(fn) {
-            queue.push(fn);
-            window.postMessage('process-tick', '*');
-        };
-    }
-
-    return function nextTick(fn) {
-        setTimeout(fn, 0);
-    };
-})();
-
-process.title = 'browser';
-process.browser = true;
-process.env = {};
-process.argv = [];
-
-function noop() {}
-
-process.on = noop;
-process.addListener = noop;
-process.once = noop;
-process.off = noop;
-process.removeListener = noop;
-process.removeAllListeners = noop;
-process.emit = noop;
-
-process.binding = function (name) {
-    throw new Error('process.binding is not supported');
-}
-
-// TODO(shtylman)
-process.cwd = function () { return '/' };
-process.chdir = function (dir) {
-    throw new Error('process.chdir is not supported');
-};
-
-},{}],4:[function(require,module,exports){
-
-var compile = require('./src/compile');
-var lib = require('./src/lib');
-var _io = lib;
-
-function compileCode(input, options) {
-	options = options || {};
-	compile.setOptions(options);
-	var result = compile.compile(input);
-	return result.trim();
-}
-
-function parse(input, options) {
-	options = options || {};
-	compile.setOptions(options);
-	return compile.parse(input);
-}
-
-function evaluate (code) {
-	if (code === '') return null;
-	var context = {};
-	eval(compileCode(code, {
-		wrapWithFunction: true,
-		functionName: 'context.run'
-	}));
-	return context.run();
-}
-
-module.exports = {
-	compile: compileCode,
-	parse: parse,
-	lib: lib,
-	eval: evaluate,
-};
-
-},{"./src/compile":22,"./src/lib":23}],5:[function(require,module,exports){
 (function (global){
 /*
   Copyright (C) 2012-2013 Yusuke Suzuki <utatane.tea@gmail.com>
@@ -2616,7 +2285,332 @@ module.exports = {
 /* vim: set sw=4 ts=4 et tw=80 : */
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./package.json":21,"estraverse":6,"esutils":9,"source-map":10}],6:[function(require,module,exports){
+},{"./package.json":5,"estraverse":6,"esutils":4,"source-map":16}],2:[function(require,module,exports){
+/*
+  Copyright (C) 2013 Yusuke Suzuki <utatane.tea@gmail.com>
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+(function () {
+    'use strict';
+
+    var Regex;
+
+    // See also tools/generate-unicode-regex.py.
+    Regex = {
+        NonAsciiIdentifierStart: new RegExp('[\xAA\xB5\xBA\xC0-\xD6\xD8-\xF6\xF8-\u02C1\u02C6-\u02D1\u02E0-\u02E4\u02EC\u02EE\u0370-\u0374\u0376\u0377\u037A-\u037D\u0386\u0388-\u038A\u038C\u038E-\u03A1\u03A3-\u03F5\u03F7-\u0481\u048A-\u0527\u0531-\u0556\u0559\u0561-\u0587\u05D0-\u05EA\u05F0-\u05F2\u0620-\u064A\u066E\u066F\u0671-\u06D3\u06D5\u06E5\u06E6\u06EE\u06EF\u06FA-\u06FC\u06FF\u0710\u0712-\u072F\u074D-\u07A5\u07B1\u07CA-\u07EA\u07F4\u07F5\u07FA\u0800-\u0815\u081A\u0824\u0828\u0840-\u0858\u08A0\u08A2-\u08AC\u0904-\u0939\u093D\u0950\u0958-\u0961\u0971-\u0977\u0979-\u097F\u0985-\u098C\u098F\u0990\u0993-\u09A8\u09AA-\u09B0\u09B2\u09B6-\u09B9\u09BD\u09CE\u09DC\u09DD\u09DF-\u09E1\u09F0\u09F1\u0A05-\u0A0A\u0A0F\u0A10\u0A13-\u0A28\u0A2A-\u0A30\u0A32\u0A33\u0A35\u0A36\u0A38\u0A39\u0A59-\u0A5C\u0A5E\u0A72-\u0A74\u0A85-\u0A8D\u0A8F-\u0A91\u0A93-\u0AA8\u0AAA-\u0AB0\u0AB2\u0AB3\u0AB5-\u0AB9\u0ABD\u0AD0\u0AE0\u0AE1\u0B05-\u0B0C\u0B0F\u0B10\u0B13-\u0B28\u0B2A-\u0B30\u0B32\u0B33\u0B35-\u0B39\u0B3D\u0B5C\u0B5D\u0B5F-\u0B61\u0B71\u0B83\u0B85-\u0B8A\u0B8E-\u0B90\u0B92-\u0B95\u0B99\u0B9A\u0B9C\u0B9E\u0B9F\u0BA3\u0BA4\u0BA8-\u0BAA\u0BAE-\u0BB9\u0BD0\u0C05-\u0C0C\u0C0E-\u0C10\u0C12-\u0C28\u0C2A-\u0C33\u0C35-\u0C39\u0C3D\u0C58\u0C59\u0C60\u0C61\u0C85-\u0C8C\u0C8E-\u0C90\u0C92-\u0CA8\u0CAA-\u0CB3\u0CB5-\u0CB9\u0CBD\u0CDE\u0CE0\u0CE1\u0CF1\u0CF2\u0D05-\u0D0C\u0D0E-\u0D10\u0D12-\u0D3A\u0D3D\u0D4E\u0D60\u0D61\u0D7A-\u0D7F\u0D85-\u0D96\u0D9A-\u0DB1\u0DB3-\u0DBB\u0DBD\u0DC0-\u0DC6\u0E01-\u0E30\u0E32\u0E33\u0E40-\u0E46\u0E81\u0E82\u0E84\u0E87\u0E88\u0E8A\u0E8D\u0E94-\u0E97\u0E99-\u0E9F\u0EA1-\u0EA3\u0EA5\u0EA7\u0EAA\u0EAB\u0EAD-\u0EB0\u0EB2\u0EB3\u0EBD\u0EC0-\u0EC4\u0EC6\u0EDC-\u0EDF\u0F00\u0F40-\u0F47\u0F49-\u0F6C\u0F88-\u0F8C\u1000-\u102A\u103F\u1050-\u1055\u105A-\u105D\u1061\u1065\u1066\u106E-\u1070\u1075-\u1081\u108E\u10A0-\u10C5\u10C7\u10CD\u10D0-\u10FA\u10FC-\u1248\u124A-\u124D\u1250-\u1256\u1258\u125A-\u125D\u1260-\u1288\u128A-\u128D\u1290-\u12B0\u12B2-\u12B5\u12B8-\u12BE\u12C0\u12C2-\u12C5\u12C8-\u12D6\u12D8-\u1310\u1312-\u1315\u1318-\u135A\u1380-\u138F\u13A0-\u13F4\u1401-\u166C\u166F-\u167F\u1681-\u169A\u16A0-\u16EA\u16EE-\u16F0\u1700-\u170C\u170E-\u1711\u1720-\u1731\u1740-\u1751\u1760-\u176C\u176E-\u1770\u1780-\u17B3\u17D7\u17DC\u1820-\u1877\u1880-\u18A8\u18AA\u18B0-\u18F5\u1900-\u191C\u1950-\u196D\u1970-\u1974\u1980-\u19AB\u19C1-\u19C7\u1A00-\u1A16\u1A20-\u1A54\u1AA7\u1B05-\u1B33\u1B45-\u1B4B\u1B83-\u1BA0\u1BAE\u1BAF\u1BBA-\u1BE5\u1C00-\u1C23\u1C4D-\u1C4F\u1C5A-\u1C7D\u1CE9-\u1CEC\u1CEE-\u1CF1\u1CF5\u1CF6\u1D00-\u1DBF\u1E00-\u1F15\u1F18-\u1F1D\u1F20-\u1F45\u1F48-\u1F4D\u1F50-\u1F57\u1F59\u1F5B\u1F5D\u1F5F-\u1F7D\u1F80-\u1FB4\u1FB6-\u1FBC\u1FBE\u1FC2-\u1FC4\u1FC6-\u1FCC\u1FD0-\u1FD3\u1FD6-\u1FDB\u1FE0-\u1FEC\u1FF2-\u1FF4\u1FF6-\u1FFC\u2071\u207F\u2090-\u209C\u2102\u2107\u210A-\u2113\u2115\u2119-\u211D\u2124\u2126\u2128\u212A-\u212D\u212F-\u2139\u213C-\u213F\u2145-\u2149\u214E\u2160-\u2188\u2C00-\u2C2E\u2C30-\u2C5E\u2C60-\u2CE4\u2CEB-\u2CEE\u2CF2\u2CF3\u2D00-\u2D25\u2D27\u2D2D\u2D30-\u2D67\u2D6F\u2D80-\u2D96\u2DA0-\u2DA6\u2DA8-\u2DAE\u2DB0-\u2DB6\u2DB8-\u2DBE\u2DC0-\u2DC6\u2DC8-\u2DCE\u2DD0-\u2DD6\u2DD8-\u2DDE\u2E2F\u3005-\u3007\u3021-\u3029\u3031-\u3035\u3038-\u303C\u3041-\u3096\u309D-\u309F\u30A1-\u30FA\u30FC-\u30FF\u3105-\u312D\u3131-\u318E\u31A0-\u31BA\u31F0-\u31FF\u3400-\u4DB5\u4E00-\u9FCC\uA000-\uA48C\uA4D0-\uA4FD\uA500-\uA60C\uA610-\uA61F\uA62A\uA62B\uA640-\uA66E\uA67F-\uA697\uA6A0-\uA6EF\uA717-\uA71F\uA722-\uA788\uA78B-\uA78E\uA790-\uA793\uA7A0-\uA7AA\uA7F8-\uA801\uA803-\uA805\uA807-\uA80A\uA80C-\uA822\uA840-\uA873\uA882-\uA8B3\uA8F2-\uA8F7\uA8FB\uA90A-\uA925\uA930-\uA946\uA960-\uA97C\uA984-\uA9B2\uA9CF\uAA00-\uAA28\uAA40-\uAA42\uAA44-\uAA4B\uAA60-\uAA76\uAA7A\uAA80-\uAAAF\uAAB1\uAAB5\uAAB6\uAAB9-\uAABD\uAAC0\uAAC2\uAADB-\uAADD\uAAE0-\uAAEA\uAAF2-\uAAF4\uAB01-\uAB06\uAB09-\uAB0E\uAB11-\uAB16\uAB20-\uAB26\uAB28-\uAB2E\uABC0-\uABE2\uAC00-\uD7A3\uD7B0-\uD7C6\uD7CB-\uD7FB\uF900-\uFA6D\uFA70-\uFAD9\uFB00-\uFB06\uFB13-\uFB17\uFB1D\uFB1F-\uFB28\uFB2A-\uFB36\uFB38-\uFB3C\uFB3E\uFB40\uFB41\uFB43\uFB44\uFB46-\uFBB1\uFBD3-\uFD3D\uFD50-\uFD8F\uFD92-\uFDC7\uFDF0-\uFDFB\uFE70-\uFE74\uFE76-\uFEFC\uFF21-\uFF3A\uFF41-\uFF5A\uFF66-\uFFBE\uFFC2-\uFFC7\uFFCA-\uFFCF\uFFD2-\uFFD7\uFFDA-\uFFDC]'),
+        NonAsciiIdentifierPart: new RegExp('[\xAA\xB5\xBA\xC0-\xD6\xD8-\xF6\xF8-\u02C1\u02C6-\u02D1\u02E0-\u02E4\u02EC\u02EE\u0300-\u0374\u0376\u0377\u037A-\u037D\u0386\u0388-\u038A\u038C\u038E-\u03A1\u03A3-\u03F5\u03F7-\u0481\u0483-\u0487\u048A-\u0527\u0531-\u0556\u0559\u0561-\u0587\u0591-\u05BD\u05BF\u05C1\u05C2\u05C4\u05C5\u05C7\u05D0-\u05EA\u05F0-\u05F2\u0610-\u061A\u0620-\u0669\u066E-\u06D3\u06D5-\u06DC\u06DF-\u06E8\u06EA-\u06FC\u06FF\u0710-\u074A\u074D-\u07B1\u07C0-\u07F5\u07FA\u0800-\u082D\u0840-\u085B\u08A0\u08A2-\u08AC\u08E4-\u08FE\u0900-\u0963\u0966-\u096F\u0971-\u0977\u0979-\u097F\u0981-\u0983\u0985-\u098C\u098F\u0990\u0993-\u09A8\u09AA-\u09B0\u09B2\u09B6-\u09B9\u09BC-\u09C4\u09C7\u09C8\u09CB-\u09CE\u09D7\u09DC\u09DD\u09DF-\u09E3\u09E6-\u09F1\u0A01-\u0A03\u0A05-\u0A0A\u0A0F\u0A10\u0A13-\u0A28\u0A2A-\u0A30\u0A32\u0A33\u0A35\u0A36\u0A38\u0A39\u0A3C\u0A3E-\u0A42\u0A47\u0A48\u0A4B-\u0A4D\u0A51\u0A59-\u0A5C\u0A5E\u0A66-\u0A75\u0A81-\u0A83\u0A85-\u0A8D\u0A8F-\u0A91\u0A93-\u0AA8\u0AAA-\u0AB0\u0AB2\u0AB3\u0AB5-\u0AB9\u0ABC-\u0AC5\u0AC7-\u0AC9\u0ACB-\u0ACD\u0AD0\u0AE0-\u0AE3\u0AE6-\u0AEF\u0B01-\u0B03\u0B05-\u0B0C\u0B0F\u0B10\u0B13-\u0B28\u0B2A-\u0B30\u0B32\u0B33\u0B35-\u0B39\u0B3C-\u0B44\u0B47\u0B48\u0B4B-\u0B4D\u0B56\u0B57\u0B5C\u0B5D\u0B5F-\u0B63\u0B66-\u0B6F\u0B71\u0B82\u0B83\u0B85-\u0B8A\u0B8E-\u0B90\u0B92-\u0B95\u0B99\u0B9A\u0B9C\u0B9E\u0B9F\u0BA3\u0BA4\u0BA8-\u0BAA\u0BAE-\u0BB9\u0BBE-\u0BC2\u0BC6-\u0BC8\u0BCA-\u0BCD\u0BD0\u0BD7\u0BE6-\u0BEF\u0C01-\u0C03\u0C05-\u0C0C\u0C0E-\u0C10\u0C12-\u0C28\u0C2A-\u0C33\u0C35-\u0C39\u0C3D-\u0C44\u0C46-\u0C48\u0C4A-\u0C4D\u0C55\u0C56\u0C58\u0C59\u0C60-\u0C63\u0C66-\u0C6F\u0C82\u0C83\u0C85-\u0C8C\u0C8E-\u0C90\u0C92-\u0CA8\u0CAA-\u0CB3\u0CB5-\u0CB9\u0CBC-\u0CC4\u0CC6-\u0CC8\u0CCA-\u0CCD\u0CD5\u0CD6\u0CDE\u0CE0-\u0CE3\u0CE6-\u0CEF\u0CF1\u0CF2\u0D02\u0D03\u0D05-\u0D0C\u0D0E-\u0D10\u0D12-\u0D3A\u0D3D-\u0D44\u0D46-\u0D48\u0D4A-\u0D4E\u0D57\u0D60-\u0D63\u0D66-\u0D6F\u0D7A-\u0D7F\u0D82\u0D83\u0D85-\u0D96\u0D9A-\u0DB1\u0DB3-\u0DBB\u0DBD\u0DC0-\u0DC6\u0DCA\u0DCF-\u0DD4\u0DD6\u0DD8-\u0DDF\u0DF2\u0DF3\u0E01-\u0E3A\u0E40-\u0E4E\u0E50-\u0E59\u0E81\u0E82\u0E84\u0E87\u0E88\u0E8A\u0E8D\u0E94-\u0E97\u0E99-\u0E9F\u0EA1-\u0EA3\u0EA5\u0EA7\u0EAA\u0EAB\u0EAD-\u0EB9\u0EBB-\u0EBD\u0EC0-\u0EC4\u0EC6\u0EC8-\u0ECD\u0ED0-\u0ED9\u0EDC-\u0EDF\u0F00\u0F18\u0F19\u0F20-\u0F29\u0F35\u0F37\u0F39\u0F3E-\u0F47\u0F49-\u0F6C\u0F71-\u0F84\u0F86-\u0F97\u0F99-\u0FBC\u0FC6\u1000-\u1049\u1050-\u109D\u10A0-\u10C5\u10C7\u10CD\u10D0-\u10FA\u10FC-\u1248\u124A-\u124D\u1250-\u1256\u1258\u125A-\u125D\u1260-\u1288\u128A-\u128D\u1290-\u12B0\u12B2-\u12B5\u12B8-\u12BE\u12C0\u12C2-\u12C5\u12C8-\u12D6\u12D8-\u1310\u1312-\u1315\u1318-\u135A\u135D-\u135F\u1380-\u138F\u13A0-\u13F4\u1401-\u166C\u166F-\u167F\u1681-\u169A\u16A0-\u16EA\u16EE-\u16F0\u1700-\u170C\u170E-\u1714\u1720-\u1734\u1740-\u1753\u1760-\u176C\u176E-\u1770\u1772\u1773\u1780-\u17D3\u17D7\u17DC\u17DD\u17E0-\u17E9\u180B-\u180D\u1810-\u1819\u1820-\u1877\u1880-\u18AA\u18B0-\u18F5\u1900-\u191C\u1920-\u192B\u1930-\u193B\u1946-\u196D\u1970-\u1974\u1980-\u19AB\u19B0-\u19C9\u19D0-\u19D9\u1A00-\u1A1B\u1A20-\u1A5E\u1A60-\u1A7C\u1A7F-\u1A89\u1A90-\u1A99\u1AA7\u1B00-\u1B4B\u1B50-\u1B59\u1B6B-\u1B73\u1B80-\u1BF3\u1C00-\u1C37\u1C40-\u1C49\u1C4D-\u1C7D\u1CD0-\u1CD2\u1CD4-\u1CF6\u1D00-\u1DE6\u1DFC-\u1F15\u1F18-\u1F1D\u1F20-\u1F45\u1F48-\u1F4D\u1F50-\u1F57\u1F59\u1F5B\u1F5D\u1F5F-\u1F7D\u1F80-\u1FB4\u1FB6-\u1FBC\u1FBE\u1FC2-\u1FC4\u1FC6-\u1FCC\u1FD0-\u1FD3\u1FD6-\u1FDB\u1FE0-\u1FEC\u1FF2-\u1FF4\u1FF6-\u1FFC\u200C\u200D\u203F\u2040\u2054\u2071\u207F\u2090-\u209C\u20D0-\u20DC\u20E1\u20E5-\u20F0\u2102\u2107\u210A-\u2113\u2115\u2119-\u211D\u2124\u2126\u2128\u212A-\u212D\u212F-\u2139\u213C-\u213F\u2145-\u2149\u214E\u2160-\u2188\u2C00-\u2C2E\u2C30-\u2C5E\u2C60-\u2CE4\u2CEB-\u2CF3\u2D00-\u2D25\u2D27\u2D2D\u2D30-\u2D67\u2D6F\u2D7F-\u2D96\u2DA0-\u2DA6\u2DA8-\u2DAE\u2DB0-\u2DB6\u2DB8-\u2DBE\u2DC0-\u2DC6\u2DC8-\u2DCE\u2DD0-\u2DD6\u2DD8-\u2DDE\u2DE0-\u2DFF\u2E2F\u3005-\u3007\u3021-\u302F\u3031-\u3035\u3038-\u303C\u3041-\u3096\u3099\u309A\u309D-\u309F\u30A1-\u30FA\u30FC-\u30FF\u3105-\u312D\u3131-\u318E\u31A0-\u31BA\u31F0-\u31FF\u3400-\u4DB5\u4E00-\u9FCC\uA000-\uA48C\uA4D0-\uA4FD\uA500-\uA60C\uA610-\uA62B\uA640-\uA66F\uA674-\uA67D\uA67F-\uA697\uA69F-\uA6F1\uA717-\uA71F\uA722-\uA788\uA78B-\uA78E\uA790-\uA793\uA7A0-\uA7AA\uA7F8-\uA827\uA840-\uA873\uA880-\uA8C4\uA8D0-\uA8D9\uA8E0-\uA8F7\uA8FB\uA900-\uA92D\uA930-\uA953\uA960-\uA97C\uA980-\uA9C0\uA9CF-\uA9D9\uAA00-\uAA36\uAA40-\uAA4D\uAA50-\uAA59\uAA60-\uAA76\uAA7A\uAA7B\uAA80-\uAAC2\uAADB-\uAADD\uAAE0-\uAAEF\uAAF2-\uAAF6\uAB01-\uAB06\uAB09-\uAB0E\uAB11-\uAB16\uAB20-\uAB26\uAB28-\uAB2E\uABC0-\uABEA\uABEC\uABED\uABF0-\uABF9\uAC00-\uD7A3\uD7B0-\uD7C6\uD7CB-\uD7FB\uF900-\uFA6D\uFA70-\uFAD9\uFB00-\uFB06\uFB13-\uFB17\uFB1D-\uFB28\uFB2A-\uFB36\uFB38-\uFB3C\uFB3E\uFB40\uFB41\uFB43\uFB44\uFB46-\uFBB1\uFBD3-\uFD3D\uFD50-\uFD8F\uFD92-\uFDC7\uFDF0-\uFDFB\uFE00-\uFE0F\uFE20-\uFE26\uFE33\uFE34\uFE4D-\uFE4F\uFE70-\uFE74\uFE76-\uFEFC\uFF10-\uFF19\uFF21-\uFF3A\uFF3F\uFF41-\uFF5A\uFF66-\uFFBE\uFFC2-\uFFC7\uFFCA-\uFFCF\uFFD2-\uFFD7\uFFDA-\uFFDC]')
+    };
+
+    function isDecimalDigit(ch) {
+        return (ch >= 48 && ch <= 57);   // 0..9
+    }
+
+    function isHexDigit(ch) {
+        return isDecimalDigit(ch) || (97 <= ch && ch <= 102) || (65 <= ch && ch <= 70);
+    }
+
+    function isOctalDigit(ch) {
+        return (ch >= 48 && ch <= 55);   // 0..7
+    }
+
+    // 7.2 White Space
+
+    function isWhiteSpace(ch) {
+        return (ch === 0x20) || (ch === 0x09) || (ch === 0x0B) || (ch === 0x0C) || (ch === 0xA0) ||
+            (ch >= 0x1680 && [0x1680, 0x180E, 0x2000, 0x2001, 0x2002, 0x2003, 0x2004, 0x2005, 0x2006, 0x2007, 0x2008, 0x2009, 0x200A, 0x202F, 0x205F, 0x3000, 0xFEFF].indexOf(ch) >= 0);
+    }
+
+    // 7.3 Line Terminators
+
+    function isLineTerminator(ch) {
+        return (ch === 0x0A) || (ch === 0x0D) || (ch === 0x2028) || (ch === 0x2029);
+    }
+
+    // 7.6 Identifier Names and Identifiers
+
+    function isIdentifierStart(ch) {
+        return (ch === 36) || (ch === 95) ||  // $ (dollar) and _ (underscore)
+            (ch >= 65 && ch <= 90) ||         // A..Z
+            (ch >= 97 && ch <= 122) ||        // a..z
+            (ch === 92) ||                    // \ (backslash)
+            ((ch >= 0x80) && Regex.NonAsciiIdentifierStart.test(String.fromCharCode(ch)));
+    }
+
+    function isIdentifierPart(ch) {
+        return (ch === 36) || (ch === 95) ||  // $ (dollar) and _ (underscore)
+            (ch >= 65 && ch <= 90) ||         // A..Z
+            (ch >= 97 && ch <= 122) ||        // a..z
+            (ch >= 48 && ch <= 57) ||         // 0..9
+            (ch === 92) ||                    // \ (backslash)
+            ((ch >= 0x80) && Regex.NonAsciiIdentifierPart.test(String.fromCharCode(ch)));
+    }
+
+    module.exports = {
+        isDecimalDigit: isDecimalDigit,
+        isHexDigit: isHexDigit,
+        isOctalDigit: isOctalDigit,
+        isWhiteSpace: isWhiteSpace,
+        isLineTerminator: isLineTerminator,
+        isIdentifierStart: isIdentifierStart,
+        isIdentifierPart: isIdentifierPart
+    };
+}());
+/* vim: set sw=4 ts=4 et tw=80 : */
+
+},{}],3:[function(require,module,exports){
+/*
+  Copyright (C) 2013 Yusuke Suzuki <utatane.tea@gmail.com>
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+(function () {
+    'use strict';
+
+    var code = require('./code');
+
+    function isStrictModeReservedWordES6(id) {
+        switch (id) {
+        case 'implements':
+        case 'interface':
+        case 'package':
+        case 'private':
+        case 'protected':
+        case 'public':
+        case 'static':
+        case 'let':
+            return true;
+        default:
+            return false;
+        }
+    }
+
+    function isKeywordES5(id, strict) {
+        // yield should not be treated as keyword under non-strict mode.
+        if (!strict && id === 'yield') {
+            return false;
+        }
+        return isKeywordES6(id, strict);
+    }
+
+    function isKeywordES6(id, strict) {
+        if (strict && isStrictModeReservedWordES6(id)) {
+            return true;
+        }
+
+        switch (id.length) {
+        case 2:
+            return (id === 'if') || (id === 'in') || (id === 'do');
+        case 3:
+            return (id === 'var') || (id === 'for') || (id === 'new') || (id === 'try');
+        case 4:
+            return (id === 'this') || (id === 'else') || (id === 'case') ||
+                (id === 'void') || (id === 'with') || (id === 'enum');
+        case 5:
+            return (id === 'while') || (id === 'break') || (id === 'catch') ||
+                (id === 'throw') || (id === 'const') || (id === 'yield') ||
+                (id === 'class') || (id === 'super');
+        case 6:
+            return (id === 'return') || (id === 'typeof') || (id === 'delete') ||
+                (id === 'switch') || (id === 'export') || (id === 'import');
+        case 7:
+            return (id === 'default') || (id === 'finally') || (id === 'extends');
+        case 8:
+            return (id === 'function') || (id === 'continue') || (id === 'debugger');
+        case 10:
+            return (id === 'instanceof');
+        default:
+            return false;
+        }
+    }
+
+    function isRestrictedWord(id) {
+        return id === 'eval' || id === 'arguments';
+    }
+
+    function isIdentifierName(id) {
+        var i, iz, ch;
+
+        if (id.length === 0) {
+            return false;
+        }
+
+        ch = id.charCodeAt(0);
+        if (!code.isIdentifierStart(ch) || ch === 92) {  // \ (backslash)
+            return false;
+        }
+
+        for (i = 1, iz = id.length; i < iz; ++i) {
+            ch = id.charCodeAt(i);
+            if (!code.isIdentifierPart(ch) || ch === 92) {  // \ (backslash)
+                return false;
+            }
+        }
+        return true;
+    }
+
+    module.exports = {
+        isKeywordES5: isKeywordES5,
+        isKeywordES6: isKeywordES6,
+        isRestrictedWord: isRestrictedWord,
+        isIdentifierName: isIdentifierName
+    };
+}());
+/* vim: set sw=4 ts=4 et tw=80 : */
+
+},{"./code":2}],4:[function(require,module,exports){
+/*
+  Copyright (C) 2013 Yusuke Suzuki <utatane.tea@gmail.com>
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+
+(function () {
+    'use strict';
+
+    exports.code = require('./code');
+    exports.keyword = require('./keyword');
+}());
+/* vim: set sw=4 ts=4 et tw=80 : */
+
+},{"./code":2,"./keyword":3}],5:[function(require,module,exports){
+module.exports={
+  "name": "escodegen",
+  "description": "ECMAScript code generator",
+  "homepage": "http://github.com/Constellation/escodegen",
+  "main": "escodegen.js",
+  "bin": {
+    "esgenerate": "./bin/esgenerate.js",
+    "escodegen": "./bin/escodegen.js"
+  },
+  "version": "1.3.3",
+  "engines": {
+    "node": ">=0.10.0"
+  },
+  "maintainers": [
+    {
+      "name": "constellation",
+      "email": "utatane.tea@gmail.com"
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/Constellation/escodegen.git"
+  },
+  "dependencies": {
+    "esutils": "~1.0.0",
+    "estraverse": "~1.5.0",
+    "esprima": "~1.1.1",
+    "source-map": "~0.1.33"
+  },
+  "optionalDependencies": {
+    "source-map": "~0.1.33"
+  },
+  "devDependencies": {
+    "esprima-moz": "*",
+    "semver": "*",
+    "chai": "~1.7.2",
+    "gulp": "~3.5.0",
+    "gulp-mocha": "~0.4.1",
+    "gulp-eslint": "~0.1.2",
+    "jshint-stylish": "~0.1.5",
+    "gulp-jshint": "~1.4.0",
+    "commonjs-everywhere": "~0.9.6",
+    "bluebird": "~1.2.0",
+    "bower-registry-client": "~0.2.0"
+  },
+  "licenses": [
+    {
+      "type": "BSD",
+      "url": "http://github.com/Constellation/escodegen/raw/master/LICENSE.BSD"
+    }
+  ],
+  "scripts": {
+    "test": "gulp travis",
+    "unit-test": "gulp test",
+    "lint": "gulp lint",
+    "release": "node tools/release.js",
+    "build-min": "cjsify -ma path: tools/entry-point.js > escodegen.browser.min.js",
+    "build": "cjsify -a path: tools/entry-point.js > escodegen.browser.js"
+  },
+  "bugs": {
+    "url": "https://github.com/Constellation/escodegen/issues"
+  },
+  "_id": "escodegen@1.3.3",
+  "dist": {
+    "shasum": "f024016f5a88e046fd12005055e939802e6c5f23",
+    "tarball": "http://registry.npmjs.org/escodegen/-/escodegen-1.3.3.tgz"
+  },
+  "_from": "escodegen@1.3.3",
+  "_npmVersion": "1.4.3",
+  "_npmUser": {
+    "name": "constellation",
+    "email": "utatane.tea@gmail.com"
+  },
+  "directories": {},
+  "_shasum": "f024016f5a88e046fd12005055e939802e6c5f23",
+  "_resolved": "https://registry.npmjs.org/escodegen/-/escodegen-1.3.3.tgz",
+  "readme": "ERROR: No README data found!"
+}
+
+},{}],6:[function(require,module,exports){
 /*
   Copyright (C) 2012-2013 Yusuke Suzuki <utatane.tea@gmail.com>
   Copyright (C) 2012 Ariya Hidayat <ariya.hidayat@gmail.com>
@@ -3308,251 +3302,2364 @@ module.exports = {
 /* vim: set sw=4 ts=4 et tw=80 : */
 
 },{}],7:[function(require,module,exports){
-/*
-  Copyright (C) 2013 Yusuke Suzuki <utatane.tea@gmail.com>
-
-  Redistribution and use in source and binary forms, with or without
-  modification, are permitted provided that the following conditions are met:
-
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in the
-      documentation and/or other materials provided with the distribution.
-
-  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-  ARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
-  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
-  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
-
-(function () {
-    'use strict';
-
-    var Regex;
-
-    // See also tools/generate-unicode-regex.py.
-    Regex = {
-        NonAsciiIdentifierStart: new RegExp('[\xAA\xB5\xBA\xC0-\xD6\xD8-\xF6\xF8-\u02C1\u02C6-\u02D1\u02E0-\u02E4\u02EC\u02EE\u0370-\u0374\u0376\u0377\u037A-\u037D\u0386\u0388-\u038A\u038C\u038E-\u03A1\u03A3-\u03F5\u03F7-\u0481\u048A-\u0527\u0531-\u0556\u0559\u0561-\u0587\u05D0-\u05EA\u05F0-\u05F2\u0620-\u064A\u066E\u066F\u0671-\u06D3\u06D5\u06E5\u06E6\u06EE\u06EF\u06FA-\u06FC\u06FF\u0710\u0712-\u072F\u074D-\u07A5\u07B1\u07CA-\u07EA\u07F4\u07F5\u07FA\u0800-\u0815\u081A\u0824\u0828\u0840-\u0858\u08A0\u08A2-\u08AC\u0904-\u0939\u093D\u0950\u0958-\u0961\u0971-\u0977\u0979-\u097F\u0985-\u098C\u098F\u0990\u0993-\u09A8\u09AA-\u09B0\u09B2\u09B6-\u09B9\u09BD\u09CE\u09DC\u09DD\u09DF-\u09E1\u09F0\u09F1\u0A05-\u0A0A\u0A0F\u0A10\u0A13-\u0A28\u0A2A-\u0A30\u0A32\u0A33\u0A35\u0A36\u0A38\u0A39\u0A59-\u0A5C\u0A5E\u0A72-\u0A74\u0A85-\u0A8D\u0A8F-\u0A91\u0A93-\u0AA8\u0AAA-\u0AB0\u0AB2\u0AB3\u0AB5-\u0AB9\u0ABD\u0AD0\u0AE0\u0AE1\u0B05-\u0B0C\u0B0F\u0B10\u0B13-\u0B28\u0B2A-\u0B30\u0B32\u0B33\u0B35-\u0B39\u0B3D\u0B5C\u0B5D\u0B5F-\u0B61\u0B71\u0B83\u0B85-\u0B8A\u0B8E-\u0B90\u0B92-\u0B95\u0B99\u0B9A\u0B9C\u0B9E\u0B9F\u0BA3\u0BA4\u0BA8-\u0BAA\u0BAE-\u0BB9\u0BD0\u0C05-\u0C0C\u0C0E-\u0C10\u0C12-\u0C28\u0C2A-\u0C33\u0C35-\u0C39\u0C3D\u0C58\u0C59\u0C60\u0C61\u0C85-\u0C8C\u0C8E-\u0C90\u0C92-\u0CA8\u0CAA-\u0CB3\u0CB5-\u0CB9\u0CBD\u0CDE\u0CE0\u0CE1\u0CF1\u0CF2\u0D05-\u0D0C\u0D0E-\u0D10\u0D12-\u0D3A\u0D3D\u0D4E\u0D60\u0D61\u0D7A-\u0D7F\u0D85-\u0D96\u0D9A-\u0DB1\u0DB3-\u0DBB\u0DBD\u0DC0-\u0DC6\u0E01-\u0E30\u0E32\u0E33\u0E40-\u0E46\u0E81\u0E82\u0E84\u0E87\u0E88\u0E8A\u0E8D\u0E94-\u0E97\u0E99-\u0E9F\u0EA1-\u0EA3\u0EA5\u0EA7\u0EAA\u0EAB\u0EAD-\u0EB0\u0EB2\u0EB3\u0EBD\u0EC0-\u0EC4\u0EC6\u0EDC-\u0EDF\u0F00\u0F40-\u0F47\u0F49-\u0F6C\u0F88-\u0F8C\u1000-\u102A\u103F\u1050-\u1055\u105A-\u105D\u1061\u1065\u1066\u106E-\u1070\u1075-\u1081\u108E\u10A0-\u10C5\u10C7\u10CD\u10D0-\u10FA\u10FC-\u1248\u124A-\u124D\u1250-\u1256\u1258\u125A-\u125D\u1260-\u1288\u128A-\u128D\u1290-\u12B0\u12B2-\u12B5\u12B8-\u12BE\u12C0\u12C2-\u12C5\u12C8-\u12D6\u12D8-\u1310\u1312-\u1315\u1318-\u135A\u1380-\u138F\u13A0-\u13F4\u1401-\u166C\u166F-\u167F\u1681-\u169A\u16A0-\u16EA\u16EE-\u16F0\u1700-\u170C\u170E-\u1711\u1720-\u1731\u1740-\u1751\u1760-\u176C\u176E-\u1770\u1780-\u17B3\u17D7\u17DC\u1820-\u1877\u1880-\u18A8\u18AA\u18B0-\u18F5\u1900-\u191C\u1950-\u196D\u1970-\u1974\u1980-\u19AB\u19C1-\u19C7\u1A00-\u1A16\u1A20-\u1A54\u1AA7\u1B05-\u1B33\u1B45-\u1B4B\u1B83-\u1BA0\u1BAE\u1BAF\u1BBA-\u1BE5\u1C00-\u1C23\u1C4D-\u1C4F\u1C5A-\u1C7D\u1CE9-\u1CEC\u1CEE-\u1CF1\u1CF5\u1CF6\u1D00-\u1DBF\u1E00-\u1F15\u1F18-\u1F1D\u1F20-\u1F45\u1F48-\u1F4D\u1F50-\u1F57\u1F59\u1F5B\u1F5D\u1F5F-\u1F7D\u1F80-\u1FB4\u1FB6-\u1FBC\u1FBE\u1FC2-\u1FC4\u1FC6-\u1FCC\u1FD0-\u1FD3\u1FD6-\u1FDB\u1FE0-\u1FEC\u1FF2-\u1FF4\u1FF6-\u1FFC\u2071\u207F\u2090-\u209C\u2102\u2107\u210A-\u2113\u2115\u2119-\u211D\u2124\u2126\u2128\u212A-\u212D\u212F-\u2139\u213C-\u213F\u2145-\u2149\u214E\u2160-\u2188\u2C00-\u2C2E\u2C30-\u2C5E\u2C60-\u2CE4\u2CEB-\u2CEE\u2CF2\u2CF3\u2D00-\u2D25\u2D27\u2D2D\u2D30-\u2D67\u2D6F\u2D80-\u2D96\u2DA0-\u2DA6\u2DA8-\u2DAE\u2DB0-\u2DB6\u2DB8-\u2DBE\u2DC0-\u2DC6\u2DC8-\u2DCE\u2DD0-\u2DD6\u2DD8-\u2DDE\u2E2F\u3005-\u3007\u3021-\u3029\u3031-\u3035\u3038-\u303C\u3041-\u3096\u309D-\u309F\u30A1-\u30FA\u30FC-\u30FF\u3105-\u312D\u3131-\u318E\u31A0-\u31BA\u31F0-\u31FF\u3400-\u4DB5\u4E00-\u9FCC\uA000-\uA48C\uA4D0-\uA4FD\uA500-\uA60C\uA610-\uA61F\uA62A\uA62B\uA640-\uA66E\uA67F-\uA697\uA6A0-\uA6EF\uA717-\uA71F\uA722-\uA788\uA78B-\uA78E\uA790-\uA793\uA7A0-\uA7AA\uA7F8-\uA801\uA803-\uA805\uA807-\uA80A\uA80C-\uA822\uA840-\uA873\uA882-\uA8B3\uA8F2-\uA8F7\uA8FB\uA90A-\uA925\uA930-\uA946\uA960-\uA97C\uA984-\uA9B2\uA9CF\uAA00-\uAA28\uAA40-\uAA42\uAA44-\uAA4B\uAA60-\uAA76\uAA7A\uAA80-\uAAAF\uAAB1\uAAB5\uAAB6\uAAB9-\uAABD\uAAC0\uAAC2\uAADB-\uAADD\uAAE0-\uAAEA\uAAF2-\uAAF4\uAB01-\uAB06\uAB09-\uAB0E\uAB11-\uAB16\uAB20-\uAB26\uAB28-\uAB2E\uABC0-\uABE2\uAC00-\uD7A3\uD7B0-\uD7C6\uD7CB-\uD7FB\uF900-\uFA6D\uFA70-\uFAD9\uFB00-\uFB06\uFB13-\uFB17\uFB1D\uFB1F-\uFB28\uFB2A-\uFB36\uFB38-\uFB3C\uFB3E\uFB40\uFB41\uFB43\uFB44\uFB46-\uFBB1\uFBD3-\uFD3D\uFD50-\uFD8F\uFD92-\uFDC7\uFDF0-\uFDFB\uFE70-\uFE74\uFE76-\uFEFC\uFF21-\uFF3A\uFF41-\uFF5A\uFF66-\uFFBE\uFFC2-\uFFC7\uFFCA-\uFFCF\uFFD2-\uFFD7\uFFDA-\uFFDC]'),
-        NonAsciiIdentifierPart: new RegExp('[\xAA\xB5\xBA\xC0-\xD6\xD8-\xF6\xF8-\u02C1\u02C6-\u02D1\u02E0-\u02E4\u02EC\u02EE\u0300-\u0374\u0376\u0377\u037A-\u037D\u0386\u0388-\u038A\u038C\u038E-\u03A1\u03A3-\u03F5\u03F7-\u0481\u0483-\u0487\u048A-\u0527\u0531-\u0556\u0559\u0561-\u0587\u0591-\u05BD\u05BF\u05C1\u05C2\u05C4\u05C5\u05C7\u05D0-\u05EA\u05F0-\u05F2\u0610-\u061A\u0620-\u0669\u066E-\u06D3\u06D5-\u06DC\u06DF-\u06E8\u06EA-\u06FC\u06FF\u0710-\u074A\u074D-\u07B1\u07C0-\u07F5\u07FA\u0800-\u082D\u0840-\u085B\u08A0\u08A2-\u08AC\u08E4-\u08FE\u0900-\u0963\u0966-\u096F\u0971-\u0977\u0979-\u097F\u0981-\u0983\u0985-\u098C\u098F\u0990\u0993-\u09A8\u09AA-\u09B0\u09B2\u09B6-\u09B9\u09BC-\u09C4\u09C7\u09C8\u09CB-\u09CE\u09D7\u09DC\u09DD\u09DF-\u09E3\u09E6-\u09F1\u0A01-\u0A03\u0A05-\u0A0A\u0A0F\u0A10\u0A13-\u0A28\u0A2A-\u0A30\u0A32\u0A33\u0A35\u0A36\u0A38\u0A39\u0A3C\u0A3E-\u0A42\u0A47\u0A48\u0A4B-\u0A4D\u0A51\u0A59-\u0A5C\u0A5E\u0A66-\u0A75\u0A81-\u0A83\u0A85-\u0A8D\u0A8F-\u0A91\u0A93-\u0AA8\u0AAA-\u0AB0\u0AB2\u0AB3\u0AB5-\u0AB9\u0ABC-\u0AC5\u0AC7-\u0AC9\u0ACB-\u0ACD\u0AD0\u0AE0-\u0AE3\u0AE6-\u0AEF\u0B01-\u0B03\u0B05-\u0B0C\u0B0F\u0B10\u0B13-\u0B28\u0B2A-\u0B30\u0B32\u0B33\u0B35-\u0B39\u0B3C-\u0B44\u0B47\u0B48\u0B4B-\u0B4D\u0B56\u0B57\u0B5C\u0B5D\u0B5F-\u0B63\u0B66-\u0B6F\u0B71\u0B82\u0B83\u0B85-\u0B8A\u0B8E-\u0B90\u0B92-\u0B95\u0B99\u0B9A\u0B9C\u0B9E\u0B9F\u0BA3\u0BA4\u0BA8-\u0BAA\u0BAE-\u0BB9\u0BBE-\u0BC2\u0BC6-\u0BC8\u0BCA-\u0BCD\u0BD0\u0BD7\u0BE6-\u0BEF\u0C01-\u0C03\u0C05-\u0C0C\u0C0E-\u0C10\u0C12-\u0C28\u0C2A-\u0C33\u0C35-\u0C39\u0C3D-\u0C44\u0C46-\u0C48\u0C4A-\u0C4D\u0C55\u0C56\u0C58\u0C59\u0C60-\u0C63\u0C66-\u0C6F\u0C82\u0C83\u0C85-\u0C8C\u0C8E-\u0C90\u0C92-\u0CA8\u0CAA-\u0CB3\u0CB5-\u0CB9\u0CBC-\u0CC4\u0CC6-\u0CC8\u0CCA-\u0CCD\u0CD5\u0CD6\u0CDE\u0CE0-\u0CE3\u0CE6-\u0CEF\u0CF1\u0CF2\u0D02\u0D03\u0D05-\u0D0C\u0D0E-\u0D10\u0D12-\u0D3A\u0D3D-\u0D44\u0D46-\u0D48\u0D4A-\u0D4E\u0D57\u0D60-\u0D63\u0D66-\u0D6F\u0D7A-\u0D7F\u0D82\u0D83\u0D85-\u0D96\u0D9A-\u0DB1\u0DB3-\u0DBB\u0DBD\u0DC0-\u0DC6\u0DCA\u0DCF-\u0DD4\u0DD6\u0DD8-\u0DDF\u0DF2\u0DF3\u0E01-\u0E3A\u0E40-\u0E4E\u0E50-\u0E59\u0E81\u0E82\u0E84\u0E87\u0E88\u0E8A\u0E8D\u0E94-\u0E97\u0E99-\u0E9F\u0EA1-\u0EA3\u0EA5\u0EA7\u0EAA\u0EAB\u0EAD-\u0EB9\u0EBB-\u0EBD\u0EC0-\u0EC4\u0EC6\u0EC8-\u0ECD\u0ED0-\u0ED9\u0EDC-\u0EDF\u0F00\u0F18\u0F19\u0F20-\u0F29\u0F35\u0F37\u0F39\u0F3E-\u0F47\u0F49-\u0F6C\u0F71-\u0F84\u0F86-\u0F97\u0F99-\u0FBC\u0FC6\u1000-\u1049\u1050-\u109D\u10A0-\u10C5\u10C7\u10CD\u10D0-\u10FA\u10FC-\u1248\u124A-\u124D\u1250-\u1256\u1258\u125A-\u125D\u1260-\u1288\u128A-\u128D\u1290-\u12B0\u12B2-\u12B5\u12B8-\u12BE\u12C0\u12C2-\u12C5\u12C8-\u12D6\u12D8-\u1310\u1312-\u1315\u1318-\u135A\u135D-\u135F\u1380-\u138F\u13A0-\u13F4\u1401-\u166C\u166F-\u167F\u1681-\u169A\u16A0-\u16EA\u16EE-\u16F0\u1700-\u170C\u170E-\u1714\u1720-\u1734\u1740-\u1753\u1760-\u176C\u176E-\u1770\u1772\u1773\u1780-\u17D3\u17D7\u17DC\u17DD\u17E0-\u17E9\u180B-\u180D\u1810-\u1819\u1820-\u1877\u1880-\u18AA\u18B0-\u18F5\u1900-\u191C\u1920-\u192B\u1930-\u193B\u1946-\u196D\u1970-\u1974\u1980-\u19AB\u19B0-\u19C9\u19D0-\u19D9\u1A00-\u1A1B\u1A20-\u1A5E\u1A60-\u1A7C\u1A7F-\u1A89\u1A90-\u1A99\u1AA7\u1B00-\u1B4B\u1B50-\u1B59\u1B6B-\u1B73\u1B80-\u1BF3\u1C00-\u1C37\u1C40-\u1C49\u1C4D-\u1C7D\u1CD0-\u1CD2\u1CD4-\u1CF6\u1D00-\u1DE6\u1DFC-\u1F15\u1F18-\u1F1D\u1F20-\u1F45\u1F48-\u1F4D\u1F50-\u1F57\u1F59\u1F5B\u1F5D\u1F5F-\u1F7D\u1F80-\u1FB4\u1FB6-\u1FBC\u1FBE\u1FC2-\u1FC4\u1FC6-\u1FCC\u1FD0-\u1FD3\u1FD6-\u1FDB\u1FE0-\u1FEC\u1FF2-\u1FF4\u1FF6-\u1FFC\u200C\u200D\u203F\u2040\u2054\u2071\u207F\u2090-\u209C\u20D0-\u20DC\u20E1\u20E5-\u20F0\u2102\u2107\u210A-\u2113\u2115\u2119-\u211D\u2124\u2126\u2128\u212A-\u212D\u212F-\u2139\u213C-\u213F\u2145-\u2149\u214E\u2160-\u2188\u2C00-\u2C2E\u2C30-\u2C5E\u2C60-\u2CE4\u2CEB-\u2CF3\u2D00-\u2D25\u2D27\u2D2D\u2D30-\u2D67\u2D6F\u2D7F-\u2D96\u2DA0-\u2DA6\u2DA8-\u2DAE\u2DB0-\u2DB6\u2DB8-\u2DBE\u2DC0-\u2DC6\u2DC8-\u2DCE\u2DD0-\u2DD6\u2DD8-\u2DDE\u2DE0-\u2DFF\u2E2F\u3005-\u3007\u3021-\u302F\u3031-\u3035\u3038-\u303C\u3041-\u3096\u3099\u309A\u309D-\u309F\u30A1-\u30FA\u30FC-\u30FF\u3105-\u312D\u3131-\u318E\u31A0-\u31BA\u31F0-\u31FF\u3400-\u4DB5\u4E00-\u9FCC\uA000-\uA48C\uA4D0-\uA4FD\uA500-\uA60C\uA610-\uA62B\uA640-\uA66F\uA674-\uA67D\uA67F-\uA697\uA69F-\uA6F1\uA717-\uA71F\uA722-\uA788\uA78B-\uA78E\uA790-\uA793\uA7A0-\uA7AA\uA7F8-\uA827\uA840-\uA873\uA880-\uA8C4\uA8D0-\uA8D9\uA8E0-\uA8F7\uA8FB\uA900-\uA92D\uA930-\uA953\uA960-\uA97C\uA980-\uA9C0\uA9CF-\uA9D9\uAA00-\uAA36\uAA40-\uAA4D\uAA50-\uAA59\uAA60-\uAA76\uAA7A\uAA7B\uAA80-\uAAC2\uAADB-\uAADD\uAAE0-\uAAEF\uAAF2-\uAAF6\uAB01-\uAB06\uAB09-\uAB0E\uAB11-\uAB16\uAB20-\uAB26\uAB28-\uAB2E\uABC0-\uABEA\uABEC\uABED\uABF0-\uABF9\uAC00-\uD7A3\uD7B0-\uD7C6\uD7CB-\uD7FB\uF900-\uFA6D\uFA70-\uFAD9\uFB00-\uFB06\uFB13-\uFB17\uFB1D-\uFB28\uFB2A-\uFB36\uFB38-\uFB3C\uFB3E\uFB40\uFB41\uFB43\uFB44\uFB46-\uFBB1\uFBD3-\uFD3D\uFD50-\uFD8F\uFD92-\uFDC7\uFDF0-\uFDFB\uFE00-\uFE0F\uFE20-\uFE26\uFE33\uFE34\uFE4D-\uFE4F\uFE70-\uFE74\uFE76-\uFEFC\uFF10-\uFF19\uFF21-\uFF3A\uFF3F\uFF41-\uFF5A\uFF66-\uFFBE\uFFC2-\uFFC7\uFFCA-\uFFCF\uFFD2-\uFFD7\uFFDA-\uFFDC]')
-    };
-
-    function isDecimalDigit(ch) {
-        return (ch >= 48 && ch <= 57);   // 0..9
-    }
-
-    function isHexDigit(ch) {
-        return isDecimalDigit(ch) || (97 <= ch && ch <= 102) || (65 <= ch && ch <= 70);
-    }
-
-    function isOctalDigit(ch) {
-        return (ch >= 48 && ch <= 55);   // 0..7
-    }
-
-    // 7.2 White Space
-
-    function isWhiteSpace(ch) {
-        return (ch === 0x20) || (ch === 0x09) || (ch === 0x0B) || (ch === 0x0C) || (ch === 0xA0) ||
-            (ch >= 0x1680 && [0x1680, 0x180E, 0x2000, 0x2001, 0x2002, 0x2003, 0x2004, 0x2005, 0x2006, 0x2007, 0x2008, 0x2009, 0x200A, 0x202F, 0x205F, 0x3000, 0xFEFF].indexOf(ch) >= 0);
-    }
-
-    // 7.3 Line Terminators
-
-    function isLineTerminator(ch) {
-        return (ch === 0x0A) || (ch === 0x0D) || (ch === 0x2028) || (ch === 0x2029);
-    }
-
-    // 7.6 Identifier Names and Identifiers
-
-    function isIdentifierStart(ch) {
-        return (ch === 36) || (ch === 95) ||  // $ (dollar) and _ (underscore)
-            (ch >= 65 && ch <= 90) ||         // A..Z
-            (ch >= 97 && ch <= 122) ||        // a..z
-            (ch === 92) ||                    // \ (backslash)
-            ((ch >= 0x80) && Regex.NonAsciiIdentifierStart.test(String.fromCharCode(ch)));
-    }
-
-    function isIdentifierPart(ch) {
-        return (ch === 36) || (ch === 95) ||  // $ (dollar) and _ (underscore)
-            (ch >= 65 && ch <= 90) ||         // A..Z
-            (ch >= 97 && ch <= 122) ||        // a..z
-            (ch >= 48 && ch <= 57) ||         // 0..9
-            (ch === 92) ||                    // \ (backslash)
-            ((ch >= 0x80) && Regex.NonAsciiIdentifierPart.test(String.fromCharCode(ch)));
-    }
-
-    module.exports = {
-        isDecimalDigit: isDecimalDigit,
-        isHexDigit: isHexDigit,
-        isOctalDigit: isOctalDigit,
-        isWhiteSpace: isWhiteSpace,
-        isLineTerminator: isLineTerminator,
-        isIdentifierStart: isIdentifierStart,
-        isIdentifierPart: isIdentifierPart
-    };
-}());
-/* vim: set sw=4 ts=4 et tw=80 : */
 
 },{}],8:[function(require,module,exports){
+(function (process){
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+// resolves . and .. elements in a path array with directory names there
+// must be no slashes, empty elements, or device names (c:\) in the array
+// (so also no leading and trailing slashes - it does not distinguish
+// relative and absolute paths)
+function normalizeArray(parts, allowAboveRoot) {
+  // if the path tries to go above the root, `up` ends up > 0
+  var up = 0;
+  for (var i = parts.length - 1; i >= 0; i--) {
+    var last = parts[i];
+    if (last === '.') {
+      parts.splice(i, 1);
+    } else if (last === '..') {
+      parts.splice(i, 1);
+      up++;
+    } else if (up) {
+      parts.splice(i, 1);
+      up--;
+    }
+  }
+
+  // if the path is allowed to go above the root, restore leading ..s
+  if (allowAboveRoot) {
+    for (; up--; up) {
+      parts.unshift('..');
+    }
+  }
+
+  return parts;
+}
+
+// Split a filename into [root, dir, basename, ext], unix version
+// 'root' is just a slash, or nothing.
+var splitPathRe =
+    /^(\/?|)([\s\S]*?)((?:\.{1,2}|[^\/]+?|)(\.[^.\/]*|))(?:[\/]*)$/;
+var splitPath = function(filename) {
+  return splitPathRe.exec(filename).slice(1);
+};
+
+// path.resolve([from ...], to)
+// posix version
+exports.resolve = function() {
+  var resolvedPath = '',
+      resolvedAbsolute = false;
+
+  for (var i = arguments.length - 1; i >= -1 && !resolvedAbsolute; i--) {
+    var path = (i >= 0) ? arguments[i] : process.cwd();
+
+    // Skip empty and invalid entries
+    if (typeof path !== 'string') {
+      throw new TypeError('Arguments to path.resolve must be strings');
+    } else if (!path) {
+      continue;
+    }
+
+    resolvedPath = path + '/' + resolvedPath;
+    resolvedAbsolute = path.charAt(0) === '/';
+  }
+
+  // At this point the path should be resolved to a full absolute path, but
+  // handle relative paths to be safe (might happen when process.cwd() fails)
+
+  // Normalize the path
+  resolvedPath = normalizeArray(filter(resolvedPath.split('/'), function(p) {
+    return !!p;
+  }), !resolvedAbsolute).join('/');
+
+  return ((resolvedAbsolute ? '/' : '') + resolvedPath) || '.';
+};
+
+// path.normalize(path)
+// posix version
+exports.normalize = function(path) {
+  var isAbsolute = exports.isAbsolute(path),
+      trailingSlash = substr(path, -1) === '/';
+
+  // Normalize the path
+  path = normalizeArray(filter(path.split('/'), function(p) {
+    return !!p;
+  }), !isAbsolute).join('/');
+
+  if (!path && !isAbsolute) {
+    path = '.';
+  }
+  if (path && trailingSlash) {
+    path += '/';
+  }
+
+  return (isAbsolute ? '/' : '') + path;
+};
+
+// posix version
+exports.isAbsolute = function(path) {
+  return path.charAt(0) === '/';
+};
+
+// posix version
+exports.join = function() {
+  var paths = Array.prototype.slice.call(arguments, 0);
+  return exports.normalize(filter(paths, function(p, index) {
+    if (typeof p !== 'string') {
+      throw new TypeError('Arguments to path.join must be strings');
+    }
+    return p;
+  }).join('/'));
+};
+
+
+// path.relative(from, to)
+// posix version
+exports.relative = function(from, to) {
+  from = exports.resolve(from).substr(1);
+  to = exports.resolve(to).substr(1);
+
+  function trim(arr) {
+    var start = 0;
+    for (; start < arr.length; start++) {
+      if (arr[start] !== '') break;
+    }
+
+    var end = arr.length - 1;
+    for (; end >= 0; end--) {
+      if (arr[end] !== '') break;
+    }
+
+    if (start > end) return [];
+    return arr.slice(start, end - start + 1);
+  }
+
+  var fromParts = trim(from.split('/'));
+  var toParts = trim(to.split('/'));
+
+  var length = Math.min(fromParts.length, toParts.length);
+  var samePartsLength = length;
+  for (var i = 0; i < length; i++) {
+    if (fromParts[i] !== toParts[i]) {
+      samePartsLength = i;
+      break;
+    }
+  }
+
+  var outputParts = [];
+  for (var i = samePartsLength; i < fromParts.length; i++) {
+    outputParts.push('..');
+  }
+
+  outputParts = outputParts.concat(toParts.slice(samePartsLength));
+
+  return outputParts.join('/');
+};
+
+exports.sep = '/';
+exports.delimiter = ':';
+
+exports.dirname = function(path) {
+  var result = splitPath(path),
+      root = result[0],
+      dir = result[1];
+
+  if (!root && !dir) {
+    // No dirname whatsoever
+    return '.';
+  }
+
+  if (dir) {
+    // It has a dirname, strip trailing slash
+    dir = dir.substr(0, dir.length - 1);
+  }
+
+  return root + dir;
+};
+
+
+exports.basename = function(path, ext) {
+  var f = splitPath(path)[2];
+  // TODO: make this comparison case-insensitive on windows?
+  if (ext && f.substr(-1 * ext.length) === ext) {
+    f = f.substr(0, f.length - ext.length);
+  }
+  return f;
+};
+
+
+exports.extname = function(path) {
+  return splitPath(path)[3];
+};
+
+function filter (xs, f) {
+    if (xs.filter) return xs.filter(f);
+    var res = [];
+    for (var i = 0; i < xs.length; i++) {
+        if (f(xs[i], i, xs)) res.push(xs[i]);
+    }
+    return res;
+}
+
+// String.prototype.substr - negative index don't work in IE8
+var substr = 'ab'.substr(-1) === 'b'
+    ? function (str, start, len) { return str.substr(start, len) }
+    : function (str, start, len) {
+        if (start < 0) start = str.length + start;
+        return str.substr(start, len);
+    }
+;
+
+}).call(this,require("JkpR2F"))
+},{"JkpR2F":9}],9:[function(require,module,exports){
+// shim for using process in browser
+
+var process = module.exports = {};
+
+process.nextTick = (function () {
+    var canSetImmediate = typeof window !== 'undefined'
+    && window.setImmediate;
+    var canPost = typeof window !== 'undefined'
+    && window.postMessage && window.addEventListener
+    ;
+
+    if (canSetImmediate) {
+        return function (f) { return window.setImmediate(f) };
+    }
+
+    if (canPost) {
+        var queue = [];
+        window.addEventListener('message', function (ev) {
+            var source = ev.source;
+            if ((source === window || source === null) && ev.data === 'process-tick') {
+                ev.stopPropagation();
+                if (queue.length > 0) {
+                    var fn = queue.shift();
+                    fn();
+                }
+            }
+        }, true);
+
+        return function nextTick(fn) {
+            queue.push(fn);
+            window.postMessage('process-tick', '*');
+        };
+    }
+
+    return function nextTick(fn) {
+        setTimeout(fn, 0);
+    };
+})();
+
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+
+function noop() {}
+
+process.on = noop;
+process.addListener = noop;
+process.once = noop;
+process.off = noop;
+process.removeListener = noop;
+process.removeAllListeners = noop;
+process.emit = noop;
+
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
+}
+
+// TODO(shtylman)
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
+};
+
+},{}],10:[function(require,module,exports){
+
+var compile = require('./src/compile');
+var lib = require('./src/lib');
+var _io = lib;
+
+function compileCode(input, options) {
+	options = options || {};
+	compile.setOptions(options);
+	var result = compile.compile(input);
+	return result.trim();
+}
+
+function parse(input, options) {
+	options = options || {};
+	compile.setOptions(options);
+	return compile.parse(input);
+}
+
+function evaluate (code) {
+	if (code === '') return null;
+	var context = {};
+	eval(compileCode(code, {
+		wrapWithFunction: true,
+		functionName: 'context.run'
+	}));
+	return context.run();
+}
+
+module.exports = {
+	compile: compileCode,
+	parse: parse,
+	lib: lib,
+	eval: evaluate,
+};
+
+},{"./src/compile":12,"./src/lib":13}],11:[function(require,module,exports){
+
+// var Type = Object.freeze({
+// 	"String": {},
+// 	"Number": {},
+// 	"Identifier": {},
+// });
+
+// A chain is a left-associative application of zero or more messages
+function Chain (messages) {
+	// Preconditions
+	assertArray(messages, assertMessage);
+
+	this.type = 'chain'; // TODO remove eventually
+	this.value = messages;
+}
+Chain.prototype.getMessages = function () {
+	return this.value;
+};
+Chain.prototype.setMessages = function (messages) {
+	this.value = messages;
+};
+
+// A message is a symbol plus arguments
+
+function Message (symbol) {
+	// Preconditions
+	assertSymbol(symbol);
+	// TODO arguments are either messages or chains?
+
+	this.type = 'message'; // TODO remove eventually
+	this.value = symbol;
+	this.target = 'Lobby';
+}
+Message.prototype.getSymbolValue = function () {
+	return this.value.getLiteralValue();
+};
+Message.prototype.getSymbolType = function () {
+	return this.value.getLiteralType();
+};
+Message.prototype.getArguments = function () {
+	return this.value.getArguments();
+};
+Message.prototype.getTarget = function () {
+	return this.target;
+};
+
+// A symbol is anything that may serve as a literal value:
+// a number, string, or idenfitier
+
+function Symbol (literal, arguments) {
+	// Preconditions
+	assertLiteral(literal);
+	assertArray(arguments);
+	// TODO arguments are either messages or chains?
+
+	this.type = 'symbol'; // TODO remove eventually
+	this.value = literal;
+	this.arguments = arguments;
+}
+Symbol.prototype.getLiteralType = function () {
+	return this.value.getType();
+}
+Symbol.prototype.getLiteralValue = function () {
+	return this.value.getValue();
+}
+Symbol.prototype.getArguments = function () {
+	return this.arguments;
+}
+
+function Literal (type, value) {
+	console.assert(type === 'string' || type === 'number' || type === 'identifier')
+	this.type = type;
+	this.value = value;
+}
+Literal.prototype.getType = function () {
+	return this.type;
+};
+Literal.prototype.getValue = function () {
+	return this.value;
+};
+
+function isChain (node) {
+	return node instanceof Chain;
+}
+function isMessage (node) {
+	return node instanceof Message;
+}
+function isSymbol (node) {
+	return node instanceof Symbol;
+}
+function isLiteral (node) {
+	return node instanceof Literal;
+}
+
+function assertChain (node) {
+	console.assert(isChain(node), node + ' is not a Chain');
+}
+function assertMessage (node) {
+	console.assert(isMessage(node), node + ' is not a Message');
+}
+function assertSymbol (node) {
+	console.assert(isSymbol(node), node + ' is not a Symbol');
+}
+function assertLiteral (node) {
+	console.assert(isLiteral(node), node + ' is not a Literal');
+}
+function assertArray (node, pred) {
+	console.assert(Array.isArray(node), node + ' is not a array');
+	if (pred) {
+		node.forEach(pred);
+	}
+}
+
+module.exports = {
+	Chain: Chain,
+	Message: Message,
+	Symbol: Symbol,
+	Literal: Literal,
+	
+	isChain: isChain,
+	isMessage: isMessage,
+	isSymbol: isSymbol,
+	isLiteral: isLiteral,
+
+	assertChain: assertChain,
+	assertMessage: assertMessage,
+	assertSymbol: assertSymbol,
+	assertLiteral: assertLiteral,
+	assertArray: assertArray,
+};
+
+},{}],12:[function(require,module,exports){
+
+var escodegen = require('escodegen');
+
+var parser = require('./parser');
+var pratt = require('./pratt');
+
+var options = {};
+
+function setOptions (userOptions) {
+	options.wrapWithFunction = userOptions.wrapWithFunction || false;
+	options.useProxy = userOptions.useProxy || false;
+	options.functionName = userOptions.functionName || 'io';
+	options.runtimeLib = userOptions.runtimeLib || '_io';
+	options.self = userOptions.self || 'self';
+}
+
+function applyMacros (ast) {
+
+	// An AST is a list of chains
+	// A chain is a list of messages
+	// A message can have arguments which are messages or chains
+
+	assignmentOperatorMacro(ast);
+	infixOperatorMacro(ast);
+
+	return ast;
+}
+
+function findChainsInAST (nodelist) {
+
+	// Performs a post-order traversal of an AST and returns
+	// a list of references to all chain objects
+
+	var allChains = [];
+	function helper (nodelist) {
+		nodelist.forEach(function (node) {
+			if (node.type === 'chain') {
+				node.value.forEach(function (message) {
+					message.value.arguments.forEach(function (arg) {
+						helper(arg);
+					});
+				});
+				allChains.push(node);
+			}
+		});
+	}
+	helper(nodelist);
+	return allChains;
+}
+
+function assignmentOperatorMacro (ast) {
+
+	// Rewrites messages containing assignment operators
+	// with setSlot messages
+
+	var chains = findChainsInAST(ast);
+
+	while (chains.length > 0) {
+		var chain = chains.pop();
+
+		for (var i=0; i<chain.value.length; i++) {
+			var message = chain.value[i];
+
+			// Find an assignment operator
+			if ((message.value.value.value !== ":=") && (message.value.value.value !== "=")) 
+			{
+				continue;
+			}
+			// Pick the previous two elements in the chain.
+			// They are the target and the slot on the target that
+			// is being assigned:
+			// a b := c
+
+			var target, slotName;
+
+			if (i === 0) {
+				// := b
+				throw new Error("SyntaxError: no target for assignment operator");
+			} else if (i === 1) {
+				// a := b
+
+				// target defaults to Lobby
+				// TODO: even in method bodies! this has to be
+				// done during compilation when scope is known
+
+				target = {
+					type: 'message',
+					value: {
+						type: 'symbol',
+						value: {
+							type: 'identifier',
+							value: 'Lobby'
+						},
+						arguments: []
+					}
+				};
+				slotName = chain.value[0];
+			} else {
+				// a b := c
+				target = chain.value[i-2];
+				slotName = chain.value[i-1];
+			}
+
+			// rewrite the chain
+
+			// var current = chain.value[i];
+			// var prevtwo = chain.value.slice(Math.max(i-2,0), i);
+			var beforethose = chain.value.slice(0, Math.max(i-2, 0));
+			var after = chain.value.slice(i+1, chain.value.length);
+
+			var rhs = {type: 'chain', value: after};
+			var new_message = {
+				type: 'chain',
+				value: [{
+					type: 'message',
+					value: {
+						type: 'symbol',
+						value: {
+							type: 'string',
+							value: slotName.value.value.value
+						},
+						arguments: []
+					}
+				}]
+			};
+
+			if (message.value.value.value == ":=")
+			{
+				var setSlot = {
+					type: 'message',
+					value: {
+						type: 'symbol',
+						value: {
+							type: 'identifier',
+							value: 'setSlot'
+						},
+						arguments: [[new_message], [rhs]]
+					}
+				};
+
+				chain.value = beforethose.concat([target, setSlot]);
+			}
+			if (message.value.value.value == "=")
+			{
+				var updateSlot = {
+					type: 'message',
+					value: {
+						type: 'symbol',
+						value: {
+							type: 'identifier',
+							value: 'updateSlot'
+						},
+						arguments: [[new_message], [rhs]]
+					}
+				};
+
+				chain.value = beforethose.concat([target, updateSlot]);
+			}
+			// Recurse on the newly created chain in case it contains
+			// more operators
+			chains.push(rhs);
+
+			break;
+		
+		}
+	}
+}
+
+function infixOperatorMacro (ast) {
+
+	// Rearranges all chains containing operators into properly
+	// nested messages based on precedence
+
+	var chains = findChainsInAST(ast).filter(function (chain) {
+
+		// Skip chains that cannot possibly contain operators
+		if (chain.value.length <= 1) return false;
+
+		// A chain will be processed if it contains at least one operator
+		// message with no arguments (meaning it has not been processed yet)
+		var hasAnOperator = chain.value.filter(function (message) {
+			return pratt.isOperator(message.value.value.value) && message.value.arguments.length === 0;
+		}).length > 0;
+
+		return hasAnOperator;
+	});
+
+	chains.forEach(function (chain) {
+		chain.value = pratt.parse(chain).value;
+	});
+}
+
+function parse (code) {
+
+	var ast = parser.parse(code);
+
+	ast = applyMacros(ast);
+
+	var generated = [];
+	ast.forEach(function (chain) {
+
+		var proxy = {
+			"type": "CallExpression",
+			"callee": {
+				"type": "MemberExpression",
+				"computed": false,
+				"object": astIdentifier("Proxy"),
+				"property": {
+					"type": "Identifier",
+					"name": "set"
+				}
+			},
+			"arguments": [{
+				"type": "Identifier",
+				"name": options.self
+			}]
+		};
+
+		chain = compile(chain,
+			options.useProxy ? proxy : astIdentifier('Lobby'),
+			options.useProxy ? proxy : astIdentifier('Lobby'));
+		generated.push(chain);
+	});
+	
+	generated = {
+		type: "Program",
+		body: generated.map(function (expr) {
+			return {
+				type: "ExpressionStatement",
+				expression: expr
+			};
+		})
+	};
+
+	if (options.wrapWithFunction) {
+		generated.body[generated.body.length-1] = implicitReturnStatement(generated.body[generated.body.length-1]);
+		generated = wrapInFunction(generated);
+	}
+
+	return generated;
+}
+
+function parseAndEmit (code) {
+	return escodegen.generate(parse(code));
+}
+
+function wrapInFunction (program) {
+
+	var bodyBlockStatement = {
+		"type": "BlockStatement",
+		"body": [{
+			"type": "VariableDeclaration",
+			"declarations": [{
+				"type": "VariableDeclarator",
+				"id": {
+					"type": "Identifier",
+					"name": options.self
+				},
+				"init": {
+					"type": "LogicalExpression",
+					"operator": "||",
+					"left": {
+						"type": "ThisExpression"
+					},
+					"right": {
+						"type": "ObjectExpression",
+						"properties": []
+					}
+				}
+			}],
+			"kind": "var"
+		}].concat(program.body)
+	};
+
+	var propertyAccess = options.functionName.indexOf('.') !== -1;
+
+	if (propertyAccess) {
+		return {
+	        "type": "ExpressionStatement",
+	        "expression": {
+	            "type": "AssignmentExpression",
+	            "operator": "=",
+	            "left": {
+	                "type": "Identifier",
+	                "name": options.functionName
+	            },
+	            "right": {
+	                "type": "FunctionExpression",
+	                "id": null,
+	                "params": [],
+	                "body": bodyBlockStatement
+	            }
+	        }
+	    };
+	}
+	else {
+		return {
+			type: "Program",
+			body: [{
+				"type": "FunctionDeclaration",
+				"id": {
+					"type": "Identifier",
+					"name": options.functionName
+				},
+				"params": [],
+				"body": bodyBlockStatement
+			}]
+		};
+	}
+}
+
+function implicitReturnStatement(expressionStatement) {
+
+	function unwrap(expr) {
+		return {
+			type: "CallExpression",
+			callee: {
+				type: "MemberExpression",
+				computed: false,
+				object: {
+					type: "Identifier",
+					name: options.runtimeLib
+				},
+				property: {
+					type: "Identifier",
+					name: "unwrapIoValue"
+				}
+			},
+			arguments: [expr]
+		};
+	}
+
+	// var program = ast;
+	// var wrapperFunction = program.body[0];
+	// var blockStatement = wrapperFunction.body;
+	// var lastExpressionStatement = blockStatement.body[blockStatement.body.length - 1];
+	// blockStatement.body[blockStatement.body.length - 1] = ;
+	return {
+		type: "ReturnStatement",
+		argument: unwrap(expressionStatement.expression)
+	};
+}
+
+function getEnclosingRange (exprlist) {
+	function priority (s, c) {
+		// line number must be smaller
+		// if line number is tied, column must be smaller
+	    return c.line < s.line ? c : (c.line === s.line && c.column < s.column ? c : s);
+	};
+
+	var inf = {
+	    line: Infinity,
+	    column: Infinity
+	};
+
+	var locInfo = exprlist
+		.map(function(node) {return node.loc;})
+		.filter(function(node) {return !!node;});
+
+	if (locInfo.length > 0) {
+		var start = locInfo.map(function(node) {return node.start;}).reduce(priority, inf);
+		var end = locInfo.map(function(node) {return node.end;}).reduce(priority, inf);
+
+		return {start: start, end: end};
+	}
+
+	return null;
+}
+
+function compile (ast, receiver, localContext) {
+	var result = {};
+
+	if (ast.type === 'chain') {
+		//  A chain is a series of left-associative messages
+		var chain = ast.value;
+		var current;
+
+		for (var i=0; i<chain.length; i++) {
+			// The receiver of a message in a chain is the preceding one
+			current = chain[i];
+			current = compile(current, receiver, localContext);
+			receiver = current;
+		}
+		return current;
+	}
+	else if (ast.type === 'message') {
+		// The symbol is the name of the message
+		var symbol = ast.value;
+
+		if (symbol.value.type === 'number') {
+			result = {
+				// loc: symbol.loc,
+				type: "CallExpression",
+				callee: astIdentifier('IoNumberWrapper'),// symbol.loc),
+				arguments: [{type: "Literal", value: +symbol.value.value}]//, loc: symbol.loc}]
+			};
+		}
+		else if (symbol.value.type === 'string') {
+			result = {
+				// loc: symbol.loc,
+				type: "CallExpression",
+				callee: astIdentifier('IoStringWrapper'),// symbol.loc),
+				arguments: [{type: "Literal", value: symbol.value.value}]//, loc: symbol.loc}]
+			};
+		}
+		else if (symbol.value.type === 'identifier') {
+			var symbolValue = {type: "Literal", value: symbol.value.value};
+	
+			// a.b(args);
+			result = {
+				// loc: symbol.loc,
+				type: "CallExpression",
+				callee: {
+					// loc: symbol.loc,
+				    type: "MemberExpression",
+				    object: receiver, // a
+				    property: {
+				    	// loc: symbol.loc,
+		                type: "Identifier",
+		                name: "send" // b
+		            },
+				    computed: false,
+				},
+				arguments: [symbolValue].concat(symbol.arguments.map(function (arg) {
+					 // arg is a list of exprs delimted by ;
+                    var result = {
+                        type: "SequenceExpression",
+                        expressions: arg.map(function (realarg) {
+                            return compile(realarg, localContext, localContext);
+                        })
+                    };
+
+                    // var loc = getEnclosingRange(result.expressions);
+                    // if (loc !== null) result.loc = loc;
+
+                    return result;
+				}))
+			};
+
+			if (symbolValue.value === "method") {
+
+				result.arguments = [symbolValue].concat(symbol.arguments.map(function (arg) {
+					// Arguments will have the locals object as context
+					// arg is also a list of expressions here
+                    return {
+                        type: "SequenceExpression",
+                        expressions: arg.map(function (realarg) {
+							return compile(realarg, {type: "Identifier", name: "locals"}, {type: "Identifier", name: "locals"});
+                        })
+                    };
+				}));
+
+				// Turn all arguments but the last to strings instead;
+				// they will be sent as messages to the locals object
+
+				for (var i = 1; i < result.arguments.length - 1; i++) {
+					// Each argument is a SequenceExpression
+					// Grab the last expression in each sequence and turn it into a string
+					result.arguments[i] = result.arguments[i].expressions[result.arguments[i].expressions.length-1].arguments[0];
+				}
+
+				// The last becomes a thunk
+
+				var lastArgument = result.arguments[result.arguments.length - 1];
+				var methodBody = lastArgument;
+
+				result.arguments[result.arguments.length - 1] = {
+					type: "CallExpression",
+					callee: astIdentifier('IoThunk'),
+					arguments: [{
+						type: "FunctionExpression",
+						id: null,
+						params: [{
+							type: "Identifier",
+							name: "locals"
+						}],
+						body: {
+							type: "BlockStatement",
+							body: [{
+								type: "ReturnStatement",
+								argument: methodBody
+							}]
+						}
+					}]
+				}
+			}
+			else if (symbolValue.value === "if") {
+
+				// Convert last two arguments into thunks
+				// TODO handle cases where if statements have < 3 arguments
+
+				var conseq = result.arguments[2];
+				result.arguments[2] = {
+					type: "CallExpression",
+					callee: astIdentifier('IoThunk'),
+					arguments: [{
+						type: "FunctionExpression",
+						id: null,
+						params: [],
+						body: {
+							type: "BlockStatement",
+							body: [{
+								type: "ReturnStatement",
+								argument: conseq
+							}]
+						}
+					}]
+				};
+
+				var alt = result.arguments[3];
+				result.arguments[3] = {
+					type: "CallExpression",
+					callee: astIdentifier('IoThunk'),
+					arguments: [{
+						type: "FunctionExpression",
+						id: null,
+						params: [],
+						body: {
+							type: "BlockStatement",
+							body: [{
+								type: "ReturnStatement",
+								argument: alt
+							}]
+						}
+					}]
+				};
+			}
+			else if (symbolValue.value === "loop") {
+				var block = result.arguments[1];
+				result.arguments[1] = {
+					type: "CallExpression",
+					callee: astIdentifier('IoThunk'),
+					arguments: [{
+						type: "FunctionExpression",
+						id: null,
+						params: [],
+						body: {
+							type: "BlockStatement",
+							body: [{
+									type: "ExpressionStatement",
+									expression: block
+							}]
+						}
+					}]
+				};
+			}    	
+		}
+	} else {
+		throw new Error('CompileError: unrecognized AST type: ' + ast.type);
+	}
+
+	return result;
+}
+
+function astIdentifier (id) {//, loc) {
+	return {
+	    // "loc": loc,
+	    "type": "MemberExpression",
+	    "computed": false,
+	    "object": {
+	        "type": "Identifier",
+	    	// "loc": loc,
+	        "name": options.runtimeLib
+	    },
+	    "property": {
+	    	// "loc": loc,
+	        "type": "Identifier",
+	        "name": id
+	    }
+	};
+}
+
+module.exports = {
+	parse: parse,
+	compile: parseAndEmit,
+	setOptions: setOptions,
+};
+
+},{"./parser":14,"./pratt":15,"escodegen":1}],13:[function(require,module,exports){
+
+var _io = (function () {
+
+	function IoObject (slots, proto) {
+		var self = {};
+		self.slots = slots || {};
+		self.proto = proto;
+
+		self.identity = Math.random() + "";
+
+		self.findSlot = IoObject.findSlot;
+		self.send = IoObject.send;
+		self.equals = IoObject.equals;
+
+		return self;
+	}
+
+	function guid() {
+  		function s4() {
+    		return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+  		}
+  		return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
+	}
+
+	IoObject.equals = function (other) {
+		return this.identity === other.identity;
+	};
+
+	IoObject.findSlot = function (slot) {
+		if (this.isRootObject || this.slots.hasOwnProperty(slot)) {
+			return this.slots[slot];
+		} else if (this.proto) {
+			return this.proto.findSlot(slot);
+		} else {
+			return null;
+		}
+	};
+
+	IoObject.send = function (message) {
+		var args = Array.prototype.slice.call(arguments, 1);
+		var slot = this.findSlot(message);
+
+		if (slot) {
+			if (typeof slot === 'function') {
+				return slot.apply(this, args);
+			} else {
+				if (slot.activate) {
+					return slot.activate.apply(slot, [this].concat(args));
+				} else {
+					return slot;
+				}
+			}
+		} else {
+			throw new Error("Object send: unrecognized message '" + message + "'");
+		}
+	};
+
+	var Lobby = IoObject({type: 'Lobby'});
+	Lobby.isLobby = true;
+
+	var LoopScopes = [];
+
+	var IoRootObject = IoObject({
+		type: 'Object',
+		clone: function (name, instance) {
+			var slots = {};
+			if (!instance) {
+				slots.type = name;
+			}
+			return IoObject(slots, this);
+		},
+		slotNames: function () {
+			return Object.keys(this.slots);
+		},
+		getSlot: function (slotName) {
+			// TODO this method only works for user-defined methods for now,
+			// which are IoObjects and can respond to messages.
+			// At the moment all primitive methods are raw functions and won't work.
+			slotName = unwrapIoValue(slotName);
+			var slot = this.findSlot(slotName);
+			return slot;
+		},
+		setSlot: function (slot, value) {
+			slot = unwrapIoValue(slot);
+			this.slots[slot] = value;
+			return value;
+		},
+		updateSlot: function (slot, value) {
+			slot = unwrapIoValue(slot);
+			if (this.slots[slot]) {
+				this.slots[slot] = value;
+				return value;
+			} else {
+				throw new Error("Object updateSlot: slot '" + slot + "' doesn't exist; cannot update");
+			}
+		},
+		toIoString: function () {
+			return IoStringWrapper("#" + getTypeOf(this) + " " + this.send("slotNames"));
+		},
+		proto: function () {
+			return this.proto;
+		},
+		writeln: function (thing) {
+			console.log(unwrapIoValue(thing.send('toIoString')));
+			return IoNil;
+		},
+		method: function () {
+			var args = Array.prototype.slice.call(arguments);
+			var parameters = args.slice(0, args.length-1);
+			var thunk = args[args.length-1];
+
+			var method = IoMethod.send('clone');
+			method.slots.type = IoMethod.slots.type; // TODO get rid of this once clone properly sets the type field
+			method.body = thunk;
+			method.parameters = parameters;
+			method.self = this;
+
+			method.activate = function () {
+				var self = arguments[0];
+				var args = Array.prototype.slice.call(arguments, 1);
+
+				var locals = IoObject({}, self);
+				for (var i=0; i<args.length; i++) {
+					locals.send('setSlot', IoStringWrapper(this.parameters[i]), args[i]);
+					if (i > this.parameters) break; // over-application
+				}
+				locals.send('setSlot', IoStringWrapper('self'), self);
+
+				return this.body.eval(locals);
+			};
+
+			return method;
+		},
+		if: function (condition, conseq, alt) {
+			if (condition.equals(IoTrue)) {
+				return conseq.eval();
+			}
+			else {
+				return alt.eval();
+			}
+		},
+		loop: function (block) {
+			var index = LoopScopes.push(guid())-1;
+			var id = LoopScopes[index];
+			var res = IoNil;
+			while (LoopScopes.length>index && LoopScopes[index] == id)
+			{
+				res = block.eval();
+			}
+			return res;
+		},
+		break: function (block) {
+			if (LoopScopes.length > 0)
+			{
+				LoopScopes.pop();
+			}
+			return IoNil;
+		},
+		"==": function (other) {
+			return IoBooleanWrapper(this.equals(other));
+		}
+	}, Lobby);
+	IoRootObject.isRootObject = true;
+
+	var IoNil = IoObject({
+		type: 'Nil',
+		toIoString: function () {
+			return IoStringWrapper("nil");
+		}
+	}, IoRootObject);
+
+	var IoNumber = IoObject({
+		type: 'Number',
+		"+": function (other) {
+			return IoNumberWrapper(unwrapIoValue(this) + unwrapIoValue(other));
+		},
+		"*": function (other) {
+			return IoNumberWrapper(unwrapIoValue(this) * unwrapIoValue(other));
+		},
+		"-": function (other) {
+			return IoNumberWrapper(unwrapIoValue(this) - unwrapIoValue(other));
+		},
+		"==": function (other) {
+			return IoBooleanWrapper(unwrapIoValue(this) === unwrapIoValue(other));
+		},
+		toIoString: function () {
+			return IoStringWrapper(unwrapIoValue(this));
+		}
+	}, IoRootObject);
+
+	function IoNumberWrapper (value) {
+		return IoObject({value: value}, IoNumber);
+	}
+
+	var IoString = IoObject({
+		type: 'String',
+		charAt: function (n) {
+			n = unwrapIoValue(n);
+			return IoStringWrapper(unwrapIoValue(this).charAt(n));
+		},
+		toIoString: function () {
+			return this;
+		}
+	}, IoRootObject);
+	
+	function IoStringWrapper (value) {
+		return IoObject({value: value}, IoString);
+	}
+
+	var IoTrue = IoObject({
+		type: 'Boolean',
+		and: function (other) {
+			if (other.equals(this)) return this;
+			else return IoFalse;
+		},
+		toIoString: function () {
+			return IoStringWrapper("true");
+		}
+	}, IoRootObject);
+
+	var IoFalse = IoObject({
+		type: 'Boolean',
+		and: function (other) {
+			return IoFalse;
+		},
+		toIoString: function () {
+			return IoStringWrapper("false");
+		}
+	}, IoRootObject);
+
+	function IoBooleanWrapper (bool) {
+		return bool ? IoTrue : IoFalse;
+	}
+
+	function IoThunk (f) {
+		return {f:f, eval: function() {return f.apply(null, Array.prototype.slice.call(arguments));}};
+	}
+
+	var IoMethod = IoObject({
+		type: 'Block',
+		activate: null // defined later
+	}, IoRootObject);
+
+	// A proxy object for hooking into the messages of another
+	// object and forwarding them, redirecting them, etc.
+	// For internal use only.
+
+	function IoProxy (forObject, action) {
+		var p = IoObject({type: 'Proxy'}, forObject);
+		
+		p.send = function (message) {
+			var result = action.apply(this, arguments);
+			if (result) {
+				return result;
+			} else {
+				return IoObject.send.apply(p, arguments);
+			}
+		};
+		return p;
+	}
+
+	Lobby.slots['nil'] = IoNil;
+	Lobby.slots['true'] = IoTrue;
+	Lobby.slots['false'] = IoFalse;
+	Lobby.slots['Object'] = IoRootObject;
+	Lobby.slots['Lobby'] = Lobby;
+	Lobby.proto = IoRootObject;
+
+	function isJSPrimitive (value) {
+		var type = typeof value;
+		switch (type) {
+		case 'number':
+		case 'string':
+		case 'boolean':
+		case 'function':
+			return true;
+		case 'object':
+			// Is there a less duck-typed way to do this?
+			return value.slots === undefined;
+		default:
+			throw new Error('isJSPrimitive: invalid value ' + value + ' of type ' + type);
+		}
+	}
+
+	function getTypeOf (ioValue) {
+		if (!ioValue) {
+			throw new Error('getTypeOf: attempt to get type of invalid Io value ' + ioValue);
+		}
+
+		if (typeof ioValue === 'function') {
+			// Assuming this isn't a bug... the value is either a
+			// native method or a wrapped external method
+			return 'Block';
+		}
+
+		var type = ioValue.send('type');
+
+		if (!type) {
+			throw new Error('getTypeOf: invalid type ' + ioValue);
+		}
+
+		return type;
+	}
+
+	function unwrapIoValue (ioValue) {
+
+		var type = getTypeOf(ioValue);
+
+		switch (type) {
+		case 'Nil':
+			return undefined;
+		case 'Number':
+		case 'String':
+			return ioValue.slots.value;
+		case 'Boolean':
+			return ioValue.equals(IoTrue);
+		case 'Block':
+			// To wrap a block, we wrap it in a function which
+			// activates the original Io method when applied.
+			// The appropriate Io context is kept.
+
+			return function () {
+				var args = Array.prototype.slice.call(arguments).map(_io.wrapJSValue);
+				if (ioValue.activate) {
+					return unwrapIoValue(ioValue.activate.apply(ioValue, [ioValue.self].concat(args)));
+				} else {
+					throw new Error('unwrapIoValue: Io method has type \'Block\' but does not have an activation method');
+				}
+			};
+		default:
+			var obj = {};
+			Object.keys(ioValue.slots).forEach(function (slotKey) {
+
+				var value = ioValue.slots[slotKey];
+				
+				// This has to be done because Io object slots might
+				// contain JS primitives (the type of an IoString can't
+				// be an IoString, for example - infinite loop).
+
+				// For now it's assumed that if an Io object slot contains
+				// a primitive value (and if it's not a bug), the value is a
+				// library primitive and shouldn't be copied out.
+				// This rule might not always hold.
+
+				if (!isJSPrimitive(value)) {
+					obj[slotKey] = unwrapIoValue(value);
+				}
+			});
+			return obj;
+		}
+	}
+
+	function wrapJSValue (jsValue) {
+
+		if (jsValue === undefined || jsValue === null) {
+			return IoNil;
+		}
+
+		var type = typeof jsValue;
+		switch (type) {
+		case 'number':
+			return IoNumberWrapper(jsValue);
+		case 'string':
+			return IoStringWrapper(jsValue);
+		case 'boolean':
+			return IoBooleanWrapper(jsValue);
+		case 'object':
+			var obj = IoObject({type: 'JSObject'}, IoRootObject);
+			Object.keys(jsValue).forEach(function (key) {
+				obj.slots[key] = wrapJSValue(jsValue[key]);
+			});
+			return obj;
+		case 'function':
+			
+			// We use the fact that most library methods are vanilla
+			// functions to simply return a vanilla function.
+			// Additional type safety would probably be a good idea
+			// here... eventually
+
+			return jsValue;
+		default:
+			throw new Error('wrapJSValue: invalid object type ' + type);
+		}
+	}
+
+	// A special proxy for JavaScript interop
+
+	var Proxy = {
+		set: function(obj) {
+			var actualProxy = IoProxy(Lobby, function(message) {
+				if (this.obj && this.obj[message]) {
+					if (typeof this.obj[message] === 'function') {
+						var args = Array.prototype.slice.call(arguments, 1);
+						args = args.map(_io.unwrapIoValue);
+						return wrapJSValue(this.obj[message].apply(this.obj, args));
+					} else {
+						return wrapJSValue(this.obj[message]);
+					}
+				}
+				return false;
+			});
+			actualProxy.obj = obj;
+
+			return actualProxy;
+		}
+	};
+	
+	return {
+		IoObject: IoObject,
+		IoNil: IoNil,
+		IoNumber: IoNumber,
+		IoNumberWrapper: IoNumberWrapper,
+		IoString: IoString,
+		IoStringWrapper: IoStringWrapper,
+		IoTrue: IoTrue,
+		IoFalse: IoFalse,
+		IoBooleanWrapper: IoBooleanWrapper,
+		IoThunk: IoThunk,
+		IoMethod: IoMethod,
+		IoProxy: IoProxy,
+		Lobby: Lobby,
+		IoRootObject: IoRootObject,
+		getTypeOf: getTypeOf,
+		unwrapIoValue: unwrapIoValue,
+		wrapJSValue: wrapJSValue,
+		Proxy: Proxy,
+	};
+})();
+
+if (typeof module !== 'undefined' && module.exports) {
+	module.exports = _io;
+}
+
+},{}],14:[function(require,module,exports){
+(function (process){
+/* parser generated by jison 0.4.15 */
 /*
-  Copyright (C) 2013 Yusuke Suzuki <utatane.tea@gmail.com>
+  Returns a Parser object of the following structure:
 
-  Redistribution and use in source and binary forms, with or without
-  modification, are permitted provided that the following conditions are met:
+  Parser: {
+    yy: {}
+  }
 
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in the
-      documentation and/or other materials provided with the distribution.
+  Parser.prototype: {
+    yy: {},
+    trace: function(),
+    symbols_: {associative list: name ==> number},
+    terminals_: {associative list: number ==> name},
+    productions_: [...],
+    performAction: function anonymous(yytext, yyleng, yylineno, yy, yystate, $$, _$),
+    table: [...],
+    defaultActions: {...},
+    parseError: function(str, hash),
+    parse: function(input),
 
-  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-  ARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
-  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
-  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+    lexer: {
+        EOF: 1,
+        parseError: function(str, hash),
+        setInput: function(input),
+        input: function(),
+        unput: function(str),
+        more: function(),
+        less: function(n),
+        pastInput: function(),
+        upcomingInput: function(),
+        showPosition: function(),
+        test_match: function(regex_match_array, rule_index),
+        next: function(),
+        lex: function(),
+        begin: function(condition),
+        popState: function(),
+        _currentRules: function(),
+        topState: function(),
+        pushState: function(condition),
+
+        options: {
+            ranges: boolean           (optional: true ==> token location info will include a .range[] member)
+            flex: boolean             (optional: true ==> flex-like lexing behaviour where the rules are tested exhaustively to find the longest match)
+            backtrack_lexer: boolean  (optional: true ==> lexer regexes are tested in order and for each matching regex the action code is invoked; the lexer terminates the scan when a token is returned by the action code)
+        },
+
+        performAction: function(yy, yy_, $avoiding_name_collisions, YY_START),
+        rules: [...],
+        conditions: {associative list: name ==> set},
+    }
+  }
+
+
+  token location info (@$, _$, etc.): {
+    first_line: n,
+    last_line: n,
+    first_column: n,
+    last_column: n,
+    range: [start_number, end_number]       (where the numbers are indexes into the input string, regular zero-based)
+  }
+
+
+  the parseError function receives a 'hash' object with these members for lexer and parser errors: {
+    text:        (matched text)
+    token:       (the produced terminal token, if any)
+    line:        (yylineno)
+  }
+  while parser (grammar) errors will also provide these members, i.e. parser errors deliver a superset of attributes: {
+    loc:         (yylloc)
+    expected:    (string describing the set of expected tokens)
+    recoverable: (boolean: TRUE when the parser has a error recovery rule available for this particular error)
+  }
 */
+var parser = (function(){
+var o=function(k,v,o,l){for(o=o||{},l=k.length;l--;o[k[l]]=v);return o},$V0=[11,19,20,22,23,24],$V1=[2,16],$V2=[1,6],$V3=[1,7],$V4=[1,12],$V5=[1,14],$V6=[1,15],$V7=[1,17],$V8=[1,18],$V9=[1,19],$Va=[2,15],$Vb=[5,11,12,18,19,20,22,23,24],$Vc=[5,12,18],$Vd=[5,12,15,16,18],$Ve=[5,12,15,16,18,19,20,22,23,24],$Vf=[5,11,12,15,16,18,19,20,22,23,24],$Vg=[12,18];
+var parser = {trace: function trace() { },
+yy: {},
+symbols_: {"error":2,"program":3,"looselyTerminatedExpr":4,"EOF":5,"zeroOrMoreTerminators":6,"exprs":7,"oneOrMoreTerminators":8,"expr":9,"message":10,"(":11,")":12,"symbol":13,"arguments":14,"NEWLINE":15,";":16,"argumentList":17,",":18,"IDENTIFIER":19,"NUMBER":20,"string":21,"EmptyString":22,"QuotedString":23,"QuotedStringEscape":24,"quotedstring":25,"$accept":0,"$end":1},
+terminals_: {2:"error",5:"EOF",11:"(",12:")",15:"NEWLINE",16:";",18:",",19:"IDENTIFIER",20:"NUMBER",22:"EmptyString",23:"QuotedString",24:"QuotedStringEscape",25:"quotedstring"},
+productions_: [0,[3,2],[3,1],[4,3],[7,3],[7,1],[9,2],[9,1],[9,3],[10,1],[10,2],[8,2],[8,1],[8,2],[8,1],[6,1],[6,0],[14,2],[14,3],[17,1],[17,3],[13,1],[13,1],[13,1],[21,1],[21,1],[21,1],[21,2],[21,2]],
+performAction: function anonymous(yytext, yyleng, yylineno, yy, yystate /* action[1] */, $$ /* vstack */, _$ /* lstack */) {
+/* this == yyval */
 
-(function () {
-    'use strict';
+var $0 = $$.length - 1;
+switch (yystate) {
+case 1:
+return $$[$0-1];
+break;
+case 2:
+return [];
+break;
+case 3: case 8: case 18:
+this.$ = $$[$0-1];
+break;
+case 4:
+$$[$0-2].push($$[$0]); this.$ = $$[$0-2];
+break;
+case 5: case 19:
+this.$ = [$$[$0]];
+break;
+case 6:
+$$[$0-1].getMessages().push(new ast.Message($$[$0])); this.$ = $$[$0-1];
+break;
+case 7:
+this.$ = new ast.Chain([new ast.Message($$[$0])]);
+break;
+case 9:
 
-    var code = require('./code');
+            this.$ = new ast.Symbol($$[$0], []);
+        
+break;
+case 10:
 
-    function isStrictModeReservedWordES6(id) {
-        switch (id) {
-        case 'implements':
-        case 'interface':
-        case 'package':
-        case 'private':
-        case 'protected':
-        case 'public':
-        case 'static':
-        case 'let':
-            return true;
-        default:
-            return false;
+            this.$ = new ast.Symbol($$[$0-1], $$[$0]);
+        
+break;
+case 17:
+this.$ = [];
+break;
+case 20:
+$$[$0-2].push($$[$0]); this.$ = $$[$0-2]; 
+break;
+case 21:
+this.$ = new ast.Literal('identifier', $$[$0]);
+break;
+case 22:
+this.$ = new ast.Literal('number', $$[$0]);
+break;
+case 23:
+this.$ = new ast.Literal('string', $$[$0]);
+break;
+case 24:
+
+        this.$ = '';
+    
+break;
+case 26:
+
+        switch (yytext)
+        {
+            case 'b':       this.$ = '\b'; break;
+            case 'n':       this.$ = '\n'; break;
+            case 'r':       this.$ = '\r'; break;
+            case 't':       this.$ = '\t'; break;
+            case "'":       this.$ = "'"; break;
+            case '"':       this.$ = '"'; break;
+            case '\\':      this.$ = '\\'; break;
+            case '\n':
+            case '\r\n':    this.$ = ''; break;
+            default:        this.$ = '\\' + $$[$0]; break;
+        }
+    
+break;
+case 27:
+
+        switch ($$[$0-1])
+        {
+            case 'b':       this.$ = '\b'; break;
+            case 'n':       this.$ = '\n'; break;
+            case 'r':       this.$ = '\r'; break;
+            case 't':       this.$ = '\t'; break;
+            case "'":       this.$ = "'"; break;
+            case '"':       this.$ = '"'; break;
+            case '\\':      this.$ = '\\'; break;
+            case '\n':
+            case '\r\n':    this.$ = ''; break;
+            default:        this.$ = '\\' + $$[$0-1]; break;
+        }
+        this.$ += $$[$0];
+    
+break;
+case 28:
+
+        this.$ = $$[$0-1] + $$[$0];
+    
+break;
+}
+},
+table: [o($V0,$V1,{3:1,4:2,6:4,8:5,5:[1,3],15:$V2,16:$V3}),{1:[3]},{5:[1,8]},{1:[2,2]},{7:9,9:10,10:11,11:$V4,13:13,19:$V5,20:$V6,21:16,22:$V7,23:$V8,24:$V9},o($V0,$Va),o($Vb,[2,12],{8:20,15:$V2,16:$V3}),o($Vb,[2,14],{8:21,15:$V2,16:$V3}),{1:[2,1]},o($Vc,$V1,{6:22,8:23,15:$V2,16:$V3}),o($Vd,[2,5],{13:13,21:16,10:24,19:$V5,20:$V6,22:$V7,23:$V8,24:$V9}),o($Ve,[2,7]),{9:25,10:11,11:$V4,13:13,19:$V5,20:$V6,21:16,22:$V7,23:$V8,24:$V9},o($Ve,[2,9],{14:26,11:[1,27]}),o($Vf,[2,21]),o($Vf,[2,22]),o($Vf,[2,23]),o($Vf,[2,24]),o($Vf,[2,25],{25:[1,28]}),o($Vf,[2,26],{25:[1,29]}),o($Vb,[2,11]),o($Vb,[2,13]),o($Vc,[2,3]),o($Vc,$Va,{10:11,13:13,21:16,9:30,11:$V4,19:$V5,20:$V6,22:$V7,23:$V8,24:$V9}),o($Ve,[2,6]),{10:24,12:[1,31],13:13,19:$V5,20:$V6,21:16,22:$V7,23:$V8,24:$V9},o($Ve,[2,10]),o($V0,$V1,{6:4,8:5,17:33,4:34,12:[1,32],15:$V2,16:$V3}),o($Vf,[2,28]),o($Vf,[2,27]),o($Vd,[2,4],{13:13,21:16,10:24,19:$V5,20:$V6,22:$V7,23:$V8,24:$V9}),o($Ve,[2,8]),o($Ve,[2,17]),{12:[1,35],18:[1,36]},o($Vg,[2,19]),o($Ve,[2,18]),o($V0,$V1,{6:4,8:5,4:37,15:$V2,16:$V3}),o($Vg,[2,20])],
+defaultActions: {3:[2,2],8:[2,1]},
+parseError: function parseError(str, hash) {
+    if (hash.recoverable) {
+        this.trace(str);
+    } else {
+        throw new Error(str);
+    }
+},
+parse: function parse(input) {
+    var self = this, stack = [0], tstack = [], vstack = [null], lstack = [], table = this.table, yytext = '', yylineno = 0, yyleng = 0, recovering = 0, TERROR = 2, EOF = 1;
+    var args = lstack.slice.call(arguments, 1);
+    var lexer = Object.create(this.lexer);
+    var sharedState = { yy: {} };
+    for (var k in this.yy) {
+        if (Object.prototype.hasOwnProperty.call(this.yy, k)) {
+            sharedState.yy[k] = this.yy[k];
         }
     }
-
-    function isKeywordES5(id, strict) {
-        // yield should not be treated as keyword under non-strict mode.
-        if (!strict && id === 'yield') {
-            return false;
-        }
-        return isKeywordES6(id, strict);
+    lexer.setInput(input, sharedState.yy);
+    sharedState.yy.lexer = lexer;
+    sharedState.yy.parser = this;
+    if (typeof lexer.yylloc == 'undefined') {
+        lexer.yylloc = {};
     }
-
-    function isKeywordES6(id, strict) {
-        if (strict && isStrictModeReservedWordES6(id)) {
-            return true;
+    var yyloc = lexer.yylloc;
+    lstack.push(yyloc);
+    var ranges = lexer.options && lexer.options.ranges;
+    if (typeof sharedState.yy.parseError === 'function') {
+        this.parseError = sharedState.yy.parseError;
+    } else {
+        this.parseError = Object.getPrototypeOf(this).parseError;
+    }
+    function popStack(n) {
+        stack.length = stack.length - 2 * n;
+        vstack.length = vstack.length - n;
+        lstack.length = lstack.length - n;
+    }
+    _token_stack:
+        function lex() {
+            var token;
+            token = lexer.lex() || EOF;
+            if (typeof token !== 'number') {
+                token = self.symbols_[token] || token;
+            }
+            return token;
         }
-
-        switch (id.length) {
+    var symbol, preErrorSymbol, state, action, a, r, yyval = {}, p, len, newState, expected;
+    while (true) {
+        state = stack[stack.length - 1];
+        if (this.defaultActions[state]) {
+            action = this.defaultActions[state];
+        } else {
+            if (symbol === null || typeof symbol == 'undefined') {
+                symbol = lex();
+            }
+            action = table[state] && table[state][symbol];
+        }
+                    if (typeof action === 'undefined' || !action.length || !action[0]) {
+                var errStr = '';
+                expected = [];
+                for (p in table[state]) {
+                    if (this.terminals_[p] && p > TERROR) {
+                        expected.push('\'' + this.terminals_[p] + '\'');
+                    }
+                }
+                if (lexer.showPosition) {
+                    errStr = 'Parse error on line ' + (yylineno + 1) + ':\n' + lexer.showPosition() + '\nExpecting ' + expected.join(', ') + ', got \'' + (this.terminals_[symbol] || symbol) + '\'';
+                } else {
+                    errStr = 'Parse error on line ' + (yylineno + 1) + ': Unexpected ' + (symbol == EOF ? 'end of input' : '\'' + (this.terminals_[symbol] || symbol) + '\'');
+                }
+                this.parseError(errStr, {
+                    text: lexer.match,
+                    token: this.terminals_[symbol] || symbol,
+                    line: lexer.yylineno,
+                    loc: yyloc,
+                    expected: expected
+                });
+            }
+        if (action[0] instanceof Array && action.length > 1) {
+            throw new Error('Parse Error: multiple actions possible at state: ' + state + ', token: ' + symbol);
+        }
+        switch (action[0]) {
+        case 1:
+            stack.push(symbol);
+            vstack.push(lexer.yytext);
+            lstack.push(lexer.yylloc);
+            stack.push(action[1]);
+            symbol = null;
+            if (!preErrorSymbol) {
+                yyleng = lexer.yyleng;
+                yytext = lexer.yytext;
+                yylineno = lexer.yylineno;
+                yyloc = lexer.yylloc;
+                if (recovering > 0) {
+                    recovering--;
+                }
+            } else {
+                symbol = preErrorSymbol;
+                preErrorSymbol = null;
+            }
+            break;
         case 2:
-            return (id === 'if') || (id === 'in') || (id === 'do');
+            len = this.productions_[action[1]][1];
+            yyval.$ = vstack[vstack.length - len];
+            yyval._$ = {
+                first_line: lstack[lstack.length - (len || 1)].first_line,
+                last_line: lstack[lstack.length - 1].last_line,
+                first_column: lstack[lstack.length - (len || 1)].first_column,
+                last_column: lstack[lstack.length - 1].last_column
+            };
+            if (ranges) {
+                yyval._$.range = [
+                    lstack[lstack.length - (len || 1)].range[0],
+                    lstack[lstack.length - 1].range[1]
+                ];
+            }
+            r = this.performAction.apply(yyval, [
+                yytext,
+                yyleng,
+                yylineno,
+                sharedState.yy,
+                action[1],
+                vstack,
+                lstack
+            ].concat(args));
+            if (typeof r !== 'undefined') {
+                return r;
+            }
+            if (len) {
+                stack = stack.slice(0, -1 * len * 2);
+                vstack = vstack.slice(0, -1 * len);
+                lstack = lstack.slice(0, -1 * len);
+            }
+            stack.push(this.productions_[action[1]][0]);
+            vstack.push(yyval.$);
+            lstack.push(yyval._$);
+            newState = table[stack[stack.length - 2]][stack[stack.length - 1]];
+            stack.push(newState);
+            break;
         case 3:
-            return (id === 'var') || (id === 'for') || (id === 'new') || (id === 'try');
-        case 4:
-            return (id === 'this') || (id === 'else') || (id === 'case') ||
-                (id === 'void') || (id === 'with') || (id === 'enum');
-        case 5:
-            return (id === 'while') || (id === 'break') || (id === 'catch') ||
-                (id === 'throw') || (id === 'const') || (id === 'yield') ||
-                (id === 'class') || (id === 'super');
-        case 6:
-            return (id === 'return') || (id === 'typeof') || (id === 'delete') ||
-                (id === 'switch') || (id === 'export') || (id === 'import');
-        case 7:
-            return (id === 'default') || (id === 'finally') || (id === 'extends');
-        case 8:
-            return (id === 'function') || (id === 'continue') || (id === 'debugger');
-        case 10:
-            return (id === 'instanceof');
-        default:
-            return false;
+            return true;
         }
     }
+    return true;
+}};
 
-    function isRestrictedWord(id) {
-        return id === 'eval' || id === 'arguments';
-    }
+    // This is done in place of setting yy because the latter wouldn't work.
+    var ast = require('./ast');
+/* generated by jison-lex 0.3.4 */
+var lexer = (function(){
+var lexer = ({
 
-    function isIdentifierName(id) {
-        var i, iz, ch;
+EOF:1,
 
-        if (id.length === 0) {
-            return false;
+parseError:function parseError(str, hash) {
+        if (this.yy.parser) {
+            this.yy.parser.parseError(str, hash);
+        } else {
+            throw new Error(str);
+        }
+    },
+
+// resets the lexer, sets new input
+setInput:function (input, yy) {
+        this.yy = yy || this.yy || {};
+        this._input = input;
+        this._more = this._backtrack = this.done = false;
+        this.yylineno = this.yyleng = 0;
+        this.yytext = this.matched = this.match = '';
+        this.conditionStack = ['INITIAL'];
+        this.yylloc = {
+            first_line: 1,
+            first_column: 0,
+            last_line: 1,
+            last_column: 0
+        };
+        if (this.options.ranges) {
+            this.yylloc.range = [0,0];
+        }
+        this.offset = 0;
+        return this;
+    },
+
+// consumes and returns one char from the input
+input:function () {
+        var ch = this._input[0];
+        this.yytext += ch;
+        this.yyleng++;
+        this.offset++;
+        this.match += ch;
+        this.matched += ch;
+        var lines = ch.match(/(?:\r\n?|\n).*/g);
+        if (lines) {
+            this.yylineno++;
+            this.yylloc.last_line++;
+        } else {
+            this.yylloc.last_column++;
+        }
+        if (this.options.ranges) {
+            this.yylloc.range[1]++;
         }
 
-        ch = id.charCodeAt(0);
-        if (!code.isIdentifierStart(ch) || ch === 92) {  // \ (backslash)
-            return false;
-        }
+        this._input = this._input.slice(1);
+        return ch;
+    },
 
-        for (i = 1, iz = id.length; i < iz; ++i) {
-            ch = id.charCodeAt(i);
-            if (!code.isIdentifierPart(ch) || ch === 92) {  // \ (backslash)
-                return false;
+// unshifts one char (or a string) into the input
+unput:function (ch) {
+        var len = ch.length;
+        var lines = ch.split(/(?:\r\n?|\n)/g);
+
+        this._input = ch + this._input;
+        this.yytext = this.yytext.substr(0, this.yytext.length - len);
+        //this.yyleng -= len;
+        this.offset -= len;
+        var oldLines = this.match.split(/(?:\r\n?|\n)/g);
+        this.match = this.match.substr(0, this.match.length - 1);
+        this.matched = this.matched.substr(0, this.matched.length - 1);
+
+        if (lines.length - 1) {
+            this.yylineno -= lines.length - 1;
+        }
+        var r = this.yylloc.range;
+
+        this.yylloc = {
+            first_line: this.yylloc.first_line,
+            last_line: this.yylineno + 1,
+            first_column: this.yylloc.first_column,
+            last_column: lines ?
+                (lines.length === oldLines.length ? this.yylloc.first_column : 0)
+                 + oldLines[oldLines.length - lines.length].length - lines[0].length :
+              this.yylloc.first_column - len
+        };
+
+        if (this.options.ranges) {
+            this.yylloc.range = [r[0], r[0] + this.yyleng - len];
+        }
+        this.yyleng = this.yytext.length;
+        return this;
+    },
+
+// When called from action, caches matched text and appends it on next action
+more:function () {
+        this._more = true;
+        return this;
+    },
+
+// When called from action, signals the lexer that this rule fails to match the input, so the next matching rule (regex) should be tested instead.
+reject:function () {
+        if (this.options.backtrack_lexer) {
+            this._backtrack = true;
+        } else {
+            return this.parseError('Lexical error on line ' + (this.yylineno + 1) + '. You can only invoke reject() in the lexer when the lexer is of the backtracking persuasion (options.backtrack_lexer = true).\n' + this.showPosition(), {
+                text: "",
+                token: null,
+                line: this.yylineno
+            });
+
+        }
+        return this;
+    },
+
+// retain first n characters of the match
+less:function (n) {
+        this.unput(this.match.slice(n));
+    },
+
+// displays already matched input, i.e. for error messages
+pastInput:function () {
+        var past = this.matched.substr(0, this.matched.length - this.match.length);
+        return (past.length > 20 ? '...':'') + past.substr(-20).replace(/\n/g, "");
+    },
+
+// displays upcoming input, i.e. for error messages
+upcomingInput:function () {
+        var next = this.match;
+        if (next.length < 20) {
+            next += this._input.substr(0, 20-next.length);
+        }
+        return (next.substr(0,20) + (next.length > 20 ? '...' : '')).replace(/\n/g, "");
+    },
+
+// displays the character position where the lexing error occurred, i.e. for error messages
+showPosition:function () {
+        var pre = this.pastInput();
+        var c = new Array(pre.length + 1).join("-");
+        return pre + this.upcomingInput() + "\n" + c + "^";
+    },
+
+// test the lexed token: return FALSE when not a match, otherwise return token
+test_match:function (match, indexed_rule) {
+        var token,
+            lines,
+            backup;
+
+        if (this.options.backtrack_lexer) {
+            // save context
+            backup = {
+                yylineno: this.yylineno,
+                yylloc: {
+                    first_line: this.yylloc.first_line,
+                    last_line: this.last_line,
+                    first_column: this.yylloc.first_column,
+                    last_column: this.yylloc.last_column
+                },
+                yytext: this.yytext,
+                match: this.match,
+                matches: this.matches,
+                matched: this.matched,
+                yyleng: this.yyleng,
+                offset: this.offset,
+                _more: this._more,
+                _input: this._input,
+                yy: this.yy,
+                conditionStack: this.conditionStack.slice(0),
+                done: this.done
+            };
+            if (this.options.ranges) {
+                backup.yylloc.range = this.yylloc.range.slice(0);
             }
         }
-        return true;
+
+        lines = match[0].match(/(?:\r\n?|\n).*/g);
+        if (lines) {
+            this.yylineno += lines.length;
+        }
+        this.yylloc = {
+            first_line: this.yylloc.last_line,
+            last_line: this.yylineno + 1,
+            first_column: this.yylloc.last_column,
+            last_column: lines ?
+                         lines[lines.length - 1].length - lines[lines.length - 1].match(/\r?\n?/)[0].length :
+                         this.yylloc.last_column + match[0].length
+        };
+        this.yytext += match[0];
+        this.match += match[0];
+        this.matches = match;
+        this.yyleng = this.yytext.length;
+        if (this.options.ranges) {
+            this.yylloc.range = [this.offset, this.offset += this.yyleng];
+        }
+        this._more = false;
+        this._backtrack = false;
+        this._input = this._input.slice(match[0].length);
+        this.matched += match[0];
+        token = this.performAction.call(this, this.yy, this, indexed_rule, this.conditionStack[this.conditionStack.length - 1]);
+        if (this.done && this._input) {
+            this.done = false;
+        }
+        if (token) {
+            return token;
+        } else if (this._backtrack) {
+            // recover context
+            for (var k in backup) {
+                this[k] = backup[k];
+            }
+            return false; // rule action called reject() implying the next rule should be tested instead.
+        }
+        return false;
+    },
+
+// return next match in input
+next:function () {
+        if (this.done) {
+            return this.EOF;
+        }
+        if (!this._input) {
+            this.done = true;
+        }
+
+        var token,
+            match,
+            tempMatch,
+            index;
+        if (!this._more) {
+            this.yytext = '';
+            this.match = '';
+        }
+        var rules = this._currentRules();
+        for (var i = 0; i < rules.length; i++) {
+            tempMatch = this._input.match(this.rules[rules[i]]);
+            if (tempMatch && (!match || tempMatch[0].length > match[0].length)) {
+                match = tempMatch;
+                index = i;
+                if (this.options.backtrack_lexer) {
+                    token = this.test_match(tempMatch, rules[i]);
+                    if (token !== false) {
+                        return token;
+                    } else if (this._backtrack) {
+                        match = false;
+                        continue; // rule action called reject() implying a rule MISmatch.
+                    } else {
+                        // else: this is a lexer rule which consumes input without producing a token (e.g. whitespace)
+                        return false;
+                    }
+                } else if (!this.options.flex) {
+                    break;
+                }
+            }
+        }
+        if (match) {
+            token = this.test_match(match, rules[index]);
+            if (token !== false) {
+                return token;
+            }
+            // else: this is a lexer rule which consumes input without producing a token (e.g. whitespace)
+            return false;
+        }
+        if (this._input === "") {
+            return this.EOF;
+        } else {
+            return this.parseError('Lexical error on line ' + (this.yylineno + 1) + '. Unrecognized text.\n' + this.showPosition(), {
+                text: "",
+                token: null,
+                line: this.yylineno
+            });
+        }
+    },
+
+// return next match that has a token
+lex:function lex() {
+        var r = this.next();
+        if (r) {
+            return r;
+        } else {
+            return this.lex();
+        }
+    },
+
+// activates a new lexer condition state (pushes the new lexer condition state onto the condition stack)
+begin:function begin(condition) {
+        this.conditionStack.push(condition);
+    },
+
+// pop the previously active lexer condition state off the condition stack
+popState:function popState() {
+        var n = this.conditionStack.length - 1;
+        if (n > 0) {
+            return this.conditionStack.pop();
+        } else {
+            return this.conditionStack[0];
+        }
+    },
+
+// produce the lexer rule set which is active for the currently active lexer condition state
+_currentRules:function _currentRules() {
+        if (this.conditionStack.length && this.conditionStack[this.conditionStack.length - 1]) {
+            return this.conditions[this.conditionStack[this.conditionStack.length - 1]].rules;
+        } else {
+            return this.conditions["INITIAL"].rules;
+        }
+    },
+
+// return the currently active lexer condition state; when an index argument is provided it produces the N-th previous condition state, if available
+topState:function topState(n) {
+        n = this.conditionStack.length - 1 - Math.abs(n || 0);
+        if (n >= 0) {
+            return this.conditionStack[n];
+        } else {
+            return "INITIAL";
+        }
+    },
+
+// alias for begin(condition)
+pushState:function pushState(condition) {
+        this.begin(condition);
+    },
+
+// return the number of states currently on the stack
+stateStackSize:function stateStackSize() {
+        return this.conditionStack.length;
+    },
+options: {},
+performAction: function anonymous(yy,yy_,$avoiding_name_collisions,YY_START) {
+var YYSTATE=YY_START;
+switch($avoiding_name_collisions) {
+case 0:
+break;
+case 1:
+break;
+case 2:
+break;
+case 3:return 20
+break;
+case 4:return 19
+break;
+case 5:return 11
+break;
+case 6:return 12
+break;
+case 7:return 15
+break;
+case 8:return 16
+break;
+case 9:return 18
+break;
+case 10:return 22
+break;
+case 11:this.begin('DoubleQuotedString');
+break;
+case 12:this.begin('QuotedStringEscape');
+break;
+case 13:this.popState();
+break;
+case 14: /* The newlines are there because we can span strings across lines using \ */
+                                            this.popState();
+                                            return 24;
+                                        
+break;
+case 15:return 23;
+break;
+case 16:return 5
+break;
+case 17:return 'INVALID'
+break;
+}
+},
+rules: [/^(?:[ \t]+)/,/^(?:(#|\/\/)[^\r\n]*)/,/^(?:\/\*([\u0000-\uffff]*?)\*\/)/,/^(?:\b[0-9]+(\.[0-9]+)?\b)/,/^(?:[^()\[\]{}",;\s]+)/,/^(?:\()/,/^(?:\))/,/^(?:\r?\n)/,/^(?:;)/,/^(?:,)/,/^(?:"")/,/^(?:")/,/^(?:\\)/,/^(?:")/,/^(?:(.|\r\n|\n))/,/^(?:[^"\\]*)/,/^(?:$)/,/^(?:.)/],
+conditions: {"QuotedStringEscape":{"rules":[14],"inclusive":false},"DoubleQuotedString":{"rules":[12,13,15],"inclusive":false},"INITIAL":{"rules":[0,1,2,3,4,5,6,7,8,9,10,11,16,17],"inclusive":true}}
+});
+return lexer;
+})();
+parser.lexer = lexer;
+function Parser () {
+  this.yy = {};
+}
+Parser.prototype = parser;parser.Parser = Parser;
+return new Parser;
+})();
+
+
+if (typeof require !== 'undefined' && typeof exports !== 'undefined') {
+exports.parser = parser;
+exports.Parser = parser.Parser;
+exports.parse = function () { return parser.parse.apply(parser, arguments); };
+exports.main = function commonjsMain(args) {
+    if (!args[1]) {
+        console.log('Usage: '+args[0]+' FILE');
+        process.exit(1);
     }
+    var source = require('fs').readFileSync(require('path').normalize(args[1]), "utf8");
+    return exports.parser.parse(source);
+};
+if (typeof module !== 'undefined' && require.main === module) {
+  exports.main(process.argv.slice(1));
+}
+}
+}).call(this,require("JkpR2F"))
+},{"./ast":11,"JkpR2F":9,"fs":7,"path":8}],15:[function(require,module,exports){
 
-    module.exports = {
-        isKeywordES5: isKeywordES5,
-        isKeywordES6: isKeywordES6,
-        isRestrictedWord: isRestrictedWord,
-        isIdentifierName: isIdentifierName
-    };
-}());
-/* vim: set sw=4 ts=4 et tw=80 : */
+// AST nodes
 
-},{"./code":7}],9:[function(require,module,exports){
-/*
-  Copyright (C) 2013 Yusuke Suzuki <utatane.tea@gmail.com>
+function Chain (left, op, right) {
+	var result = [];
+	result.push(left);
+	result.push(op);
+	op.value.arguments.push({type: 'chain', value: right});
+	return result;
+}
 
-  Redistribution and use in source and binary forms, with or without
-  modification, are permitted provided that the following conditions are met:
+// Tokens
 
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in the
-      documentation and/or other materials provided with the distribution.
+var input = [];
+var ptr = 0;
 
-  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-  ARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
-  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
-  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+function consume () {
+	return input[ptr++];
+}
 
+function lookahead () {
+	return input[ptr];
+}
 
-(function () {
-    'use strict';
+// Parser
 
-    exports.code = require('./code');
-    exports.keyword = require('./keyword');
-}());
-/* vim: set sw=4 ts=4 et tw=80 : */
+function parseId (token) {
+	return token;
+}
 
-},{"./code":7,"./keyword":8}],10:[function(require,module,exports){
+// function parsePrefixOp (token) {
+// 	var operand = parseExpression(PREFIX);
+// 	return Application(token.value, [operand]);
+// }
+
+function makeInfixOp (precedence) {
+	var parser = function (left, token) {
+		var right = parseExpression(precedence);
+		token.value.arguments.push([right]);
+		return {type: 'chain', value: [left, token]};
+	};
+	parser.precedence = precedence;
+	return parser;
+}
+
+// function parsePostfixOp (left, token) {
+// 	return Application(token.value, [left]);
+// }
+
+// function parseMixfixOp (left, token) {
+// 	var conseq = parseExpression(CONDITIONAL);
+// 	consume();
+// 	var alt = parseExpression(CONDITIONAL);
+// 	consume();
+// 	return Application(token.value, [left, conseq, alt]);
+// }
+
+// var prefixOperators = {
+// 	"+": parsePrefixOp,
+// 	"-": parsePrefixOp,
+// 	"~": parsePrefixOp,
+// 	"!": parsePrefixOp
+// };
+
+var ASSIGNMENT = 1;
+// var CONDITIONAL = 2;
+var BOOLEAN = 2;
+var COMPARISON = 3;
+var SUM = 4;
+var PRODUCT = 5;
+// var EXPONENT = 6;
+// var PREFIX = 7;
+// var POSTFIX = 8;
+// var CALL = 9;
+
+var otherOperators = {
+	"+": makeInfixOp(SUM),
+	"-": makeInfixOp(SUM),
+	"*": makeInfixOp(PRODUCT),
+	"==": makeInfixOp(COMPARISON),
+	"and": makeInfixOp(BOOLEAN),
+	// "/": makeInfixOp(PRODUCT),
+	// "?": parseMixfixOp
+};
+
+function isOperator (token) {
+	return !!otherOperators[token];
+}
+
+function getPrecedence (token) {
+	if (token.type === 'EOF') return 0;
+	if (otherOperators[token.value.value.value]) return otherOperators[token.value.value.value].precedence;
+	return 0;
+}
+
+function parseExpression (precedence) {
+	var token = consume();
+	
+	// {
+	// 	type: 'message',
+	// 	value: {
+	// 		type: 'symbol',
+	// 		value: {
+	// 			type: 'number',
+	// 			value: '2'
+	// 		},
+	// 		arguments: []
+	// 	}
+	// }
+
+	// assume there are no nested chains inside. those can be parsed with a recursive call
+
+	var symbol = token.value;
+	// var prefixParser = symbol.value.value === "number" ? parseId : prefixOperators[token.value];
+
+	// if (!prefixParser) {
+	// 	throw new Error('unrecognized token ' + token.value);
+	// }
+
+	var prefixParser = parseId; // assume there are no prefix operators for now...
+
+	var left = prefixParser(token);
+
+	while (precedence < getPrecedence(token = lookahead())) {
+		var infixParser = otherOperators[token.value.value.value];
+
+		if (!infixParser) {
+			return left;
+		}
+
+		consume();
+
+		left = infixParser(left, token);
+	}
+
+	return left;
+}
+
+module.exports = {
+	parse: function (chain) {
+		input = [];
+		ptr = 0;
+
+		if (chain.type !== 'chain') return chain;
+		input = chain.value.slice();
+		input.push({type: 'EOF'});
+		var result = parseExpression(0);
+
+		return result;
+	},
+	isOperator: isOperator
+};
+},{}],16:[function(require,module,exports){
 /*
  * Copyright 2009-2011 Mozilla Foundation and contributors
  * Licensed under the New BSD license. See LICENSE.txt or:
@@ -3562,7 +5669,7 @@ exports.SourceMapGenerator = require('./source-map/source-map-generator').Source
 exports.SourceMapConsumer = require('./source-map/source-map-consumer').SourceMapConsumer;
 exports.SourceNode = require('./source-map/source-node').SourceNode;
 
-},{"./source-map/source-map-consumer":16,"./source-map/source-map-generator":17,"./source-map/source-node":18}],11:[function(require,module,exports){
+},{"./source-map/source-map-consumer":22,"./source-map/source-map-generator":23,"./source-map/source-node":24}],17:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -3661,7 +5768,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./util":19,"amdefine":20}],12:[function(require,module,exports){
+},{"./util":25,"amdefine":26}],18:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -3805,7 +5912,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./base64":13,"amdefine":20}],13:[function(require,module,exports){
+},{"./base64":19,"amdefine":26}],19:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -3849,7 +5956,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"amdefine":20}],14:[function(require,module,exports){
+},{"amdefine":26}],20:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -3931,7 +6038,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"amdefine":20}],15:[function(require,module,exports){
+},{"amdefine":26}],21:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2014 Mozilla Foundation and contributors
@@ -4019,7 +6126,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./util":19,"amdefine":20}],16:[function(require,module,exports){
+},{"./util":25,"amdefine":26}],22:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -4596,7 +6703,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./array-set":11,"./base64-vlq":12,"./binary-search":14,"./util":19,"amdefine":20}],17:[function(require,module,exports){
+},{"./array-set":17,"./base64-vlq":18,"./binary-search":20,"./util":25,"amdefine":26}],23:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -4998,7 +7105,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./array-set":11,"./base64-vlq":12,"./mapping-list":15,"./util":19,"amdefine":20}],18:[function(require,module,exports){
+},{"./array-set":17,"./base64-vlq":18,"./mapping-list":21,"./util":25,"amdefine":26}],24:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -5414,7 +7521,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./source-map-generator":17,"./util":19,"amdefine":20}],19:[function(require,module,exports){
+},{"./source-map-generator":23,"./util":25,"amdefine":26}],25:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -5735,7 +7842,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"amdefine":20}],20:[function(require,module,exports){
+},{"amdefine":26}],26:[function(require,module,exports){
 (function (process,__filename){
 /** vim: et:ts=4:sw=4:sts=4
  * @license amdefine 0.1.0 Copyright (c) 2011, The Dojo Foundation All Rights Reserved.
@@ -6037,1902 +8144,8 @@ function amdefine(module, requireFn) {
 
 module.exports = amdefine;
 
-}).call(this,require("JkpR2F"),"/../node_modules/iota-compiler/node_modules/escodegen/node_modules/source-map/node_modules/amdefine/amdefine.js")
-},{"JkpR2F":3,"path":2}],21:[function(require,module,exports){
-module.exports={
-  "name": "escodegen",
-  "description": "ECMAScript code generator",
-  "homepage": "http://github.com/Constellation/escodegen",
-  "main": "escodegen.js",
-  "bin": {
-    "esgenerate": "./bin/esgenerate.js",
-    "escodegen": "./bin/escodegen.js"
-  },
-  "version": "1.3.3",
-  "engines": {
-    "node": ">=0.10.0"
-  },
-  "maintainers": [
-    {
-      "name": "constellation",
-      "email": "utatane.tea@gmail.com"
-    }
-  ],
-  "repository": {
-    "type": "git",
-    "url": "http://github.com/Constellation/escodegen.git"
-  },
-  "dependencies": {
-    "esutils": "~1.0.0",
-    "estraverse": "~1.5.0",
-    "esprima": "~1.1.1",
-    "source-map": "~0.1.33"
-  },
-  "optionalDependencies": {
-    "source-map": "~0.1.33"
-  },
-  "devDependencies": {
-    "esprima-moz": "*",
-    "semver": "*",
-    "chai": "~1.7.2",
-    "gulp": "~3.5.0",
-    "gulp-mocha": "~0.4.1",
-    "gulp-eslint": "~0.1.2",
-    "jshint-stylish": "~0.1.5",
-    "gulp-jshint": "~1.4.0",
-    "commonjs-everywhere": "~0.9.6",
-    "bluebird": "~1.2.0",
-    "bower-registry-client": "~0.2.0"
-  },
-  "licenses": [
-    {
-      "type": "BSD",
-      "url": "http://github.com/Constellation/escodegen/raw/master/LICENSE.BSD"
-    }
-  ],
-  "scripts": {
-    "test": "gulp travis",
-    "unit-test": "gulp test",
-    "lint": "gulp lint",
-    "release": "node tools/release.js",
-    "build-min": "cjsify -ma path: tools/entry-point.js > escodegen.browser.min.js",
-    "build": "cjsify -a path: tools/entry-point.js > escodegen.browser.js"
-  },
-  "bugs": {
-    "url": "https://github.com/Constellation/escodegen/issues"
-  },
-  "_id": "escodegen@1.3.3",
-  "dist": {
-    "shasum": "f024016f5a88e046fd12005055e939802e6c5f23",
-    "tarball": "http://registry.npmjs.org/escodegen/-/escodegen-1.3.3.tgz"
-  },
-  "_from": "escodegen@1.3.3",
-  "_npmVersion": "1.4.3",
-  "_npmUser": {
-    "name": "constellation",
-    "email": "utatane.tea@gmail.com"
-  },
-  "directories": {},
-  "_shasum": "f024016f5a88e046fd12005055e939802e6c5f23",
-  "_resolved": "https://registry.npmjs.org/escodegen/-/escodegen-1.3.3.tgz",
-  "readme": "ERROR: No README data found!"
-}
-
-},{}],22:[function(require,module,exports){
-
-var escodegen = require('escodegen');
-
-var parser = require('./parser');
-var pratt = require('./pratt');
-
-var options = {};
-
-function setOptions (userOptions) {
-	options.wrapWithFunction = userOptions.wrapWithFunction || false;
-	options.useProxy = userOptions.useProxy || false;
-	options.functionName = userOptions.functionName || 'io';
-	options.runtimeLib = userOptions.runtimeLib || '_io';
-	options.self = userOptions.self || 'self';
-}
-
-function applyMacros (ast) {
-
-	// An AST is a list of chains
-	// A chain is a list of messages
-	// A message can have arguments which are messages or chains
-
-	infixOperatorMacro(ast);
-	assignmentOperatorMacro(ast);
-
-	return ast;
-}
-
-function findChainsInAST (nodelist) {
-
-	// Performs a post-order traversal of an AST and returns
-	// a list of references to all chain objects
-
-	var allChains = [];
-	function helper (nodelist) {
-		nodelist.forEach(function (node) {
-			if (node.type === 'chain') {
-				node.value.forEach(function (message) {
-					message.value.arguments.forEach(function (arg) {
-						helper(arg);
-					});
-				});
-				allChains.push(node);
-			}
-		});
-	}
-	helper(nodelist);
-	return allChains;
-}
-
-function assignmentOperatorMacro (ast) {
-
-	// Rewrites messages containing assignment operators
-	// with setSlot messages
-
-	var chains = findChainsInAST(ast);
-
-	while (chains.length > 0) {
-		var chain = chains.pop();
-
-		for (var i=0; i<chain.value.length; i++) {
-			var message = chain.value[i];
-
-			// Find an assignment operator
-			if (message.value.value.value !== ":=") continue;
-
-			// Pick the previous two elements in the chain.
-			// They are the target and the slot on the target that
-			// is being assigned:
-			// a b := c
-
-			var target, slotName;
-
-			if (i === 0) {
-				// := b
-				throw new Error("SyntaxError: no target for assignment operator");
-			} else if (i === 1) {
-				// a := b
-
-				// target defaults to Lobby
-				// TODO: even in method bodies! this has to be
-				// done during compilation when scope is known
-
-				target = {
-					type: 'message',
-					value: {
-						type: 'symbol',
-						value: {
-							type: 'identifier',
-							value: 'Lobby'
-						},
-						arguments: []
-					}
-				};
-				slotName = chain.value[0];
-			} else {
-				// a b := c
-				target = chain.value[i-2];
-				slotName = chain.value[i-1];
-			}
-
-			// rewrite the chain
-
-			// var current = chain.value[i];
-			// var prevtwo = chain.value.slice(Math.max(i-2,0), i);
-			var beforethose = chain.value.slice(0, Math.max(i-2, 0));
-			var after = chain.value.slice(i+1, chain.value.length);
-
-			var rhs = {type: 'chain', value: after};
-			var message = {
-				type: 'chain',
-				value: [{
-					type: 'message',
-					value: {
-						type: 'symbol',
-						value: {
-							type: 'string',
-							value: slotName.value.value.value
-						},
-						arguments: []
-					}
-				}]
-			};
-			var setSlot = {
-				type: 'message',
-				value: {
-					type: 'symbol',
-					value: {
-						type: 'identifier',
-						value: 'setSlot'
-					},
-					arguments: [[message], [rhs]]
-				}
-			};
-
-			chain.value = beforethose.concat([target, setSlot]);
-
-			// Recurse on the newly created chain in case it contains
-			// more operators
-			chains.push(rhs);
-
-			break;
-		
-		}
-	}
-}
-
-function infixOperatorMacro (ast) {
-
-	// Rearranges all chains containing operators into properly
-	// nested messages based on precedence
-
-	var chains = findChainsInAST(ast).filter(function (chain) {
-
-		// Skip chains that cannot possibly contain operators
-		if (chain.value.length <= 1) return false;
-
-		// A chain will be processed if it contains at least one operator
-		// message with no arguments (meaning it has not been processed yet)
-		var hasAnOperator = chain.value.filter(function (message) {
-			return pratt.isOperator(message.value.value.value) && message.value.arguments.length === 0;
-		}).length > 0;
-
-		return hasAnOperator;
-	});
-
-	chains.forEach(function (chain) {
-		chain.value = pratt.parse(chain).value;
-	});
-}
-
-function parse (code) {
-
-	var ast = parser.parse(code);
-
-	ast = applyMacros(ast);
-
-	var generated = [];
-	ast.forEach(function (chain) {
-
-		var proxy = {
-			"type": "CallExpression",
-			"callee": {
-				"type": "MemberExpression",
-				"computed": false,
-				"object": astIdentifier("Proxy"),
-				"property": {
-					"type": "Identifier",
-					"name": "set"
-				}
-			},
-			"arguments": [{
-				"type": "Identifier",
-				"name": options.self
-			}]
-		};
-
-		chain = compile(chain,
-			options.useProxy ? proxy : astIdentifier('Lobby'),
-			options.useProxy ? proxy : astIdentifier('Lobby'));
-		generated.push(chain);
-	});
-	
-	generated = {
-		type: "Program",
-		body: generated.map(function (expr) {
-			return {
-				type: "ExpressionStatement",
-				expression: expr
-			};
-		})
-	};
-
-	if (options.wrapWithFunction) {
-		generated.body[generated.body.length-1] = implicitReturnStatement(generated.body[generated.body.length-1]);
-		generated = wrapInFunction(generated);
-	}
-
-	return generated;
-}
-
-function parseAndEmit (code) {
-	return escodegen.generate(parse(code));
-}
-
-function wrapInFunction (program) {
-
-	var bodyBlockStatement = {
-		"type": "BlockStatement",
-		"body": [{
-			"type": "VariableDeclaration",
-			"declarations": [{
-				"type": "VariableDeclarator",
-				"id": {
-					"type": "Identifier",
-					"name": options.self
-				},
-				"init": {
-					"type": "LogicalExpression",
-					"operator": "||",
-					"left": {
-						"type": "ThisExpression"
-					},
-					"right": {
-						"type": "ObjectExpression",
-						"properties": []
-					}
-				}
-			}],
-			"kind": "var"
-		}].concat(program.body)
-	};
-
-	var propertyAccess = options.functionName.indexOf('.') !== -1;
-
-	if (propertyAccess) {
-		return {
-	        "type": "ExpressionStatement",
-	        "expression": {
-	            "type": "AssignmentExpression",
-	            "operator": "=",
-	            "left": {
-	                "type": "Identifier",
-	                "name": options.functionName
-	            },
-	            "right": {
-	                "type": "FunctionExpression",
-	                "id": null,
-	                "params": [],
-	                "body": bodyBlockStatement
-	            }
-	        }
-	    };
-	}
-	else {
-		return {
-			type: "Program",
-			body: [{
-				"type": "FunctionDeclaration",
-				"id": {
-					"type": "Identifier",
-					"name": options.functionName
-				},
-				"params": [],
-				"body": bodyBlockStatement
-			}]
-		};
-	}
-}
-
-function implicitReturnStatement(expressionStatement) {
-
-	function unwrap(expr) {
-		return {
-			type: "CallExpression",
-			callee: {
-				type: "MemberExpression",
-				computed: false,
-				object: {
-					type: "Identifier",
-					name: options.runtimeLib
-				},
-				property: {
-					type: "Identifier",
-					name: "unwrapIoValue"
-				}
-			},
-			arguments: [expr]
-		};
-	}
-
-	// var program = ast;
-	// var wrapperFunction = program.body[0];
-	// var blockStatement = wrapperFunction.body;
-	// var lastExpressionStatement = blockStatement.body[blockStatement.body.length - 1];
-	// blockStatement.body[blockStatement.body.length - 1] = ;
-	return {
-		type: "ReturnStatement",
-		argument: unwrap(expressionStatement.expression)
-	};
-}
-
-function getEnclosingRange (exprlist) {
-	function priority (s, c) {
-		// line number must be smaller
-		// if line number is tied, column must be smaller
-	    return c.line < s.line ? c : (c.line === s.line && c.column < s.column ? c : s);
-	};
-
-	var inf = {
-	    line: Infinity,
-	    column: Infinity
-	};
-
-	var locInfo = exprlist
-		.map(function(node) {return node.loc;})
-		.filter(function(node) {return !!node;});
-
-	if (locInfo.length > 0) {
-		var start = locInfo.map(function(node) {return node.start;}).reduce(priority, inf);
-		var end = locInfo.map(function(node) {return node.end;}).reduce(priority, inf);
-
-		return {start: start, end: end};
-	}
-
-	return null;
-}
-
-function compile (ast, receiver, localContext) {
-	var result = {};
-
-	if (ast.type === 'chain') {
-		//  A chain is a series of left-associative messages
-		var chain = ast.value;
-		var current;
-
-		for (var i=0; i<chain.length; i++) {
-			// The receiver of a message in a chain is the preceding one
-			current = chain[i];
-			current = compile(current, receiver, localContext);
-			receiver = current;
-		}
-		return current;
-	}
-	else if (ast.type === 'message') {
-		// The symbol is the name of the message
-		var symbol = ast.value;
-
-		if (symbol.value.type === 'number') {
-			result = {
-				// loc: symbol.loc,
-				type: "CallExpression",
-				callee: astIdentifier('IoNumberWrapper'),// symbol.loc),
-				arguments: [{type: "Literal", value: +symbol.value.value}]//, loc: symbol.loc}]
-			};
-		}
-		else if (symbol.value.type === 'string') {
-			result = {
-				// loc: symbol.loc,
-				type: "CallExpression",
-				callee: astIdentifier('IoStringWrapper'),// symbol.loc),
-				arguments: [{type: "Literal", value: symbol.value.value}]//, loc: symbol.loc}]
-			};
-		}
-		else if (symbol.value.type === 'identifier') {
-			var symbolValue = {type: "Literal", value: symbol.value.value};
-	
-			// a.b(args);
-			result = {
-				// loc: symbol.loc,
-				type: "CallExpression",
-				callee: {
-					// loc: symbol.loc,
-				    type: "MemberExpression",
-				    object: receiver, // a
-				    property: {
-				    	// loc: symbol.loc,
-		                type: "Identifier",
-		                name: "send" // b
-		            },
-				    computed: false,
-				},
-				arguments: [symbolValue].concat(symbol.arguments.map(function (arg) {
-					 // arg is a list of exprs delimted by ;
-                    var result = {
-                        type: "SequenceExpression",
-                        expressions: arg.map(function (realarg) {
-                            return compile(realarg, localContext, localContext);
-                        })
-                    };
-
-                    // var loc = getEnclosingRange(result.expressions);
-                    // if (loc !== null) result.loc = loc;
-
-                    return result;
-				}))
-			};
-
-			if (symbolValue.value === "method") {
-
-				result.arguments = [symbolValue].concat(symbol.arguments.map(function (arg) {
-					// Arguments will have the locals object as context
-					// arg is also a list of expressions here
-                    return {
-                        type: "SequenceExpression",
-                        expressions: arg.map(function (realarg) {
-							return compile(realarg, {type: "Identifier", name: "locals"}, {type: "Identifier", name: "locals"});
-                        })
-                    };
-				}));
-
-				// Turn all arguments but the last to strings instead;
-				// they will be sent as messages to the locals object
-
-				for (var i = 1; i < result.arguments.length - 1; i++) {
-					// Each argument is a SequenceExpression
-					// Grab the last expression in each sequence and turn it into a string
-					result.arguments[i] = result.arguments[i].expressions[result.arguments[i].expressions.length-1].arguments[0];
-				}
-
-				// The last becomes a thunk
-
-				var lastArgument = result.arguments[result.arguments.length - 1];
-				var methodBody = lastArgument;
-
-				result.arguments[result.arguments.length - 1] = {
-					type: "CallExpression",
-					callee: astIdentifier('IoThunk'),
-					arguments: [{
-						type: "FunctionExpression",
-						id: null,
-						params: [{
-							type: "Identifier",
-							name: "locals"
-						}],
-						body: {
-							type: "BlockStatement",
-							body: [{
-								type: "ReturnStatement",
-								argument: methodBody
-							}]
-						}
-					}]
-				}
-			}
-			else if (symbolValue.value === "if") {
-
-				// Convert last two arguments into thunks
-				// TODO handle cases where if statements have < 3 arguments
-
-				var conseq = result.arguments[2];
-				result.arguments[2] = {
-					type: "CallExpression",
-					callee: astIdentifier('IoThunk'),
-					arguments: [{
-						type: "FunctionExpression",
-						id: null,
-						params: [],
-						body: {
-							type: "BlockStatement",
-							body: [{
-								type: "ReturnStatement",
-								argument: conseq
-							}]
-						}
-					}]
-				};
-
-				var alt = result.arguments[3];
-				result.arguments[3] = {
-					type: "CallExpression",
-					callee: astIdentifier('IoThunk'),
-					arguments: [{
-						type: "FunctionExpression",
-						id: null,
-						params: [],
-						body: {
-							type: "BlockStatement",
-							body: [{
-								type: "ReturnStatement",
-								argument: alt
-							}]
-						}
-					}]
-				};
-			}
-		}
-	} else {
-		throw new Error('CompileError: unrecognized AST type: ' + ast.type);
-	}
-
-	return result;
-}
-
-function astIdentifier (id) {//, loc) {
-	return {
-	    // "loc": loc,
-	    "type": "MemberExpression",
-	    "computed": false,
-	    "object": {
-	        "type": "Identifier",
-	    	// "loc": loc,
-	        "name": options.runtimeLib
-	    },
-	    "property": {
-	    	// "loc": loc,
-	        "type": "Identifier",
-	        "name": id
-	    }
-	};
-}
-
-module.exports = {
-	parse: parse,
-	compile: parseAndEmit,
-	setOptions: setOptions,
-};
-
-},{"./parser":24,"./pratt":25,"escodegen":5}],23:[function(require,module,exports){
-
-var _io = (function () {
-
-	function IoObject (slots, proto) {
-		var self = {};
-		self.slots = slots || {};
-		self.proto = proto;
-
-		self.identity = Math.random() + "";
-
-		self.findSlot = IoObject.findSlot;
-		self.send = IoObject.send;
-		self.equals = IoObject.equals;
-
-		return self;
-	}
-
-	IoObject.equals = function (other) {
-		return this.identity === other.identity;
-	};
-
-	IoObject.findSlot = function (slot) {
-		if (this.isRootObject || this.slots.hasOwnProperty(slot)) {
-			return this.slots[slot];
-		} else if (this.proto) {
-			return this.proto.findSlot(slot);
-		} else {
-			return null;
-		}
-	};
-
-	IoObject.send = function (message) {
-		var args = Array.prototype.slice.call(arguments, 1);
-		var slot = this.findSlot(message);
-
-		if (slot) {
-			if (typeof slot === 'function') {
-				return slot.apply(this, args);
-			} else {
-				if (slot.activate) {
-					return slot.activate.apply(slot, [this].concat(args));
-				} else {
-					return slot;
-				}
-			}
-		} else {
-			throw new Error("Object send: unrecognized message '" + message + "'");
-		}
-	};
-
-	var Lobby = IoObject({type: 'Lobby'});
-	Lobby.isLobby = true;
-
-	var IoRootObject = IoObject({
-		type: 'Object',
-		clone: function (name, instance) {
-			var slots = {};
-			if (!instance) {
-				slots.type = name;
-			}
-			return IoObject(slots, this);
-		},
-		slotNames: function () {
-			return Object.keys(this.slots);
-		},
-		getSlot: function (slotName) {
-			// TODO this method only works for user-defined methods for now,
-			// which are IoObjects and can respond to messages.
-			// At the moment all primitive methods are raw functions and won't work.
-			slotName = unwrapIoValue(slotName);
-			var slot = this.findSlot(slotName);
-			return slot;
-		},
-		setSlot: function (slot, value) {
-			slot = unwrapIoValue(slot);
-			this.slots[slot] = value;
-			return IoNil;
-		},
-		updateSlot: function (slot, value) {
-			if (this.slots[slot]) {
-				this.slots[slot] = value;
-			} else {
-				throw new Error("Object updateSlot: slot '" + slot + "' doesn't exist; cannot update");
-			}
-		},
-		toIoString: function () {
-			return IoStringWrapper("#" + getTypeOf(this) + " " + this.send("slotNames"));
-		},
-		proto: function () {
-			return this.proto;
-		},
-		writeln: function (thing) {
-			console.log(unwrapIoValue(thing.send('toIoString')));
-			return IoNil;
-		},
-		method: function () {
-			var args = Array.prototype.slice.call(arguments);
-			var parameters = args.slice(0, args.length-1);
-			var thunk = args[args.length-1];
-
-			var method = IoMethod.send('clone');
-			method.slots.type = IoMethod.slots.type; // TODO get rid of this once clone properly sets the type field
-			method.body = thunk;
-			method.parameters = parameters;
-			method.self = this;
-
-			method.activate = function () {
-				var self = arguments[0];
-				var args = Array.prototype.slice.call(arguments, 1);
-
-				var locals = IoObject({}, self);
-				for (var i=0; i<args.length; i++) {
-					locals.send('setSlot', IoStringWrapper(this.parameters[i]), args[i]);
-					if (i > this.parameters) break; // over-application
-				}
-				locals.send('setSlot', IoStringWrapper('self'), self);
-
-				return this.body.eval(locals);
-			};
-
-			return method;
-		},
-		if: function (condition, conseq, alt) {
-			if (condition.equals(IoTrue)) {
-				return conseq.eval();
-			}
-			else {
-				return alt.eval();
-			}
-		},
-		"==": function (other) {
-			return IoBooleanWrapper(this.equals(other));
-		}
-	}, Lobby);
-	IoRootObject.isRootObject = true;
-
-	var IoNil = IoObject({
-		type: 'Nil',
-		toIoString: function () {
-			return IoStringWrapper("nil");
-		}
-	}, IoRootObject);
-
-	var IoNumber = IoObject({
-		type: 'Number',
-		"+": function (other) {
-			return IoNumberWrapper(unwrapIoValue(this) + unwrapIoValue(other));
-		},
-		"*": function (other) {
-			return IoNumberWrapper(unwrapIoValue(this) * unwrapIoValue(other));
-		},
-		"-": function (other) {
-			return IoNumberWrapper(unwrapIoValue(this) - unwrapIoValue(other));
-		},
-		"==": function (other) {
-			return IoBooleanWrapper(unwrapIoValue(this) === unwrapIoValue(other));
-		},
-		toIoString: function () {
-			return IoStringWrapper(unwrapIoValue(this));
-		}
-	}, IoRootObject);
-
-	function IoNumberWrapper (value) {
-		return IoObject({value: value}, IoNumber);
-	}
-
-	var IoString = IoObject({
-		type: 'String',
-		charAt: function (n) {
-			n = unwrapIoValue(n);
-			return IoStringWrapper(unwrapIoValue(this).charAt(n));
-		},
-		toIoString: function () {
-			return this;
-		}
-	}, IoRootObject);
-	
-	function IoStringWrapper (value) {
-		return IoObject({value: value}, IoString);
-	}
-
-	var IoTrue = IoObject({
-		type: 'Boolean',
-		and: function (other) {
-			if (other.equals(this)) return this;
-			else return IoFalse;
-		},
-		toIoString: function () {
-			return IoStringWrapper("true");
-		}
-	}, IoRootObject);
-
-	var IoFalse = IoObject({
-		type: 'Boolean',
-		and: function (other) {
-			return IoFalse;
-		},
-		toIoString: function () {
-			return IoStringWrapper("false");
-		}
-	}, IoRootObject);
-
-	function IoBooleanWrapper (bool) {
-		return bool ? IoTrue : IoFalse;
-	}
-
-	function IoThunk (f) {
-		return {f:f, eval: function() {return f.apply(null, Array.prototype.slice.call(arguments));}};
-	}
-
-	var IoMethod = IoObject({
-		type: 'Block',
-		activate: null // defined later
-	}, IoRootObject);
-
-	// A proxy object for hooking into the messages of another
-	// object and forwarding them, redirecting them, etc.
-	// For internal use only.
-
-	function IoProxy (forObject, action) {
-		var p = IoObject({type: 'Proxy'}, forObject);
-		
-		p.send = function (message) {
-			var result = action.apply(this, arguments);
-			if (result) {
-				return result;
-			} else {
-				return IoObject.send.apply(p, arguments);
-			}
-		};
-		return p;
-	}
-
-	Lobby.slots['nil'] = IoNil;
-	Lobby.slots['true'] = IoTrue;
-	Lobby.slots['false'] = IoFalse;
-	Lobby.slots['Object'] = IoRootObject;
-	Lobby.slots['Lobby'] = Lobby;
-	Lobby.proto = IoRootObject;
-
-	function isJSPrimitive (value) {
-		var type = typeof value;
-		switch (type) {
-		case 'number':
-		case 'string':
-		case 'boolean':
-		case 'function':
-			return true;
-		case 'object':
-			// Is there a less duck-typed way to do this?
-			return value.slots === undefined;
-		default:
-			throw new Error('isJSPrimitive: invalid value ' + value + ' of type ' + type);
-		}
-	}
-
-	function getTypeOf (ioValue) {
-		if (!ioValue) {
-			throw new Error('getTypeOf: attempt to get type of invalid Io value ' + ioValue);
-		}
-
-		if (typeof ioValue === 'function') {
-			// Assuming this isn't a bug... the value is either a
-			// native method or a wrapped external method
-			return 'Block';
-		}
-
-		var type = ioValue.send('type');
-
-		if (!type) {
-			throw new Error('getTypeOf: invalid type ' + ioValue);
-		}
-
-		return type;
-	}
-
-	function unwrapIoValue (ioValue) {
-
-		var type = getTypeOf(ioValue);
-
-		switch (type) {
-		case 'Nil':
-			return undefined;
-		case 'Number':
-		case 'String':
-			return ioValue.slots.value;
-		case 'Boolean':
-			return ioValue.equals(IoTrue);
-		case 'Block':
-			// To wrap a block, we wrap it in a function which
-			// activates the original Io method when applied.
-			// The appropriate Io context is kept.
-
-			return function () {
-				var args = Array.prototype.slice.call(arguments).map(_io.wrapJSValue);
-				if (ioValue.activate) {
-					return unwrapIoValue(ioValue.activate.apply(ioValue, [ioValue.self].concat(args)));
-				} else {
-					throw new Error('unwrapIoValue: Io method has type \'Block\' but does not have an activation method');
-				}
-			};
-		default:
-			var obj = {};
-			Object.keys(ioValue.slots).forEach(function (slotKey) {
-
-				var value = ioValue.slots[slotKey];
-				
-				// This has to be done because Io object slots might
-				// contain JS primitives (the type of an IoString can't
-				// be an IoString, for example - infinite loop).
-
-				// For now it's assumed that if an Io object slot contains
-				// a primitive value (and if it's not a bug), the value is a
-				// library primitive and shouldn't be copied out.
-				// This rule might not always hold.
-
-				if (!isJSPrimitive(value)) {
-					obj[slotKey] = unwrapIoValue(value);
-				}
-			});
-			return obj;
-		}
-	}
-
-	function wrapJSValue (jsValue) {
-
-		if (jsValue === undefined || jsValue === null) {
-			return IoNil;
-		}
-
-		var type = typeof jsValue;
-		switch (type) {
-		case 'number':
-			return IoNumberWrapper(jsValue);
-		case 'string':
-			return IoStringWrapper(jsValue);
-		case 'boolean':
-			return IoBooleanWrapper(jsValue);
-		case 'object':
-			var obj = IoObject({type: 'JSObject'}, IoRootObject);
-			Object.keys(jsValue).forEach(function (key) {
-				obj.slots[key] = wrapJSValue(jsValue[key]);
-			});
-			return obj;
-		case 'function':
-			
-			// We use the fact that most library methods are vanilla
-			// functions to simply return a vanilla function.
-			// Additional type safety would probably be a good idea
-			// here... eventually
-
-			return jsValue;
-		default:
-			throw new Error('wrapJSValue: invalid object type ' + type);
-		}
-	}
-
-	// A special proxy for JavaScript interop
-
-	var Proxy = {
-		set: function(obj) {
-			var actualProxy = IoProxy(Lobby, function(message) {
-				if (this.obj && this.obj[message]) {
-					if (typeof this.obj[message] === 'function') {
-						var args = Array.prototype.slice.call(arguments, 1);
-						args = args.map(_io.unwrapIoValue);
-						return wrapJSValue(this.obj[message].apply(this.obj, args));
-					} else {
-						return wrapJSValue(this.obj[message]);
-					}
-				}
-				return false;
-			});
-			actualProxy.obj = obj;
-
-			return actualProxy;
-		}
-	};
-	
-	return {
-		IoObject: IoObject,
-		IoNil: IoNil,
-		IoNumber: IoNumber,
-		IoNumberWrapper: IoNumberWrapper,
-		IoString: IoString,
-		IoStringWrapper: IoStringWrapper,
-		IoTrue: IoTrue,
-		IoFalse: IoFalse,
-		IoBooleanWrapper: IoBooleanWrapper,
-		IoThunk: IoThunk,
-		IoMethod: IoMethod,
-		IoProxy: IoProxy,
-		Lobby: Lobby,
-		IoRootObject: IoRootObject,
-		getTypeOf: getTypeOf,
-		unwrapIoValue: unwrapIoValue,
-		wrapJSValue: wrapJSValue,
-		Proxy: Proxy,
-	};
-})();
-
-if (typeof module !== 'undefined' && module.exports) {
-	module.exports = _io;
-}
-
-},{}],24:[function(require,module,exports){
-(function (process){
-/* parser generated by jison 0.4.13 */
-/*
-  Returns a Parser object of the following structure:
-
-  Parser: {
-    yy: {}
-  }
-
-  Parser.prototype: {
-    yy: {},
-    trace: function(),
-    symbols_: {associative list: name ==> number},
-    terminals_: {associative list: number ==> name},
-    productions_: [...],
-    performAction: function anonymous(yytext, yyleng, yylineno, yy, yystate, $$, _$),
-    table: [...],
-    defaultActions: {...},
-    parseError: function(str, hash),
-    parse: function(input),
-
-    lexer: {
-        EOF: 1,
-        parseError: function(str, hash),
-        setInput: function(input),
-        input: function(),
-        unput: function(str),
-        more: function(),
-        less: function(n),
-        pastInput: function(),
-        upcomingInput: function(),
-        showPosition: function(),
-        test_match: function(regex_match_array, rule_index),
-        next: function(),
-        lex: function(),
-        begin: function(condition),
-        popState: function(),
-        _currentRules: function(),
-        topState: function(),
-        pushState: function(condition),
-
-        options: {
-            ranges: boolean           (optional: true ==> token location info will include a .range[] member)
-            flex: boolean             (optional: true ==> flex-like lexing behaviour where the rules are tested exhaustively to find the longest match)
-            backtrack_lexer: boolean  (optional: true ==> lexer regexes are tested in order and for each matching regex the action code is invoked; the lexer terminates the scan when a token is returned by the action code)
-        },
-
-        performAction: function(yy, yy_, $avoiding_name_collisions, YY_START),
-        rules: [...],
-        conditions: {associative list: name ==> set},
-    }
-  }
-
-
-  token location info (@$, _$, etc.): {
-    first_line: n,
-    last_line: n,
-    first_column: n,
-    last_column: n,
-    range: [start_number, end_number]       (where the numbers are indexes into the input string, regular zero-based)
-  }
-
-
-  the parseError function receives a 'hash' object with these members for lexer and parser errors: {
-    text:        (matched text)
-    token:       (the produced terminal token, if any)
-    line:        (yylineno)
-  }
-  while parser (grammar) errors will also provide these members, i.e. parser errors deliver a superset of attributes: {
-    loc:         (yylloc)
-    expected:    (string describing the set of expected tokens)
-    recoverable: (boolean: TRUE when the parser has a error recovery rule available for this particular error)
-  }
-*/
-var parser = (function(){
-var parser = {trace: function trace() { },
-yy: {},
-symbols_: {"error":2,"program":3,"looselyTerminatedExpr":4,"EOF":5,"zeroOrMoreTerminators":6,"exprs":7,"oneOrMoreTerminators":8,"expr":9,"message":10,"(":11,")":12,"symbol":13,"arguments":14,"NEWLINE":15,";":16,"argumentList":17,",":18,"IDENTIFIER":19,"NUMBER":20,"string":21,"EmptyString":22,"QuotedString":23,"QuotedStringEscape":24,"quotedstring":25,"$accept":0,"$end":1},
-terminals_: {2:"error",5:"EOF",11:"(",12:")",15:"NEWLINE",16:";",18:",",19:"IDENTIFIER",20:"NUMBER",22:"EmptyString",23:"QuotedString",24:"QuotedStringEscape",25:"quotedstring"},
-productions_: [0,[3,2],[3,1],[4,3],[7,3],[7,1],[9,2],[9,1],[9,3],[10,1],[10,2],[8,2],[8,1],[8,2],[8,1],[6,1],[6,0],[14,2],[14,3],[17,1],[17,3],[13,1],[13,1],[13,1],[21,1],[21,1],[21,1],[21,2],[21,2]],
-performAction: function anonymous(yytext, yyleng, yylineno, yy, yystate /* action[1] */, $$ /* vstack */, _$ /* lstack */) {
-/* this == yyval */
-
-var $0 = $$.length - 1;
-switch (yystate) {
-case 1:return $$[$0-1];
-break;
-case 2:return [];
-break;
-case 3:this.$ = $$[$0-1];
-break;
-case 4:$$[$0-2].push($$[$0]); this.$ = $$[$0-2];
-break;
-case 5:this.$ = [$$[$0]];
-break;
-case 6:$$[$0-1].value.push({type: 'message', value: $$[$0]}); this.$ = $$[$0-1];
-break;
-case 7:this.$ = {type: 'chain', value: [{type: 'message', value: $$[$0]}]};
-break;
-case 8:this.$ = $$[$0-1];
-break;
-case 9:
-            this.$ = {
-                type: 'symbol',
-                value: $$[$0],
-                arguments: [],
-                loc: {start: {line: this._$.first_line, column: this._$.first_column}, end: {line: this._$.last_line, column: this._$.last_column}}
-            };
-        
-break;
-case 10:
-            this.$ = {
-                type: 'symbol',
-                value: $$[$0-1],
-                arguments: $$[$0],
-                loc: {start: {line: this._$.first_line, column: this._$.first_column}, end: {line: this._$.last_line, column: this._$.last_column}}
-            };
-        
-break;
-case 17:this.$ = [];
-break;
-case 18:this.$ = $$[$0-1];
-break;
-case 19:this.$ = [$$[$0]];
-break;
-case 20:$$[$0-2].push($$[$0]); this.$ = $$[$0-2]; 
-break;
-case 21:this.$ = {type: 'identifier', value: $$[$0]};
-break;
-case 22:this.$ = {type: 'number', value: $$[$0]};
-break;
-case 23:this.$ = {type: 'string', value: $$[$0]};
-break;
-case 24:
-        this.$ = '';
-    
-break;
-case 26:
-        switch (yytext)
-        {
-            case 'b':       this.$ = '\b'; break;
-            case 'n':       this.$ = '\n'; break;
-            case 'r':       this.$ = '\r'; break;
-            case 't':       this.$ = '\t'; break;
-            case "'":       this.$ = "'"; break;
-            case '"':       this.$ = '"'; break;
-            case '\\':      this.$ = '\\'; break;
-            case '\n':
-            case '\r\n':    this.$ = ''; break;
-            default:        this.$ = '\\' + $$[$0]; break;
-        }
-    
-break;
-case 27:
-        switch ($$[$0-1])
-        {
-            case 'b':       this.$ = '\b'; break;
-            case 'n':       this.$ = '\n'; break;
-            case 'r':       this.$ = '\r'; break;
-            case 't':       this.$ = '\t'; break;
-            case "'":       this.$ = "'"; break;
-            case '"':       this.$ = '"'; break;
-            case '\\':      this.$ = '\\'; break;
-            case '\n':
-            case '\r\n':    this.$ = ''; break;
-            default:        this.$ = '\\' + $$[$0-1]; break;
-        }
-        this.$ += $$[$0];
-    
-break;
-case 28:
-        this.$ = $$[$0-1] + $$[$0];
-    
-break;
-}
-},
-table: [{3:1,4:2,5:[1,3],6:4,8:5,11:[2,16],15:[1,6],16:[1,7],19:[2,16],20:[2,16],22:[2,16],23:[2,16],24:[2,16]},{1:[3]},{5:[1,8]},{1:[2,2]},{7:9,9:10,10:11,11:[1,12],13:13,19:[1,14],20:[1,15],21:16,22:[1,17],23:[1,18],24:[1,19]},{11:[2,15],19:[2,15],20:[2,15],22:[2,15],23:[2,15],24:[2,15]},{5:[2,12],8:20,11:[2,12],12:[2,12],15:[1,6],16:[1,7],18:[2,12],19:[2,12],20:[2,12],22:[2,12],23:[2,12],24:[2,12]},{5:[2,14],8:21,11:[2,14],12:[2,14],15:[1,6],16:[1,7],18:[2,14],19:[2,14],20:[2,14],22:[2,14],23:[2,14],24:[2,14]},{1:[2,1]},{5:[2,16],6:22,8:23,12:[2,16],15:[1,6],16:[1,7],18:[2,16]},{5:[2,5],10:24,12:[2,5],13:13,15:[2,5],16:[2,5],18:[2,5],19:[1,14],20:[1,15],21:16,22:[1,17],23:[1,18],24:[1,19]},{5:[2,7],12:[2,7],15:[2,7],16:[2,7],18:[2,7],19:[2,7],20:[2,7],22:[2,7],23:[2,7],24:[2,7]},{9:25,10:11,11:[1,12],13:13,19:[1,14],20:[1,15],21:16,22:[1,17],23:[1,18],24:[1,19]},{5:[2,9],11:[1,27],12:[2,9],14:26,15:[2,9],16:[2,9],18:[2,9],19:[2,9],20:[2,9],22:[2,9],23:[2,9],24:[2,9]},{5:[2,21],11:[2,21],12:[2,21],15:[2,21],16:[2,21],18:[2,21],19:[2,21],20:[2,21],22:[2,21],23:[2,21],24:[2,21]},{5:[2,22],11:[2,22],12:[2,22],15:[2,22],16:[2,22],18:[2,22],19:[2,22],20:[2,22],22:[2,22],23:[2,22],24:[2,22]},{5:[2,23],11:[2,23],12:[2,23],15:[2,23],16:[2,23],18:[2,23],19:[2,23],20:[2,23],22:[2,23],23:[2,23],24:[2,23]},{5:[2,24],11:[2,24],12:[2,24],15:[2,24],16:[2,24],18:[2,24],19:[2,24],20:[2,24],22:[2,24],23:[2,24],24:[2,24]},{5:[2,25],11:[2,25],12:[2,25],15:[2,25],16:[2,25],18:[2,25],19:[2,25],20:[2,25],22:[2,25],23:[2,25],24:[2,25],25:[1,28]},{5:[2,26],11:[2,26],12:[2,26],15:[2,26],16:[2,26],18:[2,26],19:[2,26],20:[2,26],22:[2,26],23:[2,26],24:[2,26],25:[1,29]},{5:[2,11],11:[2,11],12:[2,11],18:[2,11],19:[2,11],20:[2,11],22:[2,11],23:[2,11],24:[2,11]},{5:[2,13],11:[2,13],12:[2,13],18:[2,13],19:[2,13],20:[2,13],22:[2,13],23:[2,13],24:[2,13]},{5:[2,3],12:[2,3],18:[2,3]},{5:[2,15],9:30,10:11,11:[1,12],12:[2,15],13:13,18:[2,15],19:[1,14],20:[1,15],21:16,22:[1,17],23:[1,18],24:[1,19]},{5:[2,6],12:[2,6],15:[2,6],16:[2,6],18:[2,6],19:[2,6],20:[2,6],22:[2,6],23:[2,6],24:[2,6]},{10:24,12:[1,31],13:13,19:[1,14],20:[1,15],21:16,22:[1,17],23:[1,18],24:[1,19]},{5:[2,10],12:[2,10],15:[2,10],16:[2,10],18:[2,10],19:[2,10],20:[2,10],22:[2,10],23:[2,10],24:[2,10]},{4:34,6:4,8:5,11:[2,16],12:[1,32],15:[1,6],16:[1,7],17:33,19:[2,16],20:[2,16],22:[2,16],23:[2,16],24:[2,16]},{5:[2,28],11:[2,28],12:[2,28],15:[2,28],16:[2,28],18:[2,28],19:[2,28],20:[2,28],22:[2,28],23:[2,28],24:[2,28]},{5:[2,27],11:[2,27],12:[2,27],15:[2,27],16:[2,27],18:[2,27],19:[2,27],20:[2,27],22:[2,27],23:[2,27],24:[2,27]},{5:[2,4],10:24,12:[2,4],13:13,15:[2,4],16:[2,4],18:[2,4],19:[1,14],20:[1,15],21:16,22:[1,17],23:[1,18],24:[1,19]},{5:[2,8],12:[2,8],15:[2,8],16:[2,8],18:[2,8],19:[2,8],20:[2,8],22:[2,8],23:[2,8],24:[2,8]},{5:[2,17],12:[2,17],15:[2,17],16:[2,17],18:[2,17],19:[2,17],20:[2,17],22:[2,17],23:[2,17],24:[2,17]},{12:[1,35],18:[1,36]},{12:[2,19],18:[2,19]},{5:[2,18],12:[2,18],15:[2,18],16:[2,18],18:[2,18],19:[2,18],20:[2,18],22:[2,18],23:[2,18],24:[2,18]},{4:37,6:4,8:5,11:[2,16],15:[1,6],16:[1,7],19:[2,16],20:[2,16],22:[2,16],23:[2,16],24:[2,16]},{12:[2,20],18:[2,20]}],
-defaultActions: {3:[2,2],8:[2,1]},
-parseError: function parseError(str, hash) {
-    if (hash.recoverable) {
-        this.trace(str);
-    } else {
-        throw new Error(str);
-    }
-},
-parse: function parse(input) {
-    var self = this, stack = [0], vstack = [null], lstack = [], table = this.table, yytext = '', yylineno = 0, yyleng = 0, recovering = 0, TERROR = 2, EOF = 1;
-    var args = lstack.slice.call(arguments, 1);
-    this.lexer.setInput(input);
-    this.lexer.yy = this.yy;
-    this.yy.lexer = this.lexer;
-    this.yy.parser = this;
-    if (typeof this.lexer.yylloc == 'undefined') {
-        this.lexer.yylloc = {};
-    }
-    var yyloc = this.lexer.yylloc;
-    lstack.push(yyloc);
-    var ranges = this.lexer.options && this.lexer.options.ranges;
-    if (typeof this.yy.parseError === 'function') {
-        this.parseError = this.yy.parseError;
-    } else {
-        this.parseError = Object.getPrototypeOf(this).parseError;
-    }
-    function popStack(n) {
-        stack.length = stack.length - 2 * n;
-        vstack.length = vstack.length - n;
-        lstack.length = lstack.length - n;
-    }
-    function lex() {
-        var token;
-        token = self.lexer.lex() || EOF;
-        if (typeof token !== 'number') {
-            token = self.symbols_[token] || token;
-        }
-        return token;
-    }
-    var symbol, preErrorSymbol, state, action, a, r, yyval = {}, p, len, newState, expected;
-    while (true) {
-        state = stack[stack.length - 1];
-        if (this.defaultActions[state]) {
-            action = this.defaultActions[state];
-        } else {
-            if (symbol === null || typeof symbol == 'undefined') {
-                symbol = lex();
-            }
-            action = table[state] && table[state][symbol];
-        }
-                    if (typeof action === 'undefined' || !action.length || !action[0]) {
-                var errStr = '';
-                expected = [];
-                for (p in table[state]) {
-                    if (this.terminals_[p] && p > TERROR) {
-                        expected.push('\'' + this.terminals_[p] + '\'');
-                    }
-                }
-                if (this.lexer.showPosition) {
-                    errStr = 'Parse error on line ' + (yylineno + 1) + ':\n' + this.lexer.showPosition() + '\nExpecting ' + expected.join(', ') + ', got \'' + (this.terminals_[symbol] || symbol) + '\'';
-                } else {
-                    errStr = 'Parse error on line ' + (yylineno + 1) + ': Unexpected ' + (symbol == EOF ? 'end of input' : '\'' + (this.terminals_[symbol] || symbol) + '\'');
-                }
-                this.parseError(errStr, {
-                    text: this.lexer.match,
-                    token: this.terminals_[symbol] || symbol,
-                    line: this.lexer.yylineno,
-                    loc: yyloc,
-                    expected: expected
-                });
-            }
-        if (action[0] instanceof Array && action.length > 1) {
-            throw new Error('Parse Error: multiple actions possible at state: ' + state + ', token: ' + symbol);
-        }
-        switch (action[0]) {
-        case 1:
-            stack.push(symbol);
-            vstack.push(this.lexer.yytext);
-            lstack.push(this.lexer.yylloc);
-            stack.push(action[1]);
-            symbol = null;
-            if (!preErrorSymbol) {
-                yyleng = this.lexer.yyleng;
-                yytext = this.lexer.yytext;
-                yylineno = this.lexer.yylineno;
-                yyloc = this.lexer.yylloc;
-                if (recovering > 0) {
-                    recovering--;
-                }
-            } else {
-                symbol = preErrorSymbol;
-                preErrorSymbol = null;
-            }
-            break;
-        case 2:
-            len = this.productions_[action[1]][1];
-            yyval.$ = vstack[vstack.length - len];
-            yyval._$ = {
-                first_line: lstack[lstack.length - (len || 1)].first_line,
-                last_line: lstack[lstack.length - 1].last_line,
-                first_column: lstack[lstack.length - (len || 1)].first_column,
-                last_column: lstack[lstack.length - 1].last_column
-            };
-            if (ranges) {
-                yyval._$.range = [
-                    lstack[lstack.length - (len || 1)].range[0],
-                    lstack[lstack.length - 1].range[1]
-                ];
-            }
-            r = this.performAction.apply(yyval, [
-                yytext,
-                yyleng,
-                yylineno,
-                this.yy,
-                action[1],
-                vstack,
-                lstack
-            ].concat(args));
-            if (typeof r !== 'undefined') {
-                return r;
-            }
-            if (len) {
-                stack = stack.slice(0, -1 * len * 2);
-                vstack = vstack.slice(0, -1 * len);
-                lstack = lstack.slice(0, -1 * len);
-            }
-            stack.push(this.productions_[action[1]][0]);
-            vstack.push(yyval.$);
-            lstack.push(yyval._$);
-            newState = table[stack[stack.length - 2]][stack[stack.length - 1]];
-            stack.push(newState);
-            break;
-        case 3:
-            return true;
-        }
-    }
-    return true;
-}};
-/* generated by jison-lex 0.2.1 */
-var lexer = (function(){
-var lexer = {
-
-EOF:1,
-
-parseError:function parseError(str, hash) {
-        if (this.yy.parser) {
-            this.yy.parser.parseError(str, hash);
-        } else {
-            throw new Error(str);
-        }
-    },
-
-// resets the lexer, sets new input
-setInput:function (input) {
-        this._input = input;
-        this._more = this._backtrack = this.done = false;
-        this.yylineno = this.yyleng = 0;
-        this.yytext = this.matched = this.match = '';
-        this.conditionStack = ['INITIAL'];
-        this.yylloc = {
-            first_line: 1,
-            first_column: 0,
-            last_line: 1,
-            last_column: 0
-        };
-        if (this.options.ranges) {
-            this.yylloc.range = [0,0];
-        }
-        this.offset = 0;
-        return this;
-    },
-
-// consumes and returns one char from the input
-input:function () {
-        var ch = this._input[0];
-        this.yytext += ch;
-        this.yyleng++;
-        this.offset++;
-        this.match += ch;
-        this.matched += ch;
-        var lines = ch.match(/(?:\r\n?|\n).*/g);
-        if (lines) {
-            this.yylineno++;
-            this.yylloc.last_line++;
-        } else {
-            this.yylloc.last_column++;
-        }
-        if (this.options.ranges) {
-            this.yylloc.range[1]++;
-        }
-
-        this._input = this._input.slice(1);
-        return ch;
-    },
-
-// unshifts one char (or a string) into the input
-unput:function (ch) {
-        var len = ch.length;
-        var lines = ch.split(/(?:\r\n?|\n)/g);
-
-        this._input = ch + this._input;
-        this.yytext = this.yytext.substr(0, this.yytext.length - len - 1);
-        //this.yyleng -= len;
-        this.offset -= len;
-        var oldLines = this.match.split(/(?:\r\n?|\n)/g);
-        this.match = this.match.substr(0, this.match.length - 1);
-        this.matched = this.matched.substr(0, this.matched.length - 1);
-
-        if (lines.length - 1) {
-            this.yylineno -= lines.length - 1;
-        }
-        var r = this.yylloc.range;
-
-        this.yylloc = {
-            first_line: this.yylloc.first_line,
-            last_line: this.yylineno + 1,
-            first_column: this.yylloc.first_column,
-            last_column: lines ?
-                (lines.length === oldLines.length ? this.yylloc.first_column : 0)
-                 + oldLines[oldLines.length - lines.length].length - lines[0].length :
-              this.yylloc.first_column - len
-        };
-
-        if (this.options.ranges) {
-            this.yylloc.range = [r[0], r[0] + this.yyleng - len];
-        }
-        this.yyleng = this.yytext.length;
-        return this;
-    },
-
-// When called from action, caches matched text and appends it on next action
-more:function () {
-        this._more = true;
-        return this;
-    },
-
-// When called from action, signals the lexer that this rule fails to match the input, so the next matching rule (regex) should be tested instead.
-reject:function () {
-        if (this.options.backtrack_lexer) {
-            this._backtrack = true;
-        } else {
-            return this.parseError('Lexical error on line ' + (this.yylineno + 1) + '. You can only invoke reject() in the lexer when the lexer is of the backtracking persuasion (options.backtrack_lexer = true).\n' + this.showPosition(), {
-                text: "",
-                token: null,
-                line: this.yylineno
-            });
-
-        }
-        return this;
-    },
-
-// retain first n characters of the match
-less:function (n) {
-        this.unput(this.match.slice(n));
-    },
-
-// displays already matched input, i.e. for error messages
-pastInput:function () {
-        var past = this.matched.substr(0, this.matched.length - this.match.length);
-        return (past.length > 20 ? '...':'') + past.substr(-20).replace(/\n/g, "");
-    },
-
-// displays upcoming input, i.e. for error messages
-upcomingInput:function () {
-        var next = this.match;
-        if (next.length < 20) {
-            next += this._input.substr(0, 20-next.length);
-        }
-        return (next.substr(0,20) + (next.length > 20 ? '...' : '')).replace(/\n/g, "");
-    },
-
-// displays the character position where the lexing error occurred, i.e. for error messages
-showPosition:function () {
-        var pre = this.pastInput();
-        var c = new Array(pre.length + 1).join("-");
-        return pre + this.upcomingInput() + "\n" + c + "^";
-    },
-
-// test the lexed token: return FALSE when not a match, otherwise return token
-test_match:function (match, indexed_rule) {
-        var token,
-            lines,
-            backup;
-
-        if (this.options.backtrack_lexer) {
-            // save context
-            backup = {
-                yylineno: this.yylineno,
-                yylloc: {
-                    first_line: this.yylloc.first_line,
-                    last_line: this.last_line,
-                    first_column: this.yylloc.first_column,
-                    last_column: this.yylloc.last_column
-                },
-                yytext: this.yytext,
-                match: this.match,
-                matches: this.matches,
-                matched: this.matched,
-                yyleng: this.yyleng,
-                offset: this.offset,
-                _more: this._more,
-                _input: this._input,
-                yy: this.yy,
-                conditionStack: this.conditionStack.slice(0),
-                done: this.done
-            };
-            if (this.options.ranges) {
-                backup.yylloc.range = this.yylloc.range.slice(0);
-            }
-        }
-
-        lines = match[0].match(/(?:\r\n?|\n).*/g);
-        if (lines) {
-            this.yylineno += lines.length;
-        }
-        this.yylloc = {
-            first_line: this.yylloc.last_line,
-            last_line: this.yylineno + 1,
-            first_column: this.yylloc.last_column,
-            last_column: lines ?
-                         lines[lines.length - 1].length - lines[lines.length - 1].match(/\r?\n?/)[0].length :
-                         this.yylloc.last_column + match[0].length
-        };
-        this.yytext += match[0];
-        this.match += match[0];
-        this.matches = match;
-        this.yyleng = this.yytext.length;
-        if (this.options.ranges) {
-            this.yylloc.range = [this.offset, this.offset += this.yyleng];
-        }
-        this._more = false;
-        this._backtrack = false;
-        this._input = this._input.slice(match[0].length);
-        this.matched += match[0];
-        token = this.performAction.call(this, this.yy, this, indexed_rule, this.conditionStack[this.conditionStack.length - 1]);
-        if (this.done && this._input) {
-            this.done = false;
-        }
-        if (token) {
-            return token;
-        } else if (this._backtrack) {
-            // recover context
-            for (var k in backup) {
-                this[k] = backup[k];
-            }
-            return false; // rule action called reject() implying the next rule should be tested instead.
-        }
-        return false;
-    },
-
-// return next match in input
-next:function () {
-        if (this.done) {
-            return this.EOF;
-        }
-        if (!this._input) {
-            this.done = true;
-        }
-
-        var token,
-            match,
-            tempMatch,
-            index;
-        if (!this._more) {
-            this.yytext = '';
-            this.match = '';
-        }
-        var rules = this._currentRules();
-        for (var i = 0; i < rules.length; i++) {
-            tempMatch = this._input.match(this.rules[rules[i]]);
-            if (tempMatch && (!match || tempMatch[0].length > match[0].length)) {
-                match = tempMatch;
-                index = i;
-                if (this.options.backtrack_lexer) {
-                    token = this.test_match(tempMatch, rules[i]);
-                    if (token !== false) {
-                        return token;
-                    } else if (this._backtrack) {
-                        match = false;
-                        continue; // rule action called reject() implying a rule MISmatch.
-                    } else {
-                        // else: this is a lexer rule which consumes input without producing a token (e.g. whitespace)
-                        return false;
-                    }
-                } else if (!this.options.flex) {
-                    break;
-                }
-            }
-        }
-        if (match) {
-            token = this.test_match(match, rules[index]);
-            if (token !== false) {
-                return token;
-            }
-            // else: this is a lexer rule which consumes input without producing a token (e.g. whitespace)
-            return false;
-        }
-        if (this._input === "") {
-            return this.EOF;
-        } else {
-            return this.parseError('Lexical error on line ' + (this.yylineno + 1) + '. Unrecognized text.\n' + this.showPosition(), {
-                text: "",
-                token: null,
-                line: this.yylineno
-            });
-        }
-    },
-
-// return next match that has a token
-lex:function lex() {
-        var r = this.next();
-        if (r) {
-            return r;
-        } else {
-            return this.lex();
-        }
-    },
-
-// activates a new lexer condition state (pushes the new lexer condition state onto the condition stack)
-begin:function begin(condition) {
-        this.conditionStack.push(condition);
-    },
-
-// pop the previously active lexer condition state off the condition stack
-popState:function popState() {
-        var n = this.conditionStack.length - 1;
-        if (n > 0) {
-            return this.conditionStack.pop();
-        } else {
-            return this.conditionStack[0];
-        }
-    },
-
-// produce the lexer rule set which is active for the currently active lexer condition state
-_currentRules:function _currentRules() {
-        if (this.conditionStack.length && this.conditionStack[this.conditionStack.length - 1]) {
-            return this.conditions[this.conditionStack[this.conditionStack.length - 1]].rules;
-        } else {
-            return this.conditions["INITIAL"].rules;
-        }
-    },
-
-// return the currently active lexer condition state; when an index argument is provided it produces the N-th previous condition state, if available
-topState:function topState(n) {
-        n = this.conditionStack.length - 1 - Math.abs(n || 0);
-        if (n >= 0) {
-            return this.conditionStack[n];
-        } else {
-            return "INITIAL";
-        }
-    },
-
-// alias for begin(condition)
-pushState:function pushState(condition) {
-        this.begin(condition);
-    },
-
-// return the number of states currently on the stack
-stateStackSize:function stateStackSize() {
-        return this.conditionStack.length;
-    },
-options: {},
-performAction: function anonymous(yy,yy_,$avoiding_name_collisions,YY_START) {
-
-var YYSTATE=YY_START;
-switch($avoiding_name_collisions) {
-case 0:
-break;
-case 1:
-break;
-case 2:
-break;
-case 3:return 20
-break;
-case 4:return 19
-break;
-case 5:return 11
-break;
-case 6:return 12
-break;
-case 7:return 15
-break;
-case 8:return 16
-break;
-case 9:return 18
-break;
-case 10:return 22
-break;
-case 11:this.begin('DoubleQuotedString');
-break;
-case 12:this.begin('QuotedStringEscape');
-break;
-case 13:this.popState();
-break;
-case 14: /* The newlines are there because we can span strings across lines using \ */
-                                            this.popState();
-                                            return 24;
-                                        
-break;
-case 15:return 23;
-break;
-case 16:return 5
-break;
-case 17:return 'INVALID'
-break;
-}
-},
-rules: [/^(?:[ \t]+)/,/^(?:(#|\/\/)[^\r\n]*)/,/^(?:\/\*([\u0000-\uffff]*?)\*\/)/,/^(?:\b[0-9]+(\.[0-9]+)?\b)/,/^(?:[^()\[\]{}",;\s]+)/,/^(?:\()/,/^(?:\))/,/^(?:\r?\n)/,/^(?:;)/,/^(?:,)/,/^(?:"")/,/^(?:")/,/^(?:\\)/,/^(?:")/,/^(?:(.|\r\n|\n))/,/^(?:[^"\\]*)/,/^(?:$)/,/^(?:.)/],
-conditions: {"QuotedStringEscape":{"rules":[14],"inclusive":false},"DoubleQuotedString":{"rules":[12,13,15],"inclusive":false},"INITIAL":{"rules":[0,1,2,3,4,5,6,7,8,9,10,11,16,17],"inclusive":true}}
-};
-return lexer;
-})();
-parser.lexer = lexer;
-function Parser () {
-  this.yy = {};
-}
-Parser.prototype = parser;parser.Parser = Parser;
-return new Parser;
-})();
-
-
-if (typeof require !== 'undefined' && typeof exports !== 'undefined') {
-exports.parser = parser;
-exports.Parser = parser.Parser;
-exports.parse = function () { return parser.parse.apply(parser, arguments); };
-exports.main = function commonjsMain(args) {
-    if (!args[1]) {
-        console.log('Usage: '+args[0]+' FILE');
-        process.exit(1);
-    }
-    var source = require('fs').readFileSync(require('path').normalize(args[1]), "utf8");
-    return exports.parser.parse(source);
-};
-if (typeof module !== 'undefined' && require.main === module) {
-  exports.main(process.argv.slice(1));
-}
-}
-}).call(this,require("JkpR2F"))
-},{"JkpR2F":3,"fs":1,"path":2}],25:[function(require,module,exports){
-
-// AST nodes
-
-function Chain (left, op, right) {
-	var result = [];
-	result.push(left);
-	result.push(op);
-	op.value.arguments.push({type: 'chain', value: right});
-	return result;
-}
-
-// Tokens
-
-var input = [];
-var ptr = 0;
-
-function consume () {
-	return input[ptr++];
-}
-
-function lookahead () {
-	return input[ptr];
-}
-
-// Parser
-
-function parseId (token) {
-	return token;
-}
-
-// function parsePrefixOp (token) {
-// 	var operand = parseExpression(PREFIX);
-// 	return Application(token.value, [operand]);
-// }
-
-function makeInfixOp (precedence) {
-	var parser = function (left, token) {
-		var right = parseExpression(precedence);
-		token.value.arguments.push([right]);
-		return {type: 'chain', value: [left, token]};
-	};
-	parser.precedence = precedence;
-	return parser;
-}
-
-// function parsePostfixOp (left, token) {
-// 	return Application(token.value, [left]);
-// }
-
-// function parseMixfixOp (left, token) {
-// 	var conseq = parseExpression(CONDITIONAL);
-// 	consume();
-// 	var alt = parseExpression(CONDITIONAL);
-// 	consume();
-// 	return Application(token.value, [left, conseq, alt]);
-// }
-
-// var prefixOperators = {
-// 	"+": parsePrefixOp,
-// 	"-": parsePrefixOp,
-// 	"~": parsePrefixOp,
-// 	"!": parsePrefixOp
-// };
-
-// var ASSIGNMENT = 1;
-// var CONDITIONAL = 2;
-var BOOLEAN = 2;
-var COMPARISON = 3;
-var SUM = 4;
-var PRODUCT = 5;
-// var EXPONENT = 6;
-// var PREFIX = 7;
-// var POSTFIX = 8;
-// var CALL = 9;
-
-var otherOperators = {
-	"+": makeInfixOp(SUM),
-	"-": makeInfixOp(SUM),
-	"*": makeInfixOp(PRODUCT),
-	"==": makeInfixOp(COMPARISON),
-	"and": makeInfixOp(BOOLEAN),
-	// "/": makeInfixOp(PRODUCT),
-	// "?": parseMixfixOp
-};
-
-function isOperator (token) {
-	return !!otherOperators[token];
-}
-
-function getPrecedence (token) {
-	if (token.type === 'EOF') return 0;
-	if (otherOperators[token.value.value.value]) return otherOperators[token.value.value.value].precedence;
-	return 0;
-}
-
-function parseExpression (precedence) {
-	var token = consume();
-	
-	// {
-	// 	type: 'message',
-	// 	value: {
-	// 		type: 'symbol',
-	// 		value: {
-	// 			type: 'number',
-	// 			value: '2'
-	// 		},
-	// 		arguments: []
-	// 	}
-	// }
-
-	// assume there are no nested chains inside. those can be parsed with a recursive call
-
-	var symbol = token.value;
-	// var prefixParser = symbol.value.value === "number" ? parseId : prefixOperators[token.value];
-
-	// if (!prefixParser) {
-	// 	throw new Error('unrecognized token ' + token.value);
-	// }
-
-	var prefixParser = parseId; // assume there are no prefix operators for now...
-
-	var left = prefixParser(token);
-
-	while (precedence < getPrecedence(token = lookahead())) {
-		var infixParser = otherOperators[token.value.value.value];
-
-		if (!infixParser) {
-			return left;
-		}
-
-		consume();
-
-		left = infixParser(left, token);
-	}
-
-	return left;
-}
-
-module.exports = {
-	parse: function (chain) {
-		input = [];
-		ptr = 0;
-
-		if (chain.type !== 'chain') return chain;
-		input = chain.value.slice();
-		input.push({type: 'EOF'});
-		var result = parseExpression(0);
-
-		return result;
-	},
-	isOperator: isOperator
-};
-},{}],26:[function(require,module,exports){
+}).call(this,require("JkpR2F"),"/../node_modules/source-map/node_modules/amdefine/amdefine.js")
+},{"JkpR2F":9,"path":8}],27:[function(require,module,exports){
 window.aetherIotaCompiler = require('iota-compiler');
 
-},{"iota-compiler":4}]},{},[26]);
+},{"iota-compiler":10}]},{},[27]);
