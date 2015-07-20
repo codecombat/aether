@@ -383,7 +383,7 @@ module.exports.makeYieldConditionally = makeYieldConditionally = (simpleLoops) -
       node.yields = true
       possiblyGeneratorifyAncestorFunction node unless node.mustBecomeGeneratorFunction
     else if node.mustBecomeGeneratorFunction
-      node.update node.source().replace /^function \(/, 'function* ('
+      node.update node.source().replace /^function /, 'function* '
     else if node.type is S.AssignmentExpression and node.right?.type is S.CallExpression
       # Update call to generatorified user function to process yields, and set return result
       userFnMap = getUserFnMap(node, @language) unless userFnMap
@@ -439,7 +439,7 @@ module.exports.makeYieldAutomatically = makeYieldAutomatically = ->
       node.yields = true
       possiblyGeneratorifyAncestorFunction node unless node.mustBecomeGeneratorFunction
     else if node.mustBecomeGeneratorFunction
-      node.update node.source().replace /^function \(/, 'function* ('
+      node.update node.source().replace /^function /, 'function* '
     else if node.type is S.AssignmentExpression and node.right?.type is S.CallExpression
       # Update call to generatorified user function to process yields, and set return result
       userFnMap = getUserFnMap(node, @language) unless userFnMap

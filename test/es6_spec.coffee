@@ -329,6 +329,28 @@ describe "JavaScript Test Suite", ->
       expect(gen.next().done).toEqual true
       expect(dude.enemy).toEqual "slain!"
 
+    it "Named fn expr", ->
+      dude =
+        slay: -> @enemy = "slain!"
+        hesitate: -> aether._shouldYield = true
+      code = """
+        this.f = function named() {
+          this.hesitate();
+          this.hesitate();
+          this.hesitate();
+        };
+        this.f();
+        this.slay();
+      """
+      aether.transpile code
+      f = aether.createFunction()
+      gen = f.apply dude
+      expect(gen.next().done).toEqual false
+      expect(gen.next().done).toEqual false
+      expect(gen.next().done).toEqual false
+      expect(gen.next().done).toEqual true
+      expect(dude.enemy).toEqual "slain!"
+
     it "IIFE", ->
       dude =
         slay: -> @enemy = "slain!"
