@@ -105,6 +105,15 @@ module.exports = (grunt) ->
         src: ['node_modules/traceur/bin/traceur.js', 'build/<%= pkg.name %>.js']
         dest: 'build/<%= pkg.name %>.js'
 
+    'string-replace':
+      build:
+        files:
+          'build/<%= pkg.name %>.js': 'build/<%= pkg.name %>.js'
+        options:
+          replacements: [
+            {pattern: /\$defineProperty\(Object, 'assign', method\(assign\)\);/, replacement: "//$defineProperty(Object, 'assign', method(assign));  // This polyfill interferes with Facebook's JS SDK and isn't needed for our use case anyway."}
+          ]
+
     "gh-pages":
       options:
         base: 'build'
@@ -162,7 +171,6 @@ module.exports = (grunt) ->
         dir: "coverage/reports"
         print: "detail"
 
-
   # Load the plugin that provides the "uglify" task.
   grunt.loadNpmTasks 'grunt-contrib-uglify'
   #grunt.loadNpmTasks 'grunt-contrib-jasmine'
@@ -173,6 +181,7 @@ module.exports = (grunt) ->
   grunt.loadNpmTasks 'grunt-contrib-watch'
   grunt.loadNpmTasks 'grunt-browserify'
   grunt.loadNpmTasks 'grunt-contrib-concat'
+  grunt.loadNpmTasks 'grunt-string-replace'
   grunt.loadNpmTasks 'grunt-notify'
   grunt.loadNpmTasks 'grunt-gh-pages'
   grunt.loadNpmTasks 'grunt-push-release'
@@ -183,13 +192,13 @@ module.exports = (grunt) ->
 
   # Default task(s).
   grunt.registerTask 'default', ['coffeelint', 'coffee', 'browserify', 'concat',
-    'jasmine_node:run', 'jade', 'sass'] #, 'uglify']
+    'string-replace', 'jasmine_node:run', 'jade', 'sass'] #, 'uglify']
   grunt.registerTask 'travis', ['coffeelint', 'coffee', 'jasmine_node:run']
   grunt.registerTask 'test', ['newer:coffee', 'jasmine_node:run']
   grunt.registerTask 'coverage', ['coffee', 'instrument', 'copy:tests',
     'jasmine_node:runCoverage', 'storeCoverage', 'makeReport']
   grunt.registerTask 'build', ['coffeelint', 'coffee', 'browserify:src',
-    'concat', 'jade', 'sass', 'uglify:build']
+    'concat', 'string-replace', 'jade', 'sass', 'uglify:build']
   grunt.registerTask 'parsers', ['browserify:parsers', 'uglify:parsers']
 
   # Run a single test with `grunt spec:filename`.
@@ -200,4 +209,3 @@ module.exports = (grunt) ->
     grunt.config.set 'jasmine_node.matchAll', false
     grunt.config.set 'jasmine_node.specNameMatcher', '_spec'
     grunt.task.run 'jasmine_node:run'
-

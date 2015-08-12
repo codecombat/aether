@@ -161,7 +161,7 @@
       }
       return target;
     }
-    $defineProperty(Object, 'assign', method(assign));
+    //$defineProperty(Object, 'assign', method(assign));  // This polyfill interferes with Facebook's JS SDK and isn't needed for our use case anyway.
     function mixin(target, source) {
       var props = $getOwnPropertyNames(source);
       var p,
@@ -40349,7 +40349,7 @@ define(function (require, exports, module) {
 },{"amdefine":49}],49:[function(require,module,exports){
 (function (process,__filename){
 /** vim: et:ts=4:sw=4:sts=4
- * @license amdefine 0.1.0 Copyright (c) 2011, The Dojo Foundation All Rights Reserved.
+ * @license amdefine 1.0.0 Copyright (c) 2011-2015, The Dojo Foundation All Rights Reserved.
  * Available via the MIT or new BSD license.
  * see: http://github.com/jrburke/amdefine for details
  */

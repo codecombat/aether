@@ -498,7 +498,7 @@
       var args;
       args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
       assertions.arity(0, Infinity, arguments.length);
-      return console.log.apply(null, args);
+      return console.log.apply(console, args);
     },
     'keyword': function(name) {
       assertions.arity(1, arguments.length);
