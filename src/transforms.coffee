@@ -387,8 +387,14 @@ module.exports.makeYieldConditionally = makeYieldConditionally = (simpleLoops) -
     else if node.type is S.AssignmentExpression and node.right?.type is S.CallExpression
       # Update call to generatorified user function to process yields, and set return result
       userFnMap = getUserFnMap(node, @language) unless userFnMap
-      if (fnExpr = getUserFnExpr(userFnMap, node.right)) and possiblyGeneratorifyUserFunction fnExpr
-        node.update "var __gen#{node.left.source()} = #{node.right.source()}; while (true) { var __result#{node.left.source()} = __gen#{node.left.source()}.next(); if (__result#{node.left.source()}.done) { #{node.left.source()} = __result#{node.left.source()}.value; break; } var _yieldValue = __result#{node.left.source()}.value; if (this.onAetherYield) { this.onAetherYield(_yieldValue); } yield _yieldValue;}"
+      fnExpr = getUserFnExpr(userFnMap, node.right)
+      if fnExpr and possiblyGeneratorifyUserFunction fnExpr
+        if simpleLoops and parentWhile = getImmediateParentOfType node, S.WhileStatement
+          yieldCountVar = "__yieldCount#{parentWhile.whileIndex}"
+          autoYieldStmt = "if (typeof #{yieldCountVar} !== 'undefined' && #{yieldCountVar} !== null) {#{yieldCountVar}++;}"
+        else
+          autoYieldStmt = ""
+        node.update "var __gen#{node.left.source()} = #{node.right.source()}; while (true) { var __result#{node.left.source()} = __gen#{node.left.source()}.next(); if (__result#{node.left.source()}.done) { #{node.left.source()} = __result#{node.left.source()}.value; break; } var _yieldValue = __result#{node.left.source()}.value; if (this.onAetherYield) { this.onAetherYield(_yieldValue); } yield _yieldValue; #{autoYieldStmt} }"
 
 module.exports.makeSimpleLoopsYieldAutomatically = makeSimpleLoopsYieldAutomatically = (replacedLoops, wrappedCodePrefix) ->
   # Add a yield to the end of simple loops, which executes if no other yields do

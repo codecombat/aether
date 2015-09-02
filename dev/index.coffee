@@ -263,7 +263,7 @@ examples = [
     var aether = new Aether(aetherOptions);
     var thisValue = {
       killCount: 0,
-      slay: function() { 
+      slay: function() {
         this.killCount += 1;
         aether._shouldYield = true;
         },
@@ -281,6 +281,48 @@ examples = [
       if (i < 3) console.log(gen.next().done);
     }
     console.log("Equals 6?", thisValue.killCount);
+    '''
+,
+  name: "Python yielding from subfunction"
+  code: '''
+    def buildArmy():
+        self.hesitate()
+
+    loop:
+        buildArmy()
+    '''
+  aether: '''
+    var aetherOptions = {
+      executionLimit: 1000,
+      problems: {
+        jshint_W040: {level: "ignore"},
+        aether_MissingThis: {level: "warning"}
+      },
+      functionName: "planStrategy",
+      yieldConditionally: true,
+      simpleLoops: true,
+      language: "python",
+      includeFlow: false,
+      includeMetrics: false
+    };
+    var aether = new Aether(aetherOptions);
+    var thisValue = {
+      charge: function() { this.say("attack!"); return "attack!"; },
+      hesitate: function() { this.say("uhh...!!"); aether._shouldYield = true; },
+      say: console.log
+    };
+    var code = grabDemoCode();
+    aether.transpile(code);
+    var method = aether.createMethod(thisValue);
+    var generator = method();
+    aether.sandboxGenerator(generator);
+    var executeSomeMore = function executeSomeMore() {
+      var result = generator.next();
+      demoShowOutput(aether);
+      if(!result.done)
+        setTimeout(executeSomeMore, 2000);
+    };
+    executeSomeMore();
     '''
 ,
   name: "Python protected"
