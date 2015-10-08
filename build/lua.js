@@ -6762,7 +6762,7 @@ this.parser = (function() {
 
       var builder = {
         assignmentExpression: function(op, left, right) { return wrapNode({type: "AssignmentExpression", operator: op, left: left, right: right }); },
-        binaryExpression: function(op, left, right) { return wrapNode({type: "BinaryExpression", operator: op, left: left, right: right }); },
+        binaryExpression: function(op, left, right) { return wrapNode({type: (op == '||' || op == '&&') ? "LogicalExpression" : "BinaryExpression", operator: op, left: left, right: right }); },
         blockStatement: function(body) { return wrapNode({ type: "BlockStatement", body: body}); },
         callExpression: function(callee, args) { return wrapNode({ type: "CallExpression", callee: callee, arguments: args}); },
         emptyStatement: function() { return wrapNode({ type: "EmptyStatement" }); },
@@ -6931,6 +6931,7 @@ this.parser = (function() {
             
         },
         luaOperator: function(op /*, args */) {
+            if ( op == "oneValue" && opt("noMutliReturnSquish", false) ) return arguments[1];
             var o = builder.callExpression(
                 builder.memberExpression(i("__lua"), i(op)), 
                 Array.prototype.slice.call(arguments, 1)
@@ -7250,9 +7251,9 @@ var __lua = (function() {
 
 	function count(a) { 
 		if ( a instanceof LuaTable ) {
-			var count = 0;
-			while ( a.numeric[count] !== undefined ) ++count;
-			return count;
+			var cnt = 0;
+			while ( a.numeric[cnt] !== undefined ) ++cnt;
+			return cnt;
 		}
 		return a.length;
 	}
@@ -7310,7 +7311,7 @@ var __lua = (function() {
 		this.id = ++id;
 		this.numeric = [];
 		this.hash = {};
-	};
+	}
 
 	Object.defineProperty(LuaTable.prototype, "__luaType",  {value: "table",  enumerable: false});
 	Object.defineProperty(LuaTable.prototype, "toString",  {value: function() {
@@ -7350,7 +7351,8 @@ var __lua = (function() {
 
 	function LuaReturnValues(v) {
 		this.values = v;
-	};
+	}
+
 	Object.defineProperty(LuaReturnValues.prototype, "__luaType",  {value: "returnValues",  enumerable: false});
 
 	function lookupMetaTable(table, entry) {
@@ -7386,17 +7388,17 @@ var __lua = (function() {
 
 			if ( val !== null & val !== undefined ) return val;
 
-			var idx = lookupMetaTable(table, "__index");
-			if ( idx == null ) return null;
+			var idxfx = lookupMetaTable(table, "__index");
+			if ( idxfx == null ) return null;
 
-			if ( typeof idx == "function" ) return oneValue(idx(table, prop));
-			return index(idx, prop);
+			if ( typeof idxfx == "function" ) return oneValue(idxfx(table, prop));
+			return index(idxfx, prop);
 		} else if ( isJSArray(table) ) {
 			return table[prop - 1];
 		} else if ( typeof table == "string" ) {
-			var idx = tonumber(prop);
-			if ( idx < 0 ) idx += (table.length + 1)
-			return table[idx-1];
+			var sidx = tonumber(prop);
+			if ( sidx < 0 ) sidx += (table.length + 1);
+			return table[sidx-1];
 		} else {
 			return table[prop];
 		}
@@ -7448,7 +7450,7 @@ var __lua = (function() {
 
 
 		} else if ( typeof table == "string" ) { 
-			throw "attempt to index string value"
+			throw "attempt to index string value";
 		} else if ( isJSArray(table) ) {
 			table[prop-1] = value;
 			return true;
@@ -7546,9 +7548,9 @@ var __lua = (function() {
 		forcomp: forcomp,
 		makeString: makeString,
 		oneValue: oneValue,
-		lookupMetaTable: lookupMetaTable
-	}
-
+		lookupMetaTable: lookupMetaTable,
+		isJSArray: isJSArray
+	};
 
 })();
 
@@ -7575,7 +7577,7 @@ env.string = {
 	gmatch: null,
 	gsub: null,
 	len: function len(s) { return ("" + s).length; },
-	lower: function lower(s) { return ("" + s).toLowerCase() },
+	lower: function lower(s) { return ("" + s).toLowerCase(); },
 	match: null,
 	reverse: function(s) {
 		return ("" + s).split("").reverse().join("");
@@ -7590,11 +7592,6 @@ env.string = {
 
 	},
 	upper: function lower(s) { return ("" + s).toUpperCase(); },
-		char: function char() {
-		var out = "";
-		for ( var code in arguments ) out += String.fromCharCode(code);
-		return out;
-	},
 	format: function format(format, etc) {
 		var arg = arguments;
 		var i = 1;
@@ -7615,7 +7612,7 @@ env.string = {
 		});
 	}
 
-}
+};
 
 env.table = {
 	concat: null,
@@ -7655,11 +7652,11 @@ env.unpack = env.table.unpack;
 
 env.tonumber = function(n) {
 	return parseInt(n);
-}
+};
 
 env.tostring = function(n) {
 	return __lua.makeString(n);
-}
+};
 
 env.os = {
 	clock: null,
@@ -7669,30 +7666,30 @@ env.os = {
 	exit: null,
 	time: function time(table) {
 		if ( table == null ) return new Date().getTime();
-		throw "Time given a table not implemented yet."
+		throw "Time given a table not implemented yet.";
 	}
-}
+};
 
 env.io = {
 	write: function() { env.print(arguments); }
-}
+};
 
-env.error = function error(s) { throw s; }
+env.error = function error(s) { throw s; };
 
 env.assert = function assert(what, msg, code) {
 	if ( code === undefined ) {
-		code = msg
+		code = msg;
 		msg = undefined;
 	}
 
 	if ( !!what ) return what;
 
 	throw("Assert Failed!! " + code);
-}
+};
 
 env.type = function type(what) {
 	return __lua.type(what);
-}
+};
 
 
 env.pairs = function pairs(table) {
@@ -7704,9 +7701,11 @@ env.pairs = function pairs(table) {
 	if ( __lua.isTable(table) ) {
 		for ( var i = 0; i < table.numeric.length; ++i ) list.push([i + 1, i, table.numeric]);
 		for ( var idx in table.hash ) list.push([idx, idx, table.hash]);
+	} else if ( __lua.isJSArray(table) ) {
+		for ( var i = 0; i < table.length; ++i ) list.push([i + 1, i, table]);
 	} else {
 		var keys = Object.keys(table);
-		for ( var idx in keys ) list.push([keys[idx], keys[idx], table])
+		for ( var idx in keys ) list.push([keys[idx], keys[idx], table]);
 	}
 
 	return __lua.makeMultiReturn(function(handle, cur) {
@@ -7716,7 +7715,7 @@ env.pairs = function pairs(table) {
 		var v = nfo[2][nfo[1]];
 		return __lua.makeMultiReturn(k,v);
 	}, list, null);
-}
+};
 
 env.ipairs = function ipairs(table) {
 
@@ -7725,20 +7724,23 @@ env.ipairs = function ipairs(table) {
 
 	return __lua.makeMultiReturn(function ipairsitr(table, cur) {
 		cur = cur + 1;
-		if ( __lua.isTable(table) ) {
+		if ( __lua.isJSArray(table) ) {
+			if ( table.length < cur ) return null;
+			return __lua.makeMultiReturn(cur, table[cur-1]);
+		} else if ( __lua.isTable(table) ) {
 			if ( table.numeric[cur-1] === null || table.numeric[cur-1] === undefined ) return null;
 			return __lua.makeMultiReturn(cur, table.numeric[cur-1]);
 		} else {
 			return table[cur-1];
 		}
-	}, table, null);
-}
+	}, table, 0);
+};
 
 env.next = function next(table, cur) {
 	if ( __lua.isTable(table) ) {
 		var list = [];
 		for ( var i = 0; i < table.numeric.length; ++i ) list.push([i + 1, table.numeric[i]]);
-		for ( var idx in table.hash ) list.push([idx, table.hash[idx]]);
+		for ( var tidx in table.hash ) list.push([tidx, table.hash[tidx]]);
 		var trigger = false;
 		for ( var i = 0; i < list.length; ++i ) {
 			var itm = list[i];
@@ -7751,10 +7753,10 @@ env.next = function next(table, cur) {
 
 		return null;
 	} else {
-		var list = Object.keys(table);
+		var listk = Object.keys(table);
 		var trigger = false;
-		for ( var i = 0; i < list.length; ++i ) {
-			var idx = list[i];
+		for ( var i = 0; i < listk.length; ++i ) {
+			var idx = listk[i];
 			var sidx = idx;
 			if ( typeof sidx == "number" ) sidx = sidx = 1;
 			if ( cur === null || cur === undefined || trigger ) return __lua.makeMultiReturn(idx, table[sidx]);
@@ -7762,26 +7764,26 @@ env.next = function next(table, cur) {
 		}
 		return null;
 	}
-}
+};
 
-env.print = function print() { console.log.apply(console, arguments); }
+env.print = function print() { console.log.apply(console, arguments); };
 env.pcall = this.__lua.pcall;
 
-env.rawequals = function rawequals(a,b) { return a == b; }
+env.rawequals = function rawequals(a,b) { return a == b; };
 env.rawget = function rawget(table, prop) { 
 	if ( table instanceof LuaTable ) {
 		if ( typeof prop == "number" ) return table.numeric[prop - 1];
 		else return table.hash[prop];
 	}
 	return table[prop]; 
-}
+};
 env.rawset = function rawset(table, prop, val) { 
 	if ( table instanceof LuaTable ) {
 		if ( typeof prop == "number" ) return table.numeric[prop - 1] = val;
 		else return table.hash[prop] = val;
 	}
 	return table[prop] = val; 
-}
+};
 
 env.something = function something(table) {
 	var array = [];
@@ -7791,18 +7793,18 @@ env.something = function something(table) {
 		++idx;
 	}
 	return __lua.makeMultiReturn.apply(__lua, array);
-}
+};
 env.math = Math;
 
 env.setmetatable = function setmetatable(target, meta) {
 
 	Object.defineProperty(target, "__metatable", {value: meta, enumerable: false, configurable: true });
 	return target;
-}
+};
 
 env.getmetatable = function getmetatable(taget, meta) {
 	return taget.__metatable;
-}
+};
 
 var reduce = function reduce(arr, op) {
 	if ( arr.length < 1 ) return undefined;
@@ -7811,21 +7813,21 @@ var reduce = function reduce(arr, op) {
 		val = op(val, arr[i]);
 	}
 	return val;
-}
+};
 
-env['bit32'] = {
-	band: function band() { return reduce(arguments, function(a,b) { return a & b}); },
-	bor: function bor() { return reduce(arguments, function(a,b) { return a | b}); },
-	bxor: function bxor() { return reduce(arguments, function(a,b) { return a | b}); },
+env.bit32 = {
+	band: function band() { return reduce(arguments, function(a,b) { return a & b; }); },
+	bor: function bor() { return reduce(arguments, function(a,b) { return a | b; }); },
+	bxor: function bxor() { return reduce(arguments, function(a,b) { return a | b; }); },
 
 	rshift: function rshift(b, disp) { return b >> disp; }
-}
+};
 
 env.require = function require(what) {
 	if ( what == "bit" ) return env.bit32;
 	if ( what == "bit32" ) return env.bit32;
 	throw "Module " + waht + " not found";
-}
+};
 
 __lua.mark(env);
 __lua.env = env;
