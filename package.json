@@ -37,6 +37,7 @@
     "tv4": "~1.0.7"
   },
   "devDependencies": {
+    "coffeelint": "^1.13.0",
     "grunt": "~0.4.1",
     "grunt-browserify": "~2.1.0",
     "grunt-coffeelint": "~0.0.7",
