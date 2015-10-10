@@ -460,7 +460,7 @@ describe "JavaScript Test Suite", ->
       expect(gen.next().done).toEqual true
       expect(dude.enemy).toEqual "slain!"
 
-     it "Call user fn decl from another user method", ->
+    it "Call user fn decl from another user method", ->
       dude =
         slay: -> @enemy = "slain!"
         hesitate: -> aether._shouldYield = true
@@ -487,7 +487,7 @@ describe "JavaScript Test Suite", ->
       expect(gen.next().done).toEqual true
       expect(dude.enemy).toEqual "slain!"
 
-     it "Call user fn expr from another user method", ->
+    it "Call user fn expr from another user method", ->
       dude =
         slay: -> @enemy = "slain!"
         hesitate: -> aether._shouldYield = true
