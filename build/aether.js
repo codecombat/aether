@@ -21210,11 +21210,14 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
       if (this.options.yieldConditionally && this.options.simpleLoops) {
         postNormalizationTransforms.unshift(transforms.makeSimpleLoopsYieldAutomatically(this.replacedLoops, this.language.wrappedCodePrefix));
       }
-      if (this.options.yieldConditionally) {
-        postNormalizationTransforms.unshift(transforms.makeYieldConditionally(this.options.simpleLoops));
+      if (this.options.yieldConditionally && this.options.whileTrueAutoYield) {
+        postNormalizationTransforms.unshift(transforms.makeWhileTrueYieldAutomatically(this.replacedLoops, this.language.wrappedCodePrefix));
       }
-      if (this.options.yieldConditionally && this.options.simpleLoops) {
-        postNormalizationTransforms.unshift(transforms.makeIndexSimpleLoops());
+      if (this.options.yieldConditionally) {
+        postNormalizationTransforms.unshift(transforms.makeYieldConditionally(this.options.simpleLoops, this.options.whileTrueAutoYield));
+      }
+      if (this.options.yieldConditionally && (this.options.simpleLoops || this.options.whileTrueAutoYield)) {
+        postNormalizationTransforms.unshift(transforms.makeIndexWhileLoops());
       }
       if (this.options.yieldAutomatically) {
         postNormalizationTransforms.unshift(transforms.makeYieldAutomatically());
@@ -22720,8 +22723,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
 (function() {
   var Language, Python, estraverse, parserHolder, selfToThis, _, _ref, _ref1, _ref2,
     __hasProp = {}.hasOwnProperty,
-    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
-    __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   _ = (_ref = (_ref1 = (_ref2 = typeof window !== "undefined" && window !== null ? window._ : void 0) != null ? _ref2 : typeof self !== "undefined" && self !== null ? self._ : void 0) != null ? _ref1 : typeof global !== "undefined" && global !== null ? global._ : void 0) != null ? _ref : require('lodash');
 
@@ -22822,7 +22824,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
     };
 
     Python.prototype.lint = function(rawCode, aether) {
-      var ast, error, problems, walkAST, _ref3,
+      var ast, error, problems, walkAST,
         _this = this;
       problems = [];
       walkAST = function(node, fn) {
@@ -22847,37 +22849,31 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
           locations: true,
           ranges: true
         });
-        if (((_ref3 = this.replacedLoops) != null ? _ref3.length : void 0) > 0) {
-          walkAST(ast, function(node) {
-            var _ref4;
-            if (node.type !== "WhileStatement") {
-              return;
-            }
-            if (_ref4 = node.loc.start.line * _this.wrappedCodeIndentLen + node.range[0], __indexOf.call(_this.replacedLoops, _ref4) < 0) {
-              return;
-            }
-            if (node.body.body.length !== 0) {
-              return;
-            }
-            return problems.push({
-              type: 'transpile',
-              reporter: 'aether',
-              level: 'warning',
-              message: "Empty loop. Put 4 spaces in front of statements inside loops.",
-              range: [
-                {
-                  ofs: node.range[0],
-                  row: node.loc.start.line - 1,
-                  col: node.loc.start.column
-                }, {
-                  ofs: node.range[1],
-                  row: node.loc.end.line - 1,
-                  col: node.loc.end.column
-                }
-              ]
-            });
+        walkAST(ast, function(node) {
+          if (node.type !== "WhileStatement") {
+            return;
+          }
+          if (node.body.body.length !== 0) {
+            return;
+          }
+          return problems.push({
+            type: 'transpile',
+            reporter: 'aether',
+            level: 'warning',
+            message: "Empty loop. Put 4 spaces in front of statements inside loops.",
+            range: [
+              {
+                ofs: node.range[0],
+                row: node.loc.start.line - 1,
+                col: node.loc.start.column
+              }, {
+                ofs: node.range[1],
+                row: node.loc.end.line - 1,
+                col: node.loc.end.column
+              }
+            ]
           });
-        }
+        });
         if (problems.length === 0) {
           walkAST(ast, function(node) {
             if (node.type !== "IfStatement") {
@@ -24103,7 +24099,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
 },{}],17:[function(require,module,exports){
 (function (global){
 (function() {
-  var S, SourceMap, getFunctionNestingLevel, getImmediateParentOfType, getParents, getParentsOfTypes, getUserFnExpr, getUserFnMap, interceptEval, interceptThis, makeCheckIncompleteMembers, makeCheckThisKeywords, makeFindOriginalNodes, makeGatherNodeRanges, makeIndexSimpleLoops, makeInstrumentCalls, makeInstrumentStatements, makeSimpleLoopsYieldAutomatically, makeYieldAutomatically, makeYieldConditionally, possiblyGeneratorifyAncestorFunction, possiblyGeneratorifyUserFunction, ranges, statements, _, _ref, _ref1, _ref2,
+  var S, SourceMap, getFunctionNestingLevel, getImmediateParentOfType, getParents, getParentsOfTypes, getUserFnExpr, getUserFnMap, interceptEval, interceptThis, makeCheckIncompleteMembers, makeCheckThisKeywords, makeFindOriginalNodes, makeGatherNodeRanges, makeIndexWhileLoops, makeInstrumentCalls, makeInstrumentStatements, makeSimpleLoopsYieldAutomatically, makeWhileTrueYieldAutomatically, makeYieldAutomatically, makeYieldConditionally, possiblyGeneratorifyAncestorFunction, possiblyGeneratorifyUserFunction, ranges, statements, _, _ref, _ref1, _ref2,
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
   _ = (_ref = (_ref1 = (_ref2 = typeof window !== "undefined" && window !== null ? window._ : void 0) != null ? _ref2 : typeof self !== "undefined" && self !== null ? self._ : void 0) != null ? _ref1 : typeof global !== "undefined" && global !== null ? global._ : void 0) != null ? _ref : require('lodash');
@@ -24665,7 +24661,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
     };
   };
 
-  module.exports.makeYieldConditionally = makeYieldConditionally = function(simpleLoops) {
+  module.exports.makeYieldConditionally = makeYieldConditionally = function(simpleLoops, whileTrueAutoYield) {
     var userFnMap;
     userFnMap = null;
     return function(node) {
@@ -24678,7 +24674,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
           userFnMap = getUserFnMap(node, this.language);
         }
         if (!((_ref4 = getUserFnExpr(userFnMap, node.expression.right)) != null ? _ref4.mustBecomeGeneratorFunction : void 0)) {
-          if (simpleLoops && (parentWhile = getImmediateParentOfType(node, S.WhileStatement))) {
+          if ((simpleLoops || whileTrueAutoYield) && (parentWhile = getImmediateParentOfType(node, S.WhileStatement))) {
             yieldCountVar = "__yieldCount" + parentWhile.whileIndex;
             autoYieldStmt = "if (typeof " + yieldCountVar + " !== 'undefined' && " + yieldCountVar + " !== null) {" + yieldCountVar + "++;}";
           } else {
@@ -24698,7 +24694,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
         }
         fnExpr = getUserFnExpr(userFnMap, node.right);
         if (fnExpr && possiblyGeneratorifyUserFunction(fnExpr)) {
-          if (simpleLoops && (parentWhile = getImmediateParentOfType(node, S.WhileStatement))) {
+          if ((simpleLoops || whileTrueAutoYield) && (parentWhile = getImmediateParentOfType(node, S.WhileStatement))) {
             yieldCountVar = "__yieldCount" + parentWhile.whileIndex;
             autoYieldStmt = "if (typeof " + yieldCountVar + " !== 'undefined' && " + yieldCountVar + " !== null) {" + yieldCountVar + "++;}";
           } else {
@@ -24743,7 +24739,38 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
     };
   };
 
-  module.exports.makeIndexSimpleLoops = makeIndexSimpleLoops = function() {
+  module.exports.makeWhileTrueYieldAutomatically = makeWhileTrueYieldAutomatically = function(replacedLoops, wrappedCodePrefix) {
+    return function(node) {
+      var bodySource, item, _i, _len, _ref10, _ref11, _ref12, _ref13, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9;
+      if (node.type !== S.WhileStatement) {
+        return;
+      }
+      if ((replacedLoops != null ? replacedLoops.length : void 0) > 0 && (_ref3 = (node != null ? (_ref4 = node.body) != null ? (_ref5 = _ref4.originalNode) != null ? (_ref6 = _ref5.range) != null ? _ref6[0] : void 0 : void 0 : void 0 : void 0) - wrappedCodePrefix.length, __indexOf.call(replacedLoops, _ref3) >= 0)) {
+        return;
+      }
+      if (!(((_ref7 = node.test) != null ? (_ref8 = _ref7.originalNode) != null ? (_ref9 = _ref8.test) != null ? _ref9.type : void 0 : void 0 : void 0) === 'Literal' && ((_ref10 = node.test) != null ? (_ref11 = _ref10.originalNode) != null ? (_ref12 = _ref11.test) != null ? _ref12.value : void 0 : void 0 : void 0) === true)) {
+        return;
+      }
+      if (node.body.body != null) {
+        bodySource = "var __yieldCount" + node.whileIndex + " = 0;";
+        _ref13 = node.body.body;
+        for (_i = 0, _len = _ref13.length; _i < _len; _i++) {
+          item = _ref13[_i];
+          if (item.source != null) {
+            bodySource += item.source();
+          } else {
+            console.warn("No source() for", item);
+            return;
+          }
+        }
+        bodySource += " if (this.onAetherYield) { this.onAetherYield('while true'); } if (__yieldCount" + node.whileIndex + " === 0) { yield 'while true...';}";
+        node.update("while (" + (node.test.source()) + ") {" + bodySource + "}");
+        return possiblyGeneratorifyAncestorFunction(node);
+      }
+    };
+  };
+
+  module.exports.makeIndexWhileLoops = makeIndexWhileLoops = function() {
     var whileIndex;
     whileIndex = 0;
     return function(node) {
@@ -25137,6 +25164,11 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
           type: 'boolean',
           "default": true,
           description: 'Whether builtins will be protected and restored for enhanced security.'
+        },
+        whileTrueAutoYield: {
+          type: 'boolean',
+          "default": false,
+          description: "Make while True loops automatically yield if no other yields"
         }
       }
     });
