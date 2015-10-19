@@ -80,28 +80,24 @@ module.exports = class Python extends Language
       ast = parserHolder.parser.parse rawCode, locations: true, ranges: true
 
       # Check for empty loop
-      # Assumes if @replacedLoops exists, it's for the same rawCode
-      if @replacedLoops?.length > 0
-        walkAST ast, (node) =>
-          return unless node.type is "WhileStatement"
-          return unless node.loc.start.line * @wrappedCodeIndentLen + node.range[0] in @replacedLoops
-          return unless node.body.body.length is 0
-          # Craft an warning for empty loop
-          problems.push
-            type: 'transpile'
-            reporter: 'aether'
-            level: 'warning'
-            # TODO: Try 'belong to' instead of 'inside' if players still have problems
-            message: "Empty loop. Put 4 spaces in front of statements inside loops."
-            range: [
-                ofs: node.range[0]
-                row: node.loc.start.line - 1
-                col: node.loc.start.column
-              ,
-                ofs: node.range[1]
-                row: node.loc.end.line - 1
-                col: node.loc.end.column
-            ]
+      walkAST ast, (node) =>
+        return unless node.type is "WhileStatement"
+        return unless node.body.body.length is 0
+        # Craft an warning for empty loop
+        problems.push
+          type: 'transpile'
+          reporter: 'aether'
+          level: 'warning'
+          message: "Empty loop. Put 4 spaces in front of statements inside loops."
+          range: [
+              ofs: node.range[0]
+              row: node.loc.start.line - 1
+              col: node.loc.start.column
+            ,
+              ofs: node.range[1]
+              row: node.loc.end.line - 1
+              col: node.loc.end.column
+          ]
 
       # Check for empty if
       if problems.length is 0

@@ -364,7 +364,7 @@ module.exports.makeFindOriginalNodes = makeFindOriginalNodes = (originalNodes, c
 
 # Now that it's normalized to this: https://github.com/nwinter/JS_WALA/blob/master/normalizer/doc/normalization.md
 # ... we can basically just put a yield check in after every CallExpression except the outermost one if we are yielding conditionally.
-module.exports.makeYieldConditionally = makeYieldConditionally = (simpleLoops) ->
+module.exports.makeYieldConditionally = makeYieldConditionally = (simpleLoops, whileTrueAutoYield) ->
   userFnMap = null
   return (node) ->
     if node.type is S.ExpressionStatement and node.expression.right?.type is S.CallExpression
@@ -373,8 +373,8 @@ module.exports.makeYieldConditionally = makeYieldConditionally = (simpleLoops) -
       return unless getFunctionNestingLevel(node) > 1
       userFnMap = getUserFnMap(node, @language) unless userFnMap
       unless getUserFnExpr(userFnMap, node.expression.right)?.mustBecomeGeneratorFunction
-        # Track conditional yields executed if supporting simple loops
-        if simpleLoops and parentWhile = getImmediateParentOfType node, S.WhileStatement
+        # Track conditional yields executed if supporting simpleLoops or whileTrueAutoYield
+        if (simpleLoops or whileTrueAutoYield) and parentWhile = getImmediateParentOfType node, S.WhileStatement
           yieldCountVar = "__yieldCount#{parentWhile.whileIndex}"
           autoYieldStmt = "if (typeof #{yieldCountVar} !== 'undefined' && #{yieldCountVar} !== null) {#{yieldCountVar}++;}"
         else
@@ -389,7 +389,7 @@ module.exports.makeYieldConditionally = makeYieldConditionally = (simpleLoops) -
       userFnMap = getUserFnMap(node, @language) unless userFnMap
       fnExpr = getUserFnExpr(userFnMap, node.right)
       if fnExpr and possiblyGeneratorifyUserFunction fnExpr
-        if simpleLoops and parentWhile = getImmediateParentOfType node, S.WhileStatement
+        if (simpleLoops or whileTrueAutoYield) and parentWhile = getImmediateParentOfType node, S.WhileStatement
           yieldCountVar = "__yieldCount#{parentWhile.whileIndex}"
           autoYieldStmt = "if (typeof #{yieldCountVar} !== 'undefined' && #{yieldCountVar} !== null) {#{yieldCountVar}++;}"
         else
@@ -420,7 +420,27 @@ module.exports.makeSimpleLoopsYieldAutomatically = makeSimpleLoopsYieldAutomatic
         node.update "while (#{node.test.source()}) {#{bodySource}}"
         possiblyGeneratorifyAncestorFunction node
 
-module.exports.makeIndexSimpleLoops = makeIndexSimpleLoops = ->
+module.exports.makeWhileTrueYieldAutomatically = makeWhileTrueYieldAutomatically = (replacedLoops, wrappedCodePrefix) ->
+  # Add a yield to the end of while True loops, which executes if no other yields do
+  # This ensures while True loops *always* yield
+  return (node) ->
+    return unless node.type is S.WhileStatement
+    # Skip simpleLoops
+    return if replacedLoops?.length > 0 and node?.body?.originalNode?.range?[0] - wrappedCodePrefix.length in replacedLoops
+    return unless node.test?.originalNode?.test?.type is 'Literal' and node.test?.originalNode?.test?.value is true
+    if node.body.body?
+      bodySource = "var __yieldCount#{node.whileIndex} = 0;"
+      for item in node.body.body
+        if item.source?
+          bodySource += item.source()
+        else
+          console.warn "No source() for", item
+          return
+      bodySource += " if (this.onAetherYield) { this.onAetherYield('while true'); } if (__yieldCount#{node.whileIndex} === 0) { yield 'while true...';}"
+      node.update "while (#{node.test.source()}) {#{bodySource}}"
+      possiblyGeneratorifyAncestorFunction node
+
+module.exports.makeIndexWhileLoops = makeIndexWhileLoops = ->
   # Tag while loops with a unique index so yields can be tracked
   whileIndex = 0
   return (node) ->

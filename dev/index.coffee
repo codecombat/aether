@@ -240,6 +240,39 @@ examples = [
     demoShowOutput(aether);
     '''
 ,
+  name: "While true auto yields"
+  code: '''
+    x = 0
+    while True:
+      x += 1
+      if x >= 4:
+        break
+  '''
+  aether: '''
+    var aetherOptions = {
+      yieldConditionally: true,
+      whileTrueAutoYield: true,
+      language: 'python',
+    };
+    var aether = new Aether(aetherOptions);
+    var thisValue = {
+      killCount: 0,
+      slay: function() {
+        this.killCount += 1;
+        aether._shouldYield = true;
+        },
+      getKillCount: function() { return this.killCount; }
+    };
+    var code = grabDemoCode();
+    aether.transpile(code);
+    var f = aether.createFunction();
+    var gen = f.apply(thisValue);
+    console.log(gen.next().done);
+    console.log(gen.next().done);
+    console.log(gen.next().done);
+    console.log(gen.next().done);
+    '''
+,
   name: "Simple loop"
   code: '''
     x = 0

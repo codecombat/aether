@@ -76,3 +76,7 @@ module.exports = (options) ->
         type: 'boolean'
         default: true
         description: 'Whether builtins will be protected and restored for enhanced security.'
+      whileTrueAutoYield:
+        type: 'boolean'
+        default: false
+        description: "Make while True loops automatically yield if no other yields"

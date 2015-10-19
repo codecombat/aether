@@ -242,10 +242,12 @@ module.exports = class Aether
     postNormalizationTransforms = []
     if @options.yieldConditionally and @options.simpleLoops
       postNormalizationTransforms.unshift transforms.makeSimpleLoopsYieldAutomatically @replacedLoops, @language.wrappedCodePrefix
+    if @options.yieldConditionally and @options.whileTrueAutoYield
+      postNormalizationTransforms.unshift transforms.makeWhileTrueYieldAutomatically @replacedLoops, @language.wrappedCodePrefix
     if @options.yieldConditionally
-      postNormalizationTransforms.unshift transforms.makeYieldConditionally @options.simpleLoops
-    if @options.yieldConditionally and @options.simpleLoops
-      postNormalizationTransforms.unshift transforms.makeIndexSimpleLoops()
+      postNormalizationTransforms.unshift transforms.makeYieldConditionally @options.simpleLoops, @options.whileTrueAutoYield
+    if @options.yieldConditionally and (@options.simpleLoops or @options.whileTrueAutoYield)
+      postNormalizationTransforms.unshift transforms.makeIndexWhileLoops()
     postNormalizationTransforms.unshift transforms.makeYieldAutomatically() if @options.yieldAutomatically
     if @options.includeFlow
       varNamesToRecord = if @options.noVariablesInFlow then null else varNames
