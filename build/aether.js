@@ -20992,15 +20992,21 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
     };
 
     Aether.prototype.transpile = function(raw) {
-      var rawCode, _ref6;
+      var loopProblems, rawCode, _ref6, _ref7;
       this.raw = raw;
       this.reset();
       rawCode = this.raw;
       if (this.options.simpleLoops) {
         rawCode = _.cloneDeep(this.raw);
-        _ref6 = this.language.replaceLoops(rawCode), rawCode = _ref6[0], this.replacedLoops = _ref6[1];
+        _ref6 = this.language.replaceLoops(rawCode), rawCode = _ref6[0], this.replacedLoops = _ref6[1], loopProblems = _ref6[2];
       }
       this.problems = this.lint(rawCode);
+      if (loopProblems == null) {
+        loopProblems = [];
+      }
+      if (loopProblems.length > 0) {
+        (_ref7 = this.problems.warnings).push.apply(_ref7, loopProblems);
+      }
       this.pure = this.purifyCode(rawCode);
       return this.pure;
     };
@@ -22790,29 +22796,43 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
     };
 
     Python.prototype.replaceLoops = function(rawCode) {
-      var a, convertedCode, end, line, lineNumber, lines, rangeIndex, start, _i, _len, _ref3;
-      if (rawCode.indexOf('loop:') === -1) {
+      var a, convertedCode, end, line, lineNumber, lines, problems, rangeIndex, start, _i, _len, _ref3;
+      if (!rawCode.match(/^\s*loop/m)) {
         return [rawCode, []];
       }
       convertedCode = "";
       this.replacedLoops = [];
+      problems = [];
       rangeIndex = 0;
       lines = rawCode.split('\n');
       for (lineNumber = _i = 0, _len = lines.length; _i < _len; lineNumber = ++_i) {
         line = lines[lineNumber];
         rangeIndex += this.wrappedCodeIndentLen;
-        if (line.replace(/^\s+/g, "").indexOf('loop') === 0) {
+        if (line.match(/^\s*loop\b/, "") && lineNumber < lines.length - 1) {
           start = line.indexOf('loop');
           end = start + 4;
-          while (line[end] !== ':' && end < line.length) {
+          while (end < line.length && line[end].match(/\s/)) {
             end++;
           }
-          if (end < line.length) {
-            a = line.split("");
-            [].splice.apply(a, [start, end - start + 1].concat(_ref3 = 'while True:'.split(""))), _ref3;
-            line = a.join("");
-            this.replacedLoops.push(rangeIndex + start);
+          if (line[end] !== ':') {
+            problems.push({
+              type: 'transpile',
+              message: "You are missing a ':' after 'loop'. Try `loop:`",
+              range: [
+                {
+                  row: lineNumber,
+                  column: start
+                }, {
+                  row: lineNumber,
+                  column: end
+                }
+              ]
+            });
           }
+          a = line.split("");
+          [].splice.apply(a, [start, end - start + 1].concat(_ref3 = 'while True:'.split(""))), _ref3;
+          line = a.join("");
+          this.replacedLoops.push(rangeIndex + start);
         }
         convertedCode += line;
         if (lineNumber !== lines.length - 1) {
@@ -22820,7 +22840,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
         }
         rangeIndex += line.length + 1;
       }
-      return [convertedCode, this.replacedLoops];
+      return [convertedCode, this.replacedLoops, problems];
     };
 
     Python.prototype.lint = function(rawCode, aether) {
@@ -31818,7 +31838,7 @@ module.exports={
     "shasum": "f024016f5a88e046fd12005055e939802e6c5f23",
     "tarball": "http://registry.npmjs.org/escodegen/-/escodegen-1.3.3.tgz"
   },
-  "_from": "escodegen@1.3.3",
+  "_from": "escodegen@>=1.3.0 <1.4.0",
   "_npmVersion": "1.4.3",
   "_npmUser": {
     "name": "constellation",
@@ -31826,8 +31846,7 @@ module.exports={
   },
   "directories": {},
   "_shasum": "f024016f5a88e046fd12005055e939802e6c5f23",
-  "_resolved": "https://registry.npmjs.org/escodegen/-/escodegen-1.3.3.tgz",
-  "readme": "ERROR: No README data found!"
+  "_resolved": "https://registry.npmjs.org/escodegen/-/escodegen-1.3.3.tgz"
 }
 
 },{}],34:[function(require,module,exports){
