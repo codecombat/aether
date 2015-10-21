@@ -460,6 +460,34 @@ x = 5
       aether.transpile(code)
       expect(aether.run()).toEqual(10)
 
+    it "loop : (whitespace)", ->
+      code = """
+      total = 0
+      loop  :
+        total += 1
+        if total is 10: break;
+      return total
+      """
+      aether = new Aether language: "python", simpleLoops: true
+      aether.transpile(code)
+      expect(aether.run()).toEqual(10)
+
+    it "loop : (no :)", ->
+      code = """
+      total = 0
+      loop
+        total += 1
+        if total is 10: break;
+      return total
+      """
+      aether = new Aether language: "python", simpleLoops: true
+      aether.transpile(code)
+      expect(aether.problems.warnings.length).toEqual(1)
+      expect(aether.problems.warnings[0].type).toEqual('transpile')
+      expect(aether.problems.warnings[0].message).toEqual("You are missing a ':' after 'loop'. Try `loop:`")
+      expect(aether.run()).toEqual(10)
+
+
     xit "one line", ->
       # Blocked by https://github.com/differentmatt/filbert/issues/41
       code = """

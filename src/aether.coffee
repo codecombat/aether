@@ -116,8 +116,11 @@ module.exports = class Aether
     rawCode = @raw
     if @options.simpleLoops
       rawCode = _.cloneDeep @raw
-      [rawCode, @replacedLoops] = @language.replaceLoops rawCode
+      [rawCode, @replacedLoops, loopProblems] = @language.replaceLoops rawCode
     @problems = @lint rawCode
+    loopProblems ?= []
+    if loopProblems.length > 0
+      @problems.warnings.push loopProblems...
     @pure = @purifyCode rawCode
     @pure
 

@@ -41,26 +41,37 @@ module.exports = class Python extends Language
   # Replace 'loop:' with 'while True:'
   replaceLoops: (rawCode) ->
     # rawCode is pre-wrap
-    return [rawCode, []] if rawCode.indexOf('loop:') is -1
+    return [rawCode, []] if not rawCode.match(/^\s*loop/m)
     convertedCode = ""
     @replacedLoops = []
+    problems = []
     rangeIndex = 0
     lines = rawCode.split '\n'
     for line, lineNumber in lines
       rangeIndex += @wrappedCodeIndentLen # + 4 for future wrapped indent
-      if line.replace(/^\s+/g, "").indexOf('loop') is 0
+      if line.match(/^\s*loop\b/, "") and lineNumber < lines.length - 1
         start = line.indexOf 'loop'
         end = start + 4
-        end++ while (line[end] != ':' and end < line.length)
-        if end < line.length
-          a = line.split("")
-          a[start..end] = 'while True:'.split ""
-          line = a.join("")
-          @replacedLoops.push rangeIndex + start
+        end++ while (end < line.length and line[end].match(/\s/))
+        if line[end] != ':'
+          problems.push
+            type: 'transpile'
+            message: "You are missing a ':' after 'loop'. Try `loop:`"
+            range: [
+                row: lineNumber
+                column: start
+              ,
+                row: lineNumber
+                column: end
+            ]
+        a = line.split("")
+        a[start..end] = 'while True:'.split ""
+        line = a.join("")
+        @replacedLoops.push rangeIndex + start
       convertedCode += line
       convertedCode += '\n' unless lineNumber is lines.length - 1
       rangeIndex += line.length + 1 # + 1 for newline
-    [convertedCode, @replacedLoops]
+    [convertedCode, @replacedLoops, problems]
 
   # Return an array of UserCodeProblems detected during linting.
   lint: (rawCode, aether) ->
