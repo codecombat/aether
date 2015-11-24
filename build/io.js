@@ -2552,7 +2552,7 @@ module.exports={
   ],
   "repository": {
     "type": "git",
-    "url": "http://github.com/Constellation/escodegen.git"
+    "url": "git+ssh://git@github.com/Constellation/escodegen.git"
   },
   "dependencies": {
     "esutils": "~1.0.0",
@@ -2606,7 +2606,8 @@ module.exports={
   },
   "directories": {},
   "_shasum": "f024016f5a88e046fd12005055e939802e6c5f23",
-  "_resolved": "https://registry.npmjs.org/escodegen/-/escodegen-1.3.3.tgz"
+  "_resolved": "https://registry.npmjs.org/escodegen/-/escodegen-1.3.3.tgz",
+  "readme": "ERROR: No README data found!"
 }
 
 },{}],6:[function(require,module,exports){

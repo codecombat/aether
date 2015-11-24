@@ -199,10 +199,11 @@
   var lastStart, lastEnd, lastEndLoc;
 
   // This is the parser's state. `inFunction` is used to reject
-  // `return` statements outside of functions, and `strict`
-  // indicates whether strict mode is on.
+  // `return` statements outside of functions, `strict` indicates
+  // whether strict mode is on, and `bracketNesting` tracks the level
+  // of nesting within brackets for implicit lint continuation.
 
-  var inFunction, strict;
+  var inFunction, strict, bracketNesting;
 
   // This function is used to raise exceptions on parse errors. It
   // takes an offset integer (into the current `input`) to indicate
@@ -555,6 +556,8 @@
     tokEnd = tokPos;
     if (options.locations) tokEndLoc = new Position;
     tokType = type;
+    if (type === _parenL || type === _braceL || type === _bracketL) ++bracketNesting;
+    if (type === _parenR || type === _braceR || type === _bracketR) --bracketNesting;
     if (type !== _newline) skipSpace();
     tokVal = val;
     tokRegexpAllowed = type.beforeExpr;
@@ -562,7 +565,7 @@
 
   function skipLine() {
     var ch = input.charCodeAt(++tokPos);
-    while (tokPos < inputLen && ch !== 10 && ch !== 13 && ch !== 8232 && ch !== 8233) {
+    while (tokPos < inputLen && !isNewline(ch)) {
       ++tokPos;
       ch = input.charCodeAt(tokPos);
     }
@@ -584,7 +587,22 @@
     while (tokPos < inputLen) {
       var ch = input.charCodeAt(tokPos);
       if (ch === 35) skipLineComment();
+      else if (ch === 92) {
+        ++tokPos;
+        if (isNewline(input.charCodeAt(tokPos))) {
+          if (input.charCodeAt(tokPos) === 13 && input.charCodeAt(tokPos+1) === 10) ++tokPos;
+          ++tokPos;
+          if (options.location) { tokLineStart = tokPos; ++tokCurLine; }
+        } else {
+          raise(tokPos, "Unexpected character after line continuation character");
+        }
+      }
       else if (isSpace(ch)) ++tokPos;
+      else if (bracketNesting > 0 && isNewline(ch)) {
+        if (ch === 13 && input.charCodeAt(tokPos+1) === 10) ++tokPos;
+        ++tokPos;
+        if (options.location) { tokLineStart = tokPos; ++tokCurLine; }
+      }
       else break;
     }
   }
@@ -594,6 +612,14 @@
       ch === 9 || ch === 11 || ch === 12 ||
       ch === 160 || // '\xa0'
       ch >= 5760 && nonASCIIwhitespace.test(String.fromCharCode(ch))) {
+      return true;
+    }
+    return false;
+  }
+
+  function isNewline(ch) {
+    if (ch === 10 || ch === 13 ||
+      ch === 8232 || ch === 8233) {
       return true;
     }
     return false;
@@ -683,7 +709,7 @@
       if (isSpace(ch)) {
         indent += String.fromCharCode(ch);
         ++indentPos;
-      } else if (ch === 13 || ch === 10 || ch === 8232 || ch === 8233) { // newline
+      } else if (isNewline(ch)) { // newline
         indent = "";
         if (ch === 13 && input.charCodeAt(indentPos + 1) === 10) ++indentPos;
         ++indentPos;
@@ -945,13 +971,27 @@
 
   function readString(quote) {
     tokPos++;
+    var ch = input.charCodeAt(tokPos);
+    var tripleQuoted = false;
+    if (ch === quote && input.charCodeAt(tokPos+1) === quote) {
+      tripleQuoted = true;
+      tokPos += 2;
+    }
     var out = "";
     for (;;) {
       if (tokPos >= inputLen) raise(tokStart, "Unterminated string constant");
       var ch = input.charCodeAt(tokPos);
       if (ch === quote) {
-        ++tokPos;
-        return finishToken(_string, out);
+        if (tripleQuoted) {
+          if (input.charCodeAt(tokPos+1) === quote &&
+              input.charCodeAt(tokPos+2) === quote) {
+            tokPos += 3;
+            return finishToken(_string, out);
+          }
+        } else {
+          ++tokPos;
+          return finishToken(_string, out);
+        }
       }
       if (ch === 92) { // '\'
         ch = input.charCodeAt(++tokPos);
@@ -991,9 +1031,20 @@
           }
         }
       } else {
-        if (ch === 13 || ch === 10 || ch === 8232 || ch === 8233) raise(tokStart, "Unterminated string constant");
-        out += String.fromCharCode(ch); // '\'
-        ++tokPos;
+        if (isNewline(ch)) {
+          if (tripleQuoted) {
+            out += String.fromCharCode(ch);
+            ++tokPos;
+            if (ch === 13 && input.charCodeAt(tokPos) === 10) {
+              ++tokPos;
+              out += "\n";
+            }
+            if (options.location) { tokLineStart = tokPos; ++tokCurLine; }
+          } else raise(tokStart, "Unterminated string constant");
+        } else {
+          out += String.fromCharCode(ch); // '\'
+          ++tokPos;
+        }
       }
     }
   }
@@ -1786,6 +1837,7 @@
     lastStart = lastEnd = tokPos;
     if (options.locations) lastEndLoc = new Position;
     inFunction = strict = null;
+    bracketNesting = 0;
     readToken();
     var node = program || startNode();
     if (!program) node.body = [];
@@ -2722,6 +2774,9 @@
           else for (i = 0; i < tmp.length; i += step) ret.append(tmp[i]);
         }
         return ret;
+      },
+      isJSArray: Array.isArray || function(obj) {
+        return toString.call(obj) === '[object Array]';
       }
     },
 
@@ -3095,6 +3150,8 @@
       },
       subscriptIndex: function (o, i) {
         if (pythonRuntime.internal.isSeq(o) && i < 0) return o.length + i;
+        if (pythonRuntime.internal.isJSArray(o) && i < 0 ) return o.length + i;
+        if ( typeof o === "string" && i < 0 ) return o.length + i;
         return i;
       }
     },
@@ -3239,6 +3296,9 @@
       },
       chr: function(i) {
         return String.fromCharCode(i); // TODO: Error code for not 0 <= i <= 1114111
+      },
+      divmod: function(a, b) {
+        return pythonRuntime.objects.tuple(Math.floor(a/b), a%b);
       },
       enumerate: function(iterable, start) {
         start = start || 0;

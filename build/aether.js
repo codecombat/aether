@@ -23823,7 +23823,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
 },{"lodash":36}],15:[function(require,module,exports){
 (function (global){
 (function() {
-  var addGlobal, addedGlobals, builtinClones, builtinNames, builtinObjectNames, builtinReal, cloneBuiltin, copy, copyBuiltin, createSandboxedFunction, getOwnPropertyNames, globalScope, name, problems, raiseDisabledFunctionConstructor, replaceBuiltin, restoreBuiltins, wrapWithSandbox, _, _i, _len, _ref, _ref1, _ref2;
+  var addGlobal, addedGlobals, builtinClones, builtinNames, builtinObjectNames, builtinReal, cloneBuiltin, copy, copyBuiltin, createSandboxedFunction, defineProperty, getOwnPropertyDescriptor, getOwnPropertyNames, globalScope, name, problems, raiseDisabledFunctionConstructor, replaceBuiltin, restoreBuiltins, wrapWithSandbox, _, _i, _len, _ref, _ref1, _ref2;
 
   _ = (_ref = (_ref1 = (_ref2 = typeof window !== "undefined" && window !== null ? window._ : void 0) != null ? _ref2 : typeof self !== "undefined" && self !== null ? self._ : void 0) != null ? _ref1 : typeof global !== "undefined" && global !== null ? global._ : void 0) != null ? _ref : require('lodash');
 
@@ -23837,13 +23837,27 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
 
   getOwnPropertyNames = Object.getOwnPropertyNames;
 
+  getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor;
+
+  defineProperty = Object.defineProperty.bind(Object);
+
   copy = function(source, target) {
-    var name, _i, _len, _ref3;
+    var desc, name, _i, _len, _ref3;
+    if (target == null) {
+      return target;
+    }
     _ref3 = getOwnPropertyNames(source);
     for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
       name = _ref3[_i];
       if (name !== 'caller' && name !== 'arguments') {
-        target[name] = source[name];
+        if (getOwnPropertyDescriptor) {
+          desc = getOwnPropertyDescriptor(source, name);
+          if (!desc.get) {
+            target[name] = desc.value;
+          }
+        } else {
+          target[name] = source[name];
+        }
       }
     }
     return target;
@@ -31792,7 +31806,7 @@ module.exports={
   ],
   "repository": {
     "type": "git",
-    "url": "http://github.com/Constellation/escodegen.git"
+    "url": "git+ssh://git@github.com/Constellation/escodegen.git"
   },
   "dependencies": {
     "esutils": "~1.0.0",
@@ -31846,7 +31860,8 @@ module.exports={
   },
   "directories": {},
   "_shasum": "f024016f5a88e046fd12005055e939802e6c5f23",
-  "_resolved": "https://registry.npmjs.org/escodegen/-/escodegen-1.3.3.tgz"
+  "_resolved": "https://registry.npmjs.org/escodegen/-/escodegen-1.3.3.tgz",
+  "readme": "ERROR: No README data found!"
 }
 
 },{}],34:[function(require,module,exports){
