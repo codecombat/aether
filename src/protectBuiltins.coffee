@@ -26,8 +26,17 @@ module.exports.builtinNames = builtinNames = builtinObjectNames.concat [
 Object.freeze Error  # https://github.com/codecombat/aether/issues/81
 
 getOwnPropertyNames = Object.getOwnPropertyNames  # Grab all properties, including non-enumerable ones.
+getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor
+defineProperty = Object.defineProperty.bind Object
 copy = (source, target) ->
-  target[name] = source[name] for name in getOwnPropertyNames source when name isnt 'caller' and name isnt 'arguments'
+  return target if not target?
+  for name in getOwnPropertyNames source when name isnt 'caller' and name isnt 'arguments'
+    if getOwnPropertyDescriptor
+      desc = getOwnPropertyDescriptor source, name
+      if not desc.get
+        target[name] = desc.value
+    else
+      target[name] = source[name]
   target
 
 cloneBuiltin = (obj) ->
