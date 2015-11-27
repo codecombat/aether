@@ -5,3 +5,4 @@ module.exports =
   clojure: require './clojure'
   lua: require './lua'
   io: require './io'
+  java: require './java'
