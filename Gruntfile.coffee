@@ -19,6 +19,7 @@ module.exports = (grunt) ->
           {src: 'build/io.js', dest: 'build/io.min.js'}
           {src: 'build/coffeescript.js', dest: 'build/coffeescript.min.js'}
           {src: 'build/javascript.js', dest: 'build/javascript.min.js'}
+          {src: 'build/java.js', dest: 'build/java.min.js'}
         ]
 
     coffeelint:
@@ -84,7 +85,7 @@ module.exports = (grunt) ->
           #standalone: "Aether"  # can't figure out how to get this to work
           ignore: ['lodash', 'traceur', 'closer', 'filbert',
             'filbert/filbert_loose', 'lua2js', 'iota-compiler',
-            'coffee-script-redux', 'jshint']
+            'coffee-script-redux', 'jshint', 'cashew-js']
       parsers:
         files: [
           {src: 'parsers/python.js', dest: 'build/python.js'}
@@ -93,6 +94,7 @@ module.exports = (grunt) ->
           {src: 'parsers/io.js', dest: 'build/io.js'}
           {src: 'parsers/coffeescript.js', dest: 'build/coffeescript.js'}
           {src: 'parsers/javascript.js', dest: 'build/javascript.js'}
+          {src: 'parsers/java.js', dest: 'build/java.js'}
         ]
       # We're not using jasmine but now jasmine_node,
       # so we don't need to browserify the tests

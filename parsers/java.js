@@ -1,0 +1,1 @@
+window.aetherCashew = require('cashew-js');
