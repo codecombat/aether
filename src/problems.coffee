@@ -156,14 +156,16 @@ getTranspileHint = (msg, context, languageID, code, range, simpleLoops=false) ->
       quoteCharacter = codeSnippet[0]
       codeSnippet = codeSnippet.slice(1)
       codeSnippet = codeSnippet.substring 0, nonAlphNumMatch.index if nonAlphNumMatch = codeSnippet.match /[^\w]/
-      hint = "Missing a quotation mark. Try `#{quoteCharacter}#{codeSnippet}#{quoteCharacter}`"
+      return "Missing a quotation mark. Try `#{quoteCharacter}#{codeSnippet}#{quoteCharacter}`"
+
   else if msg is "Unexpected indent"
     if range?
       index = range[0].ofs
       index-- while index > 0 and /\s/.test(code[index])
       if index >= 3 and /else/.test(code.substring(index - 3, index + 1))
-        hint = "You are missing a ':' after 'else'. Try `else:`"
-    hint = "Code needs to line up." unless hint?
+        return "You are missing a ':' after 'else'. Try `else:`"
+    return "Code needs to line up."
+    
   else if msg.indexOf("Unexpected token") >= 0 and context?
     codeSnippet = code.substring range[0].ofs, range[1].ofs
     lineStart = code.substring range[0].ofs - range[0].col, range[0].ofs
@@ -176,45 +178,41 @@ getTranspileHint = (msg, context, languageID, code, range, simpleLoops=false) ->
     if lineStart.indexOf(hintCreator.thisValue) is 0 and lineStart.trim().length < lineStart.length
       # TODO: update error range so this extra bit is highlighted
       if codeSnippet.indexOf(hintCreator.thisValue) is 0
-        hint = "Delete extra `#{hintCreator.thisValue}`"
+        return "Delete extra `#{hintCreator.thisValue}`"
       else
-        hint = hintCreator.getReferenceErrorHint codeSnippet
+        return hintCreator.getReferenceErrorHint codeSnippet
 
     # Check for two commands on a single line with no semi-colon
     # E.g. "self.moveRight()self.moveDown()"
     # Check for problems following a ')'
-    unless hint?
-      prevIndex = range[0].ofs - 1
-      prevIndex-- while prevIndex >= 0 and /[\t ]/.test(code[prevIndex])
-      if prevIndex >= 0 and code[prevIndex] is ')'
-        if codeSnippet is ')'
-          hint = "Delete extra `)`"
-        else if not /^\s*$/.test(codeSnippet)
-          hint = "Put each command on a separate line"
+    prevIndex = range[0].ofs - 1
+    prevIndex-- while prevIndex >= 0 and /[\t ]/.test(code[prevIndex])
+    if prevIndex >= 0 and code[prevIndex] is ')'
+      if codeSnippet is ')'
+        return "Delete extra `)`"
+      else if not /^\s*$/.test(codeSnippet)
+        return "Put each command on a separate line"
 
-    # Check mismatched parentheses
-    unless hint?
-      parens = 0
-      parens += (if c is '(' then 1 else if c is ')' then -1 else 0) for c in lineStart
-      hint = "Your parentheses must match." unless parens is 0
+    parens = 0
+    parens += (if c is '(' then 1 else if c is ')' then -1 else 0) for c in lineStart
+    return "Your parentheses must match." unless parens is 0
 
     # Check for uppercase loop
     # TODO: Should get 'loop' from problem context
-    if simpleLoops and not hint? and codeSnippet is ':' and lineStart isnt lineStartLow and lineStartLow is 'loop'
-      hint = "Should be lowercase. Try `loop`"
+    if simpleLoops and codeSnippet is ':' and lineStart isnt lineStartLow and lineStartLow is 'loop'
+      return "Should be lowercase. Try `loop`"
 
     # Check for malformed if statements
-    if not hint? and /^\s*if /.test(lineStart)
+    if /^\s*if /.test(lineStart)
       if codeSnippet is ':'
-        hint = "Your if statement is missing a test clause. Try `if True:`"
+        return "Your if statement is missing a test clause. Try `if True:`"
       else if /^\s*$/.test(codeSnippet)
         # TODO: Upate error range to be around lineStart in this case
-        hint = "You are missing a ':' after '#{lineStart}'. Try `#{lineStart}:`"
+        return "You are missing a ':' after '#{lineStart}'. Try `#{lineStart}:`"
 
     # Catchall hint for 'Unexpected token' error
-    if not hint? and /Unexpected token/.test(msg)
-      hint = "Please double-check your code carefully."
-  hint
+    if /Unexpected token/.test(msg)
+      return "Please double-check your code carefully."
 
 # Runtime Errors
 
