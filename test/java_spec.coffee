@@ -6,11 +6,13 @@ describe "Java test suite", ->
     it "JAVA - return 1000", ->
       code = """
       public class MyClass{
-       public static void main(String[] args)
+       public static int basicReturn()
          {
             return 1000;
          }
       }
       """
-      aether.transpile(code)
+      aether.className = "MyClass"
+      aether.staticCall = "basicReturn"
+      aether.transpile code
       expect(aether.run()).toEqual 1000
