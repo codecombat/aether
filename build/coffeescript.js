@@ -28378,7 +28378,7 @@ module.exports={
   ],
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/Constellation/escodegen.git"
+    "url": "http://github.com/Constellation/escodegen.git"
   },
   "dependencies": {
     "esprima": "~1.0.4",
@@ -28424,7 +28424,7 @@ module.exports={
     "shasum": "09de7967791cc958b7f89a2ddb6d23451af327e1",
     "tarball": "http://registry.npmjs.org/escodegen/-/escodegen-1.2.0.tgz"
   },
-  "_from": "escodegen@>=1.2.0 <1.3.0",
+  "_from": "escodegen@~1.2.0",
   "_npmVersion": "1.3.21",
   "_npmUser": {
     "name": "constellation",
@@ -28498,13 +28498,12 @@ module.exports={
     }
   ],
   "license": "3-clause BSD",
-  "gitHead": "ab93dc34c64cd11853fb8cb5a4f02c6b8fc3b26b",
   "readme": "CoffeeScript II: The Wrath of Khan\n==================================\n\n```\n          {\n       }   }   {\n      {   {  }  }\n       }   }{  {\n      {  }{  }  }             _____       __  __\n     ( }{ }{  { )            / ____|     / _|/ _|\n   .- { { }  { }} -.        | |     ___ | |_| |_ ___  ___\n  (  ( } { } { } }  )       | |    / _ \\|  _|  _/ _ \\/ _ \\\n  |`-..________ ..-'|       | |___| (_) | | | ||  __/  __/\n  |                 |        \\_____\\___/|_| |_| \\___|\\___|       .-''-.\n  |                 ;--.                                       .' .-.  )\n  |                (__  \\     _____           _       _       / .'  / /\n  |                 | )  )   / ____|         (_)     | |     (_/   / /\n  |                 |/  /   | (___   ___ _ __ _ _ __ | |_         / /\n  |                 (  /     \\___ \\ / __| '__| | '_ \\| __|       / /\n  |                 |/       ____) | (__| |  | | |_) | |_       . '\n  |                 |       |_____/ \\___|_|  |_| .__/ \\__|     / /    _.-')\n   `-.._________..-'                           | |           .' '  _.'.-''\n                                               |_|          /  /.-'_.'\n                                                           /    _.'\n                                                          ( _.-'\n```\n\n### Status\n\nComplete enough to use for nearly every project. See the [roadmap to 2.0](https://github.com/michaelficarra/CoffeeScriptRedux/wiki/Roadmap).\n\n### Getting Started\n\n    npm install -g coffee-script-redux\n    coffee --help\n    coffee --js <input.coffee >output.js\n\nBefore transitioning from Jeremy's compiler, see the\n[intentional deviations from jashkenas/coffee-script](https://github.com/michaelficarra/CoffeeScriptRedux/wiki/Intentional-Deviations-From-jashkenas-coffee-script)\nwiki page.\n\n### Development\n\n    git clone git://github.com/michaelficarra/CoffeeScriptRedux.git && cd CoffeeScriptRedux && npm install\n    make clean && git checkout -- lib && make -j build && make test\n\n### Notable Contributors\n\nI'd like to thank the following financial contributors for their large\ndonations to [the Kickstarter project](https://www.kickstarter.com/projects/michaelficarra/make-a-better-coffeescript-compiler)\nthat funded the initial work on this compiler.\nTogether, you donated over $10,000. Without you, I wouldn't have been able to do this.\n\n* [Groupon](https://www.groupon.com/), who is generously allowing me to work in their offices\n* [Trevor Burnham](http://trevorburnham.com)\n* [Shopify](https://www.shopify.com/)\n* [Abakas](http://abakas.com)\n* [37signals](http://37signals.com)\n* [Brightcove](https://www.brightcove.com/en/)\n* [Gaslight](https://teamgaslight.com/)\n* [Pantheon](https://www.getpantheon.com)\n* Benbria\n* Sam Stephenson\n* Bevan Hunt\n* Meryn Stol\n* Rob Tsuk\n* Dion Almaer\n* Andrew Davey\n* Thomas Burleson\n* Michael Kedzierski\n* Jeremy Kemper\n* Kyle Cordes\n* Jason R. Lauman\n* Martin Drenovac (Envizion Systems - Aust)\n* Julian Bilcke\n* Michael Edmondson\n\nAnd of course, thank you [Jeremy](https://github.com/jashkenas) (and all the other\n[contributors](https://github.com/jashkenas/coffeescript/graphs/contributors))\nfor making [the original CoffeeScript compiler](https://github.com/jashkenas/coffee-script).\n",
   "readmeFilename": "README.md",
   "_id": "coffee-script-redux@2.0.0-beta9-dev",
-  "_shasum": "a587e34e6c6e1e53acf2316b9bd24804220f5440",
-  "_from": "git://github.com/michaelficarra/CoffeeScriptRedux.git",
-  "_resolved": "git://github.com/michaelficarra/CoffeeScriptRedux.git#ab93dc34c64cd11853fb8cb5a4f02c6b8fc3b26b"
+  "_shasum": "131b0ab1f966fabe84495669db346fb3fca37fb0",
+  "_resolved": "git://github.com/michaelficarra/CoffeeScriptRedux#ab93dc34c64cd11853fb8cb5a4f02c6b8fc3b26b",
+  "_from": "coffee-script-redux@git://github.com/michaelficarra/CoffeeScriptRedux"
 }
 
 },{}],20:[function(require,module,exports){
