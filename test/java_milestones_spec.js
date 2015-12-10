@@ -359,8 +359,13 @@ describe('07 - complex assignment', function() {
 describe('07 - increment', function() {
 	ct('++x (int)', 'int', ['int x = 7;','++x;','return x;'], '8');
 	ct('--x (int)', 'int', ['int x = 7;','--x;','return x;'], '6');
+	ct('x++ (int)', 'int', ['int x = 7;','x++;','return x;'], '8');
+	ct('x-- (int)', 'int', ['int x = 7;','x--;','return x;'], '6');
+
 	ct('++x (double)', 'double', ['double x = 7.5;','++x;','return x;'], '8.5');
 	ct('--x (double)', 'double', ['double x = 7.5;','--x;','return x;'], '6.5');
+	ct('x++ (double)', 'double', ['double x = 7.5;','x++;','return x;'], '8.5');
+	ct('x-- (double)', 'double', ['double x = 7.5;','x--;','return x;'], '6.5');
 
 });
 
