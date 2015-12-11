@@ -156,6 +156,9 @@ module.exports = (grunt) ->
         basePath: "coverage/instrument"
 
     copy:
+      jstests:
+        src: "test/*.js"
+        dest: "lib/test/"
       tests:
         expand: true
         flatten: true
@@ -194,9 +197,9 @@ module.exports = (grunt) ->
 
   # Default task(s).
   grunt.registerTask 'default', ['coffeelint', 'coffee', 'browserify', 'concat',
-    'string-replace', 'jasmine_node:run', 'jade', 'sass'] #, 'uglify']
-  grunt.registerTask 'travis', ['coffeelint', 'coffee', 'jasmine_node:run']
-  grunt.registerTask 'test', ['newer:coffee', 'jasmine_node:run']
+    'string-replace', 'copy:jstests', 'jasmine_node:run', 'jade', 'sass'] #, 'uglify']
+  grunt.registerTask 'travis', ['coffeelint', 'coffee', 'copy:jstests', 'jasmine_node:run']
+  grunt.registerTask 'test', ['newer:coffee', 'copy:jstests', 'jasmine_node:run']
   grunt.registerTask 'coverage', ['coffee', 'instrument', 'copy:tests',
     'jasmine_node:runCoverage', 'storeCoverage', 'makeReport']
   grunt.registerTask 'build', ['coffeelint', 'coffee', 'browserify:src',

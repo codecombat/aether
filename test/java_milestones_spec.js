@@ -32,7 +32,6 @@ if ( !insideAether ) {
 			'	}',
 			'}'
 		];
-		console.log(code.join("\n"));
 		var Cashew = cashew.Cashew;
 		var parsedAST = Cashew(code.join("\n"));
 		var js = escodegen.generate(parsedAST);
@@ -57,11 +56,11 @@ if ( !insideAether ) {
 			'	}',
 			'}'
 		];
+		a.className = "MyClass";
+		a.staticCall = "output";
 		a.transpile(code.join("\n"));
-		var fn = a.createFunction();
 		var out = a.run();
-		console.log(code.join("\n"), fn, out);
-		console.log(a.problems);
+		//console.log(code.join("\n"), out);
 		return buffer + out;
 	}
 }
