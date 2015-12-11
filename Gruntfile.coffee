@@ -158,7 +158,7 @@ module.exports = (grunt) ->
     copy:
       jstests:
         src: "test/java_milestones_spec.ec5"
-        dest: "lib/java_milestones_sepc.js"
+        dest: "lib/test/java_milestones_sepc.js"
       tests:
         expand: true
         flatten: true
