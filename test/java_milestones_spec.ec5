@@ -116,21 +116,21 @@ function structureIf(cond, expected) {
 	], expected);
 }
 
-describe('05 - primative types', function() {
+describe('JAVAM - 05 - primative types', function() {
 	cts('int', 'return 1000;', '1000');
 	cts('String', 'return "Hello World";', 'Hello World');
 	cts('boolean', 'return true;', 'true');
 	cts('double', 'return 3.14159;', '3.14159');
 });
 
-describe('05 - assignment', function() {
+describe('JAVAM - 05 - assignment', function() {
 	ct('int', 'int', ['int x = 10;', 'return x;'], '10')
 	ct('String', 'String', ['String str = "Four score and seven years ago.";', 'return str;'], 'Four score and seven years ago.')
 	ct('boolean', 'boolean', ['boolean truthyness = true;', 'return truthyness;'], 'true')
 	ct('double', 'double', ['double roar = 17.76;', 'return roar;'], '17.76')
 });
 
-describe('05 - logical operators', function() {
+describe('JAVAM - 05 - logical operators', function() {
 	cts('boolean', 'return true && true;', 'true');
 	cts('boolean', 'return true && false;', 'false');
 	cts('boolean', 'return false && true;', 'false');
@@ -141,7 +141,7 @@ describe('05 - logical operators', function() {
 	cts('boolean', 'return false || false;', 'false');
 });
 
-describe('05 - math operators', function() {
+describe('JAVAM - 05 - math operators', function() {
 	ct('addition', 'int', ['return 2+2;'], '4');
 	ct('easy int division', 'int', ['return 6/2;'], '3');
 	ct('round-down int division', 'int', ['return 5/2;'], '2');
@@ -154,17 +154,17 @@ describe('05 - math operators', function() {
 	cts('int', 'return 7%-3;', '1');
 });
 
-describe('05 - string concatenation', function() {
+describe('JAVAM - 05 - string concatenation', function() {
 	ct('simple', 'String', ['return "Hello" + " " + "World";'], 'Hello World');
 });
 
-describe('05 - if statements', function() {
+describe('JAVAM - 05 - if statements', function() {
 	structureIf('true', 'Positive');
 	structureIf('false', 'Negitive');
 	structureIf('true && false', 'Negitive');
 });
 
-describe('05 - for loops', function() {
+describe('JAVAM - 05 - for loops', function() {
 	ct('Add 0..5', 'int', [
 		'int sum = 0;',
 		'for ( int i = 0; i < 6; ++i ) {',
@@ -192,7 +192,7 @@ describe('05 - for loops', function() {
 
 });
 
-describe('05 - while loops', function() {
+describe('JAVAM - 05 - while loops', function() {
 	ct('Add 0..5', 'int', [
 		'int sum = 0;',
 		'int i = 0;',
@@ -227,18 +227,18 @@ describe('05 - while loops', function() {
 
 });
 
-describe('05 - SystemOut', function() {
+describe('JAVAM - 05 - SystemOut', function() {
 	cts('boolean', 'System.out.println("Hello!"); return true;', "Hello!\ntrue");
 	cts('boolean', 'System.out.println(10); return true;', "10\ntrue");
 	cts('boolean', 'System.out.print("Hello!"); return true;', "Hello!true");
 });
 
-describe('07 - class definition', function() {
+describe('JAVAM - 07 - class definition', function() {
 
 
 });
 
-describe('07 - 2d arrays', function() {
+describe('JAVAM - 07 - 2d arrays', function() {
 	ct('simple', 'int', [
 		'int[][] multi = new int[5][];',
 		'multi[0] = new int[10];',
@@ -263,14 +263,14 @@ describe('07 - 2d arrays', function() {
 
 });
 
-describe('07 - ternary operator', function() {
+describe('JAVAM - 07 - ternary operator', function() {
 	cts('String', 'return true ? "A" : "B";', "A");
 	cts('String', 'return false ? "A" : "B";', "B");
 	cts('String', 'return 2+2 == 4 ? "A" : "B";', "A");
 	cts('String', 'return 2+2 == 5 ? "A" : "B";', "B");
 });
 
-describe('07 - switch', function() {
+describe('JAVAM - 07 - switch', function() {
 	ct('basic switch', 'String', [
 		'int x = 3;',
 		'switch ( x ) {',
@@ -340,7 +340,7 @@ describe('07 - switch', function() {
 
 });
 
-describe('07 - complex assignment', function() {
+describe('JAVAM - 07 - complex assignment', function() {
 	ct('+= (int)', 'int', ['int x = 7;','x += 2;','return x;'], '9');
 	ct('-= (int)', 'int', ['int x = 7;','x -= 2;','return x;'], '5');
 	ct('*= (int)', 'int', ['int x = 7;','x *= 2;','return x;'], '14');
@@ -355,7 +355,7 @@ describe('07 - complex assignment', function() {
 });
 
 
-describe('07 - increment', function() {
+describe('JAVAM - 07 - increment', function() {
 	ct('++x (int)', 'int', ['int x = 7;','++x;','return x;'], '8');
 	ct('--x (int)', 'int', ['int x = 7;','--x;','return x;'], '6');
 	ct('x++ (int)', 'int', ['int x = 7;','x++;','return x;'], '8');
@@ -369,7 +369,7 @@ describe('07 - increment', function() {
 });
 
 
-describe('07 - bitwise operators', function() {
+describe('JAVAM - 07 - bitwise operators', function() {
 	cts('int', 'return 20<<3;', '160');
 	cts('int', 'return 20>>3;', '2');
 	cts('int', 'return -20<<3;', '-160');	
@@ -378,21 +378,21 @@ describe('07 - bitwise operators', function() {
 	cts('int', 'return ~20;', '-21');
 });
 
-describe('07 - complex if statements', function() {
+describe('JAVAM - 07 - complex if statements', function() {
 	structureIf('2+2 == 4', 'Positive');
 	structureIf('2+2 == 5', 'Negitive');
 	structureIf('2+2 != 4', 'Negitive');
 	structureIf('2+2 != 5', 'Positive');
 });
 
-describe('07 - braceless if', function() {
+describe('JAVAM - 07 - braceless if', function() {
 	ct('braceless', 'String',[
 		'if ( 1 == 2 ) return "Wrong";',
 		'else return "Right";'
 	], 'Right')
 });
 
-describe('07 - instance/static variables', function() {
+describe('JAVAM - 07 - instance/static variables', function() {
 	var modifiers = ['public', 'private', ''];
 	for ( var o in modifiers ) {
 		var m = modifiers[o];
@@ -406,7 +406,7 @@ describe('07 - instance/static variables', function() {
 
 });
 
-describe('07 - static class method invocation', function() {
+describe('JAVAM - 07 - static class method invocation', function() {
 	ct('simple method', 'String', [
 		'return getString();'
 	],[
