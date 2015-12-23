@@ -22106,7 +22106,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
     Java.prototype.parse = function(code, aether) {
       var ast;
       ast = parserHolder.cashew.Cashew(code);
-      ast = parserHolder.cashew.wrapFunction(ast, aether.className, aether.staticCall);
+      ast = parserHolder.cashew.wrapFunction(ast, aether.options.functionName, aether.className, aether.staticCall);
       return ast;
     };
 
