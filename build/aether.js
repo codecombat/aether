@@ -22106,7 +22106,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
     Java.prototype.parse = function(code, aether) {
       var ast;
       ast = parserHolder.cashew.Cashew(code);
-      ast = parserHolder.cashew.wrapFunction(ast, aether.className, aether.staticCall);
+      ast = parserHolder.cashew.wrapFunction(ast, aether.options.functionName, aether.className, aether.staticCall);
       return ast;
     };
 
@@ -31854,7 +31854,7 @@ module.exports={
   ],
   "repository": {
     "type": "git",
-    "url": "http://github.com/Constellation/escodegen.git"
+    "url": "git+ssh://git@github.com/Constellation/escodegen.git"
   },
   "dependencies": {
     "esutils": "~1.0.0",
@@ -31900,7 +31900,7 @@ module.exports={
     "shasum": "f024016f5a88e046fd12005055e939802e6c5f23",
     "tarball": "http://registry.npmjs.org/escodegen/-/escodegen-1.3.3.tgz"
   },
-  "_from": "escodegen@~1.3.0",
+  "_from": "escodegen@>=1.3.0 <1.4.0",
   "_npmVersion": "1.4.3",
   "_npmUser": {
     "name": "constellation",

@@ -17,6 +17,6 @@ module.exports = class Java extends Language
 
   parse: (code, aether) ->
     ast = parserHolder.cashew.Cashew code
-    ast = parserHolder.cashew.wrapFunction ast, aether.className, aether.staticCall
+    ast = parserHolder.cashew.wrapFunction ast, aether.options.functionName, aether.className, aether.staticCall
     ast
 
