@@ -194,11 +194,57 @@ loadExample = (i) ->
   editors[1].setValue ex.aether
   editors[1].clearSelection()
 
+
 examples = [
-  name: "Basic Java"
+  name: "Java Yielding Conditionally"
   code: '''
     public class Main {
         public static String output() {
+            hero.charge();
+            hero.hesitate();
+            hero.hesitate();
+            hero.charge();
+            hero.hesitate();
+            hero.charge();
+        }
+    }
+    '''
+  aether: '''
+    var aetherOptions = {
+      executionLimit: 1000,
+      problems: {
+        jshint_W040: {level: "ignore"},
+        aether_MissingThis: {level: "warning"}
+      },
+      yieldConditionally: true,
+      language: 'java',
+      includeFlow: false,
+      includeMetrics: false
+    };
+    var aether = new Aether(aetherOptions);
+    var thisValue = {
+      charge: function() { this.say("attack!"); return "attack!"; },
+      hesitate: function() { this.say("uhh..."); aether._shouldYield = true; },
+      say: console.log
+    };
+    var code = grabDemoCode();
+    aether.transpile(code);
+    var method = aether.createMethod(thisValue);
+    var generator = method();
+    aether.sandboxGenerator(generator);
+    var executeSomeMore = function executeSomeMore() {
+      var result = generator.next();
+      demoShowOutput(aether);
+      if(!result.done)
+        setTimeout(executeSomeMore, 2000);
+    };
+    executeSomeMore();
+    '''
+,
+  name: "Basic Java"
+  code: '''
+    public class Main {
+        public static void main(String[] args) {
             hero.moveRight(2);
         }
     }
@@ -216,8 +262,6 @@ examples = [
       includeMetrics: false
     };
     var aether = new Aether(aetherOptions);
-    aether.staticCall = 'output';
-    aether.className = 'Main';
     var code = grabDemoCode();
     aether.transpile(code);
     var method = aether.createMethod(thisValue);

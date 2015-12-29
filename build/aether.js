@@ -161,7 +161,7 @@
       }
       return target;
     }
-    $defineProperty(Object, 'assign', method(assign));
+    //$defineProperty(Object, 'assign', method(assign));  // This polyfill interferes with Facebook's JS SDK and isn't needed for our use case anyway.
     function mixin(target, source) {
       var props = $getOwnPropertyNames(source);
       var p,
@@ -23247,6 +23247,9 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
         }
         break;
       case 'iota':
+        null;
+        break;
+      case 'cashew':
         null;
         break;
       default:

@@ -138,6 +138,9 @@ extractTranspileErrorDetails = (options) ->
         options.hint = error.hint or getTranspileHint options.message, errorContext, languageID, options.aether.raw, options.range, options.aether.options?.simpleLoops
     when 'iota'
       null
+    when 'cashew'
+      # TODO: anything here?
+      null
     else
       console.warn "Unhandled UserCodeProblem reporter", options.reporter
 
