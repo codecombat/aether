@@ -144,6 +144,7 @@ demoShowOutput = (aether) ->
   showProblems aether
   editors[2].setValue aether.pure
   editors[2].clearSelection()
+  window.lastAether = aether
   showMetrics aether
   showFlow aether
 
@@ -161,6 +162,8 @@ watchForCodeChanges = ->
   return if not lastJSInputAether.hasChangedSignificantly(code, lastJSInputAether.raw) and aetherInput is lastAetherInput
   clearOutput()
   lastAetherInput = aetherInput
+  lastJSInputAether.staticCall = 'output'
+  lastJSInputAether.className = 'Main'
   lastJSInputAether.transpile code
   eval aetherInput
 watchForCodeChanges = _.debounce(watchForCodeChanges, 1000)
@@ -192,6 +195,36 @@ loadExample = (i) ->
   editors[1].clearSelection()
 
 examples = [
+  name: "Basic Java"
+  code: '''
+    public class Main {
+        public static String output() {
+            hero.moveRight(2);
+        }
+    }
+    '''
+
+  aether: '''
+    var thisValue = {
+        moveRight: function (s) { console.log('moveRight(' + s + ')!');}
+    };
+    var aetherOptions = {
+      executionLimit: 1000,
+      problems: {jshint_W040: {level: "ignore"}},
+      language: 'java',
+      includeFlow: false,
+      includeMetrics: false
+    };
+    var aether = new Aether(aetherOptions);
+    aether.staticCall = 'output';
+    aether.className = 'Main';
+    var code = grabDemoCode();
+    aether.transpile(code);
+    var method = aether.createMethod(thisValue);
+    aether.run(method);
+    demoShowOutput(aether);
+    '''
+,
   name: "Basic"
   code: '''
     function fib(n) {
