@@ -276,7 +276,7 @@
   examples = [
     {
       name: "Java Yielding Conditionally",
-      code: 'public class Main {\n    public static String output() {\n        hero.charge();\n        hero.hesitate();\n        hero.hesitate();\n        hero.charge();\n        hero.hesitate();\n        hero.charge();\n    }\n}',
+      code: 'public class Main {\n    public static void main(String[] args) {\n        hero.charge();\n        hero.hesitate();\n        hero.hesitate();\n        hero.charge();\n        hero.hesitate();\n        hero.charge();\n    }\n}',
       aether: 'var aetherOptions = {\n  executionLimit: 1000,\n  problems: {\n    jshint_W040: {level: "ignore"},\n    aether_MissingThis: {level: "warning"}\n  },\n  yieldConditionally: true,\n  language: \'java\',\n  includeFlow: false,\n  includeMetrics: false\n};\nvar aether = new Aether(aetherOptions);\nvar thisValue = {\n  charge: function() { this.say("attack!"); return "attack!"; },\n  hesitate: function() { this.say("uhh..."); aether._shouldYield = true; },\n  say: console.log\n};\nvar code = grabDemoCode();\naether.transpile(code);\nvar method = aether.createMethod(thisValue);\nvar generator = method();\naether.sandboxGenerator(generator);\nvar executeSomeMore = function executeSomeMore() {\n  var result = generator.next();\n  demoShowOutput(aether);\n  if(!result.done)\n    setTimeout(executeSomeMore, 2000);\n};\nexecuteSomeMore();'
     }, {
       name: "Basic Java",
