@@ -199,7 +199,7 @@ examples = [
   name: "Java Yielding Conditionally"
   code: '''
     public class Main {
-        public static String output() {
+        public static void main(String[] args) {
             hero.charge();
             hero.hesitate();
             hero.hesitate();
