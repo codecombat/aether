@@ -20909,7 +20909,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
     };
 
     Aether.prototype.serialize = function() {
-      return _.pick(this, ['originalOptions', 'raw', 'pure', 'problems', 'flow', 'metrics', 'style']);
+      return _.pick(this, ['originalOptions', 'raw', 'pure', 'problems', 'flow', 'metrics', 'style', 'ast']);
     };
 
     Aether.deserialize = function(serialized) {
@@ -21136,6 +21136,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
         originalNodeRanges.splice();
         try {
           _ref8 = this.transform(wrappedCode, preNormalizationTransforms, this.language.parseDammit, true), transformedCode = _ref8[0], transformedAST = _ref8[1];
+          this.ast = transformedAST;
         } catch (_error) {
           error = _error;
           problemOptions.kind = error.index || error.id;
