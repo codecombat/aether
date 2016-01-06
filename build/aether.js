@@ -21118,6 +21118,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
       preNormalizationTransforms = [transforms.makeGatherNodeRanges(originalNodeRanges, wrappedCode, this.language.wrappedCodePrefix), transforms.makeCheckThisKeywords(this.allGlobals, varNames, this.language, this.options.problemContext), transforms.makeCheckIncompleteMembers(this.language, this.options.problemContext)];
       try {
         _ref7 = this.transform(wrappedCode, preNormalizationTransforms, this.language.parse, true), transformedCode = _ref7[0], transformedAST = _ref7[1];
+        this.ast = transformedAST;
       } catch (_error) {
         error = _error;
         problemOptions = {
@@ -21367,6 +21368,25 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
 
     Aether.prototype.convertToNativeType = function(obj) {
       return this.language.convertToNativeType(obj);
+    };
+
+    Aether.prototype.getStatementCount = function() {
+      var count, root;
+      count = 0;
+      root = this.ast.body[0].body;
+      traversal.walkASTCorrect(root, function(node) {
+        var _ref6;
+        if (node.type == null) {
+          return;
+        }
+        if (node.userCode === false) {
+          return;
+        }
+        if ((_ref6 = node.type) === 'ExpressionStatement' || _ref6 === 'ReturnStatement' || _ref6 === 'ForStatement' || _ref6 === 'ForInStatement' || _ref6 === 'WhileStatement' || _ref6 === 'DoWhileStatement' || _ref6 === 'FunctionDeclaration' || _ref6 === 'VariableDeclaration' || _ref6 === 'IfStatement' || _ref6 === 'SwitchStatement' || _ref6 === 'ThrowStatement' || _ref6 === 'ContinueStatement' || _ref6 === 'BreakStatement') {
+          return ++count;
+        }
+      });
+      return count;
     };
 
     Aether.prototype.logStatementStart = instrumentation.logStatementStart;
@@ -22804,7 +22824,8 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
             }
           }
         ],
-        "kind": "var"
+        "kind": "var",
+        "userCode": false
       });
       return ast;
     };
@@ -22862,7 +22883,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
 },{"../ranges":17,"./language":10,"lua2js":37}],13:[function(require,module,exports){
 (function (global){
 (function() {
-  var Language, Python, estraverse, parserHolder, selfToThis, _, _ref, _ref1, _ref2,
+  var Language, Python, estraverse, parserHolder, selfToThis, traversal, _, _ref, _ref1, _ref2,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
@@ -22871,6 +22892,8 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
   parserHolder = {};
 
   estraverse = require('estraverse');
+
+  traversal = require('../traversal');
 
   Language = require('./language');
 
@@ -22979,32 +23002,15 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
     };
 
     Python.prototype.lint = function(rawCode, aether) {
-      var ast, error, problems, walkAST,
+      var ast, error, problems,
         _this = this;
       problems = [];
-      walkAST = function(node, fn) {
-        var child, grandchild, key, _i, _len;
-        for (key in node) {
-          child = node[key];
-          if (_.isArray(child)) {
-            for (_i = 0, _len = child.length; _i < _len; _i++) {
-              grandchild = child[_i];
-              if (_.isString(grandchild != null ? grandchild.type : void 0)) {
-                walkAST(grandchild, fn);
-              }
-            }
-          } else if (_.isString(child != null ? child.type : void 0)) {
-            walkAST(child, fn);
-          }
-        }
-        return fn(node);
-      };
       try {
         ast = parserHolder.parser.parse(rawCode, {
           locations: true,
           ranges: true
         });
-        walkAST(ast, function(node) {
+        traversal.walkASTCorrect(ast, function(node) {
           if (node.type !== "WhileStatement") {
             return;
           }
@@ -23030,7 +23036,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
           });
         });
         if (problems.length === 0) {
-          walkAST(ast, function(node) {
+          traversal.walkASTCorrect(ast, function(node) {
             if (node.type !== "IfStatement") {
               return;
             }
@@ -23178,7 +23184,8 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
           }
         }
       ],
-      "kind": "var"
+      "kind": "var",
+      "userCode": false
     });
     return ast;
   };
@@ -23186,7 +23193,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
 }).call(this);
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./language":10,"estraverse":36,"filbert":37,"filbert/filbert_loose":37,"lodash":37}],14:[function(require,module,exports){
+},{"../traversal":19,"./language":10,"estraverse":36,"filbert":37,"filbert/filbert_loose":37,"lodash":37}],14:[function(require,module,exports){
 (function() {
   var HintCreator, acceptMatchThreshold, extractRuntimeErrorDetails, extractTranspileErrorDetails, getRuntimeHint, getTranspileHint, ranges, scoreFuzziness, string_score,
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
@@ -23325,7 +23332,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
   };
 
   getTranspileHint = function(msg, context, languageID, code, range, simpleLoops) {
-    var c, codeSnippet, hint, hintCreator, index, lineStart, lineStartLow, nonAlphNumMatch, parens, prevIndex, quoteCharacter, _i, _len, _ref;
+    var c, codeSnippet, hintCreator, index, lineStart, lineStartLow, nonAlphNumMatch, parens, prevIndex, quoteCharacter, _i, _len, _ref;
     if (simpleLoops == null) {
       simpleLoops = false;
     }
@@ -23337,7 +23344,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
         if (nonAlphNumMatch = codeSnippet.match(/[^\w]/)) {
           codeSnippet = codeSnippet.substring(0, nonAlphNumMatch.index);
         }
-        hint = "Missing a quotation mark. Try `" + quoteCharacter + codeSnippet + quoteCharacter + "`";
+        return "Missing a quotation mark. Try `" + quoteCharacter + codeSnippet + quoteCharacter + "`";
       }
     } else if (msg === "Unexpected indent") {
       if (range != null) {
@@ -23346,12 +23353,10 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
           index--;
         }
         if (index >= 3 && /else/.test(code.substring(index - 3, index + 1))) {
-          hint = "You are missing a ':' after 'else'. Try `else:`";
+          return "You are missing a ':' after 'else'. Try `else:`";
         }
       }
-      if (hint == null) {
-        hint = "Code needs to line up.";
-      }
+      return "Code needs to line up.";
     } else if (msg.indexOf("Unexpected token") >= 0 && (context != null)) {
       codeSnippet = code.substring(range[0].ofs, range[1].ofs);
       lineStart = code.substring(range[0].ofs - range[0].col, range[0].ofs);
@@ -23359,49 +23364,44 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
       hintCreator = new HintCreator(context, languageID);
       if (lineStart.indexOf(hintCreator.thisValue) === 0 && lineStart.trim().length < lineStart.length) {
         if (codeSnippet.indexOf(hintCreator.thisValue) === 0) {
-          hint = "Delete extra `" + hintCreator.thisValue + "`";
+          return "Delete extra `" + hintCreator.thisValue + "`";
         } else {
-          hint = hintCreator.getReferenceErrorHint(codeSnippet);
+          return hintCreator.getReferenceErrorHint(codeSnippet);
         }
       }
-      if (hint == null) {
-        prevIndex = range[0].ofs - 1;
-        while (prevIndex >= 0 && /[\t ]/.test(code[prevIndex])) {
-          prevIndex--;
-        }
-        if (prevIndex >= 0 && code[prevIndex] === ')') {
-          if (codeSnippet === ')') {
-            hint = "Delete extra `)`";
-          } else if (!/^\s*$/.test(codeSnippet)) {
-            hint = "Put each command on a separate line";
-          }
+      prevIndex = range[0].ofs - 1;
+      while (prevIndex >= 0 && /[\t ]/.test(code[prevIndex])) {
+        prevIndex--;
+      }
+      if (prevIndex >= 0 && code[prevIndex] === ')') {
+        if (codeSnippet === ')') {
+          return "Delete extra `)`";
+        } else if (!/^\s*$/.test(codeSnippet)) {
+          return "Put each command on a separate line";
         }
       }
-      if (hint == null) {
-        parens = 0;
-        for (_i = 0, _len = lineStart.length; _i < _len; _i++) {
-          c = lineStart[_i];
-          parens += (c === '(' ? 1 : c === ')' ? -1 : 0);
-        }
-        if (parens !== 0) {
-          hint = "Your parentheses must match.";
-        }
+      parens = 0;
+      for (_i = 0, _len = lineStart.length; _i < _len; _i++) {
+        c = lineStart[_i];
+        parens += (c === '(' ? 1 : c === ')' ? -1 : 0);
       }
-      if (simpleLoops && (hint == null) && codeSnippet === ':' && lineStart !== lineStartLow && lineStartLow === 'loop') {
-        hint = "Should be lowercase. Try `loop`";
+      if (parens !== 0) {
+        return "Your parentheses must match.";
       }
-      if ((hint == null) && /^\s*if /.test(lineStart)) {
+      if (simpleLoops && codeSnippet === ':' && lineStart !== lineStartLow && lineStartLow === 'loop') {
+        return "Should be lowercase. Try `loop`";
+      }
+      if (/^\s*if /.test(lineStart)) {
         if (codeSnippet === ':') {
-          hint = "Your if statement is missing a test clause. Try `if True:`";
+          return "Your if statement is missing a test clause. Try `if True:`";
         } else if (/^\s*$/.test(codeSnippet)) {
-          hint = "You are missing a ':' after '" + lineStart + "'. Try `" + lineStart + ":`";
+          return "You are missing a ':' after '" + lineStart + "'. Try `" + lineStart + ":`";
         }
       }
-      if ((hint == null) && /Unexpected token/.test(msg)) {
-        hint = "Please double-check your code carefully.";
+      if (/Unexpected token/.test(msg)) {
+        return "Please double-check your code carefully.";
       }
     }
-    return hint;
   };
 
   extractRuntimeErrorDetails = function(options) {
@@ -25143,7 +25143,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
 },{"./ranges":17,"esprima":35,"lodash":37,"source-map":40}],19:[function(require,module,exports){
 (function (global){
 (function() {
-  var acorn_loose, esprima, insertHelpers, morphAST, walkAST, _, _ref, _ref1, _ref2;
+  var acorn_loose, esprima, insertHelpers, morphAST, walkAST, walkASTCorrect, _, _ref, _ref1, _ref2;
 
   _ = (_ref = (_ref1 = (_ref2 = typeof window !== "undefined" && window !== null ? window._ : void 0) != null ? _ref2 : typeof self !== "undefined" && self !== null ? self._ : void 0) != null ? _ref1 : typeof global !== "undefined" && global !== null ? global._ : void 0) != null ? _ref : require('lodash');
 
@@ -25169,6 +25169,24 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
       _results.push(fn(child));
     }
     return _results;
+  };
+
+  module.exports.walkASTCorrect = walkASTCorrect = function(node, fn) {
+    var child, grandchild, key, _i, _len;
+    for (key in node) {
+      child = node[key];
+      if (_.isArray(child)) {
+        for (_i = 0, _len = child.length; _i < _len; _i++) {
+          grandchild = child[_i];
+          if (_.isString(grandchild != null ? grandchild.type : void 0)) {
+            walkASTCorrect(grandchild, fn);
+          }
+        }
+      } else if (_.isString(child != null ? child.type : void 0)) {
+        walkASTCorrect(child, fn);
+      }
+    }
+    return fn(node);
   };
 
   module.exports.morphAST = morphAST = function(source, transforms, parseFn, aether) {
@@ -26071,7 +26089,6 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
             if(nd.left.type === 'Identifier') {
               var res, tmp = null, right;
               var with_bindings = scope.possibleWithBindings(nd.left.name);
-              if ( !nd.left.name ) console.log(nd);
               if(!isTmp(nd.left.name) && scope.isGlobal(nd.left.name)) {
                 tmp = genTmp();
                 right = normalizeExpression(nd.right, getTarget());
