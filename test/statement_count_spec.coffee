@@ -24,7 +24,8 @@ describe "Statement Counting", ->
         self.moveRight();
     """
     cs "for sum", "python", 3, """
-      for i in xrange(1,10) self.say(i)
+      for i in xrange(1,10):
+        self.say(i) 
     """
     cs "function", "python", 3, """
       def x(a):
