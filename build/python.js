@@ -1241,26 +1241,33 @@
         return this.finishNodeFrom(endNode, node, type);
       },
 
+      createGeneratedNodeSpan: function (startNode, endNode, type, props) {
+        var node = startNodeFrom(startNode);
+        for (var prop in props) node[prop] = props[prop];
+        node.userCode = false;
+        return this.finishNodeFrom(endNode, node, type);
+      },
+
       // while (__formalsIndex < __params.formals.length) {
       //   <argsId>.push(__params.formals[__formalsIndex++]); }
       createNodeArgsWhileConsequent: function (argsId, s) {
         var __paramsFormals = this.createNodeMembIds(argsId, '__params' + s, 'formals');
-        var __formalsIndexId = this.createNodeSpan(argsId, argsId, "Identifier", { name: '__formalsIndex' + s });
-        return this.createNodeSpan(argsId, argsId, "WhileStatement", {
-          test: this.createNodeSpan(argsId, argsId, "BinaryExpression", {
+        var __formalsIndexId = this.createGeneratedNodeSpan(argsId, argsId, "Identifier", { name: '__formalsIndex' + s });
+        return this.createGeneratedNodeSpan(argsId, argsId, "WhileStatement", {
+          test: this.createGeneratedNodeSpan(argsId, argsId, "BinaryExpression", {
             operator: '<', left: __formalsIndexId,
-            right: this.createNodeSpan(argsId, argsId, "MemberExpression", {
+            right: this.createGeneratedNodeSpan(argsId, argsId, "MemberExpression", {
               computed: false, object: __paramsFormals,
-              property: this.createNodeSpan(argsId, argsId, "Identifier", { name: 'length' })
+              property: this.createGeneratedNodeSpan(argsId, argsId, "Identifier", { name: 'length' })
             })
           }),
-          body: this.createNodeSpan(argsId, argsId, "BlockStatement", {
-            body: [this.createNodeSpan(argsId, argsId, "ExpressionStatement", {
-              expression: this.createNodeSpan(argsId, argsId, "CallExpression", {
+          body: this.createGeneratedNodeSpan(argsId, argsId, "BlockStatement", {
+            body: [this.createGeneratedNodeSpan(argsId, argsId, "ExpressionStatement", {
+              expression: this.createGeneratedNodeSpan(argsId, argsId, "CallExpression", {
                 callee: this.createNodeMembIds(argsId, argsId.name, 'push'),
-                arguments: [this.createNodeSpan(argsId, argsId, "MemberExpression", {
+                arguments: [this.createGeneratedNodeSpan(argsId, argsId, "MemberExpression", {
                   computed: true, object: __paramsFormals,
-                  property: this.createNodeSpan(argsId, argsId, "UpdateExpression", {
+                  property: this.createGeneratedNodeSpan(argsId, argsId, "UpdateExpression", {
                     operator: '++', prefix: false, argument: __formalsIndexId
                   })
                 })]
@@ -1274,21 +1281,21 @@
       //   <argsId>.push(__args[__formalsIndex++]); }}
       createNodeArgsAlternate: function (argsId, s) {
         var __args = '__args' + s;
-        var __formalsIndexId = this.createNodeSpan(argsId, argsId, "Identifier", { name: '__formalsIndex' + s });
-        return this.createNodeSpan(argsId, argsId, "BlockStatement", {
-          body: [this.createNodeSpan(argsId, argsId, "WhileStatement", {
-            test: this.createNodeSpan(argsId, argsId, "BinaryExpression", {
+        var __formalsIndexId = this.createGeneratedNodeSpan(argsId, argsId, "Identifier", { name: '__formalsIndex' + s });
+        return this.createGeneratedNodeSpan(argsId, argsId, "BlockStatement", {
+          body: [this.createGeneratedNodeSpan(argsId, argsId, "WhileStatement", {
+            test: this.createGeneratedNodeSpan(argsId, argsId, "BinaryExpression", {
               operator: '<', left: __formalsIndexId,
               right: this.createNodeMembIds(argsId, __args, 'length')
             }),
-            body: this.createNodeSpan(argsId, argsId, "BlockStatement", {
-              body: [this.createNodeSpan(argsId, argsId, "ExpressionStatement", {
-                expression: this.createNodeSpan(argsId, argsId, "CallExpression", {
+            body: this.createGeneratedNodeSpan(argsId, argsId, "BlockStatement", {
+              body: [this.createGeneratedNodeSpan(argsId, argsId, "ExpressionStatement", {
+                expression: this.createGeneratedNodeSpan(argsId, argsId, "CallExpression", {
                   callee: this.createNodeMembIds(argsId, argsId.name, 'push'),
-                  arguments: [this.createNodeSpan(argsId, argsId, "MemberExpression", {
+                  arguments: [this.createGeneratedNodeSpan(argsId, argsId, "MemberExpression", {
                     computed: true,
-                    object: this.createNodeSpan(argsId, argsId, "Identifier", { name: __args }),
-                    property: this.createNodeSpan(argsId, argsId, "UpdateExpression", {
+                    object: this.createGeneratedNodeSpan(argsId, argsId, "Identifier", { name: __args }),
+                    property: this.createGeneratedNodeSpan(argsId, argsId, "UpdateExpression", {
                       operator: '++', prefix: false, argument: __formalsIndexId
                     })
                   })]
@@ -1301,17 +1308,17 @@
 
       // return (function() {<body>}).call(this);
       createNodeFnBodyIife: function (body) {
-        var iifeBody = this.createNodeSpan(body, body, "FunctionExpression", {
+        var iifeBody = this.createGeneratedNodeSpan(body, body, "FunctionExpression", {
           params: [], defaults: [], body: body, generator: false, expression: false
         });
-        var iifeCall = this.createNodeSpan(body, body, "CallExpression", {
-          callee: this.createNodeSpan(body, body, "MemberExpression", {
+        var iifeCall = this.createGeneratedNodeSpan(body, body, "CallExpression", {
+          callee: this.createGeneratedNodeSpan(body, body, "MemberExpression", {
             computed: false, object: iifeBody,
-            property: this.createNodeSpan(body, body, "Identifier", { name: 'call' })
+            property: this.createGeneratedNodeSpan(body, body, "Identifier", { name: 'call' })
           }),
-          arguments: [this.createNodeSpan(body, body, "ThisExpression")]
+          arguments: [this.createGeneratedNodeSpan(body, body, "ThisExpression")]
         });
-        return this.createNodeSpan(body, body, "ReturnStatement", { argument: iifeCall });
+        return this.createGeneratedNodeSpan(body, body, "ReturnStatement", { argument: iifeCall });
       },
 
       // E.g. Math.pow(2, 3)
@@ -1346,11 +1353,11 @@
       // E.g. pyRuntime.ops.add
 
       createNodeOpsCallee: function (node, fnName) {
-        var runtimeId = this.createNodeSpan(node, node, "Identifier", { name: options.runtimeParamName });
-        var opsId = this.createNodeSpan(node, node, "Identifier", { name: "ops" });
-        var addId = this.createNodeSpan(node, node, "Identifier", { name: fnName });
-        var opsMember = this.createNodeSpan(node, node, "MemberExpression", { object: runtimeId, property: opsId, computed: false });
-        return this.createNodeSpan(node, node, "MemberExpression", { object: opsMember, property: addId, computed: false });
+        var runtimeId = this.createGeneratedNodeSpan(node, node, "Identifier", { name: options.runtimeParamName });
+        var opsId = this.createGeneratedNodeSpan(node, node, "Identifier", { name: "ops" });
+        var addId = this.createGeneratedNodeSpan(node, node, "Identifier", { name: fnName });
+        var opsMember = this.createGeneratedNodeSpan(node, node, "MemberExpression", { object: runtimeId, property: opsId, computed: false });
+        return this.createGeneratedNodeSpan(node, node, "MemberExpression", { object: opsMember, property: addId, computed: false });
       },
 
       // var __params = arguments.length === 1 && arguments[0].formals && arguments[0].keywords ? arguments[0] : null;
@@ -1380,7 +1387,7 @@
           consequent: arguments0,
           alternate: this.createNodeSpan(r, r, "Literal", { value: null })
         });
-        return this.createVarDeclFromId(r, __paramsId, checks);
+        return this.createGeneratedVarDeclFromId(r, __paramsId, checks);
       },
 
       // function __getParam(v, d) {
@@ -1408,16 +1415,16 @@
         var __paramsFormals = this.createNodeMembIds(r, __params, 'formals');
         var __paramsKeywords = this.createNodeMembIds(r, __params, 'keywords')
         var __paramsKeywordsV = this.createNodeSpan(r, r, "MemberExpression", { computed: true, property: vId, object: __paramsKeywords });
-        return this.createNodeSpan(r, r, "FunctionDeclaration", {
+        return this.createGeneratedNodeSpan(r, r, "FunctionDeclaration", {
           id: this.createNodeSpan(r, r, "Identifier", { name: __getParam }),
           params: [vId, dId],
           defaults: [],
           body: this.createNodeSpan(r, r, "BlockStatement", {
-            body: [this.createVarDeclFromId(r, rId, dId),
-              this.createNodeSpan(r, r, "IfStatement", {
+            body: [this.createGeneratedVarDeclFromId(r, rId, dId),
+              this.createGeneratedNodeSpan(r, r, "IfStatement", {
                 test: this.createNodeSpan(r, r, "Identifier", { name: __params }),
                 consequent: this.createNodeSpan(r, r, "BlockStatement", {
-                  body: [this.createNodeSpan(r, r, "IfStatement", {
+                  body: [this.createGeneratedNodeSpan(r, r, "IfStatement", {
                     test: this.createNodeSpan(r, r, "BinaryExpression", {
                       operator: '<', left: __formalsIndexId,
                       right: this.createNodeSpan(r, r, "MemberExpression", {
@@ -1426,8 +1433,8 @@
                       })
                     }),
                     consequent: this.createNodeSpan(r, r, "BlockStatement", {
-                      body: [this.createNodeSpan(r, r, "ExpressionStatement", {
-                        expression: this.createNodeSpan(r, r, "AssignmentExpression", {
+                      body: [this.createGeneratedNodeSpan(r, r, "ExpressionStatement", {
+                        expression: this.createGeneratedNodeSpan(r, r, "AssignmentExpression", {
                           operator: '=', left: rId,
                           right: this.createNodeSpan(r, r, "MemberExpression", {
                             computed: true, object: __paramsFormals,
@@ -1438,17 +1445,17 @@
                         })
                       })]
                     }),
-                    alternate: this.createNodeSpan(r, r, "IfStatement", {
+                    alternate: this.createGeneratedNodeSpan(r, r, "IfStatement", {
                       test: this.createNodeSpan(r, r, "BinaryExpression", {
                         operator: 'in', left: vId, right: __paramsKeywords,
                       }),
                       consequent: this.createNodeSpan(r, r, "BlockStatement", {
-                        body: [this.createNodeSpan(r, r, "ExpressionStatement", {
-                          expression: this.createNodeSpan(r, r, "AssignmentExpression", {
+                        body: [this.createGeneratedNodeSpan(r, r, "ExpressionStatement", {
+                          expression: this.createGeneratedNodeSpan(r, r, "AssignmentExpression", {
                             operator: '=', left: rId, right: __paramsKeywordsV
                           })
                         }),
-                        this.createNodeSpan(r, r, "ExpressionStatement", {
+                        this.createGeneratedNodeSpan(r, r, "ExpressionStatement", {
                           expression: this.createNodeSpan(r, r, "UnaryExpression", {
                             operator: 'delete', prefix: true, argument: __paramsKeywordsV
                           })
@@ -1458,19 +1465,19 @@
                     })
                   })]
                 }),
-                alternate: this.createNodeSpan(r, r, "IfStatement", {
-                  test: this.createNodeSpan(r, r, "BinaryExpression", {
+                alternate: this.createGeneratedNodeSpan(r, r, "IfStatement", {
+                  test: this.createGeneratedNodeSpan(r, r, "BinaryExpression", {
                     operator: '<', left: __formalsIndexId,
                     right: this.createNodeMembIds(r, __args, 'length'),
                   }),
-                  consequent: this.createNodeSpan(r, r, "BlockStatement", {
-                    body: [this.createNodeSpan(r, r, "ExpressionStatement", {
-                      expression: this.createNodeSpan(r, r, "AssignmentExpression", {
+                  consequent: this.createGeneratedNodeSpan(r, r, "BlockStatement", {
+                    body: [this.createGeneratedNodeSpan(r, r, "ExpressionStatement", {
+                      expression: this.createGeneratedNodeSpan(r, r, "AssignmentExpression", {
                         operator: '=', left: rId,
-                        right: this.createNodeSpan(r, r, "MemberExpression", {
+                        right: this.createGeneratedNodeSpan(r, r, "MemberExpression", {
                           computed: true,
-                          object: this.createNodeSpan(r, r, "Identifier", { name: __args }),
-                          property: this.createNodeSpan(r, r, "UpdateExpression", {
+                          object: this.createGeneratedNodeSpan(r, r, "Identifier", { name: __args }),
+                          property: this.createGeneratedNodeSpan(r, r, "UpdateExpression", {
                             operator: '++', argument: __formalsIndexId, prefix: false
                           })
                         })
@@ -1480,7 +1487,7 @@
                   alternate: null
                 })
               }),
-              this.createNodeSpan(r, r, "ReturnStatement", { argument: rId })]
+              this.createGeneratedNodeSpan(r, r, "ReturnStatement", { argument: rId })]
           }),
           rest: null, generator: false, expression: false
         });
@@ -1509,6 +1516,18 @@
         var declDecl = startNodeFrom(refNode);
         declDecl.kind = "var";
         declDecl.declarations = [decl];
+        return this.finishNodeFrom(refNode, declDecl, "VariableDeclaration");
+      },
+
+      createGeneratedVarDeclFromId: function (refNode, id, init) {
+        var decl = startNodeFrom(refNode);
+        decl.id = id;
+        decl.init = init;
+        this.finishNodeFrom(refNode, decl, "VariableDeclarator");
+        var declDecl = startNodeFrom(refNode);
+        declDecl.kind = "var";
+        declDecl.declarations = [decl];
+        declDecl.userCode = false;
         return this.finishNodeFrom(refNode, declDecl, "VariableDeclaration");
       },
 
@@ -2546,12 +2565,12 @@
       node.body.body.push(nc.createNodeParamsCheck(node.id, suffix));
 
       // var __formalsIndex = 0;
-      node.body.body.push(nc.createVarDeclFromId(node.id,
+      node.body.body.push(nc.createGeneratedVarDeclFromId(node.id,
         nc.createNodeSpan(node.id, node.id, "Identifier", { name: '__formalsIndex' + suffix }),
         nc.createNodeSpan(node.id, node.id, "Literal", { value: 0 })));
 
       // var __args = arguments;
-      node.body.body.push(nc.createVarDeclFromId(node.id,
+      node.body.body.push(nc.createGeneratedVarDeclFromId(node.id,
         nc.createNodeSpan(node.id, node.id, "Identifier", { name: '__args' + suffix }),
         nc.createNodeSpan(node.id, node.id, "Identifier", { name: 'arguments' })));
     }
@@ -2580,7 +2599,7 @@
           arguments: [nc.createNodeSpan(formals[i].id, formals[i].id, "Literal", { value: formals[i].id.name })]
         });
         if (formals[i].expr) __getParamCall.arguments.push(formals[i].expr);
-        node.body.body.push(nc.createVarDeclFromId(formals[i].id, formals[i].id, __getParamCall));
+        node.body.body.push(nc.createGeneratedVarDeclFromId(formals[i].id, formals[i].id, __getParamCall));
       }
     }
     
@@ -2588,12 +2607,12 @@
     if (refNode) {
       if (argsId) {
         // var <args> = [];
-        var argsAssign = nc.createVarDeclFromId(argsId, argsId, nc.createNodeSpan(argsId, argsId, "ArrayExpression", { elements: [] }));
+        var argsAssign = nc.createGeneratedVarDeclFromId(argsId, argsId, nc.createNodeSpan(argsId, argsId, "ArrayExpression", { elements: [] }));
         node.body.body.push(argsAssign);
       }
       if (kwargsId) {
         // var <kwargs> = {};
-        var kwargsAssign = nc.createVarDeclFromId(kwargsId, kwargsId, nc.createNodeSpan(kwargsId, kwargsId, "ObjectExpression", { properties: [] }));
+        var kwargsAssign = nc.createGeneratedVarDeclFromId(kwargsId, kwargsId, nc.createNodeSpan(kwargsId, kwargsId, "ObjectExpression", { properties: [] }));
         node.body.body.push(kwargsAssign);
       }
       // if (__params) {}

@@ -22107,9 +22107,6 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
       var ast;
       ast = parserHolder.cashew.Cashew(code);
       ast = parserHolder.cashew.wrapFunction(ast, aether.options.functionName, aether.className, aether.staticCall);
-      if (aether.options.yieldConditionally || aether.options.yiedAutomatically) {
-        pruneMainMethod(ast, aether);
-      }
       heroToThis(ast.body[0].body.body);
       return ast;
     };
@@ -26071,7 +26068,6 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
             if(nd.left.type === 'Identifier') {
               var res, tmp = null, right;
               var with_bindings = scope.possibleWithBindings(nd.left.name);
-              if ( !nd.left.name ) console.log(nd);
               if(!isTmp(nd.left.name) && scope.isGlobal(nd.left.name)) {
                 tmp = genTmp();
                 right = normalizeExpression(nd.right, getTarget());

@@ -19,8 +19,8 @@ module.exports = class Java extends Language
     ast = parserHolder.cashew.Cashew code
     ast = parserHolder.cashew.wrapFunction ast, aether.options.functionName, aether.className, aether.staticCall
     #console.log(require('escodegen').generate ast)
-    if aether.options.yieldConditionally or aether.options.yiedAutomatically
-        pruneMainMethod ast, aether
+    #if aether.options.yieldConditionally or aether.options.yiedAutomatically
+    #    pruneMainMethod ast, aether
 
     heroToThis ast.body[0].body.body
 

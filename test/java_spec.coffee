@@ -308,26 +308,6 @@ describe "Java test suite", ->
       aether.transpile(code)
       expect(aether.run()).toEqual('that´s correct')
 
-    it "07 - JAVA - Instance variables from main class", ->
-      code = """
-      public class VariableStaticClass
-      {
-          static int a = 10;
-
-         public static int output()
-         {
-            if (a == 10)
-               return "that´s correct";
-           else
-               return "that´s incorrect";
-         }
-      }
-      """
-      aether.className = "VariableStaticClass"
-      aether.staticCall = "output"
-      aether.transpile(code)
-      expect(aether.run()).toEqual('that´s correct')
-
     it "07 - JAVA - Class method invocation", ->
       code = """
       public class SumClass
@@ -347,3 +327,28 @@ describe "Java test suite", ->
       aether.staticCall = "output"
       aether.transpile(code)
       expect(aether.run()).toEqual 20
+
+    it "09 - JAVA - Instance variables from main class", ->
+      code = """
+      public class VariableClass
+      {
+         private int a;
+
+         public VariableClass(int a){
+            this.a = a;
+         }
+
+         public static String output()
+         {            
+            VariableClass vc = new VariableClass(10);
+            if (vc.a == 10)
+               return "that´s correct";
+           else
+               return "that´s incorrect";
+         }
+      }
+      """
+      aether.className = "VariableClass"
+      aether.staticCall = "output"
+      aether.transpile(code)
+      expect(aether.run()).toEqual('that´s correct')
