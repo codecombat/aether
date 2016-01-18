@@ -22,9 +22,9 @@ module.exports = class Java extends Language
     #if aether.options.yieldConditionally or aether.options.yiedAutomatically
     #    pruneMainMethod ast, aether
 
-    heroToThis ast.body[0].body.body
+    heroToThis ast.body
 
-    #console.log("AST", require('escodegen').generate ast)
+    console.log("AST", require('escodegen').generate ast)
     ast
 
 pruneMainMethod = (ast, aether) ->
