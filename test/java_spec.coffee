@@ -352,3 +352,42 @@ describe "Java test suite", ->
       aether.staticCall = "output"
       aether.transpile(code)
       expect(aether.run()).toEqual('that´s correct')
+
+    it "09 - Conditional yielding", ->
+      aether = new Aether language: "java", yieldConditionally: true, simpleLoops: false
+      dude =
+        killCount: 0
+        slay: ->
+          @killCount += 1
+          aether._shouldYield = true
+        getKillCount: -> return @killCount
+      code = """
+        public class YieldClass
+      {
+         public static String output()
+         {            
+            while(true){
+              hero.slay();
+              break;
+            }
+            
+            while(true){
+                hero.slay();
+                if (hero.getKillCount() >= 5)
+                  break;
+            }
+            hero.slay();
+         }
+      }
+      """
+      aether.className = "YieldClass"
+      aether.staticCall = "output"
+      aether.transpile code
+      f = aether.createFunction()
+      gen = f.apply dude
+
+      for i in [1..6]
+        expect(gen.next().done).toEqual false
+        expect(dude.killCount).toEqual i
+      expect(gen.next().done).toEqual true
+      expect(dude.killCount).toEqual 6

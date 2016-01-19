@@ -22107,8 +22107,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
       var ast;
       ast = parserHolder.cashew.Cashew(code);
       ast = parserHolder.cashew.wrapFunction(ast, aether.options.functionName, aether.className, aether.staticCall);
-      heroToThis(ast.body);
-      console.log("AST", require('escodegen').generate(ast));
+      heroToThis(ast.body[0].body.body);
       return ast;
     };
 
@@ -22201,7 +22200,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
 
 }).call(this);
 
-},{"./language":10,"cashew-js":37,"escodegen":30}],9:[function(require,module,exports){
+},{"./language":10,"cashew-js":37}],9:[function(require,module,exports){
 (function (global){
 (function() {
   var JavaScript, Language, acorn_loose, escodegen, esprima, jshintHolder, traversal, _, _ref, _ref1, _ref2,
