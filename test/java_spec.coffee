@@ -338,10 +338,14 @@ describe "Java test suite", ->
             this.a = a;
          }
 
+         public int getA(){
+            return this.a;
+         }
+
          public static String output()
          {            
             VariableClass vc = new VariableClass(10);
-            if (vc.a == 10)
+            if (vc.getA() == 10)
                return "that´s correct";
            else
                return "that´s incorrect";
