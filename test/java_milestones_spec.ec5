@@ -71,6 +71,7 @@ if ( !insideAether ) {
 
 function evaluateJava(type, body, extra) {
 	var code = [
+		'import java.util.*;',
 		'public class MyClass {',
 		'	' + extra.join("\n\t"),
 		'	public static ' + type + ' output() {',
@@ -81,6 +82,7 @@ function evaluateJava(type, body, extra) {
 		'	}',
 		'}'
 	];
+	//console.log(code.join("\n"));
 	if ( fs.existsSync('MyClass.java') ) fs.unlinkSync('MyClass.java');
 	if ( fs.existsSync('MyClass.class') ) fs.unlinkSync('MyClass.class');
 	fs.writeFileSync('MyClass.java', code.join("\n"));
@@ -440,6 +442,9 @@ describe('JAVAM - 09 - String class', function () {
 	cts('int', 'return "".length();', '0');
 	cts('int', 'String s = "hello"; return s.length();', '5');
 	cts('String', 'return "capital".substring(3);', 'ital');
+	cts('String', 'return "capital".substring(2,4);', 'pi');
+	cts('int', 'return "capital".indexOf("it");', '3');
+	cts('int', 'return "capital".indexOf("rob");', '-1');
 })
 
 describe('JAVAM - 09 - operator overloading', function() {
@@ -595,5 +600,117 @@ describe('JAVAM - 09 - Type Chaining', function() {
 	ct('3d', 'int', ['return a(a(a("rob".length())));' ], extra, '336');
 
 });
+
+describe('JAVAM - 09 - Math', function() {
+	ct('abs', 'int', ['return Math.abs(10);'], '10');
+	ct('abs', 'int', ['return Math.abs(-10);'], '10');
+	ct('pow', 'double', ['return Math.pow(2,8);'], '256.0');
+	ct('pow', 'double', ['return Math.pow(16,0.5);'], '4.0');
+	ct('sqrt', 'double', ['return Math.sqrt(16);'], '4.0');
+	ct('sqrt', 'double', ['return Math.sqrt(-4);'], 'NaN');
+	ct('random', 'int', ['return (int)Math.random();'], '0');
+});
+
+describe('JAVAM - 09 - List', function() {
+	function w(l) {
+		return [
+		'List<Integer> list = new ArrayList<Integer>();',
+		'list.add(8);', //0
+		'list.add(6);', //1
+		'list.add(7);', //2
+		'list.add(5);', //3
+		'list.add(3);', //4
+		'list.add(0);', //5
+		'list.add(9);', //6
+		].concat(l);
+	}
+
+	ct('size', 'int', w([
+		'return list.size();'
+	]), '7');
+
+	ct('get', 'int', w([
+		'return list.get(3);'
+	]), '5');
+
+	ct('set', 'int', w([
+		'return list.set(0,20);'
+	]), '8');
+
+	ct('set', 'int', w([
+		'list.set(0,20);',
+		'return list.get(0);'
+	]), '20');
+
+	ct('remove a', 'int', w([
+		'return list.remove(5);'
+	]), '0');
+
+	ct('remove b', 'int', w([
+		'list.remove(3);',
+		'return list.size();',
+	]), '6');
+
+	ct('remove c', 'int', w([
+		'list.remove(3);',
+		'return list.get(3);',
+	]), '3');
+
+	ct('remove d', 'int', w([
+		'list.remove(3);',
+		'return list.get(1);',
+	]), '6');
+
+	ct('remove e', 'int', w([
+		'list.remove(3);',
+		'return list.get(5);',
+	]), '9');
+})
+
+describe('JAVAM - 09 - For Each', function() {
+	ct('from array', 'int', [
+		'int[] nums = {8, 6, 7, 5, 3, 0, 9};',
+		'int sum = 0;',
+		'for ( int n : nums ) {',
+		'	sum += n;',
+		'}',
+		'return sum;'
+	], '38');
+
+	ct('from list<Integer> unboxing', 'int', [
+		'List<Integer> list = new ArrayList<Integer>();',
+		'list.add(8);',
+		'list.add(6);',
+		'list.add(7);',
+		'list.add(5);',
+		'list.add(3);',
+		'list.add(0);',
+		'list.add(9);',
+		'int sum = 0;',
+		'for ( int n : list ) {',
+		'	sum += n;',
+		'}',
+		'return sum;'
+	], '38');
+
+	ct('from list<Integer> no-unboxing', 'int', [
+		'List<Integer> list = new ArrayList<Integer>();',
+		'list.add(new Integer(8));',
+		'list.add(new Integer(6));',
+		'list.add(new Integer(7));',
+		'list.add(new Integer(5));',
+		'list.add(new Integer(3));',
+		'list.add(new Integer(0));',
+		'list.add(new Integer(9));',
+		'int sum = 0;',
+		'for ( Integer n : list ) {',
+		'	sum += n.intValue();',
+		'}',
+		'return sum;'
+	], '38');
+
+});
+
+
 
 });
