@@ -22092,7 +22092,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
 
 },{"./language":10,"esprima":35,"iota-compiler":37}],8:[function(require,module,exports){
 (function() {
-  var Java, Language, heroToThis, parserHolder, pruneMainMethod,
+  var Java, Language, heroToThis, parserHolder,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
@@ -22126,7 +22126,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
 
     Java.prototype.parse = function(code, aether) {
       var ast;
-      ast = parserHolder.cashew.Cashew(code);
+      ast = parserHolder.cashew.Parse(code);
       ast = parserHolder.cashew.wrapFunction(ast, aether.options.functionName, aether.className, aether.staticCall);
       heroToThis(ast.body[0].body.body);
       return ast;
@@ -22135,70 +22135,6 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
     return Java;
 
   })(Language);
-
-  pruneMainMethod = function(ast, aether) {
-    var locator, main, target;
-    target = aether.staticCall || 'main';
-    locator = function(node) {
-      var found, n, name, _i, _j, _len, _len1, _ref, _ref1, _ref2;
-      switch (node.type) {
-        case "Program":
-          _ref = node.body;
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            n = _ref[_i];
-            found = locator(n);
-            if (found) {
-              return found;
-            }
-          }
-          break;
-        case "BlockStatement":
-          _ref1 = node.body;
-          for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-            n = _ref1[_j];
-            found = locator(n);
-            if (found) {
-              return found;
-            }
-          }
-          break;
-        case "FunctionDeclaration":
-          name = (_ref2 = node.id) != null ? _ref2.name : void 0;
-          return locator(node.body);
-        case "FunctionExpression":
-          return locator(node.body);
-        case "ReturnStatement":
-          return locator(node.argument);
-        case "CallExpression":
-          return locator(node.callee);
-        case "MemberExpression":
-          return locator(node.object);
-        case "ExpressionStatement":
-          return locator(node.expression);
-        case "AssignmentExpression":
-          name = node.left.name;
-          if (name === target) {
-            return node.right;
-          }
-          return locator(node.right);
-      }
-    };
-    main = locator(ast);
-    if (!main) {
-      return ast;
-    }
-    return ast.body = [
-      {
-        type: 'FunctionDeclaration',
-        id: {
-          type: 'Identifier',
-          name: aether.options.functionName || 'foo'
-        },
-        body: main.body,
-        params: []
-      }
-    ];
-  };
 
   heroToThis = function(body) {
     return body.unshift({
