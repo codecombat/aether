@@ -22116,7 +22116,12 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
         parserHolder.cashew = (_ref = typeof self !== "undefined" && self !== null ? self.aetherCashew : void 0) != null ? _ref : require('cashew-js');
       }
       this.runtimeGlobals = {
-        ___JavaRuntime: parserHolder.cashew.___JavaRuntime
+        ___JavaRuntime: parserHolder.cashew.___JavaRuntime,
+        _Object: parserHolder.cashew._Object,
+        Integer: parserHolder.cashew.Integer,
+        Double: parserHolder.cashew.Double,
+        _NotInitialized: parserHolder.cashew._NotInitialized,
+        _ArrayList: parserHolder.cashew._ArrayList
       };
     }
 

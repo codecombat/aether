@@ -29,6 +29,7 @@ if ( !insideAether ) {
 			buffer += what + "\n";
 		}
 		var code = [
+			'import  java.util.*;',
 			'public class MyClass {',
 			'	' + extra.join("\n\t"),
 			'	public static ' + type + ' output() {',
@@ -53,6 +54,7 @@ if ( !insideAether ) {
 			buffer += what + "\n";
 		}
 		var code = [
+			'import  java.util.*;',
 			'public class MyClass {',
 			'	' + extra.join("\n\t"),
 			'	public static ' + type + ' output() {',
@@ -248,7 +250,7 @@ describe('JAVAM - 07 - class definition', function() {
 
 describe('JAVAM - 07 - 2d arrays', function() {
 	ct('simple', 'int', [
-		'int[][] multi = new int[5][];',
+		'int[][] multi = new int[5][10];',
 		'multi[0] = new int[10];',
 		'multi[1] = new int[10];',
 		'multi[2] = new int[10];',
@@ -337,14 +339,15 @@ describe('JAVAM - 07 - switch', function() {
 
 	ct('keep falling', 'String', [
 		'int x = 2;',
+		'String r = "";',
 		'switch ( x ) {',
-		'	case 1: System.out.println("No");',
-		'	case 2: System.out.println("A");',
-		'	case 3: System.out.println("B");',
-		'	case 4: System.out.println("C");',
-		'   default: return "Yes";',
+		'	case 1: r += "No";',
+		'	case 2: r += "A";',
+		'	case 3: r += "B";',
+		'	case 4: r += "C";',
+		'   default: return r + "Yes";',
 		'}'
-	], "A\nB\nC\nYes");
+	], "ABCYes");
 
 });
 

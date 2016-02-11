@@ -152,6 +152,7 @@ module.exports = class Aether
 
   # Convenience wrapper for running the compiled function with default error handling
   run: (fn, args...) ->
+    #console.log(escodegen.generate(@ast))
     try
       fn ?= @createFunction()
     catch error
@@ -194,7 +195,6 @@ module.exports = class Aether
       transforms.makeCheckThisKeywords @allGlobals, varNames, @language, @options.problemContext
       transforms.makeCheckIncompleteMembers @language, @options.problemContext
     ]
-
     try
       [transformedCode, transformedAST] = @transform wrappedCode, preNormalizationTransforms, @language.parse, true
       @ast = transformedAST

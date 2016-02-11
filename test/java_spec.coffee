@@ -18,6 +18,7 @@ describe "Java test suite", ->
       expect(aether.run()).toEqual 1000
   
     it "05 - JAVA - variable", ->
+      aether = new Aether language: "java"
       code = """
       public class MyClass
                    { 
@@ -34,6 +35,7 @@ describe "Java test suite", ->
       expect(aether.run()).toEqual 10
 
     it "05 - JAVA - Logical operators", ->
+      aether = new Aether language: "java"
       code = """
       public class LogicalClass
        {
@@ -55,6 +57,7 @@ describe "Java test suite", ->
       expect(aether.run()).toBe('Print Expected')
 
     it "05 - JAVA - Math operations", ->
+      aether = new Aether language: "java"
       code = """
       public class MathClass
       {
@@ -78,6 +81,7 @@ describe "Java test suite", ->
       expect(aether.run()).toEqual 35
 
     it "05 - JAVA - String concatenation", ->
+      aether = new Aether language: "java"
       code = """
       public class ConcatenationClass 
       { 
@@ -96,6 +100,7 @@ describe "Java test suite", ->
       expect(aether.run()).toBe('String concatenation')
 
     it "05 - JAVA - If-else clause", ->
+      aether = new Aether language: "java"
       code = """
       public class IfClass 
        {
@@ -119,6 +124,7 @@ describe "Java test suite", ->
       expect(aether.run()).toBe('correct')
 
     it "05 - JAVA - For loop", ->
+      aether = new Aether language: "java"
       code = """
      public class ForClass
       {
@@ -138,6 +144,7 @@ describe "Java test suite", ->
       expect(aether.run()).toEqual 45
 
     it "05 - JAVA - While loop", ->
+      aether = new Aether language: "java"
       code = """
      public class WhileClass
      {
@@ -157,6 +164,7 @@ describe "Java test suite", ->
       expect(aether.run()).toEqual 10
 
     it "07 - JAVA - Two Dimensions array", ->
+      aether = new Aether language: "java"
       code = """
       public class ArrayClass
      {
@@ -179,6 +187,7 @@ describe "Java test suite", ->
       expect(aether.run()).toEqual 3
 
     it "07 - JAVA - Ternary If", ->
+      aether = new Aether language: "java"
       code = """
       public class TernaryClass
        {
@@ -195,6 +204,7 @@ describe "Java test suite", ->
       expect(aether.run()).toBe('Correct')
 
     it "07 - JAVA - Switch", ->
+      aether = new Aether language: "java"
       code = """
       public class SwitchClass
        {
@@ -216,6 +226,7 @@ describe "Java test suite", ->
       expect(aether.run()).toBe('That is not zero nor one')
 
     it "07 - JAVA - Increment and decrement outside For clause", ->
+      aether = new Aether language: "java"
       code = """
       public class IncrementClass
       {
@@ -235,6 +246,7 @@ describe "Java test suite", ->
       expect(aether.run()).toEqual 11
 
     it "07 - JAVA - Assignment operators", ->
+      aether = new Aether language: "java"
       code = """
       public class AssignmentClass
       {
@@ -257,6 +269,7 @@ describe "Java test suite", ->
       expect(aether.run()).toEqual 1
 
     it "07 - JAVA - Bitwise operators", ->
+      aether = new Aether language: "java"
       code = """
      public class BitwiseClass
       {
@@ -289,6 +302,7 @@ describe "Java test suite", ->
       expect(aether.run()).toBe true
 
     it "07 - JAVA - If/else without bracers", ->
+      aether = new Aether language: "java"
       code = """
       public class IfClass
       {
@@ -309,6 +323,7 @@ describe "Java test suite", ->
       expect(aether.run()).toEqual('that´s correct')
 
     it "07 - JAVA - Class method invocation", ->
+      aether = new Aether language: "java"
       code = """
       public class SumClass
       {  
@@ -329,6 +344,7 @@ describe "Java test suite", ->
       expect(aether.run()).toEqual 20
 
     it "09 - JAVA - Instance variables from main class", ->
+      aether = new Aether language: "java"
       code = """
       public class VariableClass
       {
