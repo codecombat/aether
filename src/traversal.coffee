@@ -15,6 +15,16 @@ module.exports.walkAST = walkAST = (node, fn) ->
       walkAST child, fn
     fn child
 
+module.exports.walkASTCorrect = walkASTCorrect = (node, fn) ->
+  for key, child of node
+    if _.isArray child
+      for grandchild in child
+        if _.isString grandchild?.type
+          walkASTCorrect grandchild, fn
+    else if _.isString child?.type
+      walkASTCorrect child, fn
+  fn node
+
 module.exports.morphAST = morphAST = (source, transforms, parseFn, aether) ->
   chunks = source.split ''
   ast = parseFn source, aether

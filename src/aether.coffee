@@ -73,7 +73,7 @@ module.exports = class Aether
 
   # Convert to JSON so we can pass it across web workers and HTTP requests and store it in databases and such.
   serialize: ->
-    _.pick @, ['originalOptions', 'raw', 'pure', 'problems', 'flow', 'metrics', 'style']
+    _.pick @, ['originalOptions', 'raw', 'pure', 'problems', 'flow', 'metrics', 'style', 'ast']
 
   # Convert a serialized Aether instance back from JSON.
   @deserialize: (serialized) ->
@@ -197,6 +197,7 @@ module.exports = class Aether
 
     try
       [transformedCode, transformedAST] = @transform wrappedCode, preNormalizationTransforms, @language.parse, true
+      @ast = transformedAST
     catch error
       problemOptions = error: error, code: wrappedCode, codePrefix: @language.wrappedCodePrefix, reporter: @language.parserID, kind: error.index or error.id, type: 'transpile'
       @addProblem @createUserCodeProblem problemOptions
@@ -204,6 +205,7 @@ module.exports = class Aether
       originalNodeRanges.splice()  # Reset any ranges we did find; we'll try again.
       try
         [transformedCode, transformedAST] = @transform wrappedCode, preNormalizationTransforms, @language.parseDammit, true
+        @ast = transformedAST
       catch error
         problemOptions.kind = error.index or error.id
         problemOptions.reporter = 'acorn_loose' if @language.id is 'javascript'
@@ -327,6 +329,21 @@ module.exports = class Aether
     # Convert obj to current language's equivalent type if necessary
     # E.g. if language is Python, JavaScript Array is converted to a Python list
     @language.convertToNativeType(obj)
+
+  getStatementCount: ->
+    count = 0
+    root = @ast.body[0].body # We assume the 'code' is one function hanging inside the program.
+    #console.log(JSON.stringify root, null, '  ')
+    traversal.walkASTCorrect root, (node) ->
+      return if not node.type?
+      return if node.userCode == false
+      if node.type in [
+        'ExpressionStatement', 'ReturnStatement', 'ForStatement', 'ForInStatement',
+        'WhileStatement', 'DoWhileStatement', 'FunctionDeclaration', 'VariableDeclaration',
+        'IfStatement', 'SwitchStatement', 'ThrowStatement', 'ContinueStatement', 'BreakStatement'
+      ]
+        ++count
+    return count
 
   # Runtime modules
 

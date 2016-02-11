@@ -2,7 +2,7 @@
 
 parserHolder = {}
 estraverse = require 'estraverse'
-
+traversal = require '../traversal'
 Language = require './language'
 
 module.exports = class Python extends Language
@@ -77,21 +77,11 @@ module.exports = class Python extends Language
   lint: (rawCode, aether) ->
     problems = []
 
-    # TODO: Only difference from traversal.walkAST is last line 'fn node'
-    walkAST = (node, fn) ->
-      for key, child of node
-        if _.isArray child
-          for grandchild in child
-            walkAST grandchild, fn if _.isString grandchild?.type
-        else if _.isString child?.type
-          walkAST child, fn
-      fn node
-
     try
       ast = parserHolder.parser.parse rawCode, locations: true, ranges: true
 
       # Check for empty loop
-      walkAST ast, (node) =>
+      traversal.walkASTCorrect ast, (node) =>
         return unless node.type is "WhileStatement"
         return unless node.body.body.length is 0
         # Craft an warning for empty loop
@@ -112,7 +102,7 @@ module.exports = class Python extends Language
 
       # Check for empty if
       if problems.length is 0
-        walkAST ast, (node) =>
+        traversal.walkASTCorrect ast, (node) =>
           return unless node.type is "IfStatement"
           return unless node.consequent.body.length is 0
           # Craft an warning for empty loop
@@ -187,5 +177,5 @@ module.exports = class Python extends Language
 # 'this' is not a keyword in Python, so it does not parse to a ThisExpression
 # Instead, we expect the variable 'self', and map it to a ThisExpression
 selfToThis = (ast) ->
-  ast.body[0].body.body.unshift {"type": "VariableDeclaration","declarations": [{ "type": "VariableDeclarator", "id": {"type": "Identifier", "name": "self" },"init": {"type": "ThisExpression"} }],"kind": "var"}
+  ast.body[0].body.body.unshift {"type": "VariableDeclaration","declarations": [{ "type": "VariableDeclarator", "id": {"type": "Identifier", "name": "self" },"init": {"type": "ThisExpression"} }],"kind": "var", "userCode": false}
   ast

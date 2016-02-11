@@ -10,10 +10,14 @@ try {
 	insideAether = false;
 }
 
+describe('Java Milestones', function() {
+
 if ( false ) {
 	var x = describe;
 	describe = function( ) { }
 	var fdescribe = x
+} else {
+	var fdescribe = describe;
 }
 
 if ( !insideAether ) {
@@ -67,6 +71,7 @@ if ( !insideAether ) {
 
 function evaluateJava(type, body, extra) {
 	var code = [
+		'import java.util.*;',
 		'public class MyClass {',
 		'	' + extra.join("\n\t"),
 		'	public static ' + type + ' output() {',
@@ -77,6 +82,7 @@ function evaluateJava(type, body, extra) {
 		'	}',
 		'}'
 	];
+	//console.log(code.join("\n"));
 	if ( fs.existsSync('MyClass.java') ) fs.unlinkSync('MyClass.java');
 	if ( fs.existsSync('MyClass.class') ) fs.unlinkSync('MyClass.class');
 	fs.writeFileSync('MyClass.java', code.join("\n"));
@@ -115,6 +121,8 @@ function structureIf(cond, expected) {
 		'return "Negitive";'
 	], expected);
 }
+
+
 
 describe('JAVAM - 05 - primative types', function() {
 	cts('int', 'return 1000;', '1000');
@@ -416,3 +424,293 @@ describe('JAVAM - 07 - static class method invocation', function() {
 	], "A String");
 });
 
+// Testable methods from Apendix a
+describe('JAVAM - 09 - String class', function () {
+	var extra = [
+		'public static int x(int o) {',
+		'	if ( o == 0 ) return 0;',
+		'	else if ( o > 0 ) return 1;',
+		'	else return -1;',
+		'}'
+	]
+	ct('compareTo', 'int', ['return x("Apple".compareTo("Boat"));'], extra, '-1');
+	ct('compareTo', 'int', ['return x("Boat".compareTo("Boat"));'], extra, '0');
+	ct('compareTo', 'int', ['return x("apple".compareTo("Boat"));'], extra, '1');
+	ct('compareTo', 'int', ['return x("apple".compareToIgnoreCase("Boat"));'], extra, '-1');
+	cts('int', 'String s = "capital"; return s.length();', '7');
+	cts('int', 'return "capital".length();', '7');
+	cts('int', 'return "".length();', '0');
+	cts('int', 'String s = "hello"; return s.length();', '5');
+	cts('String', 'return "capital".substring(3);', 'ital');
+	cts('String', 'return "capital".substring(2,4);', 'pi');
+	cts('int', 'return "capital".indexOf("it");', '3');
+	cts('int', 'return "capital".indexOf("rob");', '-1');
+})
+
+describe('JAVAM - 09 - operator overloading', function() {
+	var methods = [
+		'public static int multi(int x) { return 1; }',
+		'public static int multi(double x) { return 2; }',
+		'public static int multi(int x, double y) { return 3; }',
+		'public static double multi(double x, int y) { return 4; }',
+		'public static double three(int x) { return x * 2; }',
+		'public static double three(double x) { return x * 3; }',
+		'public static double three(double x, int y) { return x * 4; }',		
+	]
+
+	ct('1', 'int', ['return multi(2);'], methods, '1');
+	ct('2', 'int', ['return multi(2.0);'], methods, '2');
+	ct('3', 'int', ['return multi(2, 2.0);'], methods, '3');
+	ct('4', 'double', ['return 16 / multi((double) 1, 2);'], methods, '4.0');
+	ct('5',' double', ['return three(7);'], methods, '14.0');
+	ct('6',' double', ['return three(7, 2);'], methods, '28.0');
+});
+
+
+
+describe('JAVAM - 09 - Constructors ', function() {
+	var extra = [
+		'private int x = 1;',
+		'public MyClass(int y) {',
+		'	super();',
+		'	x = y * 2;',
+		'}',
+		'public MyClass() { super(); }',
+		'public int z() { return x; }',
+		'public int w(int x) { return x; }'
+	];
+	ct('1', 'int', ['return new MyClass().z();'], extra, '1');
+	ct('2', 'int', ['return new MyClass(2).z();'], extra, '4');
+	ct('3', 'int', ['return new MyClass().w(5);'], extra, '5');
+	ct('4', 'int', ['return new MyClass(2).w(6);'], extra, '6');
+});
+
+describe('JAVAM - 09 - Object as SuperClass ', function() {
+	ct('equals', 'int', [
+		'MyClass c = new MyClass();',
+		'if ( c.equals(c) ) return 1;',
+		'return 0;',
+	], '1')
+	ct('equals', 'int', [
+		'MyClass c = new MyClass();',
+		'if ( c.equals(new MyClass()) ) return 1;',
+		'return 0;',
+	], '0')
+	ct('equals', 'String', [
+		'return new MyClass().toString();'
+	], [
+		'public String toString() {',
+		'return "!" + super.toString().substring(0, 7);',
+		'}',
+	],'!MyClass')
+});
+
+describe('JAVAM - 09 - Autoboxing ', function() {
+	var extra = [
+		'public static int a(Integer i) {', 
+		'	return 2 * i.intValue();',
+		'}',
+		'public static int a(Object o) {',
+		'	Integer i = (Integer) o;',
+		'	return 3 * i.intValue();', 
+		'}',
+		'public static int b(Object o) {',
+		'	Integer i = (Integer) o;',
+		'	return 5 * i.intValue();', 
+		'}',
+		'public static String c(Object o) {',
+		'	return o.toString();',
+		'}',
+		'public static double d(Double i) {', 
+		'	return 2 * i.intValue();',
+		'}',
+		'public static double d(Object o) {',
+		'	Double d = (Double) o;',
+		'	return 3 * d.intValue();', 
+		'}',
+		'public static double e(Object o) {',
+		'	Double d = (Double) o;',
+		'	return 3 * d.intValue();', 
+		'}',
+	];
+	ct('intValue', 'int', ['return a(10);'], extra, '20');
+	ct('intValue', 'int', ['return a((Object)10);'], extra, '30');
+	ct('intValueCasting', 'int', ['return b(20);'], extra, '100');
+	ct('intString', 'String', ['return c(8);'], extra, '8');
+
+	ct('doubleValue', 'double', ['return d(10.0);'], extra, '20.0');
+	ct('doubleValue', 'double', ['return d((Object)10.0);'], extra, '30.0');
+	ct('doubleValueCasting', 'double', ['return e(20.0);'], extra, '60.0');
+	ct('doubleString', 'String', ['return c(8.0);'], extra, '8.0');
+
+});
+
+
+
+describe('JAVAM - 09 - Scoping ', function() {
+	var extra = [
+		'public static int x = -100;'
+	];
+	ct('findStaticVariable', 'int', ['return x;'], extra, '-100');
+	ct('findLocal', 'int', [
+		'int x = 10;',
+		'return x;'
+	], extra, '10');
+	ct('findStaticWithClassName', 'int', [
+		'int x = 10;',
+		'x++;',
+		'return MyClass.x;'
+	], extra, '-100');
+	ct('forDoesntClobberStatic', 'int', [
+		'int c = 0;',
+		'for ( int x = 0; x < 10; ++x ) {',
+		'	++c;',
+		'}',
+		'return x;'
+	], extra, '-100');
+	ct('forClobbersStaicInScope', 'int', [
+		'int c = 0;',
+		'for ( int x = 0; x < 10; ++x ) {',
+		'	return x;',
+		'}',
+		'return -200;'
+	], extra, '0');
+});
+
+describe('JAVAM - 09 - Type Chaining', function() {
+	var extra = [
+		'public static int a(double c) { return (int)(7.0*c); }',
+		'public static String a(int x) { return "Hello" + x; }',
+		'public static double a(String x) { return 8.0 * x.length(); }'
+	];
+
+	ct('1a', 'int', ['return a(1.0);' ], extra, '7');
+	ct('1b', 'String', ['return a(1);' ], extra, 'Hello1');
+	ct('1c', 'double', ['return a("rob");' ], extra, '24.0');
+	ct('1d', 'String', ['return a("rob".length());' ], extra, 'Hello3');
+
+	ct('2a', 'String', ['return a(a(1.0));' ], extra, 'Hello7');
+	ct('2b', 'double', ['return a(a(1));' ], extra, '48.0');
+	ct('2c', 'int', ['return a(a("rob"));' ], extra, '168');
+	ct('2d', 'double', ['return a(a("rob".length()));' ], extra, '48.0');
+
+	ct('3a', 'double', ['return a(a(a(1.0)));' ], extra, '48.0');
+	ct('3b', 'int', ['return a(a(a(1)));' ], extra, '336');
+	ct('3c', 'String', ['return a(a(a("rob")));' ], extra, 'Hello168');
+	ct('3d', 'int', ['return a(a(a("rob".length())));' ], extra, '336');
+
+});
+
+describe('JAVAM - 09 - Math', function() {
+	ct('abs', 'int', ['return Math.abs(10);'], '10');
+	ct('abs', 'int', ['return Math.abs(-10);'], '10');
+	ct('pow', 'double', ['return Math.pow(2,8);'], '256.0');
+	ct('pow', 'double', ['return Math.pow(16,0.5);'], '4.0');
+	ct('sqrt', 'double', ['return Math.sqrt(16);'], '4.0');
+	ct('sqrt', 'double', ['return Math.sqrt(-4);'], 'NaN');
+	ct('random', 'int', ['return (int)Math.random();'], '0');
+});
+
+describe('JAVAM - 09 - List', function() {
+	function w(l) {
+		return [
+		'List<Integer> list = new ArrayList<Integer>();',
+		'list.add(8);', //0
+		'list.add(6);', //1
+		'list.add(7);', //2
+		'list.add(5);', //3
+		'list.add(3);', //4
+		'list.add(0);', //5
+		'list.add(9);', //6
+		].concat(l);
+	}
+
+	ct('size', 'int', w([
+		'return list.size();'
+	]), '7');
+
+	ct('get', 'int', w([
+		'return list.get(3);'
+	]), '5');
+
+	ct('set', 'int', w([
+		'return list.set(0,20);'
+	]), '8');
+
+	ct('set', 'int', w([
+		'list.set(0,20);',
+		'return list.get(0);'
+	]), '20');
+
+	ct('remove a', 'int', w([
+		'return list.remove(5);'
+	]), '0');
+
+	ct('remove b', 'int', w([
+		'list.remove(3);',
+		'return list.size();',
+	]), '6');
+
+	ct('remove c', 'int', w([
+		'list.remove(3);',
+		'return list.get(3);',
+	]), '3');
+
+	ct('remove d', 'int', w([
+		'list.remove(3);',
+		'return list.get(1);',
+	]), '6');
+
+	ct('remove e', 'int', w([
+		'list.remove(3);',
+		'return list.get(5);',
+	]), '9');
+})
+
+describe('JAVAM - 09 - For Each', function() {
+	ct('from array', 'int', [
+		'int[] nums = {8, 6, 7, 5, 3, 0, 9};',
+		'int sum = 0;',
+		'for ( int n : nums ) {',
+		'	sum += n;',
+		'}',
+		'return sum;'
+	], '38');
+
+	ct('from list<Integer> unboxing', 'int', [
+		'List<Integer> list = new ArrayList<Integer>();',
+		'list.add(8);',
+		'list.add(6);',
+		'list.add(7);',
+		'list.add(5);',
+		'list.add(3);',
+		'list.add(0);',
+		'list.add(9);',
+		'int sum = 0;',
+		'for ( int n : list ) {',
+		'	sum += n;',
+		'}',
+		'return sum;'
+	], '38');
+
+	ct('from list<Integer> no-unboxing', 'int', [
+		'List<Integer> list = new ArrayList<Integer>();',
+		'list.add(new Integer(8));',
+		'list.add(new Integer(6));',
+		'list.add(new Integer(7));',
+		'list.add(new Integer(5));',
+		'list.add(new Integer(3));',
+		'list.add(new Integer(0));',
+		'list.add(new Integer(9));',
+		'int sum = 0;',
+		'for ( Integer n : list ) {',
+		'	sum += n.intValue();',
+		'}',
+		'return sum;'
+	], '38');
+
+});
+
+
+
+});
