@@ -139,8 +139,9 @@ extractTranspileErrorDetails = (options) ->
     when 'iota'
       null
     when 'cashew'
-      # TODO: anything here?
-      null
+      options.range = error.range
+      languageID = options.aether?.options?.language
+      options.hint = error.message
     else
       console.warn "Unhandled UserCodeProblem reporter", options.reporter
 

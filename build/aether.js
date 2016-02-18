@@ -23177,7 +23177,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
   };
 
   extractTranspileErrorDetails = function(options) {
-    var code, codePrefix, col, columnOffset, doubleVar, end, endCol, error, errorContext, languageID, line, lineOffset, originalLines, range, rng, row, start, startCol, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6;
+    var code, codePrefix, col, columnOffset, doubleVar, end, endCol, error, errorContext, languageID, line, lineOffset, originalLines, range, rng, row, start, startCol, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8;
     code = options.code || '';
     codePrefix = options.codePrefix || '';
     error = options.error;
@@ -23262,7 +23262,9 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
         null;
         break;
       case 'cashew':
-        null;
+        options.range = error.range;
+        languageID = (_ref7 = options.aether) != null ? (_ref8 = _ref7.options) != null ? _ref8.language : void 0 : void 0;
+        options.hint = error.message;
         break;
       default:
         console.warn("Unhandled UserCodeProblem reporter", options.reporter);
