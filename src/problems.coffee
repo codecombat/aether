@@ -139,7 +139,8 @@ extractTranspileErrorDetails = (options) ->
     when 'iota'
       null
     when 'cashew'
-      options.range = error.range
+      options.range = [ranges.offsetToPos(error.range[0], code, codePrefix),
+                       ranges.offsetToPos(error.range[1], code, codePrefix)]
       languageID = options.aether?.options?.language
       options.hint = error.message
     else
@@ -166,7 +167,7 @@ getTranspileHint = (msg, context, languageID, code, range, simpleLoops=false) ->
       if index >= 3 and /else/.test(code.substring(index - 3, index + 1))
         return "You are missing a ':' after 'else'. Try `else:`"
     return "Code needs to line up."
-    
+
   else if msg.indexOf("Unexpected token") >= 0 and context?
     codeSnippet = code.substring range[0].ofs, range[1].ofs
     lineStart = code.substring range[0].ofs - range[0].col, range[0].ofs
