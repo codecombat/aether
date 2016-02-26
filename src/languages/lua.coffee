@@ -11,6 +11,7 @@ module.exports = class Lua extends Language
     super arguments...
     parserHolder.lua2js ?= self?.aetherLua2JS ? require 'lua2js'
     @runtimeGlobals = parserHolder.lua2js.stdlib
+    @injectCode = require './lua-stdlib.ast.json'
     @fidMap = {}
 
   obviouslyCannotTranspile: (rawCode) ->

@@ -277,11 +277,18 @@ getUserFnExpr = (userFnMap, callExpr) ->
 # 3. A postNormalizationTransform can then get the original ranges for each node by going through the source map to our normalized mapping to our original node ranges.
 # 4. Instrumentation can then include the original ranges and node source in the saved flow state.
 module.exports.makeGatherNodeRanges = makeGatherNodeRanges = (nodeRanges, code, codePrefix) -> (node) ->
+
   return unless node.range
+
   #for x in node.range when _.isNaN x
   #  console.log "got bad range", node.range, "from", node, node.parent
   node.originalRange = ranges.offsetsToRange node.range[0], node.range[1], code, codePrefix
-  node.originalSource = node.source()
+
+  if node.source
+    node.originalSource = node.source()
+  else
+    #TODO: compute this via ranges
+
   nodeRanges.push node
 
 # Making
