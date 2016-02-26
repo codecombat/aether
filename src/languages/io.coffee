@@ -11,6 +11,7 @@ module.exports = class Io extends Language
     super arguments...
     parserHolder.iota ?= self?.aetherIotaCompiler ? require 'iota-compiler'
     @runtimeGlobals = _io: parserHolder.iota.lib
+    @injectCode = require './iota-stdlib.ast.json'
 
   obviouslyCannotTranspile: (rawCode) ->
     false

@@ -19,12 +19,15 @@ protectBuiltins = require './protectBuiltins'
 instrumentation = require './instrumentation'
 optionsValidator = require './validators/options'
 languages = require './languages/languages'
+interpreter = require './interpreter'
+esper = require './esper'
 
 module.exports = class Aether
   @execution: execution
   @addGlobal: protectBuiltins.addGlobal  # Use before instantiating Aether instances
   @replaceBuiltin: protectBuiltins.replaceBuiltin
   @globals: protectBuiltins.addedGlobals
+
 
   # Current call depth
   depth: 0
@@ -37,7 +40,7 @@ module.exports = class Aether
 
     # Save our original options for recreating this Aether later.
     @originalOptions = _.cloneDeep options  # TODO: slow
-
+    @useInterpreter = true
     # Merge the given options with the defaults.
     defaultsCopy = _.cloneDeep defaults
     @options = _.merge defaultsCopy, options
@@ -132,6 +135,7 @@ module.exports = class Aether
 
   # Return a ready-to-execute, instrumented, sandboxed function from the purified code.
   createFunction: ->
+    return interpreter.createFunction @ if @useInterpreter
     fn = protectBuiltins.createSandboxedFunction @options.functionName or 'foo', @pure, @
     if @options.protectBuiltins
       fn = protectBuiltins.wrapWithSandbox @, fn
@@ -143,6 +147,7 @@ module.exports = class Aether
 
   # If you want to sandbox a generator each time it's called, then call result of createFunction and hand to this.
   sandboxGenerator: (fn) ->
+    return fn if @useInterpreter
     oldNext = fn.next
     fn.next = ->
       oldNext.apply fn, arguments
@@ -213,6 +218,8 @@ module.exports = class Aether
         return ''
 
     # Now we've shed all the trappings of the original language behind; it's just JavaScript from here on.
+    if @useInterpreter
+      traversal.walkASTCorrect @ast, transforms.makeGatherNodeRanges originalNodeRanges, wrappedCode, @language.wrappedCodePrefix
 
     # TODO: need to insert 'use strict' after normalization, since otherwise you get tmp2 = 'use strict'
     try
