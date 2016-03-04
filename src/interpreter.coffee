@@ -1,5 +1,5 @@
 _ = window?._ ? self?._ ? global?._ ? require 'lodash'
-esper = require './esper.js'
+
 
 updateState = (aether, evaluator) ->
   frame_stack = evaluator.frames
@@ -49,6 +49,7 @@ updateState = (aether, evaluator) ->
         bottom.flow.statements.push f unless not f.range # Dont push statements without ranges
 
 module.exports.createFunction = (aether, code) ->
+  esper = window?.esper ? self?.esper ? global?.esper ? require 'esper.js'
   state = {}
   #aether.flow.states.push state
   messWithLoops = false

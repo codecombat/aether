@@ -85,7 +85,8 @@ module.exports = (grunt) ->
           #standalone: "Aether"  # can't figure out how to get this to work
           ignore: ['lodash', 'traceur', 'closer', 'filbert',
             'filbert/filbert_loose', 'lua2js', 'iota-compiler',
-            'coffee-script-redux', 'jshint', 'cashew-js']
+            'coffee-script-redux', 'jshint', 'cashew-js',
+            'esper.js']
       parsers:
         files: [
           {src: 'parsers/python.js', dest: 'build/python.js'}

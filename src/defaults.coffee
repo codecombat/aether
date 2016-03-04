@@ -19,3 +19,4 @@ module.exports = defaults =
   includeStyle: true
   protectAPI: false
   protectBuiltins: true
+  useInterpreter: false
