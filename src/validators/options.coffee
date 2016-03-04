@@ -80,3 +80,6 @@ module.exports = (options) ->
         type: 'boolean'
         default: false
         description: "Make while True loops automatically yield if no other yields"
+      useInterpreter:
+        type: 'boolean'
+        default: false

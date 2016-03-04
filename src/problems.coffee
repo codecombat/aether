@@ -224,7 +224,7 @@ extractRuntimeErrorDetails = (options) ->
   if error = options.error
     options.kind ?= error.name  # I think this will pick up [Error, EvalError, RangeError, ReferenceError, SyntaxError, TypeError, URIError, DOMException]
 
-    if options.aether.useInterpreter
+    if options.aether.options.useInterpreter
       options.message = error.toString()
     else
       options.message = error.message
