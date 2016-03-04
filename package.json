@@ -21,6 +21,7 @@
   "dependencies": {
     "JS_WALA": "git://github.com/nwinter/JS_WALA",
     "acorn": "~0.3.1",
+    "aether-lang-stdlibs": "http://files.codecombat.com/aether-lang-stdlibs-1.0.0.tgz",
     "cashew-js": "git://github.com/codecombat/cashew",
     "closer": "~0.2.1",
     "coffee-script-redux": "git://github.com/michaelficarra/CoffeeScriptRedux",

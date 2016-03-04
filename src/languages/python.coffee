@@ -15,7 +15,7 @@ module.exports = class Python extends Language
 
   constructor: ->
     super arguments...
-    @injectCode = require './python-stdlib.ast.json'
+    @injectCode = require 'aether-lang-stdlibs/python-stdlib.ast.json'
     @indent = Array(@wrappedCodeIndentLen + 1).join ' '
     unless parserHolder.parser?.pythonRuntime?
       if parserHolder.parser?
