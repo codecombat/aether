@@ -229,14 +229,13 @@ extractRuntimeErrorDetails = (options) ->
     if options.aether.options.useInterpreter
       options.message = error.toString()
     else
-      options.message = error.message
+      options.message = error.message or error.toString()
 
     options.hint = error.hint or getRuntimeHint options
     options.level ?= error.level
     options.userInfo ?= error.userInfo
 
   if options.range?
-    console.log options.range if not options.range[0]?
     lineNumber = options.range[0].row + 1
     if options.message.search(/^Line \d+/) != -1
       options.message = options.message.replace /^Line \d+/, (match, n) -> "Line #{lineNumber}"

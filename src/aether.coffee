@@ -27,7 +27,6 @@ module.exports = class Aether
   @replaceBuiltin: protectBuiltins.replaceBuiltin
   @globals: protectBuiltins.addedGlobals
 
-
   # Current call depth
   depth: 0
 
@@ -39,6 +38,7 @@ module.exports = class Aether
 
     # Save our original options for recreating this Aether later.
     @originalOptions = _.cloneDeep options  # TODO: slow
+    
     # Merge the given options with the defaults.
     defaultsCopy = _.cloneDeep defaults
     @options = _.merge defaultsCopy, options
