@@ -20,7 +20,6 @@ instrumentation = require './instrumentation'
 optionsValidator = require './validators/options'
 languages = require './languages/languages'
 interpreter = require './interpreter'
-esper = require './esper'
 
 module.exports = class Aether
   @execution: execution
