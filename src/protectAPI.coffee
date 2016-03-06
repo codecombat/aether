@@ -35,7 +35,7 @@ reFlags = /\w*$/
 
 # Hacky reimplementation of lodash's cloneDeep, minus the parts we don't need, plus limiting clones to apiProperties.
 module.exports.createAPIClone = createAPIClone = (aether, value) ->
-  return value unless _.isObject value
+  return value if not _.isObject(value) or 'next' of value
   className = Object::toString.call value
   return value unless cloneableClasses[className]
   ctor = ctorByClass[className]

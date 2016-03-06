@@ -390,7 +390,7 @@ module.exports.makeYieldConditionally = makeYieldConditionally = (simpleLoops, w
       node.yields = true
       possiblyGeneratorifyAncestorFunction node unless node.mustBecomeGeneratorFunction
     else if node.mustBecomeGeneratorFunction
-      node.update node.source().replace /^function /, 'function* '
+      node.update "(_tmp = #{node.source().replace(/^function /, "function* ")}, _tmp._isAetherGen = true, _tmp)"
     else if node.type is S.AssignmentExpression and node.right?.type is S.CallExpression
       # Update call to generatorified user function to process yields, and set return result
       userFnMap = getUserFnMap(node, @language) unless userFnMap
@@ -402,6 +402,9 @@ module.exports.makeYieldConditionally = makeYieldConditionally = (simpleLoops, w
         else
           autoYieldStmt = ""
         node.update "var __gen#{node.left.source()} = #{node.right.source()}; while (true) { var __result#{node.left.source()} = __gen#{node.left.source()}.next(); if (__result#{node.left.source()}.done) { #{node.left.source()} = __result#{node.left.source()}.value; break; } var _yieldValue = __result#{node.left.source()}.value; if (this.onAetherYield) { this.onAetherYield(_yieldValue); } yield _yieldValue; #{autoYieldStmt} }"
+      else if node.right.callee.type is S.MemberExpression and node.originalNode.callee?.property?.name in ["forEach", "map"] and node.right.arguments.length
+        arg = node.right.arguments[0].name
+        node.update "if (#{arg} && #{arg}._isAetherGen) { var __gen#{node.left.source()} = #{node.right.source()}; while (true) { var __result#{node.left.source()} = __gen#{node.left.source()}.next(); if (__result#{node.left.source()}.done) { #{node.left.source()} = __result#{node.left.source()}.value; break; } var _yieldValue = __result#{node.left.source()}.value; if (this.onAetherYield) { this.onAetherYield(_yieldValue); } yield _yieldValue;}} else { #{node.source()}; }"
 
 module.exports.makeSimpleLoopsYieldAutomatically = makeSimpleLoopsYieldAutomatically = (replacedLoops, wrappedCodePrefix) ->
   # Add a yield to the end of simple loops, which executes if no other yields do
