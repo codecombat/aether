@@ -1,5 +1,5 @@
 _ = window?._ ? self?._ ? global?._ ? require 'lodash'
-
+addedGlobals = require('./protectBuiltins').addedGlobals
 
 updateState = (aether, evaluator) ->
   frame_stack = evaluator.frames
@@ -65,6 +65,9 @@ module.exports.createFunction = (aether, code) ->
 
   if aether.language.injectCode?
     engine.evalASTSync(aether.language.injectCode)
+
+  for name in Object.keys addedGlobals
+    engine.addGlobal(name, addedGlobals[name])
 
   engine.evalASTSync(aether.ast)
   #console.log require('escodegen').generate(aether.ast)
