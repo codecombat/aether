@@ -56,7 +56,7 @@ module.exports.createFunction = (aether, code) ->
   if aether.options.whileTrueAutoYield or aether.options.simpleLoops
     messWithLoops = true
 
-  engine = new esper.Engine(strict: true)
+  engine = new esper.Engine(strict: true, foreignObjectMode: 'smart')
   #console.log JSON.stringify(aether.ast, null, '  ')
 
   #fxName = aether.ast.body[0].id.name
