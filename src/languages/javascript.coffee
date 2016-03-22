@@ -162,15 +162,18 @@ module.exports = class JavaScript extends Language
     code
 
   # Using a third-party parser, produce an AST in the standardized Mozilla format.
-  parse: (code, aether) ->
+  parse: (code, aether, includeTransformations=false) ->
     # loc: https://github.com/codecombat/aether/issues/71
     ast = esprima.parse code, {range: true, loc: true}
+    addHeroVariable ast if includeTransformations
+    ast
 
   # Optional: if parseDammit() is implemented, then if parse() throws an error, we'll try again using parseDammit().
   # Useful for parsing incomplete code as it is being written without giving up.
   # This should never throw an error and should always return some sort of AST, even if incomplete or empty.
-  parseDammit: (code, aether) ->
+  parseDammit: (code, aether, includeTransformations=false) ->
     ast = acorn_loose.parse_dammit code, {locations: true, tabSize: 4, ecmaVersion: 5}
+    addHeroVariable ast if includeTransformations
 
     # Esprima uses "range", but acorn_loose only has "locations"
     lines = code.replace(/\n/g, '\n空').split '空'  # split while preserving newlines
@@ -185,3 +188,7 @@ module.exports = class JavaScript extends Language
     traversal.walkAST ast, fixNodeRange
 
     ast
+
+addHeroVariable = (ast) ->
+  ast.body[0].body.body.unshift {"type": "VariableDeclaration","declarations": [{ "type": "VariableDeclarator", "id": {"type": "Identifier", "name": "hero" },"init": {"type": "ThisExpression"} }],"kind": "var", "userCode": false}
+  ast

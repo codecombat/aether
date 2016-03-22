@@ -297,7 +297,7 @@ module.exports = class Aether
   transform: (code, transforms, parseFn, withAST=false) ->
     transformedCode = traversal.morphAST code, (_.bind t, @ for t in transforms), parseFn, @
     return transformedCode unless withAST
-    transformedAST = parseFn transformedCode, @
+    transformedAST = parseFn transformedCode, @, true
     [transformedCode, transformedAST]
 
   traceurify: (code) ->

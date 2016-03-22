@@ -21330,7 +21330,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
       if (!withAST) {
         return transformedCode;
       }
-      transformedAST = parseFn(transformedCode, this);
+      transformedAST = parseFn(transformedCode, this, true);
       return [transformedCode, transformedAST];
     };
 
@@ -22165,7 +22165,7 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
 },{"./language":10,"cashew-js":31}],9:[function(require,module,exports){
 (function (global){
 (function() {
-  var JavaScript, Language, acorn_loose, escodegen, esprima, jshintHolder, traversal, _, _ref, _ref1, _ref2,
+  var JavaScript, Language, acorn_loose, addHeroVariable, escodegen, esprima, jshintHolder, traversal, _, _ref, _ref1, _ref2,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
@@ -22430,21 +22430,34 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
       return code;
     };
 
-    JavaScript.prototype.parse = function(code, aether) {
+    JavaScript.prototype.parse = function(code, aether, includeTransformations) {
       var ast;
-      return ast = esprima.parse(code, {
+      if (includeTransformations == null) {
+        includeTransformations = false;
+      }
+      ast = esprima.parse(code, {
         range: true,
         loc: true
       });
+      if (includeTransformations) {
+        addHeroVariable(ast);
+      }
+      return ast;
     };
 
-    JavaScript.prototype.parseDammit = function(code, aether) {
+    JavaScript.prototype.parseDammit = function(code, aether, includeTransformations) {
       var ast, fixNodeRange, lines, locToRange, posToOffset;
+      if (includeTransformations == null) {
+        includeTransformations = false;
+      }
       ast = acorn_loose.parse_dammit(code, {
         locations: true,
         tabSize: 4,
         ecmaVersion: 5
       });
+      if (includeTransformations) {
+        addHeroVariable(ast);
+      }
       lines = code.replace(/\n/g, '\n空').split('空');
       posToOffset = function(pos) {
         return _.reduce(lines.slice(0, pos.line - 1), (function(sum, line) {
@@ -22466,6 +22479,27 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
     return JavaScript;
 
   })(Language);
+
+  addHeroVariable = function(ast) {
+    ast.body[0].body.body.unshift({
+      "type": "VariableDeclaration",
+      "declarations": [
+        {
+          "type": "VariableDeclarator",
+          "id": {
+            "type": "Identifier",
+            "name": "hero"
+          },
+          "init": {
+            "type": "ThisExpression"
+          }
+        }
+      ],
+      "kind": "var",
+      "userCode": false
+    });
+    return ast;
+  };
 
 }).call(this);
 
@@ -23117,6 +23151,23 @@ System.get("traceur@0.0.25/src/traceur-import" + '');
           "id": {
             "type": "Identifier",
             "name": "self"
+          },
+          "init": {
+            "type": "ThisExpression"
+          }
+        }
+      ],
+      "kind": "var",
+      "userCode": false
+    });
+    ast.body[0].body.body.unshift({
+      "type": "VariableDeclaration",
+      "declarations": [
+        {
+          "type": "VariableDeclarator",
+          "id": {
+            "type": "Identifier",
+            "name": "hero"
           },
           "init": {
             "type": "ThisExpression"
