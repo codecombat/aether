@@ -30,6 +30,9 @@ module.exports = class Aether
   # Current call depth
   depth: 0
 
+  getAddedGlobals: () ->
+    protectBuiltins.addedGlobals
+
   constructor: (options) ->
     options ?= {}
     validationResults = optionsValidator options
