@@ -66,16 +66,16 @@ module.exports = class Lua extends Language
       ],"kind": "var", "userCode": false}
     ast
 
-  parse: (code, aether, includeTransformations=false) ->
+  parse: (code, aether) ->
     ast = Lua.prototype.wrapResult (Lua.prototype.callParser code, false), aether.options.functionName, aether.options.functionParameters
-    addHeroVariable ast if includeTransformations
+    addHeroVariable ast
     ast
 
 
   parseDammit: (code, aether) ->
     try
       ast = Lua.prototype.wrapResult (Lua.prototype.callParser code, true), aether.options.functionName, aether.options.functionParameters
-      addHeroVariable ast if includeTransformations
+      addHeroVariable ast
       return ast
     catch error
       return {"type": "BlockStatement": body:[{type: "EmptyStatement"}]}

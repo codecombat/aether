@@ -27939,7 +27939,7 @@ module.exports={
     "/"
   ],
   "_resolved": "git://github.com/michaelficarra/CoffeeScriptRedux.git#ab93dc34c64cd11853fb8cb5a4f02c6b8fc3b26b",
-  "_shasum": "d5a98791a71ce7d365301b780317e7ca375b3ae0",
+  "_shasum": "d6f4737c781f64c253607f07bb53cae6288cb86e",
   "_shrinkwrap": null,
   "_spec": "coffee-script-redux@git://github.com/michaelficarra/CoffeeScriptRedux.git",
   "_where": "/Users/catsync/Documents/codecombat/code/catsync/aether",
