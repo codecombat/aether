@@ -67,12 +67,16 @@ module.exports = class Lua extends Language
     ast
 
   parse: (code, aether) ->
-    Lua.prototype.wrapResult (Lua.prototype.callParser code, false), aether.options.functionName, aether.options.functionParameters
+    ast = Lua.prototype.wrapResult (Lua.prototype.callParser code, false), aether.options.functionName, aether.options.functionParameters
+    addHeroVariable ast
+    ast
 
 
   parseDammit: (code, aether) ->
     try
-      return Lua.prototype.wrapResult (Lua.prototype.callParser code, true), aether.options.functionName, aether.options.functionParameters
+      ast = Lua.prototype.wrapResult (Lua.prototype.callParser code, true), aether.options.functionName, aether.options.functionParameters
+      addHeroVariable ast
+      return ast
     catch error
       return {"type": "BlockStatement": body:[{type: "EmptyStatement"}]}
 
@@ -94,3 +98,7 @@ module.exports = class Lua extends Language
 
   rewriteFunctionID: (fid) ->
     @fidMap[fid] or fid
+
+addHeroVariable = (ast) ->
+  ast.body[0].body.body.unshift {"type": "VariableDeclaration","declarations": [{ "type": "VariableDeclarator", "id": {"type": "Identifier", "name": "hero" },"init": {"type": "ThisExpression"} }],"kind": "var", "userCode": false}
+  ast
