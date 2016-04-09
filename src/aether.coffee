@@ -47,7 +47,7 @@ module.exports = class Aether
     @options = _.merge defaultsCopy, options
 
     @setLanguage @options.language, @options.languageVersion
-    @allGlobals = @options.globals.concat protectBuiltins.builtinNames, Object.keys @language.runtimeGlobals  # After setLanguage, which can add globals.
+    @allGlobals = @options.globals.concat protectBuiltins.builtinNames, (if @options.useInterpreter then Object.keys @language.runtimeGlobals else [])  # After setLanguage, which can add globals.
 
     ## For mapping API clones and values to each other
     @protectAPIClonesToValues = {}
@@ -63,7 +63,8 @@ module.exports = class Aether
     @originalOptions.languageVersion = @options.languageVersion = languageVersion
     @language = new languages[language] languageVersion
     @languageJS ?= if language is 'javascript' then @language else new languages.javascript 'ES5'
-    Aether.addGlobal name, global for name, global of @language.runtimeGlobals
+    unless @options.useInterpreter
+      Aether.addGlobal name, global for name, global of @language.runtimeGlobals
     @reset()
     return language
 
