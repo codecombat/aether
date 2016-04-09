@@ -1,8 +1,11 @@
 Aether = require '../aether'
 lodash = require 'lodash'
 
+
 describe "JavaScript Test Suite", ->
-  it "Lowdash", ->
+
+
+  xit "Lowdash", ->
     aether = new Aether language: "javascript", yieldConditionally: true, simpleLoops: true
     save: (x) -> this.result = x
     result = null
@@ -19,7 +22,7 @@ describe "JavaScript Test Suite", ->
     expect(gen.next().done).toEqual true
     expect(dude.result).toEqual [1,4,9,16]
 
-  describe "Errors", ->
+  xdescribe "Errors", ->
     aether = new Aether language: "javascript"
 
     it "Transpile error, missing )", ->
@@ -108,7 +111,7 @@ describe "JavaScript Test Suite", ->
       expect(aether.problems.errors[0].message).toEqual("Line 2: ReferenceError: z is not defined")
       expect(aether.problems.errors[0].range).toEqual([ { ofs : 23, row : 1, col : 12 }, { ofs : 24, row : 1, col : 13 } ])
 
-  describe "Warning", ->
+  xdescribe "Warning", ->
     aether = new Aether language: "javascript"
 
     it "if (x == 5);", ->
@@ -123,7 +126,7 @@ describe "JavaScript Test Suite", ->
       expect(aether.problems.warnings[0].message).toEqual("Don't put a ';' after an if statement.")
       expect(aether.problems.warnings[0].range).toEqual([ { ofs : 41, row : 2, col : 11 }, { ofs : 42, row : 2, col : 12 } ])
 
-  describe "Traceur compilation with ES6", ->
+  xdescribe "Traceur compilation with ES6", ->
     aether = new Aether languageVersion: "ES6"
     it "should compile generator functions", ->
       code = """
@@ -153,7 +156,7 @@ describe "JavaScript Test Suite", ->
       eval(compiled)
       expect(hobaby("A yeti!")).toEqual 'name: A yeti!, codes: JavaScript, livesIn: USA'
 
-  describe "Conditional yielding", ->
+  xdescribe "Conditional yielding", ->
     aether = new Aether yieldConditionally: true, functionName: 'foo'
     it "should yield when necessary", ->
       dude =
@@ -172,7 +175,7 @@ describe "JavaScript Test Suite", ->
       expect(gen.next().done).toEqual false
       expect(gen.next().done).toEqual true
 
-  describe "Automatic yielding", ->
+  xdescribe "Automatic yielding", ->
     aether = new Aether yieldAutomatically: true, functionName: 'foo'
     it "should yield a lot", ->
       dude =
@@ -217,7 +220,7 @@ describe "JavaScript Test Suite", ->
         if gen.next().done then break else ++i
       expect(i < 100).toBe true
 
-  describe "No yielding", ->
+  xdescribe "No yielding", ->
     aether = new Aether
     it "should not yield", ->
       dude =
@@ -282,7 +285,7 @@ describe "JavaScript Test Suite", ->
       expect(gen.next().done).toEqual false
       expect(gen.next().done).toEqual true
 
-  describe "User method conditional yielding", ->
+  xdescribe "User method conditional yielding", ->
     aether = new Aether yieldConditionally: true
     it "Simple fn decl", ->
       dude =

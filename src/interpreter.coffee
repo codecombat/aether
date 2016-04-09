@@ -72,7 +72,7 @@ module.exports.createFunction = (aether, code) ->
   engine.evalASTSync(aether.ast)
   #console.log require('escodegen').generate(aether.ast)
   executionCount = 0
-  engine.evaluator.insterment = () ->
+  engine.evaluator.instrument = () ->
     if ++executionCount > aether.options.executionLimit
       throw new TypeError 'Statement execution limit reached'
 
@@ -95,6 +95,7 @@ module.exports.createFunction = (aether, code) ->
           else if not top.ast?
             if not top.didYield
               top.didYield = false
+              console.log "[Aether] Forcing while-true loop to yield."
               return true
 
       yieldValue = aether._shouldYield
