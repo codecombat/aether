@@ -2517,6 +2517,9 @@
     var kwargsId = null;  // **kwargs
     var defaultsFound = false;
     var first = true;
+
+    scope.startFn(node.id.name);
+
     expect(_parenL);
     while (!eat(_parenR)) {
       if (!first) expect(_comma); else first = false;
@@ -2536,6 +2539,7 @@
           if (argsId) raise(tokPos, "missing required keyword-only argument");
           formals.push({ id: paramId, expr: null });
         }
+        scope.addVar(paramId.name);
       }
     }
     expect(_colon);
@@ -2544,8 +2548,6 @@
     // flag (restore them to their old value afterwards).
     // `inFunction` used to throw syntax error for stray `return`
     var oldInFunc = inFunction = true;
-
-    scope.startFn(node.id.name);
 
     // If class method, remove class instance var from params and save for 'this' replacement
     if (scope.isParentClass()) {
