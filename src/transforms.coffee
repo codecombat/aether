@@ -306,6 +306,7 @@ module.exports.makeCheckThisKeywords = makeCheckThisKeywords = (globals, varName
         v = if v.object? then v.object else v.callee
       v = v.name
       if v and not varNames[v] and not (v in globals)
+        return unless problemContext   # If we don't know what properties are available, don't create this problem.
         # Probably MissingThis, but let's check if we're recursively calling an inner function from itself first.
         for p in getParentsOfTypes node, [S.FunctionDeclaration, S.FunctionExpression, S.VariableDeclarator, S.AssignmentExpression]
           varNames[p.id.name] = true if p.id?
