@@ -221,7 +221,17 @@ module.exports = class Aether
 
     # Now we've shed all the trappings of the original language behind; it's just JavaScript from here on.
     if @options.useInterpreter
-      traversal.walkASTCorrect @ast, transforms.makeGatherNodeRanges originalNodeRanges, wrappedCode, @language.wrappedCodePrefix
+      nodeGatherer = transforms.makeGatherNodeRanges originalNodeRanges, wrappedCode, @language.wrappedCodePrefix
+
+      traversal.walkASTCorrect @ast, (node) =>
+        nodeGatherer(node)
+        if node.originalRange?
+          startEndRangeArray = @language.removeWrappedIndent [node.originalRange.start, node.originalRange.end]
+          node.originalRange =
+            start: startEndRangeArray[0]
+            end: startEndRangeArray[1]
+
+      # TODO: return here some day
 
     # TODO: need to insert 'use strict' after normalization, since otherwise you get tmp2 = 'use strict'
     try

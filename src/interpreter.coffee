@@ -1,6 +1,12 @@
 _ = window?._ ? self?._ ? global?._ ? require 'lodash'
 addedGlobals = require('./protectBuiltins').addedGlobals
 
+isStatement = (name) ->
+  name not in [
+    'Literal', 'Identifier', 'ThisExpression', 'BlockStatement', 'MemberExpression',
+    'FunctionExpression', 'LogicalExpression', 'BinaryExpression', 'UnaryExpression'
+  ]
+
 updateState = (aether, evaluator) ->
   frame_stack = evaluator.frames
   top = frame_stack[0]
@@ -17,15 +23,16 @@ updateState = (aether, evaluator) ->
     aether.metrics.callsExecuted ?= 0
   
   astStack = (x.ast for x in frame_stack when x.ast?)
+  statementStack = ( x for x in astStack when isStatement x.type )
 
-  if astStack[0]? 
-    rng = astStack[0].originalRange
+  if statementStack[0]?
+    rng = statementStack[0].originalRange
     aether.lastStatementRange = [rng.start, rng.end] if rng
 
   if top.ast?
     ++aether.metrics.callsExecuted if aether.options.includeMetrics and top.ast.type == 'CallExpression'
 
-    unless top.ast.type in ['Literal', 'Identifier', 'ThisExpression', 'BlockStatement', 'MemberExpression', 'FunctionExpression']
+    if isStatement top.ast.type
       ++aether.metrics.statementsExecuted if aether.options.includeMetrics
       ++bottom.flow.statementsExecuted if bottom.flow?
 
@@ -97,11 +104,11 @@ module.exports.createFunction = (aether, code) ->
             if not top.didYield
               if not aether.whileLoopMarker or aether.whileLoopMarker() is top.mark
                 top.didYield = false
-                console.log "[Aether] Forcing while-true loop to yield."
+                #console.log "[Aether] Forcing while-true loop to yield."
                 return true
               else
                 newMark = aether.whileLoopMarker()
-                console.log "[Aether] Loop Avoided, mark #{top.mark} isnt #{newMark}"
+                #console.log "[Aether] Loop Avoided, mark #{top.mark} isnt #{newMark}"
                 top.mark = newMark
 
       yieldValue = aether._shouldYield
