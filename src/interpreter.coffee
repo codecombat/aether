@@ -92,11 +92,17 @@ module.exports.createFunction = (aether, code) ->
         if frame_stack[1].ast.type is 'WhileStatement' and frame_stack[1].ast.test.type is 'Literal'
           if not top.marked
             top.marked = true
+            top.mark = aether.whileLoopMarker() if aether.whileLoopMarker
           else if not top.ast?
             if not top.didYield
-              top.didYield = false
-              console.log "[Aether] Forcing while-true loop to yield."
-              return true
+              if not aether.whileLoopMarker or aether.whileLoopMarker() is top.mark
+                top.didYield = false
+                console.log "[Aether] Forcing while-true loop to yield."
+                return true
+              else
+                newMark = aether.whileLoopMarker()
+                console.log "[Aether] Loop Avoided, mark #{top.mark} isnt #{newMark}"
+                top.mark = newMark
 
       yieldValue = aether._shouldYield
       return false unless yieldValue
