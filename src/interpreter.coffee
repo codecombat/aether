@@ -63,7 +63,10 @@ module.exports.createFunction = (aether, code) ->
   if aether.options.whileTrueAutoYield or aether.options.simpleLoops
     messWithLoops = true
 
-  engine = new esper.Engine(strict: true, foreignObjectMode: 'smart')
+  unless aether.esperEngine
+    aether.esperEngine = new esper.Engine(strict: true, foreignObjectMode: 'smart')
+
+  engine = aether.esperEngine
   #console.log JSON.stringify(aether.ast, null, '  ')
 
   #fxName = aether.ast.body[0].id.name
@@ -79,11 +82,8 @@ module.exports.createFunction = (aether, code) ->
   engine.evalASTSync(aether.ast)
   #console.log require('escodegen').generate(aether.ast)
   executionCount = 0
-  engine.evaluator.instrument = () ->
-    if ++executionCount > aether.options.executionLimit
-      throw new TypeError 'Statement execution limit reached'
 
-    updateState aether, engine.evaluator
+  upgradeEvaluator evaluator
 
   x = 0
 
@@ -133,3 +133,25 @@ module.exports.createFunction = (aether, code) ->
     fx = engine.fetchFunctionSync fxName
 
   return fx
+
+module.exports.crazyJoshThing = (aether, fx) ->
+  engine = aether.esperEngine
+  internalFx = esper.Value.getBookmark fx
+  e = engine.evaluator
+  E = e.constructor
+  scope = engine.globalScope.createChild()
+  c = fx.call esper.Value.undef, [], scope
+
+  ev = new E e.realm, e.ast, engine.globalScope
+  ev.frames = []
+  ev.pushFrame generator: c, type: 'program', scope: scope, ast: null
+  return ev.generator()  
+
+module.exports.upgradeEvaluator = upgradeEvaluator = (aether, evaluator) ->
+  evaluator.instrument = () ->
+    if ++executionCount > aether.options.executionLimit
+      throw new TypeError 'Statement execution limit reached'
+
+    updateState aether, engine.evaluator
+
+  
