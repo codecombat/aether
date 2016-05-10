@@ -83,7 +83,7 @@ module.exports.createFunction = (aether, code) ->
   #console.log require('escodegen').generate(aether.ast)
   executionCount = 0
 
-  upgradeEvaluator evaluator
+  upgradeEvaluator engine.evaluator
 
   x = 0
 
@@ -145,6 +145,7 @@ module.exports.crazyJoshThing = (aether, fx) ->
   ev = new E e.realm, e.ast, engine.globalScope
   ev.frames = []
   ev.pushFrame generator: c, type: 'program', scope: scope, ast: null
+  upgradeEvaluator e
   return ev.generator()  
 
 module.exports.upgradeEvaluator = upgradeEvaluator = (aether, evaluator) ->
