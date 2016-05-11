@@ -41,7 +41,7 @@ module.exports = class Aether
 
     # Save our original options for recreating this Aether later.
     @originalOptions = _.cloneDeep options  # TODO: slow
-    
+
     # Merge the given options with the defaults.
     defaultsCopy = _.cloneDeep defaults
     @options = _.merge defaultsCopy, options
@@ -176,8 +176,8 @@ module.exports = class Aether
   # Create a standard Aether problem object out of some sort of transpile or runtime problem.
   createUserCodeProblem: problems.createUserCodeProblem
 
-  crazyJoshThing: (fx) ->
-    interpreter.crazyJoshThing @, fx
+  createThread: (fx) ->
+    interpreter.createThread @, fx
 
   updateProblemContext: (problemContext) ->
     @options.problemContext = problemContext

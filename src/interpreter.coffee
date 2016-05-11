@@ -21,7 +21,7 @@ updateState = (aether, evaluator) ->
   if aether.options.includeMetrics
     aether.metrics.statementsExecuted ?= 0
     aether.metrics.callsExecuted ?= 0
-  
+
   astStack = (x.ast for x in frame_stack when x.ast?)
   statementStack = ( x for x in astStack when isStatement x.type )
 
@@ -49,10 +49,10 @@ updateState = (aether, evaluator) ->
               variables[n] = p.value.debugString if p.value
           f.variables = variables
 
-        if astStack[0]? 
+        if astStack[0]?
           rng = astStack[0].originalRange
           f.range = [rng.start, rng.end] if rng
-        
+
         bottom.flow.statements.push f unless not f.range # Dont push statements without ranges
 
 module.exports.createFunction = (aether, code) ->
@@ -81,78 +81,59 @@ module.exports.createFunction = (aether, code) ->
 
   engine.evalASTSync(aether.ast)
   #console.log require('escodegen').generate(aether.ast)
-  executionCount = 0
 
-  upgradeEvaluator engine.evaluator
+  upgradeEvaluator aether, engine.evaluator
 
   x = 0
 
-  if aether.options.yieldConditionally 
-    fx = engine.fetchFunction fxName, (engine) -> 
-      frame_stack = engine.evaluator.frames
-      #console.log x.type + " " + x.ast?.type for x in frame_stack
-      #console.log "----"
-
-      top = frame_stack[0]
-
-      if top.type is 'loop'
-        if frame_stack[1].ast.type is 'WhileStatement' and frame_stack[1].ast.test.type is 'Literal'
-          if not top.marked
-            top.marked = true
-            top.mark = aether.whileLoopMarker() if aether.whileLoopMarker
-          else if not top.ast?
-            if not top.didYield
-              if not aether.whileLoopMarker or aether.whileLoopMarker() is top.mark
-                top.didYield = false
-                #console.log "[Aether] Forcing while-true loop to yield."
-                return true
-              else
-                newMark = aether.whileLoopMarker()
-                #console.log "[Aether] Loop Avoided, mark #{top.mark} isnt #{newMark}"
-                top.mark = newMark
-
-      yieldValue = aether._shouldYield
-      return false unless yieldValue
-
-      aether._shouldYield = false
-
-      if aether.onAetherYield
-        aether.onAetherYield yieldValue
-
-      aether._shouldYield = false
-      if frame_stack[1].type is 'loop'
-        frame_stack[1].didYield = true
-
-      return yieldValue
-
+  if aether.options.yieldConditionally
+    fx = engine.fetchFunction fxName, makeYieldFilter(aether)
   else if aether.options.yieldAutomatically
-    fx = engine.fetchFunction fxName, (engine) ->
-      return true
-
+    fx = engine.fetchFunction fxName, (engine) -> true
   else
     fx = engine.fetchFunctionSync fxName
 
   return fx
 
-module.exports.crazyJoshThing = (aether, fx) ->
-  engine = aether.esperEngine
-  internalFx = esper.Value.getBookmark fx
-  e = engine.evaluator
-  E = e.constructor
-  scope = engine.globalScope.createChild()
-  c = fx.call esper.Value.undef, [], scope
+makeYieldFilter = (aether) -> (engine) ->
+  frame_stack = engine.evaluator.frames
+  #console.log x.type + " " + x.ast?.type for x in frame_stack
+  #console.log "----"
 
-  ev = new E e.realm, e.ast, engine.globalScope
-  ev.frames = []
-  ev.pushFrame generator: c, type: 'program', scope: scope, ast: null
-  upgradeEvaluator e
-  return ev.generator()  
+  top = frame_stack[0]
+
+  if top.type is 'loop'
+    if frame_stack[1].ast.type is 'WhileStatement' and frame_stack[1].ast.test.type is 'Literal'
+      if not top.marked
+        top.marked = true
+        top.mark = aether.whileLoopMarker() if aether.whileLoopMarker
+      else if not top.ast?
+        if not top.didYield
+          if not aether.whileLoopMarker or aether.whileLoopMarker() is top.mark
+            top.didYield = false
+            #console.log "[Aether] Forcing while-true loop to yield."
+            return true
+          else
+            newMark = aether.whileLoopMarker()
+            #console.log "[Aether] Loop Avoided, mark #{top.mark} isnt #{newMark}"
+            top.mark = newMark
+
+  return false
+
+module.exports.createThread = (aether, fx) ->
+  internalFx = esper.Value.getBookmark fx
+  engine = new esper.Engine aether.esperEngine.options
+  Evaluator = aether.esperEngine.evaluator.constructor  # Get internal reference to this constructor
+  # TODO: Make this more efficient at some point rather than retrofitting the old engine
+  #engine.evaluator = new Evaluator aether.esperEngine.realm, aether.esperEngine.evaluator.ast, aether.esperEngine.globalScope  # Correct? scope
+  engine.evaluator = new Evaluator aether.esperEngine.realm, aether.esperEngine.evaluator.ast, aether.esperEngine.evaluator.frames[0].scope  # Crazy debugging scope
+  engine.evaluator.frames = []
+  upgradeEvaluator aether, engine.evaluator
+  return engine.makeFunctionFromClosure internalFx, -> false  # TODO: pass makeYieldFilter(aether) and fix that to handle while-true yielding properly
 
 module.exports.upgradeEvaluator = upgradeEvaluator = (aether, evaluator) ->
-  evaluator.instrument = () ->
+  executionCount = 0
+  evaluator.instrument = ->
     if ++executionCount > aether.options.executionLimit
       throw new TypeError 'Statement execution limit reached'
-
-    updateState aether, engine.evaluator
-
-  
+    updateState aether, evaluator

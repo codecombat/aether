@@ -37,7 +37,6 @@ scoreFuzziness = 0.8
 acceptMatchThreshold = 0.5
 
 module.exports.createUserCodeProblem = (options) ->
-  console.log "OP", options.error.stack
   options ?= {}
   options.aether ?= @  # Can either be called standalone or as an Aether method
   if options.type is 'transpile' and options.error
