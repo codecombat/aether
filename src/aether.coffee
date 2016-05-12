@@ -176,6 +176,9 @@ module.exports = class Aether
   # Create a standard Aether problem object out of some sort of transpile or runtime problem.
   createUserCodeProblem: problems.createUserCodeProblem
 
+  createThread: (fx) ->
+    interpreter.createThread @, fx
+
   updateProblemContext: (problemContext) ->
     @options.problemContext = problemContext
 
