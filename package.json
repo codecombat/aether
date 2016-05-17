@@ -28,7 +28,7 @@
     "escodegen": "~1.3.0",
     "esprima": "https://github.com/ariya/esprima/tarball/harmony",
     "estraverse": "~1.5.0",
-    "filbert": "~0.1.13",
+    "filbert": "~0.1.17",
     "iota-compiler": "git://github.com/genko/iota",
     "jshint": "~2.3.0",
     "lodash": "~2.4.1",
