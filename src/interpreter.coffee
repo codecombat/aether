@@ -110,11 +110,11 @@ makeYieldFilter = (aether) -> (engine) ->
       else if not top.ast?
         currentMark = aether.whileLoopMarker()
         if not aether.whileLoopMarker or currentMark is top.mark
-          console.log "[Aether] Forcing while-true loop to yield."
+          #console.log "[Aether] Forcing while-true loop to yield."
           top.mark = currentMark + 1
           return true
         else
-          console.log "[Aether] Loop Avoided, mark #{top.mark} isnt #{newMark}"
+          #console.log "[Aether] Loop Avoided, mark #{top.mark} isnt #{currentMark}"
           top.mark = currentMark
 
   return false
