@@ -79,7 +79,16 @@ module.exports.createFunction = (aether, code) ->
   for name in Object.keys addedGlobals
     engine.addGlobal(name, addedGlobals[name])
 
-  engine.evalASTSync(aether.ast)
+  try
+    engine.evalASTSync(aether.ast)
+  catch error
+    console.log 'Esper: error parsing AST. Returning empty function.', error.message
+    if aether.language.id is 'javascript'
+      error.message = "Couldn't understand your code. Are your { and } braces matched?"
+    else
+      error.message = "Couldn't understand your code. Do you have extra spaces at the beginning, or unmatched ( and ) parentheses?"
+    aether.addProblem aether.createUserCodeProblem error: error, code: aether.raw, type: 'transpile', reporter: 'aether'
+    engine.evalASTSync emptyAST
   #console.log require('escodegen').generate(aether.ast)
 
   upgradeEvaluator aether, engine.evaluator
@@ -136,3 +145,6 @@ module.exports.upgradeEvaluator = upgradeEvaluator = (aether, evaluator) ->
     if ++executionCount > aether.options.executionLimit
       throw new TypeError 'Statement execution limit reached'
     updateState aether, evaluator
+
+
+emptyAST = {"type":"Program","body":[{"type":"FunctionDeclaration","id":{"type":"Identifier","name":"plan","range":[9,13],"loc":{"start":{"line":1,"column":9},"end":{"line":1,"column":13}},"originalRange":{"start":{"ofs":-8,"row":0,"col":-8},"end":{"ofs":-4,"row":0,"col":-4}}},"params":[],"defaults":[],"body":{"type":"BlockStatement","body":[{"type":"VariableDeclaration","declarations":[{"type":"VariableDeclarator","id":{"type":"Identifier","name":"hero"},"init":{"type":"ThisExpression"}}],"kind":"var","userCode":false}],"range":[16,19],"loc":{"start":{"line":1,"column":16},"end":{"line":2,"column":1}},"originalRange":{"start":{"ofs":-1,"row":0,"col":-1},"end":{"ofs":2,"row":1,"col":1}}},"rest":null,"generator":false,"expression":false,"range":[0,19],"loc":{"start":{"line":1,"column":0},"end":{"line":2,"column":1}},"originalRange":{"start":{"ofs":-17,"row":0,"col":-17},"end":{"ofs":2,"row":1,"col":1}}}],"range":[0,19],"loc":{"start":{"line":1,"column":0},"end":{"line":2,"column":1}},"originalRange":{"start":{"ofs":-17,"row":0,"col":-17},"end":{"ofs":2,"row":1,"col":1}}}
