@@ -5,7 +5,6 @@ module.exports = defaults =
   thisValue: null  # TODO: don't use this. Aether doesn't use it at compile time and CodeCombat uses it just at runtime, and it makes cloning original options weird/unintuitive/slow.
   globals: []
   language: "javascript"
-  languageVersion: "ES5"
   functionName: null  # In case we need it for error messages
   functionParameters: []  # Or something like ["target"]
   yieldAutomatically: false  # Horrible name... we could have it auto-insert yields after every statement
@@ -17,6 +16,4 @@ module.exports = defaults =
   includeFlow: true
   includeMetrics: true
   includeStyle: true
-  protectAPI: false
   protectBuiltins: true
-  useInterpreter: false

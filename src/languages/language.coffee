@@ -9,7 +9,7 @@ module.exports = class Language
   thisValueAccess: 'this.' # E.g. in Python it is 'self.'
   wrappedCodeIndentLen: 0
 
-  constructor: (@version) ->
+  constructor: ->
 
   # Return true if we can very quickly identify a syntax error.
   obviouslyCannotTranspile: (rawCode) ->

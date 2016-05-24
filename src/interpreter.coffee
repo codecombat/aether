@@ -21,7 +21,7 @@ updateState = (aether, evaluator) ->
   if aether.options.includeMetrics
     aether.metrics.statementsExecuted ?= 0
     aether.metrics.callsExecuted ?= 0
-  
+
   astStack = (x.ast for x in frame_stack when x.ast?)
   statementStack = ( x for x in astStack when isStatement x.type )
 
@@ -49,10 +49,10 @@ updateState = (aether, evaluator) ->
               variables[n] = p.value.debugString if p.value
           f.variables = variables
 
-        if astStack[0]? 
+        if astStack[0]?
           rng = astStack[0].originalRange
           f.range = [rng.start, rng.end] if rng
-        
+
         bottom.flow.statements.push f unless not f.range # Dont push statements without ranges
 
 module.exports.createFunction = (aether, code) ->

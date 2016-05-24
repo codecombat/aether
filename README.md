@@ -9,7 +9,7 @@ and giving them tips on how they can improve their code. [CodeCombat](http://cod
 You can use the [GitHub issues](https://github.com/codecombat/aether/issues), the [Discourse forum](http://discourse.codecombat.com/), the [HipChat](http://www.hipchat.com/g3plnOKqa), or [email](mailto:nick@codecombat.com) [Nick](http://www.nickwinter.net/).
 
 ## What is it?
-It's a JavaScript library (written in CoffeeScript) that takes user code as input; does computer-sciencey transpilation things to it with the help of [JSHint](http://jshint.com/), [Esprima](http://esprima.org/), [JS_WALA](https://github.com/wala/JS_WALA), [escodegen](https://github.com/Constellation/escodegen), and [traceur](https://github.com/google/traceur-compiler); and gives you linting, transformation, sandboxing, instrumentation, time-travel debugging, style analysis, autocompletion, and more.
+It's a JavaScript library (written in CoffeeScript) that takes user code as input; does computer-sciencey transpilation things to it with the help of [JSHint](http://jshint.com/), [Esprima](http://esprima.org/), [escodegen](https://github.com/Constellation/escodegen), and Esper (soon to be open source); and gives you linting, transformation, sandboxing, instrumentation, time-travel debugging, style analysis, autocompletion, and more. It used to output transpiled code for you to run, but now it includes an interpreter for better correctness and performance.
 
 ## Devour [aetherjs.com](http://aetherjs.com) for docs, demos, and developer discourse
 

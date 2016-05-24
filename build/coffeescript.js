@@ -1,4 +1,479 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+(function() {
+  var StringScanner;
+  StringScanner = (function() {
+    function StringScanner(str) {
+      this.str = str != null ? str : '';
+      this.str = '' + this.str;
+      this.pos = 0;
+      this.lastMatch = {
+        reset: function() {
+          this.str = null;
+          this.captures = [];
+          return this;
+        }
+      }.reset();
+      this;
+    }
+    StringScanner.prototype.bol = function() {
+      return this.pos <= 0 || (this.str[this.pos - 1] === "\n");
+    };
+    StringScanner.prototype.captures = function() {
+      return this.lastMatch.captures;
+    };
+    StringScanner.prototype.check = function(pattern) {
+      var matches;
+      if (this.str.substr(this.pos).search(pattern) !== 0) {
+        this.lastMatch.reset();
+        return null;
+      }
+      matches = this.str.substr(this.pos).match(pattern);
+      this.lastMatch.str = matches[0];
+      this.lastMatch.captures = matches.slice(1);
+      return this.lastMatch.str;
+    };
+    StringScanner.prototype.checkUntil = function(pattern) {
+      var matches, patternPos;
+      patternPos = this.str.substr(this.pos).search(pattern);
+      if (patternPos < 0) {
+        this.lastMatch.reset();
+        return null;
+      }
+      matches = this.str.substr(this.pos + patternPos).match(pattern);
+      this.lastMatch.captures = matches.slice(1);
+      return this.lastMatch.str = this.str.substr(this.pos, patternPos) + matches[0];
+    };
+    StringScanner.prototype.clone = function() {
+      var clone, prop, value, _ref;
+      clone = new this.constructor(this.str);
+      clone.pos = this.pos;
+      clone.lastMatch = {};
+      _ref = this.lastMatch;
+      for (prop in _ref) {
+        value = _ref[prop];
+        clone.lastMatch[prop] = value;
+      }
+      return clone;
+    };
+    StringScanner.prototype.concat = function(str) {
+      this.str += str;
+      return this;
+    };
+    StringScanner.prototype.eos = function() {
+      return this.pos === this.str.length;
+    };
+    StringScanner.prototype.exists = function(pattern) {
+      var matches, patternPos;
+      patternPos = this.str.substr(this.pos).search(pattern);
+      if (patternPos < 0) {
+        this.lastMatch.reset();
+        return null;
+      }
+      matches = this.str.substr(this.pos + patternPos).match(pattern);
+      this.lastMatch.str = matches[0];
+      this.lastMatch.captures = matches.slice(1);
+      return patternPos;
+    };
+    StringScanner.prototype.getch = function() {
+      return this.scan(/./);
+    };
+    StringScanner.prototype.match = function() {
+      return this.lastMatch.str;
+    };
+    StringScanner.prototype.matches = function(pattern) {
+      this.check(pattern);
+      return this.matchSize();
+    };
+    StringScanner.prototype.matched = function() {
+      return this.lastMatch.str != null;
+    };
+    StringScanner.prototype.matchSize = function() {
+      if (this.matched()) {
+        return this.match().length;
+      } else {
+        return null;
+      }
+    };
+    StringScanner.prototype.peek = function(len) {
+      return this.str.substr(this.pos, len);
+    };
+    StringScanner.prototype.pointer = function() {
+      return this.pos;
+    };
+    StringScanner.prototype.setPointer = function(pos) {
+      pos = +pos;
+      if (pos < 0) {
+        pos = 0;
+      }
+      if (pos > this.str.length) {
+        pos = this.str.length;
+      }
+      return this.pos = pos;
+    };
+    StringScanner.prototype.reset = function() {
+      this.lastMatch.reset();
+      this.pos = 0;
+      return this;
+    };
+    StringScanner.prototype.rest = function() {
+      return this.str.substr(this.pos);
+    };
+    StringScanner.prototype.scan = function(pattern) {
+      var chk;
+      chk = this.check(pattern);
+      if (chk != null) {
+        this.pos += chk.length;
+      }
+      return chk;
+    };
+    StringScanner.prototype.scanUntil = function(pattern) {
+      var chk;
+      chk = this.checkUntil(pattern);
+      if (chk != null) {
+        this.pos += chk.length;
+      }
+      return chk;
+    };
+    StringScanner.prototype.skip = function(pattern) {
+      this.scan(pattern);
+      return this.matchSize();
+    };
+    StringScanner.prototype.skipUntil = function(pattern) {
+      this.scanUntil(pattern);
+      return this.matchSize();
+    };
+    StringScanner.prototype.string = function() {
+      return this.str;
+    };
+    StringScanner.prototype.terminate = function() {
+      this.pos = this.str.length;
+      this.lastMatch.reset();
+      return this;
+    };
+    StringScanner.prototype.toString = function() {
+      return "#<StringScanner " + (this.eos() ? 'fin' : "" + this.pos + "/" + this.str.length + " @ " + (this.str.length > 8 ? "" + (this.str.substr(0, 5)) + "..." : this.str)) + ">";
+    };
+    return StringScanner;
+  })();
+  StringScanner.prototype.beginningOfLine = StringScanner.prototype.bol;
+  StringScanner.prototype.clear = StringScanner.prototype.terminate;
+  StringScanner.prototype.dup = StringScanner.prototype.clone;
+  StringScanner.prototype.endOfString = StringScanner.prototype.eos;
+  StringScanner.prototype.exist = StringScanner.prototype.exists;
+  StringScanner.prototype.getChar = StringScanner.prototype.getch;
+  StringScanner.prototype.position = StringScanner.prototype.pointer;
+  StringScanner.StringScanner = StringScanner;
+  module.exports = StringScanner;
+}).call(this);
+
+},{}],2:[function(require,module,exports){
+(function (process,__filename){
+/** vim: et:ts=4:sw=4:sts=4
+ * @license amdefine 1.0.0 Copyright (c) 2011-2015, The Dojo Foundation All Rights Reserved.
+ * Available via the MIT or new BSD license.
+ * see: http://github.com/jrburke/amdefine for details
+ */
+
+/*jslint node: true */
+/*global module, process */
+'use strict';
+
+/**
+ * Creates a define for node.
+ * @param {Object} module the "module" object that is defined by Node for the
+ * current module.
+ * @param {Function} [requireFn]. Node's require function for the current module.
+ * It only needs to be passed in Node versions before 0.5, when module.require
+ * did not exist.
+ * @returns {Function} a define function that is usable for the current node
+ * module.
+ */
+function amdefine(module, requireFn) {
+    'use strict';
+    var defineCache = {},
+        loaderCache = {},
+        alreadyCalled = false,
+        path = require('path'),
+        makeRequire, stringRequire;
+
+    /**
+     * Trims the . and .. from an array of path segments.
+     * It will keep a leading path segment if a .. will become
+     * the first path segment, to help with module name lookups,
+     * which act like paths, but can be remapped. But the end result,
+     * all paths that use this function should look normalized.
+     * NOTE: this method MODIFIES the input array.
+     * @param {Array} ary the array of path segments.
+     */
+    function trimDots(ary) {
+        var i, part;
+        for (i = 0; ary[i]; i+= 1) {
+            part = ary[i];
+            if (part === '.') {
+                ary.splice(i, 1);
+                i -= 1;
+            } else if (part === '..') {
+                if (i === 1 && (ary[2] === '..' || ary[0] === '..')) {
+                    //End of the line. Keep at least one non-dot
+                    //path segment at the front so it can be mapped
+                    //correctly to disk. Otherwise, there is likely
+                    //no path mapping for a path starting with '..'.
+                    //This can still fail, but catches the most reasonable
+                    //uses of ..
+                    break;
+                } else if (i > 0) {
+                    ary.splice(i - 1, 2);
+                    i -= 2;
+                }
+            }
+        }
+    }
+
+    function normalize(name, baseName) {
+        var baseParts;
+
+        //Adjust any relative paths.
+        if (name && name.charAt(0) === '.') {
+            //If have a base name, try to normalize against it,
+            //otherwise, assume it is a top-level require that will
+            //be relative to baseUrl in the end.
+            if (baseName) {
+                baseParts = baseName.split('/');
+                baseParts = baseParts.slice(0, baseParts.length - 1);
+                baseParts = baseParts.concat(name.split('/'));
+                trimDots(baseParts);
+                name = baseParts.join('/');
+            }
+        }
+
+        return name;
+    }
+
+    /**
+     * Create the normalize() function passed to a loader plugin's
+     * normalize method.
+     */
+    function makeNormalize(relName) {
+        return function (name) {
+            return normalize(name, relName);
+        };
+    }
+
+    function makeLoad(id) {
+        function load(value) {
+            loaderCache[id] = value;
+        }
+
+        load.fromText = function (id, text) {
+            //This one is difficult because the text can/probably uses
+            //define, and any relative paths and requires should be relative
+            //to that id was it would be found on disk. But this would require
+            //bootstrapping a module/require fairly deeply from node core.
+            //Not sure how best to go about that yet.
+            throw new Error('amdefine does not implement load.fromText');
+        };
+
+        return load;
+    }
+
+    makeRequire = function (systemRequire, exports, module, relId) {
+        function amdRequire(deps, callback) {
+            if (typeof deps === 'string') {
+                //Synchronous, single module require('')
+                return stringRequire(systemRequire, exports, module, deps, relId);
+            } else {
+                //Array of dependencies with a callback.
+
+                //Convert the dependencies to modules.
+                deps = deps.map(function (depName) {
+                    return stringRequire(systemRequire, exports, module, depName, relId);
+                });
+
+                //Wait for next tick to call back the require call.
+                if (callback) {
+                    process.nextTick(function () {
+                        callback.apply(null, deps);
+                    });
+                }
+            }
+        }
+
+        amdRequire.toUrl = function (filePath) {
+            if (filePath.indexOf('.') === 0) {
+                return normalize(filePath, path.dirname(module.filename));
+            } else {
+                return filePath;
+            }
+        };
+
+        return amdRequire;
+    };
+
+    //Favor explicit value, passed in if the module wants to support Node 0.4.
+    requireFn = requireFn || function req() {
+        return module.require.apply(module, arguments);
+    };
+
+    function runFactory(id, deps, factory) {
+        var r, e, m, result;
+
+        if (id) {
+            e = loaderCache[id] = {};
+            m = {
+                id: id,
+                uri: __filename,
+                exports: e
+            };
+            r = makeRequire(requireFn, e, m, id);
+        } else {
+            //Only support one define call per file
+            if (alreadyCalled) {
+                throw new Error('amdefine with no module ID cannot be called more than once per file.');
+            }
+            alreadyCalled = true;
+
+            //Use the real variables from node
+            //Use module.exports for exports, since
+            //the exports in here is amdefine exports.
+            e = module.exports;
+            m = module;
+            r = makeRequire(requireFn, e, m, module.id);
+        }
+
+        //If there are dependencies, they are strings, so need
+        //to convert them to dependency values.
+        if (deps) {
+            deps = deps.map(function (depName) {
+                return r(depName);
+            });
+        }
+
+        //Call the factory with the right dependencies.
+        if (typeof factory === 'function') {
+            result = factory.apply(m.exports, deps);
+        } else {
+            result = factory;
+        }
+
+        if (result !== undefined) {
+            m.exports = result;
+            if (id) {
+                loaderCache[id] = m.exports;
+            }
+        }
+    }
+
+    stringRequire = function (systemRequire, exports, module, id, relId) {
+        //Split the ID by a ! so that
+        var index = id.indexOf('!'),
+            originalId = id,
+            prefix, plugin;
+
+        if (index === -1) {
+            id = normalize(id, relId);
+
+            //Straight module lookup. If it is one of the special dependencies,
+            //deal with it, otherwise, delegate to node.
+            if (id === 'require') {
+                return makeRequire(systemRequire, exports, module, relId);
+            } else if (id === 'exports') {
+                return exports;
+            } else if (id === 'module') {
+                return module;
+            } else if (loaderCache.hasOwnProperty(id)) {
+                return loaderCache[id];
+            } else if (defineCache[id]) {
+                runFactory.apply(null, defineCache[id]);
+                return loaderCache[id];
+            } else {
+                if(systemRequire) {
+                    return systemRequire(originalId);
+                } else {
+                    throw new Error('No module with ID: ' + id);
+                }
+            }
+        } else {
+            //There is a plugin in play.
+            prefix = id.substring(0, index);
+            id = id.substring(index + 1, id.length);
+
+            plugin = stringRequire(systemRequire, exports, module, prefix, relId);
+
+            if (plugin.normalize) {
+                id = plugin.normalize(id, makeNormalize(relId));
+            } else {
+                //Normalize the ID normally.
+                id = normalize(id, relId);
+            }
+
+            if (loaderCache[id]) {
+                return loaderCache[id];
+            } else {
+                plugin.load(id, makeRequire(systemRequire, exports, module, relId), makeLoad(id), {});
+
+                return loaderCache[id];
+            }
+        }
+    };
+
+    //Create a define function specific to the module asking for amdefine.
+    function define(id, deps, factory) {
+        if (Array.isArray(id)) {
+            factory = deps;
+            deps = id;
+            id = undefined;
+        } else if (typeof id !== 'string') {
+            factory = id;
+            id = deps = undefined;
+        }
+
+        if (deps && !Array.isArray(deps)) {
+            factory = deps;
+            deps = undefined;
+        }
+
+        if (!deps) {
+            deps = ['require', 'exports', 'module'];
+        }
+
+        //Set up properties for this module. If an ID, then use
+        //internal cache. If no ID, then use the external variables
+        //for this node module.
+        if (id) {
+            //Put the module in deep freeze until there is a
+            //require call for it.
+            defineCache[id] = [id, deps, factory];
+        } else {
+            runFactory(id, deps, factory);
+        }
+    }
+
+    //define.require, which has access to all the values in the
+    //cache. Useful for AMD modules that all have IDs in the file,
+    //but need to finally export a value to node based on one of those
+    //IDs.
+    define.require = function (id) {
+        if (loaderCache[id]) {
+            return loaderCache[id];
+        }
+
+        if (defineCache[id]) {
+            runFactory.apply(null, defineCache[id]);
+            return loaderCache[id];
+        }
+    };
+
+    define.amd = {};
+
+    return define;
+}
+
+module.exports = amdefine;
+
+}).call(this,require("g5I+bs"),"/../node_modules/amdefine/amdefine.js")
+},{"g5I+bs":24,"path":23}],3:[function(require,module,exports){
+
+},{}],4:[function(require,module,exports){
 // Generated by CoffeeScript 2.0.0-beta9-dev
 var any, assignment, beingDeclared, cache$, cache$1, collectIdentifiers, concat, concatMap, CS, declarationsNeeded, declarationsNeededRecursive, defaultRules, difference, divMod, dynamicMemberAccess, enabledHelpers, envEnrichments, exports, expr, fn, foldl, foldl1, forceBlock, generateMutatingWalker, generateSoak, genSym, h, hasSoak, helperNames, helpers, inlineHelpers, intersect, isIdentifierName, isScopeBoundary, JS, jsReserved, makeReturn, makeVarDeclaration, map, mapChildNodes, memberAccess, needsCaching, nub, owns, partition, span, stmt, union, usedAsExpression, variableDeclarations;
 cache$ = require('./functional-helpers');
@@ -2457,7 +2932,7 @@ function isOwn$(o, p) {
   return {}.hasOwnProperty.call(o, p);
 }
 
-},{"./../package.json":19,"./functional-helpers":2,"./helpers":3,"./js-nodes":4,"./nodes":6}],2:[function(require,module,exports){
+},{"./../package.json":18,"./functional-helpers":5,"./helpers":6,"./js-nodes":7,"./nodes":9}],5:[function(require,module,exports){
 // Generated by CoffeeScript 2.0.0-beta9-dev
 var concat, foldl, map, nub, span;
 this.any = function (list, fn) {
@@ -2614,7 +3089,7 @@ function in$(member, list) {
   return false;
 }
 
-},{}],3:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 (function (process){
 // Generated by CoffeeScript 2.0.0-beta9-dev
 var beingDeclared, cache$, cleanMarkers, colourise, COLOURS, concat, concatMap, CS, difference, envEnrichments, envEnrichments_, foldl, humanReadable, map, nub, numberLines, pointToErrorLocation, SUPPORTS_COLOUR, usedAsExpression, usedAsExpression_;
@@ -2814,8 +3289,8 @@ function in$(member, list) {
   return false;
 }
 
-}).call(this,require("JkpR2F"))
-},{"./functional-helpers":2,"./nodes":6,"JkpR2F":23}],4:[function(require,module,exports){
+}).call(this,require("g5I+bs"))
+},{"./functional-helpers":5,"./nodes":9,"g5I+bs":24}],7:[function(require,module,exports){
 // Generated by CoffeeScript 2.0.0-beta9-dev
 var ArrayExpression, AssignmentExpression, BinaryExpression, BlockStatement, cache$, cache$1, CallExpression, createNode, ctor, difference, exports, FunctionDeclaration, FunctionExpression, GenSym, handleLists, handlePrimitives, Identifier, isStatement, Literal, LogicalExpression, MemberExpression, NewExpression, node, nodeData, Nodes, ObjectExpression, params, Program, SequenceExpression, SwitchCase, SwitchStatement, TryStatement, UnaryExpression, UpdateExpression, VariableDeclaration;
 difference = require('./functional-helpers').difference;
@@ -3292,7 +3767,7 @@ function in$(member, list) {
   return false;
 }
 
-},{"./functional-helpers":2}],5:[function(require,module,exports){
+},{"./functional-helpers":5}],8:[function(require,module,exports){
 // Generated by CoffeeScript 2.0.0-beta9-dev
 var CoffeeScript, Compiler, cscodegen, escodegen, escodegenFormat, ext, formatParserError, Nodes, Optimiser, Parser, pkg, Preprocessor;
 formatParserError = require('./helpers').formatParserError;
@@ -3418,7 +3893,7 @@ if (null != (null != require.extensions ? require.extensions['.node'] : void 0))
   }
 }
 
-},{"./../package.json":19,"./compiler":1,"./helpers":3,"./nodes":6,"./optimiser":7,"./parser":8,"./preprocessor":9,"./register":10,"cscodegen":13,"escodegen":14}],6:[function(require,module,exports){
+},{"./../package.json":18,"./compiler":4,"./helpers":6,"./nodes":9,"./optimiser":10,"./parser":11,"./preprocessor":12,"./register":13,"cscodegen":19,"escodegen":15}],9:[function(require,module,exports){
 // Generated by CoffeeScript 2.0.0-beta9-dev
 var ArrayInitialiser, Block, Bool, cache$, cache$1, Class, CompoundAssignOp, concat, concatMap, Conditional, createNodes, difference, exports, ForOf, FunctionApplications, Functions, GenSym, handleLists, handlePrimitives, HeregExp, Identifier, Identifiers, map, NegatedConditional, NewOp, Nodes, nub, ObjectInitialiser, Primitives, Range, RegExp, RegExps, Slice, StaticMemberAccessOps, Super, Switch, SwitchCase, union, While;
 cache$ = require('./functional-helpers');
@@ -4004,7 +4479,7 @@ function in$(member, list) {
   return false;
 }
 
-},{"./functional-helpers":2}],7:[function(require,module,exports){
+},{"./functional-helpers":5}],10:[function(require,module,exports){
 (function (global){
 // Generated by CoffeeScript 2.0.0-beta9-dev
 var all, any, beingDeclared, cache$, cache$1, concat, concatMap, CS, declarationsFor, defaultRules, difference, envEnrichments, exports, foldl, foldl1, isFalsey, isTruthy, makeDispatcher, mayHaveSideEffects, union, usedAsExpression;
@@ -4822,7 +5297,7 @@ function in$(member, list) {
 }
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./functional-helpers":2,"./helpers":3,"./nodes":6}],8:[function(require,module,exports){
+},{"./functional-helpers":5,"./helpers":6,"./nodes":9}],11:[function(require,module,exports){
 module.exports = (function() {
   /*
    * Generated by PEG.js 0.8.0.
@@ -24632,7 +25107,7 @@ module.exports = (function() {
   };
 })();
 
-},{"../package.json":19,"./nodes":6}],9:[function(require,module,exports){
+},{"../package.json":18,"./nodes":9}],12:[function(require,module,exports){
 // Generated by CoffeeScript 2.0.0-beta9-dev
 var DEDENT, INDENT, pointToErrorLocation, Preprocessor, StringScanner, TERM, ws;
 pointToErrorLocation = require('./helpers').pointToErrorLocation;
@@ -24962,7 +25437,7 @@ this.Preprocessor = Preprocessor = function () {
   return Preprocessor;
 }();
 
-},{"./helpers":3,"StringScanner":12}],10:[function(require,module,exports){
+},{"./helpers":6,"StringScanner":1}],13:[function(require,module,exports){
 // Generated by CoffeeScript 2.0.0-beta9-dev
 var child_process, coffeeBinary, CoffeeScript, fork, fs, path, runModule;
 child_process = require('child_process');
@@ -25020,7 +25495,7 @@ function in$(member, list) {
   return false;
 }
 
-},{"./module":5,"./run":11,"child_process":21,"fs":21,"path":22}],11:[function(require,module,exports){
+},{"./module":8,"./run":14,"child_process":3,"fs":3,"path":23}],14:[function(require,module,exports){
 (function (process){
 // Generated by CoffeeScript 2.0.0-beta9-dev
 var CoffeeScript, formatSourcePosition, Module, patched, patchStackTrace, path, runMain, runModule, SourceMapConsumer;
@@ -25128,798 +25603,8 @@ module.exports = {
   runModule: runModule
 };
 
-}).call(this,require("JkpR2F"))
-},{"./module":5,"JkpR2F":23,"module":21,"path":22,"source-map":24}],12:[function(require,module,exports){
-(function() {
-  var StringScanner;
-  StringScanner = (function() {
-    function StringScanner(str) {
-      this.str = str != null ? str : '';
-      this.str = '' + this.str;
-      this.pos = 0;
-      this.lastMatch = {
-        reset: function() {
-          this.str = null;
-          this.captures = [];
-          return this;
-        }
-      }.reset();
-      this;
-    }
-    StringScanner.prototype.bol = function() {
-      return this.pos <= 0 || (this.str[this.pos - 1] === "\n");
-    };
-    StringScanner.prototype.captures = function() {
-      return this.lastMatch.captures;
-    };
-    StringScanner.prototype.check = function(pattern) {
-      var matches;
-      if (this.str.substr(this.pos).search(pattern) !== 0) {
-        this.lastMatch.reset();
-        return null;
-      }
-      matches = this.str.substr(this.pos).match(pattern);
-      this.lastMatch.str = matches[0];
-      this.lastMatch.captures = matches.slice(1);
-      return this.lastMatch.str;
-    };
-    StringScanner.prototype.checkUntil = function(pattern) {
-      var matches, patternPos;
-      patternPos = this.str.substr(this.pos).search(pattern);
-      if (patternPos < 0) {
-        this.lastMatch.reset();
-        return null;
-      }
-      matches = this.str.substr(this.pos + patternPos).match(pattern);
-      this.lastMatch.captures = matches.slice(1);
-      return this.lastMatch.str = this.str.substr(this.pos, patternPos) + matches[0];
-    };
-    StringScanner.prototype.clone = function() {
-      var clone, prop, value, _ref;
-      clone = new this.constructor(this.str);
-      clone.pos = this.pos;
-      clone.lastMatch = {};
-      _ref = this.lastMatch;
-      for (prop in _ref) {
-        value = _ref[prop];
-        clone.lastMatch[prop] = value;
-      }
-      return clone;
-    };
-    StringScanner.prototype.concat = function(str) {
-      this.str += str;
-      return this;
-    };
-    StringScanner.prototype.eos = function() {
-      return this.pos === this.str.length;
-    };
-    StringScanner.prototype.exists = function(pattern) {
-      var matches, patternPos;
-      patternPos = this.str.substr(this.pos).search(pattern);
-      if (patternPos < 0) {
-        this.lastMatch.reset();
-        return null;
-      }
-      matches = this.str.substr(this.pos + patternPos).match(pattern);
-      this.lastMatch.str = matches[0];
-      this.lastMatch.captures = matches.slice(1);
-      return patternPos;
-    };
-    StringScanner.prototype.getch = function() {
-      return this.scan(/./);
-    };
-    StringScanner.prototype.match = function() {
-      return this.lastMatch.str;
-    };
-    StringScanner.prototype.matches = function(pattern) {
-      this.check(pattern);
-      return this.matchSize();
-    };
-    StringScanner.prototype.matched = function() {
-      return this.lastMatch.str != null;
-    };
-    StringScanner.prototype.matchSize = function() {
-      if (this.matched()) {
-        return this.match().length;
-      } else {
-        return null;
-      }
-    };
-    StringScanner.prototype.peek = function(len) {
-      return this.str.substr(this.pos, len);
-    };
-    StringScanner.prototype.pointer = function() {
-      return this.pos;
-    };
-    StringScanner.prototype.setPointer = function(pos) {
-      pos = +pos;
-      if (pos < 0) {
-        pos = 0;
-      }
-      if (pos > this.str.length) {
-        pos = this.str.length;
-      }
-      return this.pos = pos;
-    };
-    StringScanner.prototype.reset = function() {
-      this.lastMatch.reset();
-      this.pos = 0;
-      return this;
-    };
-    StringScanner.prototype.rest = function() {
-      return this.str.substr(this.pos);
-    };
-    StringScanner.prototype.scan = function(pattern) {
-      var chk;
-      chk = this.check(pattern);
-      if (chk != null) {
-        this.pos += chk.length;
-      }
-      return chk;
-    };
-    StringScanner.prototype.scanUntil = function(pattern) {
-      var chk;
-      chk = this.checkUntil(pattern);
-      if (chk != null) {
-        this.pos += chk.length;
-      }
-      return chk;
-    };
-    StringScanner.prototype.skip = function(pattern) {
-      this.scan(pattern);
-      return this.matchSize();
-    };
-    StringScanner.prototype.skipUntil = function(pattern) {
-      this.scanUntil(pattern);
-      return this.matchSize();
-    };
-    StringScanner.prototype.string = function() {
-      return this.str;
-    };
-    StringScanner.prototype.terminate = function() {
-      this.pos = this.str.length;
-      this.lastMatch.reset();
-      return this;
-    };
-    StringScanner.prototype.toString = function() {
-      return "#<StringScanner " + (this.eos() ? 'fin' : "" + this.pos + "/" + this.str.length + " @ " + (this.str.length > 8 ? "" + (this.str.substr(0, 5)) + "..." : this.str)) + ">";
-    };
-    return StringScanner;
-  })();
-  StringScanner.prototype.beginningOfLine = StringScanner.prototype.bol;
-  StringScanner.prototype.clear = StringScanner.prototype.terminate;
-  StringScanner.prototype.dup = StringScanner.prototype.clone;
-  StringScanner.prototype.endOfString = StringScanner.prototype.eos;
-  StringScanner.prototype.exist = StringScanner.prototype.exists;
-  StringScanner.prototype.getChar = StringScanner.prototype.getch;
-  StringScanner.prototype.position = StringScanner.prototype.pointer;
-  StringScanner.StringScanner = StringScanner;
-  module.exports = StringScanner;
-}).call(this);
-
-},{}],13:[function(require,module,exports){
-// Generated by CoffeeScript 1.3.3
-(function() {
-  var __hasProp = {}.hasOwnProperty,
-    __slice = [].slice,
-    __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
-
-  (function(exports) {
-    var TAB, clone, eq, formatInterpolation, formatStringData, generate, indent, levels, needsParensWhenOnLeft, operators, parens, precedence;
-    TAB = '  ';
-    indent = function(code) {
-      var line;
-      return ((function() {
-        var _i, _len, _ref, _results;
-        _ref = code.split('\n');
-        _results = [];
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          line = _ref[_i];
-          _results.push("" + TAB + line);
-        }
-        return _results;
-      })()).join('\n');
-    };
-    parens = function(code) {
-      return "(" + code + ")";
-    };
-    formatStringData = function(data) {
-      return data.replace(/[^\x20-\x7e]|['\\]/, function(c) {
-        var escape, pad;
-        switch (c) {
-          case '\0':
-            return '\\0';
-          case '\b':
-            return '\\b';
-          case '\t':
-            return '\\t';
-          case '\n':
-            return '\\n';
-          case '\f':
-            return '\\f';
-          case '\r':
-            return '\\r';
-          case '\'':
-            return '\\\'';
-          case '\\':
-            return '\\\\';
-          default:
-            escape = (c.charCodeAt(0)).toString(16);
-            pad = "0000".slice(escape.length);
-            return "\\u" + pad + escape;
-        }
-      });
-    };
-    formatInterpolation = function(ast, options) {
-      var left, right;
-      switch (ast.className) {
-        case "ConcatOp":
-          left = formatInterpolation(ast.left, options);
-          right = formatInterpolation(ast.right, options);
-          return "" + left + right;
-        case "String":
-          return formatStringData(ast.data);
-        default:
-          return "\#{" + (generate(ast, options)) + "}";
-      }
-    };
-    needsParensWhenOnLeft = function(ast) {
-      switch (ast.className) {
-        case 'Function':
-        case 'BoundFunction':
-        case 'NewOp':
-          return true;
-        case 'Conditional':
-        case 'Switch':
-        case 'While':
-        case 'Block':
-          return true;
-        case 'PreIncrementOp':
-        case 'PreDecrementOp':
-        case 'UnaryPlusOp':
-        case 'UnaryNegateOp':
-        case 'LogicalNotOp':
-        case 'BitNotOp':
-        case 'DoOp':
-        case 'TypeofOp':
-        case 'DeleteOp':
-          return needsParensWhenOnLeft(ast.expression);
-        case 'FunctionApplication':
-          return ast["arguments"].length > 0;
-        default:
-          return false;
-      }
-    };
-    eq = function(nodeA, nodeB) {
-      var i, prop, v, val, _i, _len;
-      for (prop in nodeA) {
-        if (!__hasProp.call(nodeA, prop)) continue;
-        val = nodeA[prop];
-        if (prop === 'raw' || prop === 'line' || prop === 'column') {
-          continue;
-        }
-        switch (Object.prototype.toString.call(val)) {
-          case '[object Object]':
-            if (!eq(nodeB[prop], val)) {
-              return false;
-            }
-            break;
-          case '[object Array]':
-            for (i = _i = 0, _len = val.length; _i < _len; i = ++_i) {
-              v = val[i];
-              if (!eq(nodeB[prop][i], v)) {
-                return false;
-              }
-            }
-            break;
-          default:
-            if (nodeB[prop] !== val) {
-              return false;
-            }
-        }
-      }
-      return true;
-    };
-    clone = function(obj, overrides) {
-      var newObj, prop, val;
-      if (overrides == null) {
-        overrides = {};
-      }
-      newObj = {};
-      for (prop in obj) {
-        if (!__hasProp.call(obj, prop)) continue;
-        val = obj[prop];
-        newObj[prop] = val;
-      }
-      for (prop in overrides) {
-        if (!__hasProp.call(overrides, prop)) continue;
-        val = overrides[prop];
-        newObj[prop] = val;
-      }
-      return newObj;
-    };
-    levels = [['SeqOp'], ['Conditional', 'ForIn', 'ForOf', 'While'], ['FunctionApplication', 'SoakedFunctionApplication'], ['AssignOp', 'CompoundAssignOp', 'ExistsAssignOp'], ['LogicalOrOp'], ['LogicalAndOp'], ['BitOrOp'], ['BitXorOp'], ['BitAndOp'], ['ExistsOp'], ['EQOp', 'NEQOp'], ['LTOp', 'LTEOp', 'GTOp', 'GTEOp', 'InOp', 'OfOp', 'InstanceofOp'], ['LeftShiftOp', 'SignedRightShiftOp', 'UnsignedRightShiftOp'], ['PlusOp', 'SubtractOp'], ['MultiplyOp', 'DivideOp', 'RemOp'], ['UnaryPlusOp', 'UnaryNegateOp', 'LogicalNotOp', 'BitNotOp', 'DoOp', 'TypeofOp', 'PreIncrementOp', 'PreDecrementOp', 'DeleteOp'], ['UnaryExistsOp', 'ShallowCopyArray', 'PostIncrementOp', 'PostDecrementOp', 'Spread'], ['NewOp'], ['MemberAccessOp', 'SoakedMemberAccessOp', 'DynamicMemberAccessOp', 'SoakedDynamicMemberAccessOp', 'ProtoMemberAccessOp', 'DynamicProtoMemberAccessOp', 'SoakedProtoMemberAccessOp', 'SoakedDynamicProtoMemberAccessOp']];
-    precedence = {};
-    (function() {
-      var level, op, ops, _i, _len, _results;
-      _results = [];
-      for (level = _i = 0, _len = levels.length; _i < _len; level = ++_i) {
-        ops = levels[level];
-        _results.push((function() {
-          var _j, _len1, _results1;
-          _results1 = [];
-          for (_j = 0, _len1 = ops.length; _j < _len1; _j++) {
-            op = ops[_j];
-            _results1.push(precedence[op] = level);
-          }
-          return _results1;
-        })());
-      }
-      return _results;
-    })();
-    operators = {
-      SeqOp: ';',
-      LogicalOrOp: 'or',
-      LogicalAndOp: 'and',
-      BitOrOp: '|',
-      BitXorOp: '^',
-      BitAndOp: '&',
-      EQOp: 'is',
-      NEQOp: 'isnt',
-      LTOp: '<',
-      LTEOp: '<=',
-      GTOp: '>',
-      GTEOp: '>=',
-      InOp: 'in',
-      OfOp: 'of',
-      InstanceofOp: 'instanceof',
-      LeftShiftOp: '<<',
-      SignedRightShiftOp: '>>',
-      UnsignedRightShiftOp: '>>>',
-      PlusOp: '+',
-      SubtractOp: '-',
-      MultiplyOp: '*',
-      DivideOp: '/',
-      RemOp: '%',
-      UnaryPlusOp: '+',
-      UnaryNegateOp: '-',
-      LogicalNotOp: 'not ',
-      BitNotOp: '~',
-      DoOp: 'do ',
-      NewOp: 'new ',
-      TypeofOp: 'typeof ',
-      PreIncrementOp: '++',
-      PreDecrementOp: '--',
-      UnaryExistsOp: '?',
-      ShallowCopyArray: '[..]',
-      PostIncrementOp: '++',
-      PostDecrementOp: '--',
-      Spread: '...',
-      FunctionApplication: '',
-      SoakedFunctionApplication: '?',
-      MemberAccessOp: '.',
-      SoakedMemberAccessOp: '?.',
-      ProtoMemberAccessOp: '::',
-      SoakedProtoMemberAccessOp: '?::',
-      DynamicMemberAccessOp: '',
-      SoakedDynamicMemberAccessOp: '?',
-      DynamicProtoMemberAccessOp: '::',
-      SoakedDynamicProtoMemberAccessOp: '?::'
-    };
-    return exports.generate = generate = function(ast, options) {
-      var a, absNum, arg, args, expression_, hasAlternate, i, isMultiline, key_, m, memberAccessOps, members_, needsParens, p, parameters, parent, parentClassName, prec, s, sep, src, usedAsExpression, _alternate, _argList, _args, _assignee, _block, _body, _consequent, _ctor, _expr, _fn, _indexingExpr, _left, _op, _paramList, _ref, _ref1, _right;
-      if (options == null) {
-        options = {};
-      }
-      needsParens = false;
-      if ((_ref = options.precedence) == null) {
-        options.precedence = 0;
-      }
-      if ((_ref1 = options.ancestors) == null) {
-        options.ancestors = [];
-      }
-      parent = options.ancestors[0];
-      parentClassName = parent != null ? parent.className : void 0;
-      usedAsExpression = (parent != null) && parentClassName !== 'Block';
-      src = (function() {
-        var _i, _len, _ref2, _ref3, _ref4, _ref5, _ref6;
-        switch (ast.className) {
-          case 'Program':
-            options.ancestors = [ast].concat(__slice.call(options.ancestors));
-            if (ast.body != null) {
-              return generate(ast.body, options);
-            } else {
-              return '';
-            }
-            break;
-          case 'Block':
-            options = clone(options, {
-              ancestors: [ast].concat(__slice.call(options.ancestors)),
-              precedence: 0
-            });
-            if (ast.statements.length === 0) {
-              return generate((new Undefined).g(), options);
-            } else {
-              sep = parentClassName === 'Program' ? '\n\n' : '\n';
-              return ((function() {
-                var _i, _len, _ref2, _results;
-                _ref2 = ast.statements;
-                _results = [];
-                for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
-                  s = _ref2[_i];
-                  _results.push(generate(s, options));
-                }
-                return _results;
-              })()).join(sep);
-            }
-            break;
-          case 'Conditional':
-            options.ancestors.unshift(ast);
-            options.precedence = 0;
-            hasAlternate = (ast.consequent != null) && (ast.alternate != null);
-            _consequent = generate((_ref2 = ast.consequent) != null ? _ref2 : (new Undefined).g(), options);
-            _alternate = hasAlternate ? generate(ast.alternate, options) : "";
-            isMultiline = _consequent.length > 90 || _alternate.length > 90 || __indexOf.call(_alternate, '\n') >= 0 || __indexOf.call(_consequent, '\n') >= 0;
-            _consequent = isMultiline ? "\n" + (indent(_consequent)) : " then " + _consequent;
-            if (hasAlternate) {
-              _alternate = isMultiline ? "\nelse\n" + (indent(_alternate)) : " else " + _alternate;
-            }
-            return "if " + (generate(ast.condition, options)) + _consequent + _alternate;
-          case 'Identifier':
-            return ast.data;
-          case 'Null':
-            return 'null';
-          case 'This':
-            return 'this';
-          case 'Undefined':
-            return 'undefined';
-          case 'Int':
-            absNum = ast.data < 0 ? -ast.data : ast.data;
-            if (absNum >= 1e12 || (absNum >= 0x10 && 0 === (absNum & (absNum - 1)))) {
-              return "0x" + (ast.data.toString(16));
-            } else {
-              return ast.data.toString(10);
-            }
-            break;
-          case 'Float':
-            return ast.data.toString(10);
-          case 'String':
-            return "'" + (formatStringData(ast.data)) + "'";
-          case 'ArrayInitialiser':
-            options = clone(options, {
-              ancestors: [ast].concat(__slice.call(options.ancestors)),
-              precedence: precedence.AssignmentExpression
-            });
-            members_ = (function() {
-              var _i, _len, _ref3, _results;
-              _ref3 = ast.members;
-              _results = [];
-              for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
-                m = _ref3[_i];
-                _results.push(generate(m, options));
-              }
-              return _results;
-            })();
-            switch (ast.members.length) {
-              case 0:
-                return '[]';
-              case 1:
-              case 2:
-                for (i = _i = 0, _len = members_.length; _i < _len; i = ++_i) {
-                  m = members_[i];
-                  if (i + 1 !== members_.length) {
-                    if (needsParensWhenOnLeft(ast.members[i])) {
-                      members_[i] = parens(m);
-                    }
-                  }
-                }
-                return "[" + (members_.join(', ')) + "]";
-              default:
-                return "[\n" + (indent(members_.join('\n'))) + "\n]";
-            }
-            break;
-          case 'ObjectInitialiser':
-            options.ancestors = [ast].concat(__slice.call(options.ancestors));
-            members_ = (function() {
-              var _j, _len1, _ref3, _results;
-              _ref3 = ast.members;
-              _results = [];
-              for (_j = 0, _len1 = _ref3.length; _j < _len1; _j++) {
-                m = _ref3[_j];
-                _results.push(generate(m, options));
-              }
-              return _results;
-            })();
-            switch (ast.members.length) {
-              case 0:
-                return '{}';
-              case 1:
-                return "{" + (members_.join(', ')) + "}";
-              default:
-                return "{\n" + (indent(members_.join('\n'))) + "\n}";
-            }
-            break;
-          case 'ObjectInitialiserMember':
-            options = clone(options, {
-              ancestors: [ast].concat(__slice.call(options.ancestors)),
-              precedence: precedence.AssignmentExpression
-            });
-            key_ = generate(ast.key, options);
-            expression_ = generate(ast.expression, options);
-            memberAccessOps = ['MemberAccessOp', 'ProtoMemberAccessOp', 'SoakedMemberAccessOp', 'SoakedProtoMemberAccessOp'];
-            if (eq(ast.key, ast.expression)) {
-              return "" + key_;
-            } else if ((_ref3 = ast.expression.className, __indexOf.call(memberAccessOps, _ref3) >= 0) && ast.key.data === ast.expression.memberName) {
-              return "" + expression_;
-            } else {
-              return "" + key_ + ": " + expression_;
-            }
-            break;
-          case 'Function':
-          case 'BoundFunction':
-            options = clone(options, {
-              ancestors: [ast].concat(__slice.call(options.ancestors)),
-              precedence: precedence.AssignmentExpression
-            });
-            parameters = (function() {
-              var _j, _len1, _ref4, _results;
-              _ref4 = ast.parameters;
-              _results = [];
-              for (_j = 0, _len1 = _ref4.length; _j < _len1; _j++) {
-                p = _ref4[_j];
-                _results.push(generate(p, options));
-              }
-              return _results;
-            })();
-            options.precedence = 0;
-            _body = !(ast.body != null) || ast.body.className === 'Undefined' ? '' : generate(ast.body, options);
-            _paramList = ast.parameters.length > 0 ? "(" + (parameters.join(', ')) + ") " : '';
-            _block = _body.length === 0 ? '' : _paramList.length + _body.length < 100 && __indexOf.call(_body, '\n') < 0 ? " " + _body : "\n" + (indent(_body));
-            switch (ast.className) {
-              case 'Function':
-                return "" + _paramList + "->" + _block;
-              case 'BoundFunction':
-                return "" + _paramList + "=>" + _block;
-            }
-            break;
-          case 'AssignOp':
-            prec = precedence[ast.className];
-            needsParens = prec < options.precedence;
-            options = clone(options, {
-              ancestors: [ast].concat(__slice.call(options.ancestors)),
-              precedence: prec
-            });
-            _assignee = generate(ast.assignee, options);
-            _expr = generate(ast.expression, options);
-            return "" + _assignee + " = " + _expr;
-          case 'CompoundAssignOp':
-            prec = precedence[ast.className];
-            needsParens = prec < options.precedence;
-            options = clone(options, {
-              ancestors: [ast].concat(__slice.call(options.ancestors)),
-              precedence: prec
-            });
-            _op = operators[ast.op.prototype.className];
-            _assignee = generate(ast.assignee, options);
-            _expr = generate(ast.expression, options);
-            return "" + _assignee + " " + _op + "= " + _expr;
-          case 'SeqOp':
-            prec = precedence[ast.className];
-            needsParens = prec < options.precedence;
-            options = clone(options, {
-              ancestors: [ast].concat(__slice.call(options.ancestors)),
-              precedence: prec
-            });
-            _left = generate(ast.left, options);
-            _right = generate(ast.right, options);
-            return "" + _left + "; " + _right;
-          case 'LogicalOrOp':
-          case 'LogicalAndOp':
-          case 'BitOrOp':
-          case 'BitXorOp':
-          case 'BitAndOp':
-          case 'LeftShiftOp':
-          case 'SignedRightShiftOp':
-          case 'UnsignedRightShiftOp':
-          case 'EQOp':
-          case 'NEQOp':
-          case 'LTOp':
-          case 'LTEOp':
-          case 'GTOp':
-          case 'GTEOp':
-          case 'InOp':
-          case 'OfOp':
-          case 'InstanceofOp':
-          case 'PlusOp':
-          case 'SubtractOp':
-          case 'MultiplyOp':
-          case 'DivideOp':
-          case 'RemOp':
-          case 'ExistsOp':
-            _op = operators[ast.className];
-            if (((_ref4 = ast.className) === 'InOp' || _ref4 === 'OfOp' || _ref4 === 'InstanceofOp') && parentClassName === 'LogicalNotOp') {
-              _op = "not " + _op;
-            }
-            prec = precedence[ast.className];
-            needsParens = prec < options.precedence;
-            options = clone(options, {
-              ancestors: [ast].concat(__slice.call(options.ancestors)),
-              precedence: prec
-            });
-            _left = generate(ast.left, options);
-            if (needsParensWhenOnLeft(ast.left)) {
-              _left = parens(_left);
-            }
-            _right = generate(ast.right, options);
-            return "" + _left + " " + _op + " " + _right;
-          case 'UnaryPlusOp':
-          case 'UnaryNegateOp':
-          case 'LogicalNotOp':
-          case 'BitNotOp':
-          case 'DoOp':
-          case 'TypeofOp':
-          case 'PreIncrementOp':
-          case 'PreDecrementOp':
-            _op = operators[ast.className];
-            prec = precedence[ast.className];
-            if (ast.className === 'LogicalNotOp') {
-              if ((_ref5 = ast.expression.className) === 'InOp' || _ref5 === 'OfOp' || _ref5 === 'InstanceofOp') {
-                _op = '';
-                prec = precedence[ast.expression.className];
-              }
-              if ('LogicalNotOp' === parentClassName || 'LogicalNotOp' === ast.expression.className) {
-                _op = '!';
-              }
-            }
-            needsParens = prec < options.precedence;
-            if (parentClassName === ast.className && ((_ref6 = ast.className) === 'UnaryPlusOp' || _ref6 === 'UnaryNegateOp')) {
-              needsParens = true;
-            }
-            options = clone(options, {
-              ancestors: [ast].concat(__slice.call(options.ancestors)),
-              precedence: prec
-            });
-            return "" + _op + (generate(ast.expression, options));
-          case 'UnaryExistsOp':
-          case 'PostIncrementOp':
-          case 'PostDecrementOp':
-          case 'Spread':
-            _op = operators[ast.className];
-            prec = precedence[ast.className];
-            needsParens = prec < options.precedence;
-            options = clone(options, {
-              ancestors: [ast].concat(__slice.call(options.ancestors)),
-              precedence: prec
-            });
-            _expr = generate(ast.expression, options);
-            if (needsParensWhenOnLeft(ast.expression)) {
-              _expr = parens(_expr);
-            }
-            return "" + _expr + _op;
-          case 'NewOp':
-            _op = operators[ast.className];
-            prec = precedence[ast.className];
-            options = clone(options, {
-              ancestors: [ast].concat(__slice.call(options.ancestors)),
-              precedence: prec
-            });
-            _ctor = generate(ast.ctor, options);
-            if (ast["arguments"].length > 0 && needsParensWhenOnLeft(ast.ctor)) {
-              _ctor = parens(_ctor);
-            }
-            options.precedence = precedence['AssignOp'];
-            args = (function() {
-              var _j, _len1, _ref7, _results;
-              _ref7 = ast["arguments"];
-              _results = [];
-              for (i = _j = 0, _len1 = _ref7.length; _j < _len1; i = ++_j) {
-                a = _ref7[i];
-                arg = generate(a, options);
-                if ((needsParensWhenOnLeft(a)) && i + 1 !== ast["arguments"].length) {
-                  arg = parens(arg);
-                }
-                _results.push(arg);
-              }
-              return _results;
-            })();
-            _args = ast["arguments"].length === 0 ? '' : " " + (args.join(', '));
-            return "" + _op + _ctor + _args;
-          case 'FunctionApplication':
-          case 'SoakedFunctionApplication':
-            if (ast.className === 'FunctionApplication' && ast["arguments"].length === 0 && !usedAsExpression) {
-              return generate(new DoOp(ast["function"]), options);
-            } else {
-              options = clone(options, {
-                ancestors: [ast].concat(__slice.call(options.ancestors)),
-                precedence: precedence[ast.className]
-              });
-              _op = operators[ast.className];
-              _fn = generate(ast["function"], options);
-              if (needsParensWhenOnLeft(ast["function"])) {
-                _fn = parens(_fn);
-              }
-              args = (function() {
-                var _j, _len1, _ref7, _results;
-                _ref7 = ast["arguments"];
-                _results = [];
-                for (i = _j = 0, _len1 = _ref7.length; _j < _len1; i = ++_j) {
-                  a = _ref7[i];
-                  arg = generate(a, options);
-                  if ((needsParensWhenOnLeft(a)) && i + 1 !== ast["arguments"].length) {
-                    arg = parens(arg);
-                  }
-                  _results.push(arg);
-                }
-                return _results;
-              })();
-              _argList = ast["arguments"].length === 0 ? '()' : " " + (args.join(', '));
-              return "" + _fn + _op + _argList;
-            }
-            break;
-          case 'MemberAccessOp':
-          case 'SoakedMemberAccessOp':
-          case 'ProtoMemberAccessOp':
-          case 'SoakedProtoMemberAccessOp':
-            _op = operators[ast.className];
-            prec = precedence[ast.className];
-            needsParens = prec < options.precedence;
-            options = clone(options, {
-              ancestors: [ast].concat(__slice.call(options.ancestors)),
-              precedence: prec
-            });
-            if (ast.expression.className === 'This') {
-              _expr = '@';
-              if (ast.className === 'MemberAccessOp') {
-                _op = '';
-              }
-            } else {
-              _expr = generate(ast.expression, options);
-              if (needsParensWhenOnLeft(ast.expression)) {
-                _expr = parens(_expr);
-              }
-            }
-            return "" + _expr + _op + ast.memberName;
-          case 'DynamicMemberAccessOp':
-          case 'SoakedDynamicMemberAccessOp':
-          case 'DynamicProtoMemberAccessOp':
-          case 'SoakedDynamicProtoMemberAccessOp':
-            _op = operators[ast.className];
-            prec = precedence[ast.className];
-            needsParens = prec < options.precedence;
-            options = clone(options, {
-              ancestors: [ast].concat(__slice.call(options.ancestors)),
-              precedence: prec
-            });
-            if (ast.expression.className === 'This') {
-              _expr = '@';
-            } else {
-              _expr = generate(ast.expression, options);
-              if (needsParensWhenOnLeft(ast.expression)) {
-                _expr = parens(_expr);
-              }
-            }
-            options.precedence = 0;
-            _indexingExpr = generate(ast.indexingExpr, options);
-            return "" + _expr + _op + "[" + _indexingExpr + "]";
-          case 'ConcatOp':
-            _left = formatInterpolation(ast.left, options);
-            _right = formatInterpolation(ast.right, options);
-            return "\"" + _left + _right + "\"";
-          default:
-            throw new Error("Non-exhaustive patterns in case: " + ast.className);
-        }
-      })();
-      if (needsParens) {
-        return parens(src);
-      } else {
-        return src;
-      }
-    };
-  })(typeof exports !== "undefined" && exports !== null ? exports : this.cscodegen = {});
-
-}).call(this);
-
-},{}],14:[function(require,module,exports){
+}).call(this,require("g5I+bs"))
+},{"./module":8,"g5I+bs":24,"module":3,"path":23,"source-map":25}],15:[function(require,module,exports){
 (function (global){
 /*
   Copyright (C) 2012-2013 Yusuke Suzuki <utatane.tea@gmail.com>
@@ -28111,274 +27796,47 @@ module.exports = {
 /* vim: set sw=4 ts=4 et tw=80 : */
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./package.json":18,"estraverse":20,"esutils":17,"source-map":24}],15:[function(require,module,exports){
-/*
-  Copyright (C) 2013 Yusuke Suzuki <utatane.tea@gmail.com>
-
-  Redistribution and use in source and binary forms, with or without
-  modification, are permitted provided that the following conditions are met:
-
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in the
-      documentation and/or other materials provided with the distribution.
-
-  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-  ARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
-  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
-  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
-
-(function () {
-    'use strict';
-
-    var Regex;
-
-    // See also tools/generate-unicode-regex.py.
-    Regex = {
-        NonAsciiIdentifierStart: new RegExp('[\xAA\xB5\xBA\xC0-\xD6\xD8-\xF6\xF8-\u02C1\u02C6-\u02D1\u02E0-\u02E4\u02EC\u02EE\u0370-\u0374\u0376\u0377\u037A-\u037D\u0386\u0388-\u038A\u038C\u038E-\u03A1\u03A3-\u03F5\u03F7-\u0481\u048A-\u0527\u0531-\u0556\u0559\u0561-\u0587\u05D0-\u05EA\u05F0-\u05F2\u0620-\u064A\u066E\u066F\u0671-\u06D3\u06D5\u06E5\u06E6\u06EE\u06EF\u06FA-\u06FC\u06FF\u0710\u0712-\u072F\u074D-\u07A5\u07B1\u07CA-\u07EA\u07F4\u07F5\u07FA\u0800-\u0815\u081A\u0824\u0828\u0840-\u0858\u08A0\u08A2-\u08AC\u0904-\u0939\u093D\u0950\u0958-\u0961\u0971-\u0977\u0979-\u097F\u0985-\u098C\u098F\u0990\u0993-\u09A8\u09AA-\u09B0\u09B2\u09B6-\u09B9\u09BD\u09CE\u09DC\u09DD\u09DF-\u09E1\u09F0\u09F1\u0A05-\u0A0A\u0A0F\u0A10\u0A13-\u0A28\u0A2A-\u0A30\u0A32\u0A33\u0A35\u0A36\u0A38\u0A39\u0A59-\u0A5C\u0A5E\u0A72-\u0A74\u0A85-\u0A8D\u0A8F-\u0A91\u0A93-\u0AA8\u0AAA-\u0AB0\u0AB2\u0AB3\u0AB5-\u0AB9\u0ABD\u0AD0\u0AE0\u0AE1\u0B05-\u0B0C\u0B0F\u0B10\u0B13-\u0B28\u0B2A-\u0B30\u0B32\u0B33\u0B35-\u0B39\u0B3D\u0B5C\u0B5D\u0B5F-\u0B61\u0B71\u0B83\u0B85-\u0B8A\u0B8E-\u0B90\u0B92-\u0B95\u0B99\u0B9A\u0B9C\u0B9E\u0B9F\u0BA3\u0BA4\u0BA8-\u0BAA\u0BAE-\u0BB9\u0BD0\u0C05-\u0C0C\u0C0E-\u0C10\u0C12-\u0C28\u0C2A-\u0C33\u0C35-\u0C39\u0C3D\u0C58\u0C59\u0C60\u0C61\u0C85-\u0C8C\u0C8E-\u0C90\u0C92-\u0CA8\u0CAA-\u0CB3\u0CB5-\u0CB9\u0CBD\u0CDE\u0CE0\u0CE1\u0CF1\u0CF2\u0D05-\u0D0C\u0D0E-\u0D10\u0D12-\u0D3A\u0D3D\u0D4E\u0D60\u0D61\u0D7A-\u0D7F\u0D85-\u0D96\u0D9A-\u0DB1\u0DB3-\u0DBB\u0DBD\u0DC0-\u0DC6\u0E01-\u0E30\u0E32\u0E33\u0E40-\u0E46\u0E81\u0E82\u0E84\u0E87\u0E88\u0E8A\u0E8D\u0E94-\u0E97\u0E99-\u0E9F\u0EA1-\u0EA3\u0EA5\u0EA7\u0EAA\u0EAB\u0EAD-\u0EB0\u0EB2\u0EB3\u0EBD\u0EC0-\u0EC4\u0EC6\u0EDC-\u0EDF\u0F00\u0F40-\u0F47\u0F49-\u0F6C\u0F88-\u0F8C\u1000-\u102A\u103F\u1050-\u1055\u105A-\u105D\u1061\u1065\u1066\u106E-\u1070\u1075-\u1081\u108E\u10A0-\u10C5\u10C7\u10CD\u10D0-\u10FA\u10FC-\u1248\u124A-\u124D\u1250-\u1256\u1258\u125A-\u125D\u1260-\u1288\u128A-\u128D\u1290-\u12B0\u12B2-\u12B5\u12B8-\u12BE\u12C0\u12C2-\u12C5\u12C8-\u12D6\u12D8-\u1310\u1312-\u1315\u1318-\u135A\u1380-\u138F\u13A0-\u13F4\u1401-\u166C\u166F-\u167F\u1681-\u169A\u16A0-\u16EA\u16EE-\u16F0\u1700-\u170C\u170E-\u1711\u1720-\u1731\u1740-\u1751\u1760-\u176C\u176E-\u1770\u1780-\u17B3\u17D7\u17DC\u1820-\u1877\u1880-\u18A8\u18AA\u18B0-\u18F5\u1900-\u191C\u1950-\u196D\u1970-\u1974\u1980-\u19AB\u19C1-\u19C7\u1A00-\u1A16\u1A20-\u1A54\u1AA7\u1B05-\u1B33\u1B45-\u1B4B\u1B83-\u1BA0\u1BAE\u1BAF\u1BBA-\u1BE5\u1C00-\u1C23\u1C4D-\u1C4F\u1C5A-\u1C7D\u1CE9-\u1CEC\u1CEE-\u1CF1\u1CF5\u1CF6\u1D00-\u1DBF\u1E00-\u1F15\u1F18-\u1F1D\u1F20-\u1F45\u1F48-\u1F4D\u1F50-\u1F57\u1F59\u1F5B\u1F5D\u1F5F-\u1F7D\u1F80-\u1FB4\u1FB6-\u1FBC\u1FBE\u1FC2-\u1FC4\u1FC6-\u1FCC\u1FD0-\u1FD3\u1FD6-\u1FDB\u1FE0-\u1FEC\u1FF2-\u1FF4\u1FF6-\u1FFC\u2071\u207F\u2090-\u209C\u2102\u2107\u210A-\u2113\u2115\u2119-\u211D\u2124\u2126\u2128\u212A-\u212D\u212F-\u2139\u213C-\u213F\u2145-\u2149\u214E\u2160-\u2188\u2C00-\u2C2E\u2C30-\u2C5E\u2C60-\u2CE4\u2CEB-\u2CEE\u2CF2\u2CF3\u2D00-\u2D25\u2D27\u2D2D\u2D30-\u2D67\u2D6F\u2D80-\u2D96\u2DA0-\u2DA6\u2DA8-\u2DAE\u2DB0-\u2DB6\u2DB8-\u2DBE\u2DC0-\u2DC6\u2DC8-\u2DCE\u2DD0-\u2DD6\u2DD8-\u2DDE\u2E2F\u3005-\u3007\u3021-\u3029\u3031-\u3035\u3038-\u303C\u3041-\u3096\u309D-\u309F\u30A1-\u30FA\u30FC-\u30FF\u3105-\u312D\u3131-\u318E\u31A0-\u31BA\u31F0-\u31FF\u3400-\u4DB5\u4E00-\u9FCC\uA000-\uA48C\uA4D0-\uA4FD\uA500-\uA60C\uA610-\uA61F\uA62A\uA62B\uA640-\uA66E\uA67F-\uA697\uA6A0-\uA6EF\uA717-\uA71F\uA722-\uA788\uA78B-\uA78E\uA790-\uA793\uA7A0-\uA7AA\uA7F8-\uA801\uA803-\uA805\uA807-\uA80A\uA80C-\uA822\uA840-\uA873\uA882-\uA8B3\uA8F2-\uA8F7\uA8FB\uA90A-\uA925\uA930-\uA946\uA960-\uA97C\uA984-\uA9B2\uA9CF\uAA00-\uAA28\uAA40-\uAA42\uAA44-\uAA4B\uAA60-\uAA76\uAA7A\uAA80-\uAAAF\uAAB1\uAAB5\uAAB6\uAAB9-\uAABD\uAAC0\uAAC2\uAADB-\uAADD\uAAE0-\uAAEA\uAAF2-\uAAF4\uAB01-\uAB06\uAB09-\uAB0E\uAB11-\uAB16\uAB20-\uAB26\uAB28-\uAB2E\uABC0-\uABE2\uAC00-\uD7A3\uD7B0-\uD7C6\uD7CB-\uD7FB\uF900-\uFA6D\uFA70-\uFAD9\uFB00-\uFB06\uFB13-\uFB17\uFB1D\uFB1F-\uFB28\uFB2A-\uFB36\uFB38-\uFB3C\uFB3E\uFB40\uFB41\uFB43\uFB44\uFB46-\uFBB1\uFBD3-\uFD3D\uFD50-\uFD8F\uFD92-\uFDC7\uFDF0-\uFDFB\uFE70-\uFE74\uFE76-\uFEFC\uFF21-\uFF3A\uFF41-\uFF5A\uFF66-\uFFBE\uFFC2-\uFFC7\uFFCA-\uFFCF\uFFD2-\uFFD7\uFFDA-\uFFDC]'),
-        NonAsciiIdentifierPart: new RegExp('[\xAA\xB5\xBA\xC0-\xD6\xD8-\xF6\xF8-\u02C1\u02C6-\u02D1\u02E0-\u02E4\u02EC\u02EE\u0300-\u0374\u0376\u0377\u037A-\u037D\u0386\u0388-\u038A\u038C\u038E-\u03A1\u03A3-\u03F5\u03F7-\u0481\u0483-\u0487\u048A-\u0527\u0531-\u0556\u0559\u0561-\u0587\u0591-\u05BD\u05BF\u05C1\u05C2\u05C4\u05C5\u05C7\u05D0-\u05EA\u05F0-\u05F2\u0610-\u061A\u0620-\u0669\u066E-\u06D3\u06D5-\u06DC\u06DF-\u06E8\u06EA-\u06FC\u06FF\u0710-\u074A\u074D-\u07B1\u07C0-\u07F5\u07FA\u0800-\u082D\u0840-\u085B\u08A0\u08A2-\u08AC\u08E4-\u08FE\u0900-\u0963\u0966-\u096F\u0971-\u0977\u0979-\u097F\u0981-\u0983\u0985-\u098C\u098F\u0990\u0993-\u09A8\u09AA-\u09B0\u09B2\u09B6-\u09B9\u09BC-\u09C4\u09C7\u09C8\u09CB-\u09CE\u09D7\u09DC\u09DD\u09DF-\u09E3\u09E6-\u09F1\u0A01-\u0A03\u0A05-\u0A0A\u0A0F\u0A10\u0A13-\u0A28\u0A2A-\u0A30\u0A32\u0A33\u0A35\u0A36\u0A38\u0A39\u0A3C\u0A3E-\u0A42\u0A47\u0A48\u0A4B-\u0A4D\u0A51\u0A59-\u0A5C\u0A5E\u0A66-\u0A75\u0A81-\u0A83\u0A85-\u0A8D\u0A8F-\u0A91\u0A93-\u0AA8\u0AAA-\u0AB0\u0AB2\u0AB3\u0AB5-\u0AB9\u0ABC-\u0AC5\u0AC7-\u0AC9\u0ACB-\u0ACD\u0AD0\u0AE0-\u0AE3\u0AE6-\u0AEF\u0B01-\u0B03\u0B05-\u0B0C\u0B0F\u0B10\u0B13-\u0B28\u0B2A-\u0B30\u0B32\u0B33\u0B35-\u0B39\u0B3C-\u0B44\u0B47\u0B48\u0B4B-\u0B4D\u0B56\u0B57\u0B5C\u0B5D\u0B5F-\u0B63\u0B66-\u0B6F\u0B71\u0B82\u0B83\u0B85-\u0B8A\u0B8E-\u0B90\u0B92-\u0B95\u0B99\u0B9A\u0B9C\u0B9E\u0B9F\u0BA3\u0BA4\u0BA8-\u0BAA\u0BAE-\u0BB9\u0BBE-\u0BC2\u0BC6-\u0BC8\u0BCA-\u0BCD\u0BD0\u0BD7\u0BE6-\u0BEF\u0C01-\u0C03\u0C05-\u0C0C\u0C0E-\u0C10\u0C12-\u0C28\u0C2A-\u0C33\u0C35-\u0C39\u0C3D-\u0C44\u0C46-\u0C48\u0C4A-\u0C4D\u0C55\u0C56\u0C58\u0C59\u0C60-\u0C63\u0C66-\u0C6F\u0C82\u0C83\u0C85-\u0C8C\u0C8E-\u0C90\u0C92-\u0CA8\u0CAA-\u0CB3\u0CB5-\u0CB9\u0CBC-\u0CC4\u0CC6-\u0CC8\u0CCA-\u0CCD\u0CD5\u0CD6\u0CDE\u0CE0-\u0CE3\u0CE6-\u0CEF\u0CF1\u0CF2\u0D02\u0D03\u0D05-\u0D0C\u0D0E-\u0D10\u0D12-\u0D3A\u0D3D-\u0D44\u0D46-\u0D48\u0D4A-\u0D4E\u0D57\u0D60-\u0D63\u0D66-\u0D6F\u0D7A-\u0D7F\u0D82\u0D83\u0D85-\u0D96\u0D9A-\u0DB1\u0DB3-\u0DBB\u0DBD\u0DC0-\u0DC6\u0DCA\u0DCF-\u0DD4\u0DD6\u0DD8-\u0DDF\u0DF2\u0DF3\u0E01-\u0E3A\u0E40-\u0E4E\u0E50-\u0E59\u0E81\u0E82\u0E84\u0E87\u0E88\u0E8A\u0E8D\u0E94-\u0E97\u0E99-\u0E9F\u0EA1-\u0EA3\u0EA5\u0EA7\u0EAA\u0EAB\u0EAD-\u0EB9\u0EBB-\u0EBD\u0EC0-\u0EC4\u0EC6\u0EC8-\u0ECD\u0ED0-\u0ED9\u0EDC-\u0EDF\u0F00\u0F18\u0F19\u0F20-\u0F29\u0F35\u0F37\u0F39\u0F3E-\u0F47\u0F49-\u0F6C\u0F71-\u0F84\u0F86-\u0F97\u0F99-\u0FBC\u0FC6\u1000-\u1049\u1050-\u109D\u10A0-\u10C5\u10C7\u10CD\u10D0-\u10FA\u10FC-\u1248\u124A-\u124D\u1250-\u1256\u1258\u125A-\u125D\u1260-\u1288\u128A-\u128D\u1290-\u12B0\u12B2-\u12B5\u12B8-\u12BE\u12C0\u12C2-\u12C5\u12C8-\u12D6\u12D8-\u1310\u1312-\u1315\u1318-\u135A\u135D-\u135F\u1380-\u138F\u13A0-\u13F4\u1401-\u166C\u166F-\u167F\u1681-\u169A\u16A0-\u16EA\u16EE-\u16F0\u1700-\u170C\u170E-\u1714\u1720-\u1734\u1740-\u1753\u1760-\u176C\u176E-\u1770\u1772\u1773\u1780-\u17D3\u17D7\u17DC\u17DD\u17E0-\u17E9\u180B-\u180D\u1810-\u1819\u1820-\u1877\u1880-\u18AA\u18B0-\u18F5\u1900-\u191C\u1920-\u192B\u1930-\u193B\u1946-\u196D\u1970-\u1974\u1980-\u19AB\u19B0-\u19C9\u19D0-\u19D9\u1A00-\u1A1B\u1A20-\u1A5E\u1A60-\u1A7C\u1A7F-\u1A89\u1A90-\u1A99\u1AA7\u1B00-\u1B4B\u1B50-\u1B59\u1B6B-\u1B73\u1B80-\u1BF3\u1C00-\u1C37\u1C40-\u1C49\u1C4D-\u1C7D\u1CD0-\u1CD2\u1CD4-\u1CF6\u1D00-\u1DE6\u1DFC-\u1F15\u1F18-\u1F1D\u1F20-\u1F45\u1F48-\u1F4D\u1F50-\u1F57\u1F59\u1F5B\u1F5D\u1F5F-\u1F7D\u1F80-\u1FB4\u1FB6-\u1FBC\u1FBE\u1FC2-\u1FC4\u1FC6-\u1FCC\u1FD0-\u1FD3\u1FD6-\u1FDB\u1FE0-\u1FEC\u1FF2-\u1FF4\u1FF6-\u1FFC\u200C\u200D\u203F\u2040\u2054\u2071\u207F\u2090-\u209C\u20D0-\u20DC\u20E1\u20E5-\u20F0\u2102\u2107\u210A-\u2113\u2115\u2119-\u211D\u2124\u2126\u2128\u212A-\u212D\u212F-\u2139\u213C-\u213F\u2145-\u2149\u214E\u2160-\u2188\u2C00-\u2C2E\u2C30-\u2C5E\u2C60-\u2CE4\u2CEB-\u2CF3\u2D00-\u2D25\u2D27\u2D2D\u2D30-\u2D67\u2D6F\u2D7F-\u2D96\u2DA0-\u2DA6\u2DA8-\u2DAE\u2DB0-\u2DB6\u2DB8-\u2DBE\u2DC0-\u2DC6\u2DC8-\u2DCE\u2DD0-\u2DD6\u2DD8-\u2DDE\u2DE0-\u2DFF\u2E2F\u3005-\u3007\u3021-\u302F\u3031-\u3035\u3038-\u303C\u3041-\u3096\u3099\u309A\u309D-\u309F\u30A1-\u30FA\u30FC-\u30FF\u3105-\u312D\u3131-\u318E\u31A0-\u31BA\u31F0-\u31FF\u3400-\u4DB5\u4E00-\u9FCC\uA000-\uA48C\uA4D0-\uA4FD\uA500-\uA60C\uA610-\uA62B\uA640-\uA66F\uA674-\uA67D\uA67F-\uA697\uA69F-\uA6F1\uA717-\uA71F\uA722-\uA788\uA78B-\uA78E\uA790-\uA793\uA7A0-\uA7AA\uA7F8-\uA827\uA840-\uA873\uA880-\uA8C4\uA8D0-\uA8D9\uA8E0-\uA8F7\uA8FB\uA900-\uA92D\uA930-\uA953\uA960-\uA97C\uA980-\uA9C0\uA9CF-\uA9D9\uAA00-\uAA36\uAA40-\uAA4D\uAA50-\uAA59\uAA60-\uAA76\uAA7A\uAA7B\uAA80-\uAAC2\uAADB-\uAADD\uAAE0-\uAAEF\uAAF2-\uAAF6\uAB01-\uAB06\uAB09-\uAB0E\uAB11-\uAB16\uAB20-\uAB26\uAB28-\uAB2E\uABC0-\uABEA\uABEC\uABED\uABF0-\uABF9\uAC00-\uD7A3\uD7B0-\uD7C6\uD7CB-\uD7FB\uF900-\uFA6D\uFA70-\uFAD9\uFB00-\uFB06\uFB13-\uFB17\uFB1D-\uFB28\uFB2A-\uFB36\uFB38-\uFB3C\uFB3E\uFB40\uFB41\uFB43\uFB44\uFB46-\uFBB1\uFBD3-\uFD3D\uFD50-\uFD8F\uFD92-\uFDC7\uFDF0-\uFDFB\uFE00-\uFE0F\uFE20-\uFE26\uFE33\uFE34\uFE4D-\uFE4F\uFE70-\uFE74\uFE76-\uFEFC\uFF10-\uFF19\uFF21-\uFF3A\uFF3F\uFF41-\uFF5A\uFF66-\uFFBE\uFFC2-\uFFC7\uFFCA-\uFFCF\uFFD2-\uFFD7\uFFDA-\uFFDC]')
-    };
-
-    function isDecimalDigit(ch) {
-        return (ch >= 48 && ch <= 57);   // 0..9
-    }
-
-    function isHexDigit(ch) {
-        return isDecimalDigit(ch) || (97 <= ch && ch <= 102) || (65 <= ch && ch <= 70);
-    }
-
-    function isOctalDigit(ch) {
-        return (ch >= 48 && ch <= 55);   // 0..7
-    }
-
-    // 7.2 White Space
-
-    function isWhiteSpace(ch) {
-        return (ch === 0x20) || (ch === 0x09) || (ch === 0x0B) || (ch === 0x0C) || (ch === 0xA0) ||
-            (ch >= 0x1680 && [0x1680, 0x180E, 0x2000, 0x2001, 0x2002, 0x2003, 0x2004, 0x2005, 0x2006, 0x2007, 0x2008, 0x2009, 0x200A, 0x202F, 0x205F, 0x3000, 0xFEFF].indexOf(ch) >= 0);
-    }
-
-    // 7.3 Line Terminators
-
-    function isLineTerminator(ch) {
-        return (ch === 0x0A) || (ch === 0x0D) || (ch === 0x2028) || (ch === 0x2029);
-    }
-
-    // 7.6 Identifier Names and Identifiers
-
-    function isIdentifierStart(ch) {
-        return (ch === 36) || (ch === 95) ||  // $ (dollar) and _ (underscore)
-            (ch >= 65 && ch <= 90) ||         // A..Z
-            (ch >= 97 && ch <= 122) ||        // a..z
-            (ch === 92) ||                    // \ (backslash)
-            ((ch >= 0x80) && Regex.NonAsciiIdentifierStart.test(String.fromCharCode(ch)));
-    }
-
-    function isIdentifierPart(ch) {
-        return (ch === 36) || (ch === 95) ||  // $ (dollar) and _ (underscore)
-            (ch >= 65 && ch <= 90) ||         // A..Z
-            (ch >= 97 && ch <= 122) ||        // a..z
-            (ch >= 48 && ch <= 57) ||         // 0..9
-            (ch === 92) ||                    // \ (backslash)
-            ((ch >= 0x80) && Regex.NonAsciiIdentifierPart.test(String.fromCharCode(ch)));
-    }
-
-    module.exports = {
-        isDecimalDigit: isDecimalDigit,
-        isHexDigit: isHexDigit,
-        isOctalDigit: isOctalDigit,
-        isWhiteSpace: isWhiteSpace,
-        isLineTerminator: isLineTerminator,
-        isIdentifierStart: isIdentifierStart,
-        isIdentifierPart: isIdentifierPart
-    };
-}());
-/* vim: set sw=4 ts=4 et tw=80 : */
-
-},{}],16:[function(require,module,exports){
-/*
-  Copyright (C) 2013 Yusuke Suzuki <utatane.tea@gmail.com>
-
-  Redistribution and use in source and binary forms, with or without
-  modification, are permitted provided that the following conditions are met:
-
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in the
-      documentation and/or other materials provided with the distribution.
-
-  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-  ARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
-  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
-  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
-
-(function () {
-    'use strict';
-
-    var code = require('./code');
-
-    function isStrictModeReservedWordES6(id) {
-        switch (id) {
-        case 'implements':
-        case 'interface':
-        case 'package':
-        case 'private':
-        case 'protected':
-        case 'public':
-        case 'static':
-        case 'let':
-            return true;
-        default:
-            return false;
-        }
-    }
-
-    function isKeywordES5(id, strict) {
-        // yield should not be treated as keyword under non-strict mode.
-        if (!strict && id === 'yield') {
-            return false;
-        }
-        return isKeywordES6(id, strict);
-    }
-
-    function isKeywordES6(id, strict) {
-        if (strict && isStrictModeReservedWordES6(id)) {
-            return true;
-        }
-
-        switch (id.length) {
-        case 2:
-            return (id === 'if') || (id === 'in') || (id === 'do');
-        case 3:
-            return (id === 'var') || (id === 'for') || (id === 'new') || (id === 'try');
-        case 4:
-            return (id === 'this') || (id === 'else') || (id === 'case') ||
-                (id === 'void') || (id === 'with') || (id === 'enum');
-        case 5:
-            return (id === 'while') || (id === 'break') || (id === 'catch') ||
-                (id === 'throw') || (id === 'const') || (id === 'yield') ||
-                (id === 'class') || (id === 'super');
-        case 6:
-            return (id === 'return') || (id === 'typeof') || (id === 'delete') ||
-                (id === 'switch') || (id === 'export') || (id === 'import');
-        case 7:
-            return (id === 'default') || (id === 'finally') || (id === 'extends');
-        case 8:
-            return (id === 'function') || (id === 'continue') || (id === 'debugger');
-        case 10:
-            return (id === 'instanceof');
-        default:
-            return false;
-        }
-    }
-
-    function isRestrictedWord(id) {
-        return id === 'eval' || id === 'arguments';
-    }
-
-    function isIdentifierName(id) {
-        var i, iz, ch;
-
-        if (id.length === 0) {
-            return false;
-        }
-
-        ch = id.charCodeAt(0);
-        if (!code.isIdentifierStart(ch) || ch === 92) {  // \ (backslash)
-            return false;
-        }
-
-        for (i = 1, iz = id.length; i < iz; ++i) {
-            ch = id.charCodeAt(i);
-            if (!code.isIdentifierPart(ch) || ch === 92) {  // \ (backslash)
-                return false;
-            }
-        }
-        return true;
-    }
-
-    module.exports = {
-        isKeywordES5: isKeywordES5,
-        isKeywordES6: isKeywordES6,
-        isRestrictedWord: isRestrictedWord,
-        isIdentifierName: isIdentifierName
-    };
-}());
-/* vim: set sw=4 ts=4 et tw=80 : */
-
-},{"./code":15}],17:[function(require,module,exports){
-/*
-  Copyright (C) 2013 Yusuke Suzuki <utatane.tea@gmail.com>
-
-  Redistribution and use in source and binary forms, with or without
-  modification, are permitted provided that the following conditions are met:
-
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in the
-      documentation and/or other materials provided with the distribution.
-
-  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-  ARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
-  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
-  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
-
-
-(function () {
-    'use strict';
-
-    exports.code = require('./code');
-    exports.keyword = require('./keyword');
-}());
-/* vim: set sw=4 ts=4 et tw=80 : */
-
-},{"./code":15,"./keyword":16}],18:[function(require,module,exports){
+},{"./package.json":16,"estraverse":17,"esutils":22,"source-map":25}],16:[function(require,module,exports){
 module.exports={
-  "name": "escodegen",
-  "description": "ECMAScript code generator",
-  "homepage": "http://github.com/Constellation/escodegen",
-  "main": "escodegen.js",
-  "bin": {
-    "esgenerate": "./bin/esgenerate.js",
-    "escodegen": "./bin/escodegen.js"
-  },
-  "version": "1.2.0",
-  "engines": {
-    "node": ">=0.4.0"
-  },
-  "maintainers": [
-    {
-      "name": "constellation",
-      "email": "utatane.tea@gmail.com"
-    }
+  "_args": [
+    [
+      "escodegen@~1.2.0",
+      "/Users/winter/Desktop/aether/node_modules/coffee-script-redux"
+    ]
   ],
-  "repository": {
-    "type": "git",
-    "url": "git+ssh://git@github.com/Constellation/escodegen.git"
+  "_from": "escodegen@>=1.2.0 <1.3.0",
+  "_id": "escodegen@1.2.0",
+  "_inCache": true,
+  "_installable": true,
+  "_location": "/coffee-script-redux/escodegen",
+  "_npmUser": {
+    "email": "utatane.tea@gmail.com",
+    "name": "constellation"
+  },
+  "_npmVersion": "1.3.21",
+  "_phantomChildren": {},
+  "_requested": {
+    "name": "escodegen",
+    "raw": "escodegen@~1.2.0",
+    "rawSpec": "~1.2.0",
+    "scope": null,
+    "spec": ">=1.2.0 <1.3.0",
+    "type": "range"
+  },
+  "_requiredBy": [
+    "/coffee-script-redux"
+  ],
+  "_resolved": "https://registry.npmjs.org/escodegen/-/escodegen-1.2.0.tgz",
+  "_shasum": "09de7967791cc958b7f89a2ddb6d23451af327e1",
+  "_shrinkwrap": null,
+  "_spec": "escodegen@~1.2.0",
+  "_where": "/Users/winter/Desktop/aether/node_modules/coffee-script-redux",
+  "bin": {
+    "escodegen": "./bin/escodegen.js",
+    "esgenerate": "./bin/esgenerate.js"
+  },
+  "bugs": {
+    "url": "https://github.com/Constellation/escodegen/issues"
   },
   "dependencies": {
     "esprima": "~1.0.4",
@@ -28386,128 +27844,63 @@ module.exports={
     "esutils": "~1.0.0",
     "source-map": "~0.1.30"
   },
-  "optionalDependencies": {
-    "source-map": "~0.1.30"
-  },
+  "description": "ECMAScript code generator",
   "devDependencies": {
-    "esprima-moz": "*",
-    "q": "*",
     "bower": "*",
-    "semver": "*",
     "chai": "~1.7.2",
+    "commonjs-everywhere": "~0.9.6",
+    "esprima-moz": "*",
     "gulp": "~3.5.0",
-    "gulp-mocha": "~0.4.1",
     "gulp-eslint": "~0.1.2",
-    "jshint-stylish": "~0.1.5",
     "gulp-jshint": "~1.4.0",
-    "commonjs-everywhere": "~0.9.6"
+    "gulp-mocha": "~0.4.1",
+    "jshint-stylish": "~0.1.5",
+    "q": "*",
+    "semver": "*"
   },
+  "directories": {},
+  "dist": {
+    "shasum": "09de7967791cc958b7f89a2ddb6d23451af327e1",
+    "tarball": "http://registry.npmjs.org/escodegen/-/escodegen-1.2.0.tgz"
+  },
+  "engines": {
+    "node": ">=0.4.0"
+  },
+  "homepage": "http://github.com/Constellation/escodegen",
   "licenses": [
     {
       "type": "BSD",
       "url": "http://github.com/Constellation/escodegen/raw/master/LICENSE.BSD"
     }
   ],
-  "scripts": {
-    "test": "gulp travis",
-    "unit-test": "gulp test",
-    "lint": "gulp lint",
-    "release": "node tools/release.js",
-    "build-min": "cjsify -ma path: tools/entry-point.js > escodegen.browser.min.js",
-    "build": "cjsify -a path: tools/entry-point.js > escodegen.browser.js"
-  },
-  "bugs": {
-    "url": "https://github.com/Constellation/escodegen/issues"
-  },
-  "_id": "escodegen@1.2.0",
-  "dist": {
-    "shasum": "09de7967791cc958b7f89a2ddb6d23451af327e1",
-    "tarball": "http://registry.npmjs.org/escodegen/-/escodegen-1.2.0.tgz"
-  },
-  "_from": "escodegen@>=1.2.0 <1.3.0",
-  "_npmVersion": "1.3.21",
-  "_npmUser": {
-    "name": "constellation",
-    "email": "utatane.tea@gmail.com"
-  },
-  "directories": {},
-  "_shasum": "09de7967791cc958b7f89a2ddb6d23451af327e1",
-  "_resolved": "https://registry.npmjs.org/escodegen/-/escodegen-1.2.0.tgz",
-  "readme": "ERROR: No README data found!"
-}
-
-},{}],19:[function(require,module,exports){
-module.exports={
-  "name": "coffee-script-redux",
-  "author": {
-    "name": "Michael Ficarra"
-  },
-  "version": "2.0.0-beta9-dev",
-  "homepage": "https://github.com/michaelficarra/CoffeeScriptRedux",
-  "bugs": {
-    "url": "https://github.com/michaelficarra/CoffeeScriptRedux/issues"
-  },
-  "description": "Unfancy JavaScript",
-  "keywords": [
-    "coffeescript",
-    "javascript",
-    "language",
-    "compiler"
-  ],
-  "main": "./lib/module",
-  "bin": {
-    "coffee": "./bin/coffee"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/michaelficarra/CoffeeScriptRedux.git"
-  },
-  "scripts": {
-    "build": "make -j build",
-    "test": "make -j test"
-  },
-  "devDependencies": {
-    "mocha": "~1.12.0",
-    "pegjs": "~0.8.0",
-    "pegjs-each-code": "~0.2.0",
-    "commonjs-everywhere": "~0.9.0",
-    "cluster": "~0.7.7",
-    "semver": "~2.1.0"
-  },
-  "dependencies": {
-    "StringScanner": "~0.0.3",
-    "nopt": "~2.1.2",
-    "esmangle": "~1.0.0",
-    "source-map": "0.1.x",
-    "escodegen": "~1.2.0",
-    "cscodegen": "git+https://github.com/michaelficarra/cscodegen.git#73fd7202ac086c26f18c9d56f025b18b3c6f5383"
-  },
-  "optionalDependencies": {
-    "esmangle": "~1.0.0",
-    "source-map": "0.1.x",
-    "escodegen": "~1.2.0",
-    "cscodegen": "git+https://github.com/michaelficarra/cscodegen.git#73fd7202ac086c26f18c9d56f025b18b3c6f5383"
-  },
-  "engines": {
-    "node": "0.8.x || 0.10.x"
-  },
-  "licenses": [
+  "main": "escodegen.js",
+  "maintainers": [
     {
-      "type": "3-clause BSD",
-      "url": "https://raw.github.com/michaelficarra/CoffeeScriptRedux/master/LICENSE"
+      "name": "constellation",
+      "email": "utatane.tea@gmail.com"
     }
   ],
-  "license": "3-clause BSD",
-  "gitHead": "ab93dc34c64cd11853fb8cb5a4f02c6b8fc3b26b",
-  "readme": "CoffeeScript II: The Wrath of Khan\n==================================\n\n```\n          {\n       }   }   {\n      {   {  }  }\n       }   }{  {\n      {  }{  }  }             _____       __  __\n     ( }{ }{  { )            / ____|     / _|/ _|\n   .- { { }  { }} -.        | |     ___ | |_| |_ ___  ___\n  (  ( } { } { } }  )       | |    / _ \\|  _|  _/ _ \\/ _ \\\n  |`-..________ ..-'|       | |___| (_) | | | ||  __/  __/\n  |                 |        \\_____\\___/|_| |_| \\___|\\___|       .-''-.\n  |                 ;--.                                       .' .-.  )\n  |                (__  \\     _____           _       _       / .'  / /\n  |                 | )  )   / ____|         (_)     | |     (_/   / /\n  |                 |/  /   | (___   ___ _ __ _ _ __ | |_         / /\n  |                 (  /     \\___ \\ / __| '__| | '_ \\| __|       / /\n  |                 |/       ____) | (__| |  | | |_) | |_       . '\n  |                 |       |_____/ \\___|_|  |_| .__/ \\__|     / /    _.-')\n   `-.._________..-'                           | |           .' '  _.'.-''\n                                               |_|          /  /.-'_.'\n                                                           /    _.'\n                                                          ( _.-'\n```\n\n### Status\n\nComplete enough to use for nearly every project. See the [roadmap to 2.0](https://github.com/michaelficarra/CoffeeScriptRedux/wiki/Roadmap).\n\n### Getting Started\n\n    npm install -g coffee-script-redux\n    coffee --help\n    coffee --js <input.coffee >output.js\n\nBefore transitioning from Jeremy's compiler, see the\n[intentional deviations from jashkenas/coffee-script](https://github.com/michaelficarra/CoffeeScriptRedux/wiki/Intentional-Deviations-From-jashkenas-coffee-script)\nwiki page.\n\n### Development\n\n    git clone git://github.com/michaelficarra/CoffeeScriptRedux.git && cd CoffeeScriptRedux && npm install\n    make clean && git checkout -- lib && make -j build && make test\n\n### Notable Contributors\n\nI'd like to thank the following financial contributors for their large\ndonations to [the Kickstarter project](https://www.kickstarter.com/projects/michaelficarra/make-a-better-coffeescript-compiler)\nthat funded the initial work on this compiler.\nTogether, you donated over $10,000. Without you, I wouldn't have been able to do this.\n\n* [Groupon](https://www.groupon.com/), who is generously allowing me to work in their offices\n* [Trevor Burnham](http://trevorburnham.com)\n* [Shopify](https://www.shopify.com/)\n* [Abakas](http://abakas.com)\n* [37signals](http://37signals.com)\n* [Brightcove](https://www.brightcove.com/en/)\n* [Gaslight](https://teamgaslight.com/)\n* [Pantheon](https://www.getpantheon.com)\n* Benbria\n* Sam Stephenson\n* Bevan Hunt\n* Meryn Stol\n* Rob Tsuk\n* Dion Almaer\n* Andrew Davey\n* Thomas Burleson\n* Michael Kedzierski\n* Jeremy Kemper\n* Kyle Cordes\n* Jason R. Lauman\n* Martin Drenovac (Envizion Systems - Aust)\n* Julian Bilcke\n* Michael Edmondson\n\nAnd of course, thank you [Jeremy](https://github.com/jashkenas) (and all the other\n[contributors](https://github.com/jashkenas/coffeescript/graphs/contributors))\nfor making [the original CoffeeScript compiler](https://github.com/jashkenas/coffee-script).\n",
-  "readmeFilename": "README.md",
-  "_id": "coffee-script-redux@2.0.0-beta9-dev",
-  "_shasum": "418f5a360860530bd207a3f952d5deedffac1fa5",
-  "_from": "git://github.com/michaelficarra/CoffeeScriptRedux.git",
-  "_resolved": "git://github.com/michaelficarra/CoffeeScriptRedux.git#ab93dc34c64cd11853fb8cb5a4f02c6b8fc3b26b"
+  "name": "escodegen",
+  "optionalDependencies": {
+    "source-map": "~0.1.30"
+  },
+  "readme": "ERROR: No README data found!",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/Constellation/escodegen.git"
+  },
+  "scripts": {
+    "build": "./node_modules/.bin/cjsify -a path: tools/entry-point.js > escodegen.browser.js",
+    "build-min": "./node_modules/.bin/cjsify -ma path: tools/entry-point.js > escodegen.browser.min.js",
+    "lint": "gulp lint",
+    "release": "node tools/release.js",
+    "test": "gulp travis",
+    "unit-test": "gulp test"
+  },
+  "version": "1.2.0"
 }
 
-},{}],20:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 /*
   Copyright (C) 2012-2013 Yusuke Suzuki <utatane.tea@gmail.com>
   Copyright (C) 2012 Ariya Hidayat <ariya.hidayat@gmail.com>
@@ -29198,9 +28591,981 @@ module.exports={
 }));
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{}],21:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
+module.exports={
+  "_args": [
+    [
+      "git://github.com/michaelficarra/CoffeeScriptRedux.git",
+      "/Users/winter/Desktop/aether"
+    ]
+  ],
+  "_from": "git://github.com/michaelficarra/CoffeeScriptRedux.git",
+  "_id": "coffee-script-redux@2.0.0-beta9-dev",
+  "_inCache": true,
+  "_installable": true,
+  "_location": "/coffee-script-redux",
+  "_phantomChildren": {
+    "esutils": "1.0.0",
+    "source-map": "0.1.43"
+  },
+  "_requested": {
+    "hosted": {
+      "directUrl": "https://raw.githubusercontent.com/michaelficarra/CoffeeScriptRedux/master/package.json",
+      "gitUrl": "git://github.com/michaelficarra/CoffeeScriptRedux.git",
+      "httpsUrl": "git+https://github.com/michaelficarra/CoffeeScriptRedux.git",
+      "shortcut": "github:michaelficarra/CoffeeScriptRedux",
+      "ssh": "git@github.com:michaelficarra/CoffeeScriptRedux.git",
+      "sshUrl": "git+ssh://git@github.com/michaelficarra/CoffeeScriptRedux.git",
+      "type": "github"
+    },
+    "name": null,
+    "raw": "git://github.com/michaelficarra/CoffeeScriptRedux.git",
+    "rawSpec": "git://github.com/michaelficarra/CoffeeScriptRedux.git",
+    "scope": null,
+    "spec": "git://github.com/michaelficarra/CoffeeScriptRedux.git",
+    "type": "hosted"
+  },
+  "_requiredBy": [
+    "/"
+  ],
+  "_resolved": "git://github.com/michaelficarra/CoffeeScriptRedux.git#ab93dc34c64cd11853fb8cb5a4f02c6b8fc3b26b",
+  "_shasum": "a7af7d488867586117db44a583ec892d9f7ff1af",
+  "_shrinkwrap": null,
+  "_spec": "git://github.com/michaelficarra/CoffeeScriptRedux.git",
+  "_where": "/Users/winter/Desktop/aether",
+  "author": {
+    "name": "Michael Ficarra"
+  },
+  "bin": {
+    "coffee": "./bin/coffee"
+  },
+  "bugs": {
+    "url": "https://github.com/michaelficarra/CoffeeScriptRedux/issues"
+  },
+  "dependencies": {
+    "StringScanner": "~0.0.3",
+    "cscodegen": "git+https://github.com/michaelficarra/cscodegen.git#73fd7202ac086c26f18c9d56f025b18b3c6f5383",
+    "escodegen": "~1.2.0",
+    "esmangle": "~1.0.0",
+    "nopt": "~2.1.2",
+    "source-map": "0.1.x"
+  },
+  "description": "Unfancy JavaScript",
+  "devDependencies": {
+    "cluster": "~0.7.7",
+    "commonjs-everywhere": "~0.9.0",
+    "mocha": "~1.12.0",
+    "pegjs": "~0.8.0",
+    "pegjs-each-code": "~0.2.0",
+    "semver": "~2.1.0"
+  },
+  "engines": {
+    "node": "0.8.x || 0.10.x"
+  },
+  "gitHead": "ab93dc34c64cd11853fb8cb5a4f02c6b8fc3b26b",
+  "homepage": "https://github.com/michaelficarra/CoffeeScriptRedux",
+  "keywords": [
+    "coffeescript",
+    "compiler",
+    "javascript",
+    "language"
+  ],
+  "license": "3-clause BSD",
+  "licenses": [
+    {
+      "type": "3-clause BSD",
+      "url": "https://raw.github.com/michaelficarra/CoffeeScriptRedux/master/LICENSE"
+    }
+  ],
+  "main": "./lib/module",
+  "name": "coffee-script-redux",
+  "optionalDependencies": {
+    "cscodegen": "git+https://github.com/michaelficarra/cscodegen.git#73fd7202ac086c26f18c9d56f025b18b3c6f5383",
+    "escodegen": "~1.2.0",
+    "esmangle": "~1.0.0",
+    "source-map": "0.1.x"
+  },
+  "readme": "CoffeeScript II: The Wrath of Khan\n==================================\n\n```\n          {\n       }   }   {\n      {   {  }  }\n       }   }{  {\n      {  }{  }  }             _____       __  __\n     ( }{ }{  { )            / ____|     / _|/ _|\n   .- { { }  { }} -.        | |     ___ | |_| |_ ___  ___\n  (  ( } { } { } }  )       | |    / _ \\|  _|  _/ _ \\/ _ \\\n  |`-..________ ..-'|       | |___| (_) | | | ||  __/  __/\n  |                 |        \\_____\\___/|_| |_| \\___|\\___|       .-''-.\n  |                 ;--.                                       .' .-.  )\n  |                (__  \\     _____           _       _       / .'  / /\n  |                 | )  )   / ____|         (_)     | |     (_/   / /\n  |                 |/  /   | (___   ___ _ __ _ _ __ | |_         / /\n  |                 (  /     \\___ \\ / __| '__| | '_ \\| __|       / /\n  |                 |/       ____) | (__| |  | | |_) | |_       . '\n  |                 |       |_____/ \\___|_|  |_| .__/ \\__|     / /    _.-')\n   `-.._________..-'                           | |           .' '  _.'.-''\n                                               |_|          /  /.-'_.'\n                                                           /    _.'\n                                                          ( _.-'\n```\n\n### Status\n\nComplete enough to use for nearly every project. See the [roadmap to 2.0](https://github.com/michaelficarra/CoffeeScriptRedux/wiki/Roadmap).\n\n### Getting Started\n\n    npm install -g coffee-script-redux\n    coffee --help\n    coffee --js <input.coffee >output.js\n\nBefore transitioning from Jeremy's compiler, see the\n[intentional deviations from jashkenas/coffee-script](https://github.com/michaelficarra/CoffeeScriptRedux/wiki/Intentional-Deviations-From-jashkenas-coffee-script)\nwiki page.\n\n### Development\n\n    git clone git://github.com/michaelficarra/CoffeeScriptRedux.git && cd CoffeeScriptRedux && npm install\n    make clean && git checkout -- lib && make -j build && make test\n\n### Notable Contributors\n\nI'd like to thank the following financial contributors for their large\ndonations to [the Kickstarter project](https://www.kickstarter.com/projects/michaelficarra/make-a-better-coffeescript-compiler)\nthat funded the initial work on this compiler.\nTogether, you donated over $10,000. Without you, I wouldn't have been able to do this.\n\n* [Groupon](https://www.groupon.com/), who is generously allowing me to work in their offices\n* [Trevor Burnham](http://trevorburnham.com)\n* [Shopify](https://www.shopify.com/)\n* [Abakas](http://abakas.com)\n* [37signals](http://37signals.com)\n* [Brightcove](https://www.brightcove.com/en/)\n* [Gaslight](https://teamgaslight.com/)\n* [Pantheon](https://www.getpantheon.com)\n* Benbria\n* Sam Stephenson\n* Bevan Hunt\n* Meryn Stol\n* Rob Tsuk\n* Dion Almaer\n* Andrew Davey\n* Thomas Burleson\n* Michael Kedzierski\n* Jeremy Kemper\n* Kyle Cordes\n* Jason R. Lauman\n* Martin Drenovac (Envizion Systems - Aust)\n* Julian Bilcke\n* Michael Edmondson\n\nAnd of course, thank you [Jeremy](https://github.com/jashkenas) (and all the other\n[contributors](https://github.com/jashkenas/coffeescript/graphs/contributors))\nfor making [the original CoffeeScript compiler](https://github.com/jashkenas/coffee-script).\n",
+  "readmeFilename": "README.md",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/michaelficarra/CoffeeScriptRedux.git"
+  },
+  "scripts": {
+    "build": "make -j build",
+    "test": "make -j test"
+  },
+  "version": "2.0.0-beta9-dev"
+}
 
-},{}],22:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
+// Generated by CoffeeScript 1.3.3
+(function() {
+  var __hasProp = {}.hasOwnProperty,
+    __slice = [].slice,
+    __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+
+  (function(exports) {
+    var TAB, clone, eq, formatInterpolation, formatStringData, generate, indent, levels, needsParensWhenOnLeft, operators, parens, precedence;
+    TAB = '  ';
+    indent = function(code) {
+      var line;
+      return ((function() {
+        var _i, _len, _ref, _results;
+        _ref = code.split('\n');
+        _results = [];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          line = _ref[_i];
+          _results.push("" + TAB + line);
+        }
+        return _results;
+      })()).join('\n');
+    };
+    parens = function(code) {
+      return "(" + code + ")";
+    };
+    formatStringData = function(data) {
+      return data.replace(/[^\x20-\x7e]|['\\]/, function(c) {
+        var escape, pad;
+        switch (c) {
+          case '\0':
+            return '\\0';
+          case '\b':
+            return '\\b';
+          case '\t':
+            return '\\t';
+          case '\n':
+            return '\\n';
+          case '\f':
+            return '\\f';
+          case '\r':
+            return '\\r';
+          case '\'':
+            return '\\\'';
+          case '\\':
+            return '\\\\';
+          default:
+            escape = (c.charCodeAt(0)).toString(16);
+            pad = "0000".slice(escape.length);
+            return "\\u" + pad + escape;
+        }
+      });
+    };
+    formatInterpolation = function(ast, options) {
+      var left, right;
+      switch (ast.className) {
+        case "ConcatOp":
+          left = formatInterpolation(ast.left, options);
+          right = formatInterpolation(ast.right, options);
+          return "" + left + right;
+        case "String":
+          return formatStringData(ast.data);
+        default:
+          return "\#{" + (generate(ast, options)) + "}";
+      }
+    };
+    needsParensWhenOnLeft = function(ast) {
+      switch (ast.className) {
+        case 'Function':
+        case 'BoundFunction':
+        case 'NewOp':
+          return true;
+        case 'Conditional':
+        case 'Switch':
+        case 'While':
+        case 'Block':
+          return true;
+        case 'PreIncrementOp':
+        case 'PreDecrementOp':
+        case 'UnaryPlusOp':
+        case 'UnaryNegateOp':
+        case 'LogicalNotOp':
+        case 'BitNotOp':
+        case 'DoOp':
+        case 'TypeofOp':
+        case 'DeleteOp':
+          return needsParensWhenOnLeft(ast.expression);
+        case 'FunctionApplication':
+          return ast["arguments"].length > 0;
+        default:
+          return false;
+      }
+    };
+    eq = function(nodeA, nodeB) {
+      var i, prop, v, val, _i, _len;
+      for (prop in nodeA) {
+        if (!__hasProp.call(nodeA, prop)) continue;
+        val = nodeA[prop];
+        if (prop === 'raw' || prop === 'line' || prop === 'column') {
+          continue;
+        }
+        switch (Object.prototype.toString.call(val)) {
+          case '[object Object]':
+            if (!eq(nodeB[prop], val)) {
+              return false;
+            }
+            break;
+          case '[object Array]':
+            for (i = _i = 0, _len = val.length; _i < _len; i = ++_i) {
+              v = val[i];
+              if (!eq(nodeB[prop][i], v)) {
+                return false;
+              }
+            }
+            break;
+          default:
+            if (nodeB[prop] !== val) {
+              return false;
+            }
+        }
+      }
+      return true;
+    };
+    clone = function(obj, overrides) {
+      var newObj, prop, val;
+      if (overrides == null) {
+        overrides = {};
+      }
+      newObj = {};
+      for (prop in obj) {
+        if (!__hasProp.call(obj, prop)) continue;
+        val = obj[prop];
+        newObj[prop] = val;
+      }
+      for (prop in overrides) {
+        if (!__hasProp.call(overrides, prop)) continue;
+        val = overrides[prop];
+        newObj[prop] = val;
+      }
+      return newObj;
+    };
+    levels = [['SeqOp'], ['Conditional', 'ForIn', 'ForOf', 'While'], ['FunctionApplication', 'SoakedFunctionApplication'], ['AssignOp', 'CompoundAssignOp', 'ExistsAssignOp'], ['LogicalOrOp'], ['LogicalAndOp'], ['BitOrOp'], ['BitXorOp'], ['BitAndOp'], ['ExistsOp'], ['EQOp', 'NEQOp'], ['LTOp', 'LTEOp', 'GTOp', 'GTEOp', 'InOp', 'OfOp', 'InstanceofOp'], ['LeftShiftOp', 'SignedRightShiftOp', 'UnsignedRightShiftOp'], ['PlusOp', 'SubtractOp'], ['MultiplyOp', 'DivideOp', 'RemOp'], ['UnaryPlusOp', 'UnaryNegateOp', 'LogicalNotOp', 'BitNotOp', 'DoOp', 'TypeofOp', 'PreIncrementOp', 'PreDecrementOp', 'DeleteOp'], ['UnaryExistsOp', 'ShallowCopyArray', 'PostIncrementOp', 'PostDecrementOp', 'Spread'], ['NewOp'], ['MemberAccessOp', 'SoakedMemberAccessOp', 'DynamicMemberAccessOp', 'SoakedDynamicMemberAccessOp', 'ProtoMemberAccessOp', 'DynamicProtoMemberAccessOp', 'SoakedProtoMemberAccessOp', 'SoakedDynamicProtoMemberAccessOp']];
+    precedence = {};
+    (function() {
+      var level, op, ops, _i, _len, _results;
+      _results = [];
+      for (level = _i = 0, _len = levels.length; _i < _len; level = ++_i) {
+        ops = levels[level];
+        _results.push((function() {
+          var _j, _len1, _results1;
+          _results1 = [];
+          for (_j = 0, _len1 = ops.length; _j < _len1; _j++) {
+            op = ops[_j];
+            _results1.push(precedence[op] = level);
+          }
+          return _results1;
+        })());
+      }
+      return _results;
+    })();
+    operators = {
+      SeqOp: ';',
+      LogicalOrOp: 'or',
+      LogicalAndOp: 'and',
+      BitOrOp: '|',
+      BitXorOp: '^',
+      BitAndOp: '&',
+      EQOp: 'is',
+      NEQOp: 'isnt',
+      LTOp: '<',
+      LTEOp: '<=',
+      GTOp: '>',
+      GTEOp: '>=',
+      InOp: 'in',
+      OfOp: 'of',
+      InstanceofOp: 'instanceof',
+      LeftShiftOp: '<<',
+      SignedRightShiftOp: '>>',
+      UnsignedRightShiftOp: '>>>',
+      PlusOp: '+',
+      SubtractOp: '-',
+      MultiplyOp: '*',
+      DivideOp: '/',
+      RemOp: '%',
+      UnaryPlusOp: '+',
+      UnaryNegateOp: '-',
+      LogicalNotOp: 'not ',
+      BitNotOp: '~',
+      DoOp: 'do ',
+      NewOp: 'new ',
+      TypeofOp: 'typeof ',
+      PreIncrementOp: '++',
+      PreDecrementOp: '--',
+      UnaryExistsOp: '?',
+      ShallowCopyArray: '[..]',
+      PostIncrementOp: '++',
+      PostDecrementOp: '--',
+      Spread: '...',
+      FunctionApplication: '',
+      SoakedFunctionApplication: '?',
+      MemberAccessOp: '.',
+      SoakedMemberAccessOp: '?.',
+      ProtoMemberAccessOp: '::',
+      SoakedProtoMemberAccessOp: '?::',
+      DynamicMemberAccessOp: '',
+      SoakedDynamicMemberAccessOp: '?',
+      DynamicProtoMemberAccessOp: '::',
+      SoakedDynamicProtoMemberAccessOp: '?::'
+    };
+    return exports.generate = generate = function(ast, options) {
+      var a, absNum, arg, args, expression_, hasAlternate, i, isMultiline, key_, m, memberAccessOps, members_, needsParens, p, parameters, parent, parentClassName, prec, s, sep, src, usedAsExpression, _alternate, _argList, _args, _assignee, _block, _body, _consequent, _ctor, _expr, _fn, _indexingExpr, _left, _op, _paramList, _ref, _ref1, _right;
+      if (options == null) {
+        options = {};
+      }
+      needsParens = false;
+      if ((_ref = options.precedence) == null) {
+        options.precedence = 0;
+      }
+      if ((_ref1 = options.ancestors) == null) {
+        options.ancestors = [];
+      }
+      parent = options.ancestors[0];
+      parentClassName = parent != null ? parent.className : void 0;
+      usedAsExpression = (parent != null) && parentClassName !== 'Block';
+      src = (function() {
+        var _i, _len, _ref2, _ref3, _ref4, _ref5, _ref6;
+        switch (ast.className) {
+          case 'Program':
+            options.ancestors = [ast].concat(__slice.call(options.ancestors));
+            if (ast.body != null) {
+              return generate(ast.body, options);
+            } else {
+              return '';
+            }
+            break;
+          case 'Block':
+            options = clone(options, {
+              ancestors: [ast].concat(__slice.call(options.ancestors)),
+              precedence: 0
+            });
+            if (ast.statements.length === 0) {
+              return generate((new Undefined).g(), options);
+            } else {
+              sep = parentClassName === 'Program' ? '\n\n' : '\n';
+              return ((function() {
+                var _i, _len, _ref2, _results;
+                _ref2 = ast.statements;
+                _results = [];
+                for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+                  s = _ref2[_i];
+                  _results.push(generate(s, options));
+                }
+                return _results;
+              })()).join(sep);
+            }
+            break;
+          case 'Conditional':
+            options.ancestors.unshift(ast);
+            options.precedence = 0;
+            hasAlternate = (ast.consequent != null) && (ast.alternate != null);
+            _consequent = generate((_ref2 = ast.consequent) != null ? _ref2 : (new Undefined).g(), options);
+            _alternate = hasAlternate ? generate(ast.alternate, options) : "";
+            isMultiline = _consequent.length > 90 || _alternate.length > 90 || __indexOf.call(_alternate, '\n') >= 0 || __indexOf.call(_consequent, '\n') >= 0;
+            _consequent = isMultiline ? "\n" + (indent(_consequent)) : " then " + _consequent;
+            if (hasAlternate) {
+              _alternate = isMultiline ? "\nelse\n" + (indent(_alternate)) : " else " + _alternate;
+            }
+            return "if " + (generate(ast.condition, options)) + _consequent + _alternate;
+          case 'Identifier':
+            return ast.data;
+          case 'Null':
+            return 'null';
+          case 'This':
+            return 'this';
+          case 'Undefined':
+            return 'undefined';
+          case 'Int':
+            absNum = ast.data < 0 ? -ast.data : ast.data;
+            if (absNum >= 1e12 || (absNum >= 0x10 && 0 === (absNum & (absNum - 1)))) {
+              return "0x" + (ast.data.toString(16));
+            } else {
+              return ast.data.toString(10);
+            }
+            break;
+          case 'Float':
+            return ast.data.toString(10);
+          case 'String':
+            return "'" + (formatStringData(ast.data)) + "'";
+          case 'ArrayInitialiser':
+            options = clone(options, {
+              ancestors: [ast].concat(__slice.call(options.ancestors)),
+              precedence: precedence.AssignmentExpression
+            });
+            members_ = (function() {
+              var _i, _len, _ref3, _results;
+              _ref3 = ast.members;
+              _results = [];
+              for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
+                m = _ref3[_i];
+                _results.push(generate(m, options));
+              }
+              return _results;
+            })();
+            switch (ast.members.length) {
+              case 0:
+                return '[]';
+              case 1:
+              case 2:
+                for (i = _i = 0, _len = members_.length; _i < _len; i = ++_i) {
+                  m = members_[i];
+                  if (i + 1 !== members_.length) {
+                    if (needsParensWhenOnLeft(ast.members[i])) {
+                      members_[i] = parens(m);
+                    }
+                  }
+                }
+                return "[" + (members_.join(', ')) + "]";
+              default:
+                return "[\n" + (indent(members_.join('\n'))) + "\n]";
+            }
+            break;
+          case 'ObjectInitialiser':
+            options.ancestors = [ast].concat(__slice.call(options.ancestors));
+            members_ = (function() {
+              var _j, _len1, _ref3, _results;
+              _ref3 = ast.members;
+              _results = [];
+              for (_j = 0, _len1 = _ref3.length; _j < _len1; _j++) {
+                m = _ref3[_j];
+                _results.push(generate(m, options));
+              }
+              return _results;
+            })();
+            switch (ast.members.length) {
+              case 0:
+                return '{}';
+              case 1:
+                return "{" + (members_.join(', ')) + "}";
+              default:
+                return "{\n" + (indent(members_.join('\n'))) + "\n}";
+            }
+            break;
+          case 'ObjectInitialiserMember':
+            options = clone(options, {
+              ancestors: [ast].concat(__slice.call(options.ancestors)),
+              precedence: precedence.AssignmentExpression
+            });
+            key_ = generate(ast.key, options);
+            expression_ = generate(ast.expression, options);
+            memberAccessOps = ['MemberAccessOp', 'ProtoMemberAccessOp', 'SoakedMemberAccessOp', 'SoakedProtoMemberAccessOp'];
+            if (eq(ast.key, ast.expression)) {
+              return "" + key_;
+            } else if ((_ref3 = ast.expression.className, __indexOf.call(memberAccessOps, _ref3) >= 0) && ast.key.data === ast.expression.memberName) {
+              return "" + expression_;
+            } else {
+              return "" + key_ + ": " + expression_;
+            }
+            break;
+          case 'Function':
+          case 'BoundFunction':
+            options = clone(options, {
+              ancestors: [ast].concat(__slice.call(options.ancestors)),
+              precedence: precedence.AssignmentExpression
+            });
+            parameters = (function() {
+              var _j, _len1, _ref4, _results;
+              _ref4 = ast.parameters;
+              _results = [];
+              for (_j = 0, _len1 = _ref4.length; _j < _len1; _j++) {
+                p = _ref4[_j];
+                _results.push(generate(p, options));
+              }
+              return _results;
+            })();
+            options.precedence = 0;
+            _body = !(ast.body != null) || ast.body.className === 'Undefined' ? '' : generate(ast.body, options);
+            _paramList = ast.parameters.length > 0 ? "(" + (parameters.join(', ')) + ") " : '';
+            _block = _body.length === 0 ? '' : _paramList.length + _body.length < 100 && __indexOf.call(_body, '\n') < 0 ? " " + _body : "\n" + (indent(_body));
+            switch (ast.className) {
+              case 'Function':
+                return "" + _paramList + "->" + _block;
+              case 'BoundFunction':
+                return "" + _paramList + "=>" + _block;
+            }
+            break;
+          case 'AssignOp':
+            prec = precedence[ast.className];
+            needsParens = prec < options.precedence;
+            options = clone(options, {
+              ancestors: [ast].concat(__slice.call(options.ancestors)),
+              precedence: prec
+            });
+            _assignee = generate(ast.assignee, options);
+            _expr = generate(ast.expression, options);
+            return "" + _assignee + " = " + _expr;
+          case 'CompoundAssignOp':
+            prec = precedence[ast.className];
+            needsParens = prec < options.precedence;
+            options = clone(options, {
+              ancestors: [ast].concat(__slice.call(options.ancestors)),
+              precedence: prec
+            });
+            _op = operators[ast.op.prototype.className];
+            _assignee = generate(ast.assignee, options);
+            _expr = generate(ast.expression, options);
+            return "" + _assignee + " " + _op + "= " + _expr;
+          case 'SeqOp':
+            prec = precedence[ast.className];
+            needsParens = prec < options.precedence;
+            options = clone(options, {
+              ancestors: [ast].concat(__slice.call(options.ancestors)),
+              precedence: prec
+            });
+            _left = generate(ast.left, options);
+            _right = generate(ast.right, options);
+            return "" + _left + "; " + _right;
+          case 'LogicalOrOp':
+          case 'LogicalAndOp':
+          case 'BitOrOp':
+          case 'BitXorOp':
+          case 'BitAndOp':
+          case 'LeftShiftOp':
+          case 'SignedRightShiftOp':
+          case 'UnsignedRightShiftOp':
+          case 'EQOp':
+          case 'NEQOp':
+          case 'LTOp':
+          case 'LTEOp':
+          case 'GTOp':
+          case 'GTEOp':
+          case 'InOp':
+          case 'OfOp':
+          case 'InstanceofOp':
+          case 'PlusOp':
+          case 'SubtractOp':
+          case 'MultiplyOp':
+          case 'DivideOp':
+          case 'RemOp':
+          case 'ExistsOp':
+            _op = operators[ast.className];
+            if (((_ref4 = ast.className) === 'InOp' || _ref4 === 'OfOp' || _ref4 === 'InstanceofOp') && parentClassName === 'LogicalNotOp') {
+              _op = "not " + _op;
+            }
+            prec = precedence[ast.className];
+            needsParens = prec < options.precedence;
+            options = clone(options, {
+              ancestors: [ast].concat(__slice.call(options.ancestors)),
+              precedence: prec
+            });
+            _left = generate(ast.left, options);
+            if (needsParensWhenOnLeft(ast.left)) {
+              _left = parens(_left);
+            }
+            _right = generate(ast.right, options);
+            return "" + _left + " " + _op + " " + _right;
+          case 'UnaryPlusOp':
+          case 'UnaryNegateOp':
+          case 'LogicalNotOp':
+          case 'BitNotOp':
+          case 'DoOp':
+          case 'TypeofOp':
+          case 'PreIncrementOp':
+          case 'PreDecrementOp':
+            _op = operators[ast.className];
+            prec = precedence[ast.className];
+            if (ast.className === 'LogicalNotOp') {
+              if ((_ref5 = ast.expression.className) === 'InOp' || _ref5 === 'OfOp' || _ref5 === 'InstanceofOp') {
+                _op = '';
+                prec = precedence[ast.expression.className];
+              }
+              if ('LogicalNotOp' === parentClassName || 'LogicalNotOp' === ast.expression.className) {
+                _op = '!';
+              }
+            }
+            needsParens = prec < options.precedence;
+            if (parentClassName === ast.className && ((_ref6 = ast.className) === 'UnaryPlusOp' || _ref6 === 'UnaryNegateOp')) {
+              needsParens = true;
+            }
+            options = clone(options, {
+              ancestors: [ast].concat(__slice.call(options.ancestors)),
+              precedence: prec
+            });
+            return "" + _op + (generate(ast.expression, options));
+          case 'UnaryExistsOp':
+          case 'PostIncrementOp':
+          case 'PostDecrementOp':
+          case 'Spread':
+            _op = operators[ast.className];
+            prec = precedence[ast.className];
+            needsParens = prec < options.precedence;
+            options = clone(options, {
+              ancestors: [ast].concat(__slice.call(options.ancestors)),
+              precedence: prec
+            });
+            _expr = generate(ast.expression, options);
+            if (needsParensWhenOnLeft(ast.expression)) {
+              _expr = parens(_expr);
+            }
+            return "" + _expr + _op;
+          case 'NewOp':
+            _op = operators[ast.className];
+            prec = precedence[ast.className];
+            options = clone(options, {
+              ancestors: [ast].concat(__slice.call(options.ancestors)),
+              precedence: prec
+            });
+            _ctor = generate(ast.ctor, options);
+            if (ast["arguments"].length > 0 && needsParensWhenOnLeft(ast.ctor)) {
+              _ctor = parens(_ctor);
+            }
+            options.precedence = precedence['AssignOp'];
+            args = (function() {
+              var _j, _len1, _ref7, _results;
+              _ref7 = ast["arguments"];
+              _results = [];
+              for (i = _j = 0, _len1 = _ref7.length; _j < _len1; i = ++_j) {
+                a = _ref7[i];
+                arg = generate(a, options);
+                if ((needsParensWhenOnLeft(a)) && i + 1 !== ast["arguments"].length) {
+                  arg = parens(arg);
+                }
+                _results.push(arg);
+              }
+              return _results;
+            })();
+            _args = ast["arguments"].length === 0 ? '' : " " + (args.join(', '));
+            return "" + _op + _ctor + _args;
+          case 'FunctionApplication':
+          case 'SoakedFunctionApplication':
+            if (ast.className === 'FunctionApplication' && ast["arguments"].length === 0 && !usedAsExpression) {
+              return generate(new DoOp(ast["function"]), options);
+            } else {
+              options = clone(options, {
+                ancestors: [ast].concat(__slice.call(options.ancestors)),
+                precedence: precedence[ast.className]
+              });
+              _op = operators[ast.className];
+              _fn = generate(ast["function"], options);
+              if (needsParensWhenOnLeft(ast["function"])) {
+                _fn = parens(_fn);
+              }
+              args = (function() {
+                var _j, _len1, _ref7, _results;
+                _ref7 = ast["arguments"];
+                _results = [];
+                for (i = _j = 0, _len1 = _ref7.length; _j < _len1; i = ++_j) {
+                  a = _ref7[i];
+                  arg = generate(a, options);
+                  if ((needsParensWhenOnLeft(a)) && i + 1 !== ast["arguments"].length) {
+                    arg = parens(arg);
+                  }
+                  _results.push(arg);
+                }
+                return _results;
+              })();
+              _argList = ast["arguments"].length === 0 ? '()' : " " + (args.join(', '));
+              return "" + _fn + _op + _argList;
+            }
+            break;
+          case 'MemberAccessOp':
+          case 'SoakedMemberAccessOp':
+          case 'ProtoMemberAccessOp':
+          case 'SoakedProtoMemberAccessOp':
+            _op = operators[ast.className];
+            prec = precedence[ast.className];
+            needsParens = prec < options.precedence;
+            options = clone(options, {
+              ancestors: [ast].concat(__slice.call(options.ancestors)),
+              precedence: prec
+            });
+            if (ast.expression.className === 'This') {
+              _expr = '@';
+              if (ast.className === 'MemberAccessOp') {
+                _op = '';
+              }
+            } else {
+              _expr = generate(ast.expression, options);
+              if (needsParensWhenOnLeft(ast.expression)) {
+                _expr = parens(_expr);
+              }
+            }
+            return "" + _expr + _op + ast.memberName;
+          case 'DynamicMemberAccessOp':
+          case 'SoakedDynamicMemberAccessOp':
+          case 'DynamicProtoMemberAccessOp':
+          case 'SoakedDynamicProtoMemberAccessOp':
+            _op = operators[ast.className];
+            prec = precedence[ast.className];
+            needsParens = prec < options.precedence;
+            options = clone(options, {
+              ancestors: [ast].concat(__slice.call(options.ancestors)),
+              precedence: prec
+            });
+            if (ast.expression.className === 'This') {
+              _expr = '@';
+            } else {
+              _expr = generate(ast.expression, options);
+              if (needsParensWhenOnLeft(ast.expression)) {
+                _expr = parens(_expr);
+              }
+            }
+            options.precedence = 0;
+            _indexingExpr = generate(ast.indexingExpr, options);
+            return "" + _expr + _op + "[" + _indexingExpr + "]";
+          case 'ConcatOp':
+            _left = formatInterpolation(ast.left, options);
+            _right = formatInterpolation(ast.right, options);
+            return "\"" + _left + _right + "\"";
+          default:
+            throw new Error("Non-exhaustive patterns in case: " + ast.className);
+        }
+      })();
+      if (needsParens) {
+        return parens(src);
+      } else {
+        return src;
+      }
+    };
+  })(typeof exports !== "undefined" && exports !== null ? exports : this.cscodegen = {});
+
+}).call(this);
+
+},{}],20:[function(require,module,exports){
+/*
+  Copyright (C) 2013 Yusuke Suzuki <utatane.tea@gmail.com>
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+(function () {
+    'use strict';
+
+    var Regex;
+
+    // See also tools/generate-unicode-regex.py.
+    Regex = {
+        NonAsciiIdentifierStart: new RegExp('[\xAA\xB5\xBA\xC0-\xD6\xD8-\xF6\xF8-\u02C1\u02C6-\u02D1\u02E0-\u02E4\u02EC\u02EE\u0370-\u0374\u0376\u0377\u037A-\u037D\u0386\u0388-\u038A\u038C\u038E-\u03A1\u03A3-\u03F5\u03F7-\u0481\u048A-\u0527\u0531-\u0556\u0559\u0561-\u0587\u05D0-\u05EA\u05F0-\u05F2\u0620-\u064A\u066E\u066F\u0671-\u06D3\u06D5\u06E5\u06E6\u06EE\u06EF\u06FA-\u06FC\u06FF\u0710\u0712-\u072F\u074D-\u07A5\u07B1\u07CA-\u07EA\u07F4\u07F5\u07FA\u0800-\u0815\u081A\u0824\u0828\u0840-\u0858\u08A0\u08A2-\u08AC\u0904-\u0939\u093D\u0950\u0958-\u0961\u0971-\u0977\u0979-\u097F\u0985-\u098C\u098F\u0990\u0993-\u09A8\u09AA-\u09B0\u09B2\u09B6-\u09B9\u09BD\u09CE\u09DC\u09DD\u09DF-\u09E1\u09F0\u09F1\u0A05-\u0A0A\u0A0F\u0A10\u0A13-\u0A28\u0A2A-\u0A30\u0A32\u0A33\u0A35\u0A36\u0A38\u0A39\u0A59-\u0A5C\u0A5E\u0A72-\u0A74\u0A85-\u0A8D\u0A8F-\u0A91\u0A93-\u0AA8\u0AAA-\u0AB0\u0AB2\u0AB3\u0AB5-\u0AB9\u0ABD\u0AD0\u0AE0\u0AE1\u0B05-\u0B0C\u0B0F\u0B10\u0B13-\u0B28\u0B2A-\u0B30\u0B32\u0B33\u0B35-\u0B39\u0B3D\u0B5C\u0B5D\u0B5F-\u0B61\u0B71\u0B83\u0B85-\u0B8A\u0B8E-\u0B90\u0B92-\u0B95\u0B99\u0B9A\u0B9C\u0B9E\u0B9F\u0BA3\u0BA4\u0BA8-\u0BAA\u0BAE-\u0BB9\u0BD0\u0C05-\u0C0C\u0C0E-\u0C10\u0C12-\u0C28\u0C2A-\u0C33\u0C35-\u0C39\u0C3D\u0C58\u0C59\u0C60\u0C61\u0C85-\u0C8C\u0C8E-\u0C90\u0C92-\u0CA8\u0CAA-\u0CB3\u0CB5-\u0CB9\u0CBD\u0CDE\u0CE0\u0CE1\u0CF1\u0CF2\u0D05-\u0D0C\u0D0E-\u0D10\u0D12-\u0D3A\u0D3D\u0D4E\u0D60\u0D61\u0D7A-\u0D7F\u0D85-\u0D96\u0D9A-\u0DB1\u0DB3-\u0DBB\u0DBD\u0DC0-\u0DC6\u0E01-\u0E30\u0E32\u0E33\u0E40-\u0E46\u0E81\u0E82\u0E84\u0E87\u0E88\u0E8A\u0E8D\u0E94-\u0E97\u0E99-\u0E9F\u0EA1-\u0EA3\u0EA5\u0EA7\u0EAA\u0EAB\u0EAD-\u0EB0\u0EB2\u0EB3\u0EBD\u0EC0-\u0EC4\u0EC6\u0EDC-\u0EDF\u0F00\u0F40-\u0F47\u0F49-\u0F6C\u0F88-\u0F8C\u1000-\u102A\u103F\u1050-\u1055\u105A-\u105D\u1061\u1065\u1066\u106E-\u1070\u1075-\u1081\u108E\u10A0-\u10C5\u10C7\u10CD\u10D0-\u10FA\u10FC-\u1248\u124A-\u124D\u1250-\u1256\u1258\u125A-\u125D\u1260-\u1288\u128A-\u128D\u1290-\u12B0\u12B2-\u12B5\u12B8-\u12BE\u12C0\u12C2-\u12C5\u12C8-\u12D6\u12D8-\u1310\u1312-\u1315\u1318-\u135A\u1380-\u138F\u13A0-\u13F4\u1401-\u166C\u166F-\u167F\u1681-\u169A\u16A0-\u16EA\u16EE-\u16F0\u1700-\u170C\u170E-\u1711\u1720-\u1731\u1740-\u1751\u1760-\u176C\u176E-\u1770\u1780-\u17B3\u17D7\u17DC\u1820-\u1877\u1880-\u18A8\u18AA\u18B0-\u18F5\u1900-\u191C\u1950-\u196D\u1970-\u1974\u1980-\u19AB\u19C1-\u19C7\u1A00-\u1A16\u1A20-\u1A54\u1AA7\u1B05-\u1B33\u1B45-\u1B4B\u1B83-\u1BA0\u1BAE\u1BAF\u1BBA-\u1BE5\u1C00-\u1C23\u1C4D-\u1C4F\u1C5A-\u1C7D\u1CE9-\u1CEC\u1CEE-\u1CF1\u1CF5\u1CF6\u1D00-\u1DBF\u1E00-\u1F15\u1F18-\u1F1D\u1F20-\u1F45\u1F48-\u1F4D\u1F50-\u1F57\u1F59\u1F5B\u1F5D\u1F5F-\u1F7D\u1F80-\u1FB4\u1FB6-\u1FBC\u1FBE\u1FC2-\u1FC4\u1FC6-\u1FCC\u1FD0-\u1FD3\u1FD6-\u1FDB\u1FE0-\u1FEC\u1FF2-\u1FF4\u1FF6-\u1FFC\u2071\u207F\u2090-\u209C\u2102\u2107\u210A-\u2113\u2115\u2119-\u211D\u2124\u2126\u2128\u212A-\u212D\u212F-\u2139\u213C-\u213F\u2145-\u2149\u214E\u2160-\u2188\u2C00-\u2C2E\u2C30-\u2C5E\u2C60-\u2CE4\u2CEB-\u2CEE\u2CF2\u2CF3\u2D00-\u2D25\u2D27\u2D2D\u2D30-\u2D67\u2D6F\u2D80-\u2D96\u2DA0-\u2DA6\u2DA8-\u2DAE\u2DB0-\u2DB6\u2DB8-\u2DBE\u2DC0-\u2DC6\u2DC8-\u2DCE\u2DD0-\u2DD6\u2DD8-\u2DDE\u2E2F\u3005-\u3007\u3021-\u3029\u3031-\u3035\u3038-\u303C\u3041-\u3096\u309D-\u309F\u30A1-\u30FA\u30FC-\u30FF\u3105-\u312D\u3131-\u318E\u31A0-\u31BA\u31F0-\u31FF\u3400-\u4DB5\u4E00-\u9FCC\uA000-\uA48C\uA4D0-\uA4FD\uA500-\uA60C\uA610-\uA61F\uA62A\uA62B\uA640-\uA66E\uA67F-\uA697\uA6A0-\uA6EF\uA717-\uA71F\uA722-\uA788\uA78B-\uA78E\uA790-\uA793\uA7A0-\uA7AA\uA7F8-\uA801\uA803-\uA805\uA807-\uA80A\uA80C-\uA822\uA840-\uA873\uA882-\uA8B3\uA8F2-\uA8F7\uA8FB\uA90A-\uA925\uA930-\uA946\uA960-\uA97C\uA984-\uA9B2\uA9CF\uAA00-\uAA28\uAA40-\uAA42\uAA44-\uAA4B\uAA60-\uAA76\uAA7A\uAA80-\uAAAF\uAAB1\uAAB5\uAAB6\uAAB9-\uAABD\uAAC0\uAAC2\uAADB-\uAADD\uAAE0-\uAAEA\uAAF2-\uAAF4\uAB01-\uAB06\uAB09-\uAB0E\uAB11-\uAB16\uAB20-\uAB26\uAB28-\uAB2E\uABC0-\uABE2\uAC00-\uD7A3\uD7B0-\uD7C6\uD7CB-\uD7FB\uF900-\uFA6D\uFA70-\uFAD9\uFB00-\uFB06\uFB13-\uFB17\uFB1D\uFB1F-\uFB28\uFB2A-\uFB36\uFB38-\uFB3C\uFB3E\uFB40\uFB41\uFB43\uFB44\uFB46-\uFBB1\uFBD3-\uFD3D\uFD50-\uFD8F\uFD92-\uFDC7\uFDF0-\uFDFB\uFE70-\uFE74\uFE76-\uFEFC\uFF21-\uFF3A\uFF41-\uFF5A\uFF66-\uFFBE\uFFC2-\uFFC7\uFFCA-\uFFCF\uFFD2-\uFFD7\uFFDA-\uFFDC]'),
+        NonAsciiIdentifierPart: new RegExp('[\xAA\xB5\xBA\xC0-\xD6\xD8-\xF6\xF8-\u02C1\u02C6-\u02D1\u02E0-\u02E4\u02EC\u02EE\u0300-\u0374\u0376\u0377\u037A-\u037D\u0386\u0388-\u038A\u038C\u038E-\u03A1\u03A3-\u03F5\u03F7-\u0481\u0483-\u0487\u048A-\u0527\u0531-\u0556\u0559\u0561-\u0587\u0591-\u05BD\u05BF\u05C1\u05C2\u05C4\u05C5\u05C7\u05D0-\u05EA\u05F0-\u05F2\u0610-\u061A\u0620-\u0669\u066E-\u06D3\u06D5-\u06DC\u06DF-\u06E8\u06EA-\u06FC\u06FF\u0710-\u074A\u074D-\u07B1\u07C0-\u07F5\u07FA\u0800-\u082D\u0840-\u085B\u08A0\u08A2-\u08AC\u08E4-\u08FE\u0900-\u0963\u0966-\u096F\u0971-\u0977\u0979-\u097F\u0981-\u0983\u0985-\u098C\u098F\u0990\u0993-\u09A8\u09AA-\u09B0\u09B2\u09B6-\u09B9\u09BC-\u09C4\u09C7\u09C8\u09CB-\u09CE\u09D7\u09DC\u09DD\u09DF-\u09E3\u09E6-\u09F1\u0A01-\u0A03\u0A05-\u0A0A\u0A0F\u0A10\u0A13-\u0A28\u0A2A-\u0A30\u0A32\u0A33\u0A35\u0A36\u0A38\u0A39\u0A3C\u0A3E-\u0A42\u0A47\u0A48\u0A4B-\u0A4D\u0A51\u0A59-\u0A5C\u0A5E\u0A66-\u0A75\u0A81-\u0A83\u0A85-\u0A8D\u0A8F-\u0A91\u0A93-\u0AA8\u0AAA-\u0AB0\u0AB2\u0AB3\u0AB5-\u0AB9\u0ABC-\u0AC5\u0AC7-\u0AC9\u0ACB-\u0ACD\u0AD0\u0AE0-\u0AE3\u0AE6-\u0AEF\u0B01-\u0B03\u0B05-\u0B0C\u0B0F\u0B10\u0B13-\u0B28\u0B2A-\u0B30\u0B32\u0B33\u0B35-\u0B39\u0B3C-\u0B44\u0B47\u0B48\u0B4B-\u0B4D\u0B56\u0B57\u0B5C\u0B5D\u0B5F-\u0B63\u0B66-\u0B6F\u0B71\u0B82\u0B83\u0B85-\u0B8A\u0B8E-\u0B90\u0B92-\u0B95\u0B99\u0B9A\u0B9C\u0B9E\u0B9F\u0BA3\u0BA4\u0BA8-\u0BAA\u0BAE-\u0BB9\u0BBE-\u0BC2\u0BC6-\u0BC8\u0BCA-\u0BCD\u0BD0\u0BD7\u0BE6-\u0BEF\u0C01-\u0C03\u0C05-\u0C0C\u0C0E-\u0C10\u0C12-\u0C28\u0C2A-\u0C33\u0C35-\u0C39\u0C3D-\u0C44\u0C46-\u0C48\u0C4A-\u0C4D\u0C55\u0C56\u0C58\u0C59\u0C60-\u0C63\u0C66-\u0C6F\u0C82\u0C83\u0C85-\u0C8C\u0C8E-\u0C90\u0C92-\u0CA8\u0CAA-\u0CB3\u0CB5-\u0CB9\u0CBC-\u0CC4\u0CC6-\u0CC8\u0CCA-\u0CCD\u0CD5\u0CD6\u0CDE\u0CE0-\u0CE3\u0CE6-\u0CEF\u0CF1\u0CF2\u0D02\u0D03\u0D05-\u0D0C\u0D0E-\u0D10\u0D12-\u0D3A\u0D3D-\u0D44\u0D46-\u0D48\u0D4A-\u0D4E\u0D57\u0D60-\u0D63\u0D66-\u0D6F\u0D7A-\u0D7F\u0D82\u0D83\u0D85-\u0D96\u0D9A-\u0DB1\u0DB3-\u0DBB\u0DBD\u0DC0-\u0DC6\u0DCA\u0DCF-\u0DD4\u0DD6\u0DD8-\u0DDF\u0DF2\u0DF3\u0E01-\u0E3A\u0E40-\u0E4E\u0E50-\u0E59\u0E81\u0E82\u0E84\u0E87\u0E88\u0E8A\u0E8D\u0E94-\u0E97\u0E99-\u0E9F\u0EA1-\u0EA3\u0EA5\u0EA7\u0EAA\u0EAB\u0EAD-\u0EB9\u0EBB-\u0EBD\u0EC0-\u0EC4\u0EC6\u0EC8-\u0ECD\u0ED0-\u0ED9\u0EDC-\u0EDF\u0F00\u0F18\u0F19\u0F20-\u0F29\u0F35\u0F37\u0F39\u0F3E-\u0F47\u0F49-\u0F6C\u0F71-\u0F84\u0F86-\u0F97\u0F99-\u0FBC\u0FC6\u1000-\u1049\u1050-\u109D\u10A0-\u10C5\u10C7\u10CD\u10D0-\u10FA\u10FC-\u1248\u124A-\u124D\u1250-\u1256\u1258\u125A-\u125D\u1260-\u1288\u128A-\u128D\u1290-\u12B0\u12B2-\u12B5\u12B8-\u12BE\u12C0\u12C2-\u12C5\u12C8-\u12D6\u12D8-\u1310\u1312-\u1315\u1318-\u135A\u135D-\u135F\u1380-\u138F\u13A0-\u13F4\u1401-\u166C\u166F-\u167F\u1681-\u169A\u16A0-\u16EA\u16EE-\u16F0\u1700-\u170C\u170E-\u1714\u1720-\u1734\u1740-\u1753\u1760-\u176C\u176E-\u1770\u1772\u1773\u1780-\u17D3\u17D7\u17DC\u17DD\u17E0-\u17E9\u180B-\u180D\u1810-\u1819\u1820-\u1877\u1880-\u18AA\u18B0-\u18F5\u1900-\u191C\u1920-\u192B\u1930-\u193B\u1946-\u196D\u1970-\u1974\u1980-\u19AB\u19B0-\u19C9\u19D0-\u19D9\u1A00-\u1A1B\u1A20-\u1A5E\u1A60-\u1A7C\u1A7F-\u1A89\u1A90-\u1A99\u1AA7\u1B00-\u1B4B\u1B50-\u1B59\u1B6B-\u1B73\u1B80-\u1BF3\u1C00-\u1C37\u1C40-\u1C49\u1C4D-\u1C7D\u1CD0-\u1CD2\u1CD4-\u1CF6\u1D00-\u1DE6\u1DFC-\u1F15\u1F18-\u1F1D\u1F20-\u1F45\u1F48-\u1F4D\u1F50-\u1F57\u1F59\u1F5B\u1F5D\u1F5F-\u1F7D\u1F80-\u1FB4\u1FB6-\u1FBC\u1FBE\u1FC2-\u1FC4\u1FC6-\u1FCC\u1FD0-\u1FD3\u1FD6-\u1FDB\u1FE0-\u1FEC\u1FF2-\u1FF4\u1FF6-\u1FFC\u200C\u200D\u203F\u2040\u2054\u2071\u207F\u2090-\u209C\u20D0-\u20DC\u20E1\u20E5-\u20F0\u2102\u2107\u210A-\u2113\u2115\u2119-\u211D\u2124\u2126\u2128\u212A-\u212D\u212F-\u2139\u213C-\u213F\u2145-\u2149\u214E\u2160-\u2188\u2C00-\u2C2E\u2C30-\u2C5E\u2C60-\u2CE4\u2CEB-\u2CF3\u2D00-\u2D25\u2D27\u2D2D\u2D30-\u2D67\u2D6F\u2D7F-\u2D96\u2DA0-\u2DA6\u2DA8-\u2DAE\u2DB0-\u2DB6\u2DB8-\u2DBE\u2DC0-\u2DC6\u2DC8-\u2DCE\u2DD0-\u2DD6\u2DD8-\u2DDE\u2DE0-\u2DFF\u2E2F\u3005-\u3007\u3021-\u302F\u3031-\u3035\u3038-\u303C\u3041-\u3096\u3099\u309A\u309D-\u309F\u30A1-\u30FA\u30FC-\u30FF\u3105-\u312D\u3131-\u318E\u31A0-\u31BA\u31F0-\u31FF\u3400-\u4DB5\u4E00-\u9FCC\uA000-\uA48C\uA4D0-\uA4FD\uA500-\uA60C\uA610-\uA62B\uA640-\uA66F\uA674-\uA67D\uA67F-\uA697\uA69F-\uA6F1\uA717-\uA71F\uA722-\uA788\uA78B-\uA78E\uA790-\uA793\uA7A0-\uA7AA\uA7F8-\uA827\uA840-\uA873\uA880-\uA8C4\uA8D0-\uA8D9\uA8E0-\uA8F7\uA8FB\uA900-\uA92D\uA930-\uA953\uA960-\uA97C\uA980-\uA9C0\uA9CF-\uA9D9\uAA00-\uAA36\uAA40-\uAA4D\uAA50-\uAA59\uAA60-\uAA76\uAA7A\uAA7B\uAA80-\uAAC2\uAADB-\uAADD\uAAE0-\uAAEF\uAAF2-\uAAF6\uAB01-\uAB06\uAB09-\uAB0E\uAB11-\uAB16\uAB20-\uAB26\uAB28-\uAB2E\uABC0-\uABEA\uABEC\uABED\uABF0-\uABF9\uAC00-\uD7A3\uD7B0-\uD7C6\uD7CB-\uD7FB\uF900-\uFA6D\uFA70-\uFAD9\uFB00-\uFB06\uFB13-\uFB17\uFB1D-\uFB28\uFB2A-\uFB36\uFB38-\uFB3C\uFB3E\uFB40\uFB41\uFB43\uFB44\uFB46-\uFBB1\uFBD3-\uFD3D\uFD50-\uFD8F\uFD92-\uFDC7\uFDF0-\uFDFB\uFE00-\uFE0F\uFE20-\uFE26\uFE33\uFE34\uFE4D-\uFE4F\uFE70-\uFE74\uFE76-\uFEFC\uFF10-\uFF19\uFF21-\uFF3A\uFF3F\uFF41-\uFF5A\uFF66-\uFFBE\uFFC2-\uFFC7\uFFCA-\uFFCF\uFFD2-\uFFD7\uFFDA-\uFFDC]')
+    };
+
+    function isDecimalDigit(ch) {
+        return (ch >= 48 && ch <= 57);   // 0..9
+    }
+
+    function isHexDigit(ch) {
+        return isDecimalDigit(ch) || (97 <= ch && ch <= 102) || (65 <= ch && ch <= 70);
+    }
+
+    function isOctalDigit(ch) {
+        return (ch >= 48 && ch <= 55);   // 0..7
+    }
+
+    // 7.2 White Space
+
+    function isWhiteSpace(ch) {
+        return (ch === 0x20) || (ch === 0x09) || (ch === 0x0B) || (ch === 0x0C) || (ch === 0xA0) ||
+            (ch >= 0x1680 && [0x1680, 0x180E, 0x2000, 0x2001, 0x2002, 0x2003, 0x2004, 0x2005, 0x2006, 0x2007, 0x2008, 0x2009, 0x200A, 0x202F, 0x205F, 0x3000, 0xFEFF].indexOf(ch) >= 0);
+    }
+
+    // 7.3 Line Terminators
+
+    function isLineTerminator(ch) {
+        return (ch === 0x0A) || (ch === 0x0D) || (ch === 0x2028) || (ch === 0x2029);
+    }
+
+    // 7.6 Identifier Names and Identifiers
+
+    function isIdentifierStart(ch) {
+        return (ch === 36) || (ch === 95) ||  // $ (dollar) and _ (underscore)
+            (ch >= 65 && ch <= 90) ||         // A..Z
+            (ch >= 97 && ch <= 122) ||        // a..z
+            (ch === 92) ||                    // \ (backslash)
+            ((ch >= 0x80) && Regex.NonAsciiIdentifierStart.test(String.fromCharCode(ch)));
+    }
+
+    function isIdentifierPart(ch) {
+        return (ch === 36) || (ch === 95) ||  // $ (dollar) and _ (underscore)
+            (ch >= 65 && ch <= 90) ||         // A..Z
+            (ch >= 97 && ch <= 122) ||        // a..z
+            (ch >= 48 && ch <= 57) ||         // 0..9
+            (ch === 92) ||                    // \ (backslash)
+            ((ch >= 0x80) && Regex.NonAsciiIdentifierPart.test(String.fromCharCode(ch)));
+    }
+
+    module.exports = {
+        isDecimalDigit: isDecimalDigit,
+        isHexDigit: isHexDigit,
+        isOctalDigit: isOctalDigit,
+        isWhiteSpace: isWhiteSpace,
+        isLineTerminator: isLineTerminator,
+        isIdentifierStart: isIdentifierStart,
+        isIdentifierPart: isIdentifierPart
+    };
+}());
+/* vim: set sw=4 ts=4 et tw=80 : */
+
+},{}],21:[function(require,module,exports){
+/*
+  Copyright (C) 2013 Yusuke Suzuki <utatane.tea@gmail.com>
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+(function () {
+    'use strict';
+
+    var code = require('./code');
+
+    function isStrictModeReservedWordES6(id) {
+        switch (id) {
+        case 'implements':
+        case 'interface':
+        case 'package':
+        case 'private':
+        case 'protected':
+        case 'public':
+        case 'static':
+        case 'let':
+            return true;
+        default:
+            return false;
+        }
+    }
+
+    function isKeywordES5(id, strict) {
+        // yield should not be treated as keyword under non-strict mode.
+        if (!strict && id === 'yield') {
+            return false;
+        }
+        return isKeywordES6(id, strict);
+    }
+
+    function isKeywordES6(id, strict) {
+        if (strict && isStrictModeReservedWordES6(id)) {
+            return true;
+        }
+
+        switch (id.length) {
+        case 2:
+            return (id === 'if') || (id === 'in') || (id === 'do');
+        case 3:
+            return (id === 'var') || (id === 'for') || (id === 'new') || (id === 'try');
+        case 4:
+            return (id === 'this') || (id === 'else') || (id === 'case') ||
+                (id === 'void') || (id === 'with') || (id === 'enum');
+        case 5:
+            return (id === 'while') || (id === 'break') || (id === 'catch') ||
+                (id === 'throw') || (id === 'const') || (id === 'yield') ||
+                (id === 'class') || (id === 'super');
+        case 6:
+            return (id === 'return') || (id === 'typeof') || (id === 'delete') ||
+                (id === 'switch') || (id === 'export') || (id === 'import');
+        case 7:
+            return (id === 'default') || (id === 'finally') || (id === 'extends');
+        case 8:
+            return (id === 'function') || (id === 'continue') || (id === 'debugger');
+        case 10:
+            return (id === 'instanceof');
+        default:
+            return false;
+        }
+    }
+
+    function isRestrictedWord(id) {
+        return id === 'eval' || id === 'arguments';
+    }
+
+    function isIdentifierName(id) {
+        var i, iz, ch;
+
+        if (id.length === 0) {
+            return false;
+        }
+
+        ch = id.charCodeAt(0);
+        if (!code.isIdentifierStart(ch) || ch === 92) {  // \ (backslash)
+            return false;
+        }
+
+        for (i = 1, iz = id.length; i < iz; ++i) {
+            ch = id.charCodeAt(i);
+            if (!code.isIdentifierPart(ch) || ch === 92) {  // \ (backslash)
+                return false;
+            }
+        }
+        return true;
+    }
+
+    module.exports = {
+        isKeywordES5: isKeywordES5,
+        isKeywordES6: isKeywordES6,
+        isRestrictedWord: isRestrictedWord,
+        isIdentifierName: isIdentifierName
+    };
+}());
+/* vim: set sw=4 ts=4 et tw=80 : */
+
+},{"./code":20}],22:[function(require,module,exports){
+/*
+  Copyright (C) 2013 Yusuke Suzuki <utatane.tea@gmail.com>
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+
+(function () {
+    'use strict';
+
+    exports.code = require('./code');
+    exports.keyword = require('./keyword');
+}());
+/* vim: set sw=4 ts=4 et tw=80 : */
+
+},{"./code":20,"./keyword":21}],23:[function(require,module,exports){
 (function (process){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -29427,8 +29792,8 @@ var substr = 'ab'.substr(-1) === 'b'
     }
 ;
 
-}).call(this,require("JkpR2F"))
-},{"JkpR2F":23}],23:[function(require,module,exports){
+}).call(this,require("g5I+bs"))
+},{"g5I+bs":24}],24:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -29493,7 +29858,7 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 /*
  * Copyright 2009-2011 Mozilla Foundation and contributors
  * Licensed under the New BSD license. See LICENSE.txt or:
@@ -29503,7 +29868,7 @@ exports.SourceMapGenerator = require('./source-map/source-map-generator').Source
 exports.SourceMapConsumer = require('./source-map/source-map-consumer').SourceMapConsumer;
 exports.SourceNode = require('./source-map/source-node').SourceNode;
 
-},{"./source-map/source-map-consumer":30,"./source-map/source-map-generator":31,"./source-map/source-node":32}],25:[function(require,module,exports){
+},{"./source-map/source-map-consumer":31,"./source-map/source-map-generator":32,"./source-map/source-node":33}],26:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -29602,7 +29967,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./util":33,"amdefine":34}],26:[function(require,module,exports){
+},{"./util":34,"amdefine":2}],27:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -29746,7 +30111,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./base64":27,"amdefine":34}],27:[function(require,module,exports){
+},{"./base64":28,"amdefine":2}],28:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -29790,7 +30155,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"amdefine":34}],28:[function(require,module,exports){
+},{"amdefine":2}],29:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -29872,7 +30237,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"amdefine":34}],29:[function(require,module,exports){
+},{"amdefine":2}],30:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2014 Mozilla Foundation and contributors
@@ -29960,7 +30325,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./util":33,"amdefine":34}],30:[function(require,module,exports){
+},{"./util":34,"amdefine":2}],31:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -30537,7 +30902,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./array-set":25,"./base64-vlq":26,"./binary-search":28,"./util":33,"amdefine":34}],31:[function(require,module,exports){
+},{"./array-set":26,"./base64-vlq":27,"./binary-search":29,"./util":34,"amdefine":2}],32:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -30939,7 +31304,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./array-set":25,"./base64-vlq":26,"./mapping-list":29,"./util":33,"amdefine":34}],32:[function(require,module,exports){
+},{"./array-set":26,"./base64-vlq":27,"./mapping-list":30,"./util":34,"amdefine":2}],33:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -31355,7 +31720,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./source-map-generator":31,"./util":33,"amdefine":34}],33:[function(require,module,exports){
+},{"./source-map-generator":32,"./util":34,"amdefine":2}],34:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -31676,312 +32041,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"amdefine":34}],34:[function(require,module,exports){
-(function (process,__filename){
-/** vim: et:ts=4:sw=4:sts=4
- * @license amdefine 1.0.0 Copyright (c) 2011-2015, The Dojo Foundation All Rights Reserved.
- * Available via the MIT or new BSD license.
- * see: http://github.com/jrburke/amdefine for details
- */
-
-/*jslint node: true */
-/*global module, process */
-'use strict';
-
-/**
- * Creates a define for node.
- * @param {Object} module the "module" object that is defined by Node for the
- * current module.
- * @param {Function} [requireFn]. Node's require function for the current module.
- * It only needs to be passed in Node versions before 0.5, when module.require
- * did not exist.
- * @returns {Function} a define function that is usable for the current node
- * module.
- */
-function amdefine(module, requireFn) {
-    'use strict';
-    var defineCache = {},
-        loaderCache = {},
-        alreadyCalled = false,
-        path = require('path'),
-        makeRequire, stringRequire;
-
-    /**
-     * Trims the . and .. from an array of path segments.
-     * It will keep a leading path segment if a .. will become
-     * the first path segment, to help with module name lookups,
-     * which act like paths, but can be remapped. But the end result,
-     * all paths that use this function should look normalized.
-     * NOTE: this method MODIFIES the input array.
-     * @param {Array} ary the array of path segments.
-     */
-    function trimDots(ary) {
-        var i, part;
-        for (i = 0; ary[i]; i+= 1) {
-            part = ary[i];
-            if (part === '.') {
-                ary.splice(i, 1);
-                i -= 1;
-            } else if (part === '..') {
-                if (i === 1 && (ary[2] === '..' || ary[0] === '..')) {
-                    //End of the line. Keep at least one non-dot
-                    //path segment at the front so it can be mapped
-                    //correctly to disk. Otherwise, there is likely
-                    //no path mapping for a path starting with '..'.
-                    //This can still fail, but catches the most reasonable
-                    //uses of ..
-                    break;
-                } else if (i > 0) {
-                    ary.splice(i - 1, 2);
-                    i -= 2;
-                }
-            }
-        }
-    }
-
-    function normalize(name, baseName) {
-        var baseParts;
-
-        //Adjust any relative paths.
-        if (name && name.charAt(0) === '.') {
-            //If have a base name, try to normalize against it,
-            //otherwise, assume it is a top-level require that will
-            //be relative to baseUrl in the end.
-            if (baseName) {
-                baseParts = baseName.split('/');
-                baseParts = baseParts.slice(0, baseParts.length - 1);
-                baseParts = baseParts.concat(name.split('/'));
-                trimDots(baseParts);
-                name = baseParts.join('/');
-            }
-        }
-
-        return name;
-    }
-
-    /**
-     * Create the normalize() function passed to a loader plugin's
-     * normalize method.
-     */
-    function makeNormalize(relName) {
-        return function (name) {
-            return normalize(name, relName);
-        };
-    }
-
-    function makeLoad(id) {
-        function load(value) {
-            loaderCache[id] = value;
-        }
-
-        load.fromText = function (id, text) {
-            //This one is difficult because the text can/probably uses
-            //define, and any relative paths and requires should be relative
-            //to that id was it would be found on disk. But this would require
-            //bootstrapping a module/require fairly deeply from node core.
-            //Not sure how best to go about that yet.
-            throw new Error('amdefine does not implement load.fromText');
-        };
-
-        return load;
-    }
-
-    makeRequire = function (systemRequire, exports, module, relId) {
-        function amdRequire(deps, callback) {
-            if (typeof deps === 'string') {
-                //Synchronous, single module require('')
-                return stringRequire(systemRequire, exports, module, deps, relId);
-            } else {
-                //Array of dependencies with a callback.
-
-                //Convert the dependencies to modules.
-                deps = deps.map(function (depName) {
-                    return stringRequire(systemRequire, exports, module, depName, relId);
-                });
-
-                //Wait for next tick to call back the require call.
-                if (callback) {
-                    process.nextTick(function () {
-                        callback.apply(null, deps);
-                    });
-                }
-            }
-        }
-
-        amdRequire.toUrl = function (filePath) {
-            if (filePath.indexOf('.') === 0) {
-                return normalize(filePath, path.dirname(module.filename));
-            } else {
-                return filePath;
-            }
-        };
-
-        return amdRequire;
-    };
-
-    //Favor explicit value, passed in if the module wants to support Node 0.4.
-    requireFn = requireFn || function req() {
-        return module.require.apply(module, arguments);
-    };
-
-    function runFactory(id, deps, factory) {
-        var r, e, m, result;
-
-        if (id) {
-            e = loaderCache[id] = {};
-            m = {
-                id: id,
-                uri: __filename,
-                exports: e
-            };
-            r = makeRequire(requireFn, e, m, id);
-        } else {
-            //Only support one define call per file
-            if (alreadyCalled) {
-                throw new Error('amdefine with no module ID cannot be called more than once per file.');
-            }
-            alreadyCalled = true;
-
-            //Use the real variables from node
-            //Use module.exports for exports, since
-            //the exports in here is amdefine exports.
-            e = module.exports;
-            m = module;
-            r = makeRequire(requireFn, e, m, module.id);
-        }
-
-        //If there are dependencies, they are strings, so need
-        //to convert them to dependency values.
-        if (deps) {
-            deps = deps.map(function (depName) {
-                return r(depName);
-            });
-        }
-
-        //Call the factory with the right dependencies.
-        if (typeof factory === 'function') {
-            result = factory.apply(m.exports, deps);
-        } else {
-            result = factory;
-        }
-
-        if (result !== undefined) {
-            m.exports = result;
-            if (id) {
-                loaderCache[id] = m.exports;
-            }
-        }
-    }
-
-    stringRequire = function (systemRequire, exports, module, id, relId) {
-        //Split the ID by a ! so that
-        var index = id.indexOf('!'),
-            originalId = id,
-            prefix, plugin;
-
-        if (index === -1) {
-            id = normalize(id, relId);
-
-            //Straight module lookup. If it is one of the special dependencies,
-            //deal with it, otherwise, delegate to node.
-            if (id === 'require') {
-                return makeRequire(systemRequire, exports, module, relId);
-            } else if (id === 'exports') {
-                return exports;
-            } else if (id === 'module') {
-                return module;
-            } else if (loaderCache.hasOwnProperty(id)) {
-                return loaderCache[id];
-            } else if (defineCache[id]) {
-                runFactory.apply(null, defineCache[id]);
-                return loaderCache[id];
-            } else {
-                if(systemRequire) {
-                    return systemRequire(originalId);
-                } else {
-                    throw new Error('No module with ID: ' + id);
-                }
-            }
-        } else {
-            //There is a plugin in play.
-            prefix = id.substring(0, index);
-            id = id.substring(index + 1, id.length);
-
-            plugin = stringRequire(systemRequire, exports, module, prefix, relId);
-
-            if (plugin.normalize) {
-                id = plugin.normalize(id, makeNormalize(relId));
-            } else {
-                //Normalize the ID normally.
-                id = normalize(id, relId);
-            }
-
-            if (loaderCache[id]) {
-                return loaderCache[id];
-            } else {
-                plugin.load(id, makeRequire(systemRequire, exports, module, relId), makeLoad(id), {});
-
-                return loaderCache[id];
-            }
-        }
-    };
-
-    //Create a define function specific to the module asking for amdefine.
-    function define(id, deps, factory) {
-        if (Array.isArray(id)) {
-            factory = deps;
-            deps = id;
-            id = undefined;
-        } else if (typeof id !== 'string') {
-            factory = id;
-            id = deps = undefined;
-        }
-
-        if (deps && !Array.isArray(deps)) {
-            factory = deps;
-            deps = undefined;
-        }
-
-        if (!deps) {
-            deps = ['require', 'exports', 'module'];
-        }
-
-        //Set up properties for this module. If an ID, then use
-        //internal cache. If no ID, then use the external variables
-        //for this node module.
-        if (id) {
-            //Put the module in deep freeze until there is a
-            //require call for it.
-            defineCache[id] = [id, deps, factory];
-        } else {
-            runFactory(id, deps, factory);
-        }
-    }
-
-    //define.require, which has access to all the values in the
-    //cache. Useful for AMD modules that all have IDs in the file,
-    //but need to finally export a value to node based on one of those
-    //IDs.
-    define.require = function (id) {
-        if (loaderCache[id]) {
-            return loaderCache[id];
-        }
-
-        if (defineCache[id]) {
-            runFactory.apply(null, defineCache[id]);
-            return loaderCache[id];
-        }
-    };
-
-    define.amd = {};
-
-    return define;
-}
-
-module.exports = amdefine;
-
-}).call(this,require("JkpR2F"),"/../node_modules/source-map/node_modules/amdefine/amdefine.js")
-},{"JkpR2F":23,"path":22}],35:[function(require,module,exports){
+},{"amdefine":2}],35:[function(require,module,exports){
 window.aetherCoffeeScriptRedux = require('coffee-script-redux');
 
-},{"coffee-script-redux":5}]},{},[35]);
+},{"coffee-script-redux":8}]},{},[35]);

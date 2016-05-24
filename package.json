@@ -1,6 +1,6 @@
 {
   "name": "aether",
-  "version": "0.4.13",
+  "version": "0.5.0",
   "description": "Analyzes, instruments, and transpiles JS to help beginners.",
   "keywords": [
     "lint",
@@ -19,23 +19,18 @@
   ],
   "main": "lib/aether",
   "dependencies": {
-    "JS_WALA": "git://github.com/nwinter/JS_WALA",
     "acorn": "~0.3.1",
     "aether-lang-stdlibs": "http://files.codecombat.com/aether-lang-stdlibs-1.0.0.tgz",
     "cashew-js": "git://github.com/codecombat/cashew",
-    "closer": "~0.2.1",
     "coffee-script-redux": "git://github.com/michaelficarra/CoffeeScriptRedux",
     "escodegen": "~1.3.0",
     "esprima": "https://github.com/ariya/esprima/tarball/harmony",
     "estraverse": "~1.5.0",
     "filbert": "~0.1.17",
-    "iota-compiler": "git://github.com/genko/iota",
     "jshint": "~2.3.0",
     "lodash": "~2.4.1",
     "lua2js": "~0.0.7",
-    "source-map": "~0.1.29",
     "string_score": "^0.1.20",
-    "traceur": "0.0.25",
     "tv4": "~1.0.7"
   },
   "devDependencies": {
@@ -44,7 +39,6 @@
     "grunt-browserify": "~2.1.0",
     "grunt-coffeelint": "~0.0.7",
     "grunt-contrib-coffee": "~0.7.0",
-    "grunt-contrib-concat": "~0.3.0",
     "grunt-contrib-copy": "^0.5.0",
     "grunt-contrib-jade": "~0.9.1",
     "grunt-contrib-jasmine": "~0.5.1",
@@ -52,7 +46,7 @@
     "grunt-contrib-uglify": "~0.2.2",
     "grunt-contrib-watch": "~0.5.1",
     "grunt-gh-pages": "~0.9.0",
-    "grunt-istanbul": "^0.2.5",
+    "grunt-istanbul": "^0.7.0",
     "grunt-jasmine-node": "~0.1.0",
     "grunt-newer": "^1.1.0",
     "grunt-notify": "~0.2.7",
