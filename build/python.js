@@ -1251,15 +1251,13 @@
       // while (__formalsIndex < __params.formals.length) {
       //   <argsId>.push(__params.formals[__formalsIndex++]); }
       createNodeArgsWhileConsequent: function (argsId, s) {
-        var __paramsFormals = this.createNodeMembIds(argsId, '__params' + s, 'formals');
+        var __realArgCountId  = this.createGeneratedNodeSpan(argsId, argsId, "Identifier", { name:  '__realArgCount' + s });
+        var __paramsFormals  = this.createGeneratedNodeSpan(argsId, argsId, "Identifier", { name:  'arguments' });
         var __formalsIndexId = this.createGeneratedNodeSpan(argsId, argsId, "Identifier", { name: '__formalsIndex' + s });
         return this.createGeneratedNodeSpan(argsId, argsId, "WhileStatement", {
           test: this.createGeneratedNodeSpan(argsId, argsId, "BinaryExpression", {
             operator: '<', left: __formalsIndexId,
-            right: this.createGeneratedNodeSpan(argsId, argsId, "MemberExpression", {
-              computed: false, object: __paramsFormals,
-              property: this.createGeneratedNodeSpan(argsId, argsId, "Identifier", { name: 'length' })
-            })
+            right: __realArgCountId
           }),
           body: this.createGeneratedNodeSpan(argsId, argsId, "BlockStatement", {
             body: [this.createGeneratedNodeSpan(argsId, argsId, "ExpressionStatement", {
@@ -1358,139 +1356,6 @@
         var addId = this.createGeneratedNodeSpan(node, node, "Identifier", { name: fnName });
         var opsMember = this.createGeneratedNodeSpan(node, node, "MemberExpression", { object: runtimeId, property: opsId, computed: false });
         return this.createGeneratedNodeSpan(node, node, "MemberExpression", { object: opsMember, property: addId, computed: false });
-      },
-
-      // var __params = arguments.length === 1 && arguments[0].formals && arguments[0].keywords ? arguments[0] : null;
-      createNodeParamsCheck: function (r, s) {
-        var __paramsId = this.createNodeSpan(r, r, "Identifier", { name: '__params' + s });
-        var arguments0 = this.createNodeMembIdLit(r, 'arguments', 0);
-        var checks = this.createNodeSpan(r, r, "ConditionalExpression", {
-          test: this.createNodeSpan(r, r, "LogicalExpression", {
-            operator: '&&',
-            left: this.createNodeSpan(r, r, "LogicalExpression", {
-              operator: '&&',
-              left: this.createNodeSpan(r, r, "BinaryExpression", {
-                operator: '===',
-                left: this.createNodeMembIds(r, 'arguments', 'length'),
-                right: this.createNodeSpan(r, r, "Literal", { value: 1 })
-              }),
-              right: this.createNodeSpan(r, r, "MemberExpression", {
-                computed: false, object: arguments0,
-                property: this.createNodeSpan(r, r, "Identifier", { name: 'formals' }),
-              })
-            }),
-            right: this.createNodeSpan(r, r, "MemberExpression", {
-              computed: false, object: arguments0,
-              property: this.createNodeSpan(r, r, "Identifier", { name: 'keywords' }),
-            })
-          }),
-          consequent: arguments0,
-          alternate: this.createNodeSpan(r, r, "Literal", { value: null })
-        });
-        return this.createGeneratedVarDeclFromId(r, __paramsId, checks);
-      },
-
-      // function __getParam(v, d) {
-      //   var r = d;
-      //   if (__params) {
-      //     if (__formalsIndex < __params.formals.length) {
-      //       r = __params.formals[__formalsIndex++];
-      //     } else if (v in __params.keywords) {
-      //       r = __params.keywords[v];
-      //       delete __params.keywords[v];
-      //     }
-      //   } else if (__formalsIndex < __args.length) {
-      //     r = __args[__formalsIndex++];
-      //   }
-      //   return r;
-      // }
-      createNodeGetParamFn: function (r, s) {
-        var dId = this.createNodeSpan(r, r, "Identifier", { name: 'd' });
-        var vId = this.createNodeSpan(r, r, "Identifier", { name: 'v' });
-        var rId = this.createNodeSpan(r, r, "Identifier", { name: 'r' });
-        var __formalsIndexId = this.createNodeSpan(r, r, "Identifier", { name: '__formalsIndex' + s });
-        var __params = '__params' + s;
-        var __getParam = '__getParam' + s;
-        var __args = '__args' + s;
-        var __paramsFormals = this.createNodeMembIds(r, __params, 'formals');
-        var __paramsKeywords = this.createNodeMembIds(r, __params, 'keywords')
-        var __paramsKeywordsV = this.createNodeSpan(r, r, "MemberExpression", { computed: true, property: vId, object: __paramsKeywords });
-        return this.createGeneratedNodeSpan(r, r, "FunctionDeclaration", {
-          id: this.createNodeSpan(r, r, "Identifier", { name: __getParam }),
-          params: [vId, dId],
-          defaults: [],
-          body: this.createNodeSpan(r, r, "BlockStatement", {
-            body: [this.createGeneratedVarDeclFromId(r, rId, dId),
-              this.createGeneratedNodeSpan(r, r, "IfStatement", {
-                test: this.createNodeSpan(r, r, "Identifier", { name: __params }),
-                consequent: this.createNodeSpan(r, r, "BlockStatement", {
-                  body: [this.createGeneratedNodeSpan(r, r, "IfStatement", {
-                    test: this.createNodeSpan(r, r, "BinaryExpression", {
-                      operator: '<', left: __formalsIndexId,
-                      right: this.createNodeSpan(r, r, "MemberExpression", {
-                        computed: false, object: __paramsFormals,
-                        property: this.createNodeSpan(r, r, "Identifier", { name: 'length' })
-                      })
-                    }),
-                    consequent: this.createNodeSpan(r, r, "BlockStatement", {
-                      body: [this.createGeneratedNodeSpan(r, r, "ExpressionStatement", {
-                        expression: this.createGeneratedNodeSpan(r, r, "AssignmentExpression", {
-                          operator: '=', left: rId,
-                          right: this.createNodeSpan(r, r, "MemberExpression", {
-                            computed: true, object: __paramsFormals,
-                            property: this.createNodeSpan(r, r, "UpdateExpression", {
-                              operator: '++', argument: __formalsIndexId, prefix: false
-                            })
-                          })
-                        })
-                      })]
-                    }),
-                    alternate: this.createGeneratedNodeSpan(r, r, "IfStatement", {
-                      test: this.createNodeSpan(r, r, "BinaryExpression", {
-                        operator: 'in', left: vId, right: __paramsKeywords,
-                      }),
-                      consequent: this.createNodeSpan(r, r, "BlockStatement", {
-                        body: [this.createGeneratedNodeSpan(r, r, "ExpressionStatement", {
-                          expression: this.createGeneratedNodeSpan(r, r, "AssignmentExpression", {
-                            operator: '=', left: rId, right: __paramsKeywordsV
-                          })
-                        }),
-                        this.createGeneratedNodeSpan(r, r, "ExpressionStatement", {
-                          expression: this.createNodeSpan(r, r, "UnaryExpression", {
-                            operator: 'delete', prefix: true, argument: __paramsKeywordsV
-                          })
-                        })]
-                      }),
-                      alternate: null
-                    })
-                  })]
-                }),
-                alternate: this.createGeneratedNodeSpan(r, r, "IfStatement", {
-                  test: this.createGeneratedNodeSpan(r, r, "BinaryExpression", {
-                    operator: '<', left: __formalsIndexId,
-                    right: this.createNodeMembIds(r, __args, 'length'),
-                  }),
-                  consequent: this.createGeneratedNodeSpan(r, r, "BlockStatement", {
-                    body: [this.createGeneratedNodeSpan(r, r, "ExpressionStatement", {
-                      expression: this.createGeneratedNodeSpan(r, r, "AssignmentExpression", {
-                        operator: '=', left: rId,
-                        right: this.createGeneratedNodeSpan(r, r, "MemberExpression", {
-                          computed: true,
-                          object: this.createGeneratedNodeSpan(r, r, "Identifier", { name: __args }),
-                          property: this.createGeneratedNodeSpan(r, r, "UpdateExpression", {
-                            operator: '++', argument: __formalsIndexId, prefix: false
-                          })
-                        })
-                      })
-                    })]
-                  }),
-                  alternate: null
-                })
-              }),
-              this.createGeneratedNodeSpan(r, r, "ReturnStatement", { argument: rId })]
-          }),
-          rest: null, generator: false, expression: false
-        });
       },
 
       // E.g. pyRuntime.utils.add
@@ -2249,11 +2114,38 @@
     } else if (!noCalls && eat(_parenL)) {
       if (scope.isUserFunction(base.name)) {
         // Unpack parameters into JavaScript-friendly parameters, further processed at runtime
-        var createParamsCall = nc.createNodeRuntimeCall(node, 'utils', 'createParamsObj', parseParamsList());
-        node.arguments = [createParamsCall];
+        var pl = parseParamsList();
+        
+        var args = [];
+        var other = [];
+        for ( var i = 0; i < pl.length; ++i ) {
+          if ( pl[i].isntFormal ) other.push(pl[i]);
+          else args.push(pl[i]);
+        }
+
+        if ( other.length > 0 ) {
+          var createParamsCall = nc.createNodeRuntimeCall(node, 'utils', 'createParamsObj', other);
+          args.push(createParamsCall);
+        }
+
+        node.arguments = args;
       } else node.arguments = parseExprList(_parenR, false);
+
+
+      if ( base.name === 'len' && node.arguments.length === 1 ) {
+        node.type = "MemberExpression",
+        node.object = node.arguments[0];
+        node.property = nc.createNodeSpan(base, base, "Identifier", { name: "length"}),
+        node.computed = false;
+        delete node.arguments;
+        delete node.callee;
+        finishNode(node, "MemberExpression");
+        return node; 
+      }
+
       if (scope.isNewObj(base.name)) finishNode(node, "NewExpression");
       else finishNode(node, "CallExpression");
+
       if (pythonRuntime.functions[base.name]) {
         // Calling a Python built-in function
         // TODO: Unpack parameters into JavaScript-friendly parameters
@@ -2562,94 +2454,147 @@
     // The caller may pass a complex parameter object as a single parameter like this:
     // {formals:[<expr>, <expr>, ...], keywords:{<id>:<expr>, <id>:<expr>, ...}}
 
+    var r = node.id;
+    var __hasParams = nc.createNodeSpan(r, r, "Identifier", { name: '__hasParams' + suffix });
+    var __params = nc.createNodeSpan(node.id, node.id, "Identifier", { name: '__params' + suffix });
+    var __realArgCount = nc.createNodeSpan(node.id, node.id, "Identifier", { name: '__realArgCount' + suffix });
+
     if (formals.length > 0 || argsId || kwargsId) {
-      // var __params = arguments.length === 1 && arguments[0].formals && arguments[0].keywords ? arguments[0] : null;
-      node.body.body.push(nc.createNodeParamsCheck(node.id, suffix));
+      var argumentsLen = nc.createNodeSpan(r, r, "BinaryExpression", {
+        operator: '-',
+        left: nc.createNodeMembIds(r, 'arguments', 'length'),
+        right: nc.createNodeSpan(r, r, "Literal", { value: 1 })
+      });
 
-      // var __formalsIndex = 0;
-      node.body.body.push(nc.createGeneratedVarDeclFromId(node.id,
-        nc.createNodeSpan(node.id, node.id, "Identifier", { name: '__formalsIndex' + suffix }),
-        nc.createNodeSpan(node.id, node.id, "Literal", { value: 0 })));
+      var argumentsN = nc.createNodeSpan(r, r, "MemberExpression", {
+        computed: true, object: nc.createNodeSpan(r, r, "Identifier", { name: 'arguments' }),
+        property: argumentsLen
+      });
 
-      // var __args = arguments;
-      node.body.body.push(nc.createGeneratedVarDeclFromId(node.id,
-        nc.createNodeSpan(node.id, node.id, "Identifier", { name: '__args' + suffix }),
-        nc.createNodeSpan(node.id, node.id, "Identifier", { name: 'arguments' })));
-    }
+      // var __hasParams = arguments.length === 1 && arguments[arguments.length-1].formals && arguments[arguments.length-1].keywords;
+      var setHasParams = nc.createNodeSpan(r, r, "LogicalExpression", {
+        operator: '&&',
+        left: nc.createNodeSpan(r, r, "LogicalExpression", {
+          operator: '&&',
+          left: nc.createNodeSpan(r, r, "BinaryExpression", {
+            operator: '>',
+            left: nc.createNodeMembIds(r, 'arguments', 'length'),
+            right: nc.createNodeSpan(r, r, "Literal", { value: 0 })
+          }),
+          right: argumentsN
+        }),
+        right: nc.createNodeSpan(r, r, "MemberExpression", {
+          computed: false, object: argumentsN,
+          property: nc.createNodeSpan(r, r, "Identifier", { name: 'keywords' }),
+        })
+      });
 
-    if (formals.length > 0) {
-      // function __getParam(v, d) {
-      //   var r = d;
-      //   if (__params) {
-      //     if (__formalsIndex < __params.formals.length) {
-      //       r = __params.formals[__formalsIndex++];
-      //     } else if (v in __params.keywords) {
-      //       r = __params.keywords[v];
-      //       delete __params.keywords[v];
-      //     }
-      //   } else if (__formalsIndex < __args.length) {
-      //     r = __args[__formalsIndex++];
-      //   }
-      //   return r;
-      // }
-      node.body.body.push(nc.createNodeGetParamFn(node.id, suffix));
+      node.body.body.push(nc.createGeneratedVarDeclFromId(r, __hasParams, setHasParams));
 
-      for (var i = 0; i < formals.length; i++) {
-        // var <param> = __getParam('<param>', <optional default>);
-        var __getParamCall = nc.createNodeSpan(formals[i].id, formals[i].id, "CallExpression", {
-          callee: nc.createNodeSpan(formals[i].id, formals[i].id, "Identifier", { name: '__getParam' + suffix }),
-          arguments: [nc.createNodeSpan(formals[i].id, formals[i].id, "Literal", { value: formals[i].id.name })]
-        });
-        if (formals[i].expr) __getParamCall.arguments.push(formals[i].expr);
-        node.body.body.push(nc.createGeneratedVarDeclFromId(formals[i].id, formals[i].id, __getParamCall));
-      }
-    }
-    
-    var refNode = argsId || kwargsId;
-    if (refNode) {
-      if (argsId) {
-        // var <args> = [];
-        var argsAssign = nc.createGeneratedVarDeclFromId(argsId, argsId, nc.createNodeSpan(argsId, argsId, "ArrayExpression", { elements: [] }));
-        node.body.body.push(argsAssign);
-      }
-      if (kwargsId) {
-        // var <kwargs> = {};
-        var kwargsAssign = nc.createGeneratedVarDeclFromId(kwargsId, kwargsId, nc.createNodeSpan(kwargsId, kwargsId, "ObjectExpression", { properties: [] }));
-        node.body.body.push(kwargsAssign);
-      }
-      // if (__params) {}
-      var argsIf = nc.createNodeSpan(refNode, refNode, "IfStatement", {
-        test: nc.createNodeSpan(refNode, refNode, "Identifier", { name: '__params' + suffix }),
-        consequent: nc.createNodeSpan(refNode, refNode, "BlockStatement", { body: [] })})
-      if (argsId) {
-        // while (__formalsIndex < __params.formals.length) {
-        //   <argsId>.push(__params.formals[__formalsIndex++]); }
-        argsIf.consequent.body.push(nc.createNodeArgsWhileConsequent(argsId, suffix));
-        // { while (__formalsIndex < __args.length) {
-        //   <argsId>.push(__args[__formalsIndex++]); }}
-        argsIf.alternate = nc.createNodeArgsAlternate(argsId, suffix);
-      }
-      if (kwargsId) {
-        // <kwargs> = __params.keywords
-        argsIf.consequent.body.push(nc.createNodeSpan(kwargsId, kwargsId, "ExpressionStatement", {
-          expression: nc.createNodeSpan(kwargsId, kwargsId, "AssignmentExpression", {
-            operator: '=', left: kwargsId, right: nc.createNodeMembIds(kwargsId, '__params' + suffix, 'keywords'),
+      //var __params = __hasParams ? arguments[arguments.length - 1].keywords : {};
+      var setParams = nc.createNodeSpan(r, r, "ConditionalExpression", {
+        test: __hasParams,
+        consequent: nc.createNodeSpan(r, r, "MemberExpression", {
+          computed: false, object: argumentsN,
+          property: nc.createNodeSpan(r, r, "Identifier", { name: 'keywords' }),
+        }),
+        alternate: nc.createNodeSpan(r, r, "ObjectExpression", { properties: [] })
+      });
+      node.body.body.push(nc.createGeneratedVarDeclFromId(r, __params, setParams));
+
+      // var __realArgCount = arguments.length - __params0 ? 0 : 1;
+      var setRealArgCount = (nc.createGeneratedVarDeclFromId(node.id,
+        __realArgCount,
+        nc.createNodeSpan(node.id, node.id, "BinaryExpression", {
+          operator: '-',
+          left: nc.createNodeMembIds(node.id, 'arguments', 'length'),
+          //right: nc.createNodeSpan(node.id, node.id, "Literal", { value: 0 })
+          right: nc.createNodeSpan(node.id, node.id, "ConditionalExpression", {
+            test: __hasParams,
+            consequent: nc.createNodeSpan(node.id, node.id, "Literal", { value: 1 }),
+            alternate: nc.createNodeSpan(node.id, node.id, "Literal", { value: 0 })
           })
-        }));
-      }
-      node.body.body.push(argsIf);
+        })
+      ));
+
+      node.body.body.push(setRealArgCount);
     }
-
-    // Convert original body to 'return (function() {<body>}).call(this);'
-    node.body.body.push(nc.createNodeFnBodyIife(body));
-
-    inFunction = oldInFunc;
 
     // Verify that argument names are not repeated
     for (var i = 0; i < formals.length; ++i) {
+      node.params.push(formals[i].id);
       for (var j = 0; j < i; ++j) if (formals[i].id.name === formals[j].id.name)
         raise(formals[i].id.start, "Argument name clash");
     }
+
+
+    for ( i = 0; i < formals.length; ++i) {
+      var argName = nc.createNodeSpan(node.id, node.id, "Identifier", { name: formals[i].id.name });
+      var argNameStr = nc.createNodeSpan(node.id, node.id, "Literal", { value: formals[i].id.name });
+      var argSet = nc.createNodeSpan(node.id, node.id, "AssignmentExpression", {
+        operator: '=',
+        left: argName,
+        right: nc.createNodeSpan(node.id, node.id, "ConditionalExpression", {
+          test: nc.createNodeSpan(node.id, node.id, "BinaryExpression", { operator: 'in', left: argNameStr, right: __params }),
+          consequent: nc.createNodeSpan(node, node, "MemberExpression", { object: __params, property: argNameStr, computed: true }),
+          alternate: formals[i].expr ? formals[i].expr : nc.createNodeSpan(node.id, node.id, "Identifier", { name: 'undefined' })
+        })
+      });
+
+      var argCheck = nc.createNodeSpan(node.id, node.id, "IfStatement", {
+        test: nc.createNodeSpan(node.id, node.id, "BinaryExpression", {
+          operator: '<',
+          left: __realArgCount,
+          right:  nc.createNodeSpan(node.id, node.id, "Literal", { value: i+1 })
+        }),
+        consequent: nc.createNodeSpan(node.id, node.id, "ExpressionStatement", { expression: argSet })
+      });
+
+      node.body.body.push(argCheck);
+    }
+
+    if (argsId) {
+      // var __formalsIndex = n;
+      node.body.body.push(nc.createGeneratedVarDeclFromId(node.id,
+        nc.createNodeSpan(node.id, node.id, "Identifier", { name: '__formalsIndex' + suffix }),
+        nc.createNodeSpan(node.id, node.id, "Literal", { value: formals.length })));
+
+      // var <args> = [];
+      var argsAssign = nc.createGeneratedVarDeclFromId(argsId, argsId, nc.createNodeSpan(argsId, argsId, "ArrayExpression", { elements: [] }));
+      node.body.body.push(argsAssign);
+      node.body.body.push(nc.createNodeArgsWhileConsequent(argsId, suffix));
+      
+    }
+
+    if (kwargsId) {
+      for (var i = 0; i < formals.length; ++i) {
+        var formalDelete = nc.createNodeSpan(kwargsId, kwargsId, "ExpressionStatement", {
+          expression: nc.createNodeSpan(kwargsId, kwargsId, "UnaryExpression", {
+            operator: 'delete',
+            prefix: true,
+            argument: nc.createNodeSpan(kwargsId, kwargsId, "MemberExpression", {
+              object: __params,
+              property: nc.createNodeSpan(node.id, node.id, "Identifier", { name: formals[i].id.name }),
+              computed: false 
+            })
+          })
+        });
+        node.body.body.push(formalDelete);
+      }
+
+      // var <kwargs> = {};
+      var kwargsAssign = nc.createGeneratedVarDeclFromId(kwargsId, kwargsId, __params);
+      node.body.body.push(kwargsAssign);
+    }
+
+    // Convert original body to 'return (function() {<body>}).call(this);';
+    //node.body.body.push(nc.createNodeFnBodyIife(body));
+
+    //Append real body to node
+    node.body.body.push.apply(node.body.body, body.body);
+
+    inFunction = oldInFunc;
+
 
     // If class method, replace with prototype function literals
     var retNode;
@@ -2703,6 +2648,7 @@
         var kwId = nc.createNodeSpan(expr, right, "Identifier", {name:"__kwp"});
         var kwLit = nc.createNodeSpan(expr, right, "Literal", {value:true});
         var left = nc.createNodeSpan(expr, right, "ObjectExpression", { properties: [] });
+        left.isntFormal = true;
         left.properties.push({ type: "Property", key: expr, value: right, kind: "init" });
         left.properties.push({ type: "Property", key: kwId, value: kwLit, kind: "init" });
         expr = left;
@@ -2762,7 +2708,6 @@
     return node;
   }
 
-
   // ## Python runtime library
 
   var pythonRuntime = exports.pythonRuntime = {
@@ -2802,109 +2747,18 @@
     },
 
     utils: {
-      convertToDict: function (dict) {
-        if (!dict.hasOwnProperty("_type")) {
-          Object.defineProperty(dict, "_type",
-          {
-            get: function () { return 'dict';},
-            enumerable: false
-          });
-        }
-        if (!dict.hasOwnProperty("_isPython")) {
-          Object.defineProperty(dict, "_isPython",
-          {
-            get: function () { return true; },
-            enumerable: false
-          });
-        }
-        if (!dict.hasOwnProperty("items")) {
-          Object.defineProperty(dict, "items",
-          {
-            value: function () {
-              var items = new pythonRuntime.objects.list();
-              for (var k in this) items.append(new pythonRuntime.objects.tuple(k, this[k]));
-              return items;
-            },
-            enumerable: false
-          });
-        }
-        if (!dict.hasOwnProperty("length")) {
-          Object.defineProperty(dict, "length",
-          {
-            get: function () {
-              return Object.keys(this).length;
-            },
-            enumerable: false
-          });
-        }
-        if (!dict.hasOwnProperty("clear")) {
-          Object.defineProperty(dict, "clear",
-          {
-            value: function () {
-              for (var i in this) delete this[i];
-            },
-            enumerable: false
-          });
-        }
-        if (!dict.hasOwnProperty("get")) {
-          Object.defineProperty(dict, "get",
-          {
-            value: function (key, def) {
-              if (key in this) return this[key];
-              else if (def !== undefined) return def;
-              return null;
-            },
-            enumerable: false
-          });
-        }
-        if (!dict.hasOwnProperty("keys")) {
-          Object.defineProperty(dict, "keys",
-          {
-            value: function () {
-              return Object.keys(this);
-            },
-            enumerable: false
-          });
-        }
-        if (!dict.hasOwnProperty("pop")) {
-          Object.defineProperty(dict, "pop",
-          {
-            value: function (key, def) {
-              var value;
-              if (key in this) {
-                value = this[key];
-                delete this[key];
-              } else if (def !== undefined) value = def;
-              else return new Error("KeyError");
-              return value;
-            },
-            enumerable: false
-          });
-        }
-        if (!dict.hasOwnProperty("values")) {
-          Object.defineProperty(dict, "values",
-          {
-            value: function () {
-              var values = new pythonRuntime.objects.list();
-              for (var key in this) values.append(this[key]);
-              return values;
-            },
-            enumerable: false
-          });
-        }
-      },
       createDict: function () {
         var ret = new pythonRuntime.objects.dict();
         if (arguments.length === 1 && arguments[0] instanceof Object)
           for (var k in arguments[0]) ret[k] = arguments[0][k];
         else
-          throw TypeError("createDict expects a single JavaScript object")
+          throw TypeError("createDict expects a single JavaScript object");
         return ret;
       },
       createParamsObj: function () {
         // In: expr, expr, ..., {id:expr, __kwp:true}, {id:expr, __kwp:true}, ...
         // Out: {formals:[expr, expr, ...], keywords:{id:expr, id:expr, ...}}
-        var params = { formals: new pythonRuntime.objects.list(), keywords: new pythonRuntime.objects.dict() };
+        var params = { formals: new pythonRuntime.objects.list(), keywords: new PythonDict() };
         for (var i = 0; i < arguments.length; i++) {
           if (arguments[i] && arguments[i].__kwp === true) {
             for (var k in arguments[i])
@@ -2915,50 +2769,41 @@
         return params;
       },
       convertToList: function (list) {
-        if (!list.hasOwnProperty("_type")) {
-          Object.defineProperty(list, "_type",
-          {
+        Object.defineProperties(list, pythonRuntime.utils.listPropertyDescriptor);
+        return list;
+      },
+      convertToDict: function (dict) {
+        Object.defineProperties(dict, pythonRuntime.utils.dictPropertyDescriptor);
+        return dict;
+      }, 
+      listPropertyDescriptor: {
+          "_type": {
             get: function () { return 'list'; },
             enumerable: false
-          });
-        }
-        if (!list.hasOwnProperty("_isPython")) {
-          Object.defineProperty(list, "_isPython",
-          {
+          },
+          "_isPython": {
             get: function () { return true; },
             enumerable: false
-          });
-        }
-        if (!list.hasOwnProperty("append")) {
-          Object.defineProperty(list, "append",
-          {
+          },
+          "append": {
             value: function (x) {
               this.push(x);
             },
             enumerable: false
-          });
-        }
-        if (!list.hasOwnProperty("clear")) {
-          Object.defineProperty(list, "clear",
-          {
+          },
+          "clear": {
             value: function () {
               this.splice(0, this.length);
             },
             enumerable: false
-          });
-        }
-        if (!list.hasOwnProperty("copy")) {
-          Object.defineProperty(list, "copy",
-          {
+          },
+          "copy": {
             value: function () {
               return this.slice(0);
             },
             enumerable: false
-          });
-        }
-        if (!list.hasOwnProperty("count")) {
-          Object.defineProperty(list, "count",
-          {
+          },
+          "count": {
             value: function (x) {
               var c = 0;
               for (var i = 0; i < this.length; i++)
@@ -2966,11 +2811,8 @@
               return c;
             },
             enumerable: false
-          });
-        }
-        if (!list.hasOwnProperty("equals")) {
-          Object.defineProperty(list, "equals",
-          {
+          },
+          "equals": {
             value: function (x) {
               try {
                 if (this.length !== x.length) return false;
@@ -2985,29 +2827,20 @@
               return false;
             },
             enumerable: false
-          });
-        }
-        if (!list.hasOwnProperty("extend")) {
-          Object.defineProperty(list, "extend",
-          {
+          },
+          "extend": {
             value: function (L) {
               for (var i = 0; i < L.length; i++) this.push(L[i]);
             },
             enumerable: false
-          });
-        }
-        if (!list.hasOwnProperty("index")) {
-          Object.defineProperty(list, "index",
-          {
+          },
+          "index": {
             value: function (x) {
               return this.indexOf(x);
             },
             enumerable: false
-          });
-        }
-        if (!list.hasOwnProperty("indexOf")) {
-          Object.defineProperty(list, "indexOf",
-          {
+          },
+          "indexOf": {
             value: function (x, fromIndex) {
               try {
                 for (var i = fromIndex ? fromIndex : 0; i < this.length; i++) {
@@ -3020,20 +2853,14 @@
               return -1;
             },
             enumerable: false
-          });
-        }
-        if (!list.hasOwnProperty("insert")) {
-          Object.defineProperty(list, "insert",
-          {
+          },
+          "insert": {
             value: function (i, x) {
               this.splice(i, 0, x);
             },
             enumerable: false
-          });
-        }
-        if (!list.hasOwnProperty("pop")) {
-          Object.defineProperty(list, "pop",
-          {
+          },
+          "pop": {
             value: function (i) {
               if (!i)
                 i = this.length - 1;
@@ -3042,29 +2869,20 @@
               return item;
             },
             enumerable: false
-          });
-        }
-        if (!list.hasOwnProperty("_pySlice")) {
-          Object.defineProperty(list, "_pySlice",
-          {
+          },
+          "_pySlice": {
             value: function (start, end, step) {
               return pythonRuntime.internal.slice(this, start, end, step);
             },
             enumerable: false
-          });
-        }
-        if (!list.hasOwnProperty("remove")) {
-          Object.defineProperty(list, "remove",
-          {
+          },
+          "remove": {
             value: function (x) {
               this.splice(this.indexOf(x), 1);
             },
             enumerable: false
-          });
-        }
-        if (!list.hasOwnProperty("sort")) {
-          Object.defineProperty(list, "sort",
-          {
+          },
+          "sort": {
             value: function(x, reverse) {
               var list2 = this.slice(0);
               var apply_key = function(a, numerical) {
@@ -3103,17 +2921,13 @@
                 this.reverse();
             },
             enumerable: false
-          });
-        }
-        if (!list.hasOwnProperty("toString")) {
-          Object.defineProperty(list, "toString",
-          {
+          },
+          "toString": {
             value: function () {
               return '[' + this.join(', ') + ']';
             },
             enumerable: false
-          });
-        }
+          }
       },
       createList: function () {
         var ret = new pythonRuntime.objects.list();
@@ -3122,12 +2936,74 @@
         else
           for (var i in arguments) ret.push(arguments[i]);
         return ret;
+      },
+      dictPropertyDescriptor: {
+        "_type": {
+          get: function () { return 'dict';},
+          enumerable: false
+        },
+        "_isPython": {
+          get: function () { return true; },
+          enumerable: false
+        },
+        "items": {
+          value: function () {
+            var items = new pythonRuntime.objects.list();
+            for (var k in this) items.append(new pythonRuntime.objects.tuple(k, this[k]));
+            return items;
+          },
+          enumerable: false
+        },
+        "length": {
+          get: function () {
+            return Object.keys(this).length;
+          },
+          enumerable: false
+        },
+        "clear": {
+          value: function () {
+            for (var i in this) delete this[i];
+          },
+          enumerable: false
+        },
+        "get": {
+          value: function (key, def) {
+            if (key in this) return this[key];
+            else if (def !== undefined) return def;
+            return null;
+          },
+          enumerable: false
+        },
+        "keys": {
+          value: function () {
+            return Object.keys(this);
+          },
+          enumerable: false
+        },
+        "pop": {
+          value: function (key, def) {
+            var value;
+            if (key in this) {
+              value = this[key];
+              delete this[key];
+            } else if (def !== undefined) value = def;
+            else return new Error("KeyError");
+            return value;
+          },
+          enumerable: false
+        }, "values": {
+          value: function () {
+            var values = new pythonRuntime.objects.list();
+            for (var key in this) values.append(this[key]);
+            return values;
+          },
+          enumerable: false
+        }
       }
     },
-
     ops: {
       add: function (a, b) {
-        if (pythonRuntime.internal.isSeq(a) && pythonRuntime.internal.isSeq(b)) {
+        if (typeof a === 'object' && pythonRuntime.internal.isSeq(a) && pythonRuntime.internal.isSeq(b)) {
           if (a._type !== b._type)
             throw TypeError("can only concatenate " + a._type + " (not '" + b._type + "') to " + a._type);
           var ret;
@@ -3147,41 +3023,42 @@
       },
       multiply: function (a, b) {
         // TODO: non-sequence operand must be an integer
-        if (pythonRuntime.internal.isSeq(a) && !isNaN(parseInt(b))) {
-          var ret;
-          if (a._type === 'list') ret = new pythonRuntime.objects.list();
-          else if (a._type === 'tuple') ret = new pythonRuntime.objects.tuple();
-          if (ret) {
-            for (var i = 0; i < b; i++)
-              for (var j = 0; j < a.length; j++) ret.push(a[j]);
-            return ret;
-          }
-        }
-        else if (pythonRuntime.internal.isSeq(b) && !isNaN(parseInt(a))) {
-          var ret;
-          if (b._type === 'list') ret = new pythonRuntime.objects.list();
-          else if (b._type === 'tuple') ret = new pythonRuntime.objects.tuple();
-          if (ret) {
-            for (var i = 0; i < a; i++)
-              for (var j = 0; j < b.length; j++) ret.push(b[j]);
-            return ret;
+        if ( typeof a === 'object' ) {
+          if (pythonRuntime.internal.isSeq(a) && !isNaN(parseInt(b))) {
+            var ret;
+            if (a._type === 'list') ret = new pythonRuntime.objects.list();
+            else if (a._type === 'tuple') ret = new pythonRuntime.objects.tuple();
+            if (ret) {
+              for (var i = 0; i < b; i++)
+                for (var j = 0; j < a.length; j++) ret.push(a[j]);
+              return ret;
+            }
+          } else if (pythonRuntime.internal.isSeq(b) && !isNaN(parseInt(a))) {
+            var ret;
+            if (b._type === 'list') ret = new pythonRuntime.objects.list();
+            else if (b._type === 'tuple') ret = new pythonRuntime.objects.tuple();
+            if (ret) {
+              for (var i = 0; i < a; i++)
+                for (var j = 0; j < b.length; j++) ret.push(b[j]);
+              return ret;
+            }
           }
         }
         return a * b;
       },
       subscriptIndex: function (o, i) {
-        if (pythonRuntime.internal.isSeq(o) && i < 0) return o.length + i;
-        if (pythonRuntime.internal.isJSArray(o) && i < 0 ) return o.length + i;
-        if ( typeof o === "string" && i < 0 ) return o.length + i;
+        if ( i >= 0 ) return i;
+        if ( pythonRuntime.internal.isSeq(o) ) return o.length + i;
+        if ( pythonRuntime.internal.isJSArray(o) ) return o.length + i;
+        if ( typeof o === "string" ) return o.length + i;
         return i;
       }
     },
 
     objects: {
       dict: function () {
-        var obj = {};
-        for (var i in arguments) obj[arguments[i][0]] = arguments[i][1];
-        pythonRuntime.utils.convertToDict(obj);
+        var obj = new PythonDict();
+        for (var i = 0; i < arguments.length; ++i ) obj[arguments[i][0]] = arguments[i][1];
         return obj;
       },
       list: function () {
@@ -3408,14 +3285,17 @@
           step = 1;
         }
         else if (step === undefined) step = 1;
-        var r = new pythonRuntime.objects.list();
+        var len = ~~((stop - start) / step); //~~ is a fast floor
+        var r = new Array(len);
+        var element = 0;
         if (start < stop && step > 0 || start > stop && step < 0) {
           var i = start;
           while (i < stop && step > 0 || i > stop && step < 0) {
-            r.append(i);
+            r[element++] = i;
             i += step;
           }
         }
+        pythonRuntime.utils.convertToList(r);
         return r;
       },
       repr: function (obj) {
@@ -3469,6 +3349,13 @@
       }
     }
   };
+
+  function PythonDict() {
+
+  }
+
+  Object.defineProperties(PythonDict.prototype, pythonRuntime.utils.dictPropertyDescriptor);
+
 });
 
 },{}],2:[function(require,module,exports){

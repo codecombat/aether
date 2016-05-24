@@ -3,20 +3,15 @@ self = global if global? and not self?
 self.self ?= self
 
 _ = window?._ ? self?._ ? global?._ ? require 'lodash'  # rely on lodash existing, since it busts CodeCombat to browserify it--TODO
-traceur = window?.traceur ? self?.traceur ? global?.traceur ? require 'traceur'  # rely on traceur existing, since it busts CodeCombat to browserify it--TODO
 
 esprima = require 'esprima'  # getting our Esprima Harmony
-normalizer = require 'JS_WALA/normalizer/lib/normalizer'
-escodegen = require 'escodegen'
 
 defaults = require './defaults'
 problems = require './problems'
 execution = require './execution'
 traversal = require './traversal'
 transforms = require './transforms'
-protectAPI = require './protectAPI'
 protectBuiltins = require './protectBuiltins'
-instrumentation = require './instrumentation'
 optionsValidator = require './validators/options'
 languages = require './languages/languages'
 interpreter = require './interpreter'
@@ -46,25 +41,18 @@ module.exports = class Aether
     defaultsCopy = _.cloneDeep defaults
     @options = _.merge defaultsCopy, options
 
-    @setLanguage @options.language, @options.languageVersion
-    @allGlobals = @options.globals.concat protectBuiltins.builtinNames, (if @options.useInterpreter then Object.keys @language.runtimeGlobals else [])  # After setLanguage, which can add globals.
-
-    ## For mapping API clones and values to each other
-    @protectAPIClonesToValues = {}
-    @protectAPIValuesToClones = {}
+    @setLanguage @options.language
+    @allGlobals = @options.globals.concat protectBuiltins.builtinNames, Object.keys(@language.runtimeGlobals)  # After setLanguage, which can add globals.
 
   # Language can be changed after construction. (It will reset Aether's state.)
-  setLanguage: (language, languageVersion) ->
-    return if @language and @language.id is language and @language.version is languageVersion
-    validationResults = optionsValidator language: language, languageVersion: languageVersion
+  setLanguage: (language) ->
+    return if @language and @language.id is language
+    validationResults = optionsValidator language: language
     unless validationResults.valid
       throw new Error "New language is invalid: " + JSON.stringify(validationResults.errors, null, 4)
     @originalOptions.language = @options.language = language
-    @originalOptions.languageVersion = @options.languageVersion = languageVersion
-    @language = new languages[language] languageVersion
+    @language = new languages[language]()
     @languageJS ?= if language is 'javascript' then @language else new languages.javascript 'ES5'
-    unless @options.useInterpreter
-      Aether.addGlobal name, global for name, global of @language.runtimeGlobals
     @reset()
     return language
 
@@ -135,31 +123,16 @@ module.exports = class Aether
     @addProblem problem, lintProblems for problem in @language.lint rawCode, @
     lintProblems
 
-  # Return a ready-to-execute, instrumented, sandboxed function from the purified code.
+  # Return a ready-to-interpret function from the parsed code.
   createFunction: ->
-    return interpreter.createFunction @ if @options.useInterpreter
-    fn = protectBuiltins.createSandboxedFunction @options.functionName or 'foo', @pure, @
-    if @options.protectBuiltins
-      fn = protectBuiltins.wrapWithSandbox @, fn
-    fn
+    return interpreter.createFunction @
 
   # Like createFunction, but binds method to thisValue.
   createMethod: (thisValue) ->
     _.bind @createFunction(), thisValue
 
-  # If you want to sandbox a generator each time it's called, then call result of createFunction and hand to this.
-  sandboxGenerator: (fn) ->
-    return fn if @options.useInterpreter
-    oldNext = fn.next
-    fn.next = ->
-      oldNext.apply fn, arguments
-    if @options.protectBuiltins
-      fn.next = protectBuiltins.wrapWithSandbox @, fn.next
-    fn
-
   # Convenience wrapper for running the compiled function with default error handling
   run: (fn, args...) ->
-    #console.log(escodegen.generate(@ast))
     try
       fn ?= @createFunction()
     catch error
@@ -206,7 +179,7 @@ module.exports = class Aether
       transforms.makeCheckIncompleteMembers @language, @options.problemContext
     ]
     try
-      [transformedCode, transformedAST] = @transform wrappedCode, preNormalizationTransforms, @language.parse, true
+      [transformedCode, transformedAST] = @transform wrappedCode, preNormalizationTransforms, @language.parse
       @ast = transformedAST
     catch error
       problemOptions = error: error, code: wrappedCode, codePrefix: @language.wrappedCodePrefix, reporter: @language.parserID, kind: error.index or error.id, type: 'transpile'
@@ -214,7 +187,7 @@ module.exports = class Aether
       return '' unless @language.parseDammit
       originalNodeRanges.splice()  # Reset any ranges we did find; we'll try again.
       try
-        [transformedCode, transformedAST] = @transform wrappedCode, preNormalizationTransforms, @language.parseDammit, true
+        [transformedCode, transformedAST] = @transform wrappedCode, preNormalizationTransforms, @language.parseDammit
         @ast = transformedAST
       catch error
         problemOptions.kind = error.index or error.id
@@ -223,120 +196,23 @@ module.exports = class Aether
         return ''
 
     # Now we've shed all the trappings of the original language behind; it's just JavaScript from here on.
-    if @options.useInterpreter
-      nodeGatherer = transforms.makeGatherNodeRanges originalNodeRanges, wrappedCode, @language.wrappedCodePrefix
+    nodeGatherer = transforms.makeGatherNodeRanges originalNodeRanges, wrappedCode, @language.wrappedCodePrefix
 
-      traversal.walkASTCorrect @ast, (node) =>
-        nodeGatherer(node)
-        if node.originalRange?
-          startEndRangeArray = @language.removeWrappedIndent [node.originalRange.start, node.originalRange.end]
-          node.originalRange =
-            start: startEndRangeArray[0]
-            end: startEndRangeArray[1]
+    traversal.walkASTCorrect @ast, (node) =>
+      nodeGatherer(node)
+      if node.originalRange?
+        startEndRangeArray = @language.removeWrappedIndent [node.originalRange.start, node.originalRange.end]
+        node.originalRange =
+          start: startEndRangeArray[0]
+          end: startEndRangeArray[1]
 
-      # TODO: return here some day
+    # TODO: return nothing, or the AST, and make sure CodeCombat can handle it returning nothing
+    return rawCode
 
-    # TODO: need to insert 'use strict' after normalization, since otherwise you get tmp2 = 'use strict'
-    try
-      normalizedAST = normalizer.normalize transformedAST, {reference_errors: true}
-    catch error
-      console.log "JS_WALA couldn't handle", transformedAST, "\ngave error:", error.toString()
-      problemOptions = error: error, message: 'Syntax error during code normalization.', kind: 'NormalizationError', code: '', codePrefix: '', reporter: 'aether', type: 'transpile', hint: "Possibly a bug with advanced #{@language.name} feature parsing."
-      @addProblem @createUserCodeProblem problemOptions
-      return ''
-    normalizedNodeIndex = []
-    traversal.walkAST normalizedAST, (node) ->
-      return unless pos = node?.attr?.pos
-      node.loc = {start: {line: 1, column: normalizedNodeIndex.length}, end: {line: 1, column: normalizedNodeIndex.length + 1}}
-      normalizedNodeIndex.push node
-
-    try
-      normalized = escodegen.generate normalizedAST, {sourceMap: @options.functionName or 'foo', sourceMapWithCode: true}
-      normalizedCode = normalized.code
-      normalizedSourceMap = normalized.map
-    catch error
-      console.warn "escodegen couldn't handle", normalizedAST, "\ngave error:", error.toString()
-      try
-        # Maybe we can get it to work without source maps, if it errored during source mapping. Ranges (and thus other things) won't work, though.
-        normalizedCode = escodegen.generate normalizedAST, {}
-        normalizedSourceMap = null
-      catch error2
-        # Well, it was worth a try to do it without source maps.
-        problemOptions = error: error, message: 'Syntax error during code generation.', kind: 'CodeGenerationError', code: '', codePrefix: '', reporter: 'aether', type: 'transpile', hint: "Possibly a bug with advanced #{@language.name} feature parsing."
-        @addProblem @createUserCodeProblem problemOptions
-        return ''
-
-    postNormalizationTransforms = []
-    if @options.yieldConditionally and @options.simpleLoops
-      postNormalizationTransforms.unshift transforms.makeSimpleLoopsYieldAutomatically @replacedLoops, @language.wrappedCodePrefix
-    if @options.yieldConditionally and @options.whileTrueAutoYield
-      postNormalizationTransforms.unshift transforms.makeWhileTrueYieldAutomatically @replacedLoops, @language.wrappedCodePrefix
-    if @options.yieldConditionally
-      postNormalizationTransforms.unshift transforms.makeYieldConditionally @options.simpleLoops, @options.whileTrueAutoYield
-    if @options.yieldConditionally and (@options.simpleLoops or @options.whileTrueAutoYield)
-      postNormalizationTransforms.unshift transforms.makeIndexWhileLoops()
-    postNormalizationTransforms.unshift transforms.makeYieldAutomatically() if @options.yieldAutomatically
-    if @options.includeFlow
-      varNamesToRecord = if @options.noVariablesInFlow then null else varNames
-      postNormalizationTransforms.unshift transforms.makeInstrumentStatements @language, varNamesToRecord, true
-    else if @options.includeMetrics or @options.executionLimit
-      postNormalizationTransforms.unshift transforms.makeInstrumentStatements @language
-    postNormalizationTransforms.unshift transforms.makeInstrumentCalls() if @options.includeMetrics or @options.includeFlow
-    if normalizedSourceMap
-      postNormalizationTransforms.unshift transforms.makeFindOriginalNodes originalNodeRanges, @language.wrappedCodePrefix, normalizedSourceMap, normalizedNodeIndex
-    postNormalizationTransforms.unshift transforms.convertToNativeTypes
-    postNormalizationTransforms.unshift transforms.protectAPI if @options.protectAPI
-    postNormalizationTransforms.unshift transforms.interceptThis
-    postNormalizationTransforms.unshift transforms.interceptEval
-    try
-      instrumentedCode = @transform normalizedCode, postNormalizationTransforms, @languageJS.parse
-    catch error
-      problemOptions = error: error, code: normalizedCode, codePrefix: '', reporter: @languageJS.parserID, kind: error.id, type: 'transpile'
-      @addProblem @createUserCodeProblem problemOptions
-      instrumentedCode = @transform normalizedCode, postNormalizationTransforms, @languageJS.parseDammit
-    if @options.yieldConditionally or @options.yieldAutomatically
-      try
-        purifiedCode = @traceurify instrumentedCode
-      catch error
-        console.log "Traceur couldn't handle", instrumentedCode, "\ngave error:", error.toString()
-        problemOptions = error: error, code: instrumentedCode, codePrefix: '', reporter: 'aether', kind: 'TraceurError', type: 'transpile', message: 'Syntax error during code transmogrification.', hint: 'Possibly a bug with break/continue parsing.'
-        @addProblem @createUserCodeProblem problemOptions
-        return ''
-    else
-      purifiedCode = instrumentedCode
-    interceptThis = 'var __interceptThis=(function(){var G=this;return function($this,sandbox){if($this==G){return sandbox;}return $this;};})();\n'
-    purifiedCode = interceptThis + "return " + purifiedCode
-    if false
-      console.log "---NODE RANGES---:\n" + _.map(originalNodeRanges, (n) -> "#{n.originalRange.start} - #{n.originalRange.end}\t#{n.originalSource.replace(/\n/g, '↵')}").join('\n')
-      console.log "---RAW CODE----: #{rawCode.split('\n').length}\n", {code: rawCode}
-      console.log "---WRAPPED-----: #{wrappedCode.split('\n').length}\n", {code: wrappedCode}
-      console.log "---TRANSFORMED-: #{transformedCode.split('\n').length}\n", {code: transformedCode}
-      console.log "---NORMALIZED--: #{normalizedCode.split('\n').length}\n", {code: normalizedCode}
-      console.log "---INSTRUMENTED: #{instrumentedCode.split('\n').length}\n", {code: "return " + instrumentedCode}
-      console.log "---PURIFIED----: #{purifiedCode.split('\n').length}\n", {code: purifiedCode}
-    purifiedCode
-
-  transform: (code, transforms, parseFn, withAST=false) ->
+  transform: (code, transforms, parseFn) ->
     transformedCode = traversal.morphAST code, (_.bind t, @ for t in transforms), parseFn, @
-    return transformedCode unless withAST
     transformedAST = parseFn transformedCode, @, true
     [transformedCode, transformedAST]
-
-  traceurify: (code) ->
-    # Latest Traceur version that works with this hacky API is 0.0.25.
-    # Versions 0.0.27 - 0.0.34 complained about System.baseURL being an empty string despite my best attempts to provide it.
-    # Versions 0.0.35 - 0.0.41 complained that the EvalCodeUnit's metadata was undefined and so it couldn't find "tree".
-    url = "http://codecombat.com/randotron_" + Math.random()
-    reporter = new traceur.util.ErrorReporter()
-    loaderHooks = new traceur.runtime.InterceptOutputLoaderHooks reporter, url
-    loader = new traceur.System.internalLoader_.constructor loaderHooks, url  # Some day traceur's API will stabilize.
-    loader.script code, url, url, url
-    # Could also do the following, but that wraps in a module
-    #loader = new traceur.runtime.Loader loaderHooks
-    #loader.module code, url
-    if reporter.hadError()
-      console.warn "traceur had error trying to compile"
-    loaderHooks.transcoded
 
   @getFunctionBody: (func) ->
     # Remove function() { ... } wrapper and any extra indentation
@@ -366,18 +242,6 @@ module.exports = class Aether
       ]
         ++count
     return count
-
-  # Runtime modules
-
-  logStatementStart: instrumentation.logStatementStart
-  logStatement: instrumentation.logStatement
-  logCallStart: instrumentation.logCallStart
-  logCallEnd: instrumentation.logCallEnd
-
-  createAPIClone: protectAPI.createAPIClone
-  restoreAPIClone: protectAPI.restoreAPIClone
-
-  restoreBuiltins: protectBuiltins.restoreBuiltins
 
 self.Aether = Aether if self?
 window.Aether = Aether if window?

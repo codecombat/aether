@@ -2,9 +2,6 @@
 # A similar approach could be seen in https://github.com/ariya/esmorph
 _ = window?._ ? self?._ ? global?._ ? require 'lodash'  # rely on lodash existing, since it busts CodeCombat to browserify it--TODO
 
-esprima = require 'esprima'  # getting our Esprima Harmony
-acorn_loose = require 'acorn/acorn_loose'  # for if Esprima dies. Note it can't do ES6.
-
 # TODO: see about consolidating
 module.exports.walkAST = walkAST = (node, fn) ->
   for key, child of node
