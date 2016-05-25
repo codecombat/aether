@@ -26,4 +26,5 @@ module.exports = class Java extends Language
 
 
 heroToThis = (body) ->
-  body.unshift {"type": "VariableDeclaration","declarations": [{ "type": "VariableDeclarator", "id": {"type": "Identifier", "name": "hero" },"init": {"type": "ThisExpression"} }],"kind": "var"}
+  body.unshift {"type": "VariableDeclaration","declarations": [{ "type": "VariableDeclarator", "id": {"type": "Identifier", "name": "hero" },"init": {"type": "ThisExpression"} }],"kind": "var"}  # var hero = this;
+  body.unshift {"type": "VariableDeclaration","declarations": [{ "type": "VariableDeclarator", "id": {"type": "Identifier", "name": "pet" },"init": {"type": "MemberExpression", "computed": false, "object": {"type": "Identifier", "name": "hero"}, "property": {"type": "Identifier", "name": "pet"}} }],"kind": "var", "userCode": false}  # var pet = hero.pet;

@@ -177,6 +177,7 @@ module.exports = class Python extends Language
 # 'this' is not a keyword in Python, so it does not parse to a ThisExpression
 # Instead, we expect the variable 'self', and map it to a ThisExpression
 selfToThis = (ast) ->
-  ast.body[0].body.body.unshift {"type": "VariableDeclaration","declarations": [{ "type": "VariableDeclarator", "id": {"type": "Identifier", "name": "self" },"init": {"type": "ThisExpression"} }],"kind": "var", "userCode": false}
-  ast.body[0].body.body.unshift {"type": "VariableDeclaration","declarations": [{ "type": "VariableDeclarator", "id": {"type": "Identifier", "name": "hero" },"init": {"type": "ThisExpression"} }],"kind": "var", "userCode": false}
+  ast.body[0].body.body.unshift {"type": "VariableDeclaration","declarations": [{ "type": "VariableDeclarator", "id": {"type": "Identifier", "name": "self" },"init": {"type": "ThisExpression"} }],"kind": "var", "userCode": false}  # var self = this;
+  ast.body[0].body.body.unshift {"type": "VariableDeclaration","declarations": [{ "type": "VariableDeclarator", "id": {"type": "Identifier", "name": "pet" },"init": {"type": "MemberExpression", "computed": false, "object": {"type": "Identifier", "name": "hero"}, "property": {"type": "Identifier", "name": "pet"}} }],"kind": "var", "userCode": false}  # var pet = hero.pet;
+  ast.body[0].body.body.unshift {"type": "VariableDeclaration","declarations": [{ "type": "VariableDeclarator", "id": {"type": "Identifier", "name": "hero" },"init": {"type": "ThisExpression"} }],"kind": "var", "userCode": false}  # var hero = this;
   ast
