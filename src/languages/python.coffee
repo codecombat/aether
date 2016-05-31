@@ -147,11 +147,13 @@ module.exports = class Python extends Language
   # Using a third-party parser, produce an AST in the standardized Mozilla format.
   parse: (code, aether) ->
     ast = parserHolder.parser.parse code, {locations: false, ranges: true}
+    selfToThis ast
     ast
 
   parseDammit: (code, aether) ->
     try
       ast = parserHolder.parserLoose.parse_dammit code, {locations: false, ranges: true}
+      selfToThis ast
     catch error
       ast = {type: "Program", body:[{"type": "EmptyStatement"}]}
     ast
@@ -171,3 +173,7 @@ module.exports = class Python extends Language
     else
       result = cloneFn obj
     result
+
+  selfToThis = (ast) ->
+    ast.body[0].body.body.unshift {"type": "VariableDeclaration","declarations": [{ "type": "VariableDeclarator", "id": {"type": "Identifier", "name": "self" },"init": {"type": "ThisExpression"} }],"kind": "var", "userCode": false}  # var self = this;
+    ast
