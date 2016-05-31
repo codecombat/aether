@@ -165,6 +165,9 @@ module.exports = class JavaScript extends Language
   parse: (code, aether) ->
     # loc: https://github.com/codecombat/aether/issues/71
     ast = esprima.parse code, {range: true, loc: true}
+
+    if ast? and ast.body.length isnt 1
+      throw new SyntaxError('You seem to have code outside your function. Are your { and } braces matched?');
     ast
 
   # Optional: if parseDammit() is implemented, then if parse() throws an error, we'll try again using parseDammit().
