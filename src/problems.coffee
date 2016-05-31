@@ -67,6 +67,8 @@ extractTranspileErrorDetails = (options) ->
   codePrefix = options.codePrefix or ''
   error = options.error
   options.message = error.message
+  errorContext = options.problemContext or options.aether?.options?.problemContext
+  languageID = options.aether?.options?.language
 
   originalLines = code.slice(codePrefix.length).split '\n'
   lineOffset = codePrefix.split('\n').length - 1
@@ -132,31 +134,29 @@ extractTranspileErrorDetails = (options) ->
         start.ofs -= row * 4
         end.ofs -= row * 4
         options.range = [start, end]
-
-        errorContext = options.problemContext or options.aether?.options?.problemContext
-        languageID = options.aether?.options?.language
-        options.hint = error.hint or getTranspileHint options.message, errorContext, languageID, options.aether.raw, options.range, options.aether.options?.simpleLoops
     when 'iota'
       null
     when 'cashew'
       options.range = [ranges.offsetToPos(error.range[0], code, codePrefix),
                        ranges.offsetToPos(error.range[1], code, codePrefix)]
-      languageID = options.aether?.options?.language
       options.hint = error.message
     else
       console.warn "Unhandled UserCodeProblem reporter", options.reporter
 
+  options.hint = error.hint or getTranspileHint options.message, errorContext, languageID, options.aether.raw, options.range, options.aether.options?.simpleLoops
   options
 
 getTranspileHint = (msg, context, languageID, code, range, simpleLoops=false) ->
+  #console.log 'get transpile hint', msg, context, languageID, code, range
   # TODO: Only used by Python currently
   # TODO: JavaScript blocked by jshint range bug: https://github.com/codecombat/aether/issues/113
-  if msg is "Unterminated string constant" and range?
+  if msg in ["Unterminated string constant", "Unclosed string."] and range?
     codeSnippet = code.substring range[0].ofs, range[1].ofs
     # Trim codeSnippet so we can construct the correct suggestion with an ending quote
-    if codeSnippet.length > 0 and codeSnippet[0] in ["'", '"']
-      quoteCharacter = codeSnippet[0]
-      codeSnippet = codeSnippet.slice(1)
+    firstQuoteIndex = codeSnippet.search /['"]/
+    if firstQuoteIndex isnt -1
+      quoteCharacter = codeSnippet[firstQuoteIndex]
+      codeSnippet = codeSnippet.slice firstQuoteIndex + 1
       codeSnippet = codeSnippet.substring 0, nonAlphNumMatch.index if nonAlphNumMatch = codeSnippet.match /[^\w]/
       return "Missing a quotation mark. Try `#{quoteCharacter}#{codeSnippet}#{quoteCharacter}`"
 
@@ -168,7 +168,7 @@ getTranspileHint = (msg, context, languageID, code, range, simpleLoops=false) ->
         return "You are missing a ':' after 'else'. Try `else:`"
     return "Code needs to line up."
 
-  else if msg.indexOf("Unexpected token") >= 0 and context?
+  else if ((msg.indexOf("Unexpected token") >= 0) or (msg.indexOf("Unexpected identifier") >= 0)) and context?
     codeSnippet = code.substring range[0].ofs, range[1].ofs
     lineStart = code.substring range[0].ofs - range[0].col, range[0].ofs
     lineStartLow = lineStart.toLowerCase()
@@ -213,7 +213,7 @@ getTranspileHint = (msg, context, languageID, code, range, simpleLoops=false) ->
         return "You are missing a ':' after '#{lineStart}'. Try `#{lineStart}:`"
 
     # Catchall hint for 'Unexpected token' error
-    if /Unexpected token/.test(msg)
+    if /Unexpected [token|identifier]/.test(msg)
       return "Please double-check your code carefully."
 
 # Runtime Errors
