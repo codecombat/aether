@@ -18,7 +18,10 @@ interpreter = require './interpreter'
 
 module.exports = class Aether
   @execution: execution
-  @addGlobal: protectBuiltins.addGlobal  # Use before instantiating Aether instances
+  @addGlobal: (name, value) ->
+    protectBuiltins.addGlobal name, value
+    if aether.esperEngine?
+      aether.esperEngine.addGlobal name, value
   @replaceBuiltin: protectBuiltins.replaceBuiltin
   @globals: protectBuiltins.addedGlobals
 
