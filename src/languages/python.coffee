@@ -147,13 +147,11 @@ module.exports = class Python extends Language
   # Using a third-party parser, produce an AST in the standardized Mozilla format.
   parse: (code, aether) ->
     ast = parserHolder.parser.parse code, {locations: false, ranges: true}
-    selfToThis ast
     ast
 
   parseDammit: (code, aether) ->
     try
       ast = parserHolder.parserLoose.parse_dammit code, {locations: false, ranges: true}
-      selfToThis ast
     catch error
       ast = {type: "Program", body:[{"type": "EmptyStatement"}]}
     ast
@@ -173,12 +171,3 @@ module.exports = class Python extends Language
     else
       result = cloneFn obj
     result
-
-# 'this' is not a keyword in Python, so it does not parse to a ThisExpression
-# Instead, we expect the variable 'self', and map it to a ThisExpression
-selfToThis = (ast) ->
-  ast.body[0].body.body.unshift {"type": "VariableDeclaration","declarations": [{ "type": "VariableDeclarator", "id": {"type": "Identifier", "name": "self" },"init": {"type": "ThisExpression"} }],"kind": "var", "userCode": false}  # var self = this;
-  ast.body[0].body.body.unshift {"type": "VariableDeclaration","declarations": [{ "type": "VariableDeclarator", "id": {"type": "Identifier", "name": "pet" },"init": {"type": "MemberExpression", "computed": false, "object": {"type": "Identifier", "name": "hero"}, "property": {"type": "Identifier", "name": "pet"}} }],"kind": "var", "userCode": false}  # var pet = hero.pet;
-  ast.body[0].body.body.unshift {"type": "VariableDeclaration","declarations": [{ "type": "VariableDeclarator", "id": {"type": "Identifier", "name": "hero" },"init": {"type": "ThisExpression"} }],"kind": "var", "userCode": false}  # var hero = this;
-  ast.body[0].body.body.unshift {"type": "VariableDeclaration","declarations": [{ "type": "VariableDeclarator", "id": {"type": "Identifier", "name": "game" },"init": {"type": "ThisExpression"} }],"kind": "var", "userCode": false}  # var game = this;
-  ast

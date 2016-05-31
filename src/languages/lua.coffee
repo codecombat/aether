@@ -68,14 +68,12 @@ module.exports = class Lua extends Language
 
   parse: (code, aether) ->
     ast = Lua.prototype.wrapResult (Lua.prototype.callParser code, false), aether.options.functionName, aether.options.functionParameters
-    addHeroVariable ast
     ast
 
 
   parseDammit: (code, aether) ->
     try
       ast = Lua.prototype.wrapResult (Lua.prototype.callParser code, true), aether.options.functionName, aether.options.functionParameters
-      addHeroVariable ast
       return ast
     catch error
       return {"type": "BlockStatement": body:[{type: "EmptyStatement"}]}
@@ -98,9 +96,3 @@ module.exports = class Lua extends Language
 
   rewriteFunctionID: (fid) ->
     @fidMap[fid] or fid
-
-addHeroVariable = (ast) ->
-  ast.body[0].body.body.unshift {"type": "VariableDeclaration","declarations": [{ "type": "VariableDeclarator", "id": {"type": "Identifier", "name": "pet" },"init": {"type": "MemberExpression", "computed": false, "object": {"type": "Identifier", "name": "hero"}, "property": {"type": "Identifier", "name": "pet"}} }],"kind": "var", "userCode": false}  # var pet = hero.pet;
-  ast.body[0].body.body.unshift {"type": "VariableDeclaration","declarations": [{ "type": "VariableDeclarator", "id": {"type": "Identifier", "name": "hero" },"init": {"type": "ThisExpression"} }],"kind": "var", "userCode": false}  # var hero = this;
-  ast.body[0].body.body.unshift {"type": "VariableDeclaration","declarations": [{ "type": "VariableDeclarator", "id": {"type": "Identifier", "name": "game" },"init": {"type": "ThisExpression"} }],"kind": "var", "userCode": false}  # var game = this;
-  ast

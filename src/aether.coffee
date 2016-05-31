@@ -18,10 +18,7 @@ interpreter = require './interpreter'
 
 module.exports = class Aether
   @execution: execution
-  @addGlobal: (name, value) ->
-    protectBuiltins.addGlobal name, value
-    if aether.esperEngine?
-      aether.esperEngine.addGlobal name, value
+  @addGlobal: protectBuiltins.addGlobal  # Call instance method version after instance creation to update existing global list
   @replaceBuiltin: protectBuiltins.replaceBuiltin
   @globals: protectBuiltins.addedGlobals
 
@@ -30,6 +27,11 @@ module.exports = class Aether
 
   getAddedGlobals: () ->
     protectBuiltins.addedGlobals
+
+  addGlobal: (name, value) ->
+    # Call class method version before instance creation to instantiate global list
+    if @esperEngine?
+      @esperEngine.addGlobal name, value
 
   constructor: (options) ->
     options ?= {}
@@ -214,7 +216,7 @@ module.exports = class Aether
 
   transform: (code, transforms, parseFn) ->
     transformedCode = traversal.morphAST code, (_.bind t, @ for t in transforms), parseFn, @
-    transformedAST = parseFn transformedCode, @, true
+    transformedAST = parseFn transformedCode, @
     [transformedCode, transformedAST]
 
   @getFunctionBody: (func) ->
