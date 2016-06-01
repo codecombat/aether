@@ -92,3 +92,5 @@ module.exports = class Language
 
   rewriteFunctionID: (fid) ->
     fid
+
+  setupInterpreter: (esper) ->

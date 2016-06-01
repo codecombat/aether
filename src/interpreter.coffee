@@ -79,6 +79,8 @@ module.exports.createFunction = (aether, code) ->
   fxName = aether.options.functionName or 'foo'
   #console.log JSON.stringify(aether.ast, null, "  ")
 
+  aether.language.setupInterpreter engine
+
   if aether.language.injectCode?
     engine.evalASTSync(aether.language.injectCode)
 

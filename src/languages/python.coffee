@@ -177,3 +177,21 @@ module.exports = class Python extends Language
   selfToThis = (ast) ->
     ast.body[0].body.body.unshift {"type": "VariableDeclaration","declarations": [{ "type": "VariableDeclarator", "id": {"type": "Identifier", "name": "self" },"init": {"type": "ThisExpression"} }],"kind": "var", "userCode": false}  # var self = this;
     ast
+
+  setupInterpreter: (esper) ->
+    realm = esper.realm
+    realm.options.linkValueCallReturnValueWrapper = (value) ->
+      ArrayPrototype = realm.ArrayPrototype
+
+      return value unless value.jsTypeName is 'object'
+
+      if value.clazz is 'Array'
+        defineProperties = realm.Object.getImmediate('defineProperties');
+        listPropertyDescriptor = realm.globalScope.get('__pythonRuntime').getImmediate('utils').getImmediate('listPropertyDescriptor');
+
+        gen = defineProperties.call realm.Object, [value, listPropertyDescriptor], realm.globalScope
+        it = gen.next()
+        while not it.done
+          it = gen.next()
+
+      return value
