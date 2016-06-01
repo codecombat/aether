@@ -116,21 +116,28 @@ makeYieldFilter = (aether) -> (engine) ->
   #console.log "----"
 
   top = frame_stack[0]
-
+  
   if top.type is 'loop'
     if frame_stack[1].ast.type is 'WhileStatement' and frame_stack[1].ast.test.type is 'Literal'
-      if not top.marked
-        top.marked = true
-        top.mark = aether.whileLoopMarker() if aether.whileLoopMarker
-      else if not top.ast?
-        currentMark = aether.whileLoopMarker()
-        if not aether.whileLoopMarker or currentMark is top.mark
-          #console.log "[Aether] Forcing while-true loop to yield."
-          top.mark = currentMark + 1
-          return true
-        else
-          #console.log "[Aether] Loop Avoided, mark #{top.mark} isnt #{currentMark}"
-          top.mark = currentMark
+      if aether.whileLoopMarker?
+        if not top.marked
+          top.marked = true
+          top.mark = aether.whileLoopMarker()
+        else if not top.ast?
+          currentMark = aether.whileLoopMarker()
+          if currentMark is top.mark
+            #console.log "[Aether] Forcing while-true loop to yield."
+            top.mark = currentMark + 1
+            return true
+          else
+            #console.log "[Aether] Loop Avoided, mark #{top.mark} isnt #{currentMark}"
+            top.mark = currentMark
+      else
+        if not top.marked
+          top.marked = true
+        else if not top.ast?
+          if not top.didYield
+            return true
 
   return false
 
