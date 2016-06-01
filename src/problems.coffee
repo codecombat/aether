@@ -1,5 +1,6 @@
 ranges = require './ranges'
 string_score = require 'string_score'
+_ = require 'lodash'
 
 # Problems #################################
 #
@@ -281,6 +282,9 @@ class HintCreator
       when 'python' then 'self.'
       when 'cofeescript' then '@'
       else 'this.'
+    @newVariableTemplate = switch languageID
+      when 'javascript' then _.template('var <%= name %> = ')
+      else _.template('<%= name %> = ')
     @methodRegex = switch languageID
       when 'python' then new RegExp "self\\.(\\w+)\\s*\\("
       when 'cofeescript' then new RegExp "@(\\w+)\\s*\\("
@@ -303,7 +307,7 @@ class HintCreator
         missingMethodMatch = @methodRegex.exec codeSnippet
         target = missingMethodMatch[1] if missingMethodMatch?
       hint = if target? then @getNoFunctionHint target
-    else if missingReference = msg.match /ReferenceError: ([^\s]+) is not defined/
+    else if missingReference = msg.match /([^\s]+) is not defined/
       hint = @getReferenceErrorHint missingReference[1]
     else if missingProperty = msg.match /Cannot (?:read|call) (?:property|method) '([\w]+)' of (?:undefined|null)/
       # Chrome: "Cannot read property 'moveUp' of undefined"
@@ -372,6 +376,9 @@ class HintCreator
       "Did you mean #{match}? You do not have an item equipped with that skill."
     hint ?= @getScoreMatch target, [candidates: @context.commonThisMethods, msgFormatFn: (match) ->
       "Did you mean #{match}? You do not have an item equipped with that skill."]
+    # Check enemy defined
+    if not hint and target.toLowerCase().indexOf('enemy') > -1 and _.contains(@context.thisMethods, 'findNearestEnemy')
+      hint = "There is no `#{target}`. Use `#{@newVariableTemplate({name:target})}#{@thisValueAccess}findNearestEnemy()` first."
 
     # Try score match with this value prefixed
     # E.g. target = 'selfmoveright', try 'self.moveRight()''

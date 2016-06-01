@@ -1782,10 +1782,17 @@
       else node.test = parseExpression();
       expect(_colon);
       node.consequent = parseSuite();
-      if (tokType === _elif)
+      if (tokType === _elif) {
         node.alternate = parseStatement();
-      else
-        node.alternate = eat(_else) && eat(_colon) ? parseSuite() : null;
+      }
+      else if (eat(_else)) {
+        expect(_colon);
+        eat(_colon);
+        node.alternate = parseSuite();
+      }
+      else {
+        node.alternate = null;
+      } 
       return finishNode(node, "IfStatement");
 
     case _import: // Skipping from and import statements for now
