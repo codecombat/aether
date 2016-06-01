@@ -4,7 +4,13 @@ addedGlobals = require('./protectBuiltins').addedGlobals
 isStatement = (name) ->
   name not in [
     'Literal', 'Identifier', 'ThisExpression', 'BlockStatement', 'MemberExpression',
-    'FunctionExpression', 'LogicalExpression', 'BinaryExpression', 'UnaryExpression'
+    'FunctionExpression', 'LogicalExpression', 'BinaryExpression', 'UnaryExpression',
+    'Program'
+  ]
+
+shouldFlow = (name) ->
+  name not in [
+    'IfStatement', 'WhileStatement', 'DoWhileStatement', 'ForStatement', 'ForInStatement', 'ForOfStatement'
   ]
 
 updateState = (aether, evaluator) ->
@@ -36,7 +42,7 @@ updateState = (aether, evaluator) ->
       ++aether.metrics.statementsExecuted if aether.options.includeMetrics
       ++bottom.flow.statementsExecuted if bottom.flow?
 
-      if bottom.flow?
+      if bottom.flow? and shouldFlow(top.ast.type)
         f = {}
         f.userInfo = _.cloneDeep aether._userInfo if aether._userInfo?
         unless aether.options.noVariablesInFlow
@@ -49,9 +55,9 @@ updateState = (aether, evaluator) ->
               variables[n] = p.value.debugString if p.value
           f.variables = variables
 
-        if astStack[0]?
-          rng = astStack[0].originalRange
-          f.range = [rng.start, rng.end] if rng
+        rng = top.ast.originalRange
+        f.range = [rng.start, rng.end] if rng
+        f.type = top.ast.type
 
         bottom.flow.statements.push f unless not f.range # Dont push statements without ranges
 
