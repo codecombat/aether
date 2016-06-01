@@ -131,6 +131,7 @@ makeYieldFilter = (aether) -> (engine) ->
 module.exports.createThread = (aether, fx) ->
   internalFx = esper.Value.getBookmark fx
   engine = new esper.Engine aether.esperEngine.options
+  engine.realm = aether.esperEngine.realm
   Evaluator = aether.esperEngine.evaluator.constructor  # Get internal reference to this constructor
   # TODO: Make this more efficient at some point rather than retrofitting the old engine
   #engine.evaluator = new Evaluator aether.esperEngine.realm, aether.esperEngine.evaluator.ast, aether.esperEngine.globalScope  # Correct? scope
