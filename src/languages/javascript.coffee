@@ -176,6 +176,10 @@ module.exports = class JavaScript extends Language
   parseDammit: (code, aether) ->
     ast = acorn_loose.parse_dammit code, {locations: true, tabSize: 4, ecmaVersion: 5}
 
+    if ast? and ast.body.length isnt 1
+      ast.body = ast.body.slice(0,0)
+    ast
+
     # Esprima uses "range", but acorn_loose only has "locations"
     lines = code.replace(/\n/g, '\n空').split '空'  # split while preserving newlines
     posToOffset = (pos) ->
