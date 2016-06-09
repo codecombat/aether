@@ -70,7 +70,11 @@ module.exports.createFunction = (aether, code) ->
     messWithLoops = true
 
   unless aether.esperEngine
-    aether.esperEngine = new esper.Engine(strict: aether.language.id isnt 'python', foreignObjectMode: 'smart')
+    aether.esperEngine = new esper.Engine
+      strict: aether.language.id isnt 'python'
+      foreignObjectMode: 'smart'
+      extraErrorInfo: true
+      addExtraErrorInfoToStacks: true
 
   engine = aether.esperEngine
   #console.log JSON.stringify(aether.ast, null, '  ')
@@ -141,17 +145,17 @@ makeYieldFilter = (aether) -> (engine) ->
           if not top.didYield
             return true
 
+  if aether._shouldYield
+    yieldValue = aether._shouldYield
+    aether._shouldYield = false
+    frame_stack[1].didYield = true if frame_stack[1].type is 'loop'
+    return true
+
   return false
 
 module.exports.createThread = (aether, fx) ->
   internalFx = esper.Value.getBookmark fx
-  engine = new esper.Engine aether.esperEngine.options
-  engine.realm = aether.esperEngine.realm
-  Evaluator = aether.esperEngine.evaluator.constructor  # Get internal reference to this constructor
-  # TODO: Make this more efficient at some point rather than retrofitting the old engine
-  #engine.evaluator = new Evaluator aether.esperEngine.realm, aether.esperEngine.evaluator.ast, aether.esperEngine.globalScope  # Correct? scope
-  engine.evaluator = new Evaluator aether.esperEngine.realm, aether.esperEngine.evaluator.ast, aether.esperEngine.evaluator.frames[0].scope  # Crazy debugging scope
-  engine.evaluator.frames = []
+  engine = aether.esperEngine.fork()
   upgradeEvaluator aether, engine.evaluator
   return engine.makeFunctionFromClosure internalFx, -> false  # TODO: pass makeYieldFilter(aether) and fix that to handle while-true yielding properly
 
