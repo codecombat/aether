@@ -70,7 +70,7 @@ module.exports.createFunction = (aether, code) ->
     messWithLoops = true
 
   unless aether.esperEngine
-    aether.esperEngine = new esper.Engine(strict: true, foreignObjectMode: 'smart')
+    aether.esperEngine = new esper.Engine(strict: aether.language.id isnt 'python', foreignObjectMode: 'smart')
 
   engine = aether.esperEngine
   #console.log JSON.stringify(aether.ast, null, '  ')
