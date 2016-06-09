@@ -266,7 +266,7 @@ getRuntimeHint = (options) ->
   # Use problemContext to add hints
   return unless context?
   hintCreator = new HintCreator context, languageID
-  hintCreator.getHint options.message, code, options.range
+  hintCreator.getHint code, options
 
 class HintCreator
   # Create hints for an error message based on a problem context
@@ -291,9 +291,11 @@ class HintCreator
       else new RegExp "this\\.(\\w+)\\("
     @context = context ? {}
 
-  getHint: (msg, code, range) ->
+  getHint: (code, {message, range, error, aether}) ->
     return unless @context?
-    if (missingMethodMatch = msg.match(/has no method '(.*?)'/)) or msg.match(/is not a function/) or msg.match(/has no method/)
+    if error.code is 'UndefinedVariable' and error.when is 'write' and aether.language.id is 'javascript'
+      return "Missing `var`. Use `var #{error.ident} =` to make a new variable."
+    if (missingMethodMatch = message.match(/has no method '(.*?)'/)) or message.match(/is not a function/) or message.match(/has no method/)
       # NOTE: We only get this for valid thisValue and parens: self.blahblah()
       # NOTE: We get different error messages for this based on javascript engine:
       # Chrome: 'undefined is not a function'
@@ -307,9 +309,9 @@ class HintCreator
         missingMethodMatch = @methodRegex.exec codeSnippet
         target = missingMethodMatch[1] if missingMethodMatch?
       hint = if target? then @getNoFunctionHint target
-    else if missingReference = msg.match /([^\s]+) is not defined/
+    else if missingReference = message.match /([^\s]+) is not defined/
       hint = @getReferenceErrorHint missingReference[1]
-    else if missingProperty = msg.match /Cannot (?:read|call) (?:property|method) '([\w]+)' of (?:undefined|null)/
+    else if missingProperty = message.match /Cannot (?:read|call) (?:property|method) '([\w]+)' of (?:undefined|null)/
       # Chrome: "Cannot read property 'moveUp' of undefined"
       # TODO: Firefox: "tmp5 is undefined"
       hint = @getReferenceErrorHint missingProperty[1]
