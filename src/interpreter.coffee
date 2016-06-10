@@ -72,7 +72,7 @@ module.exports.createFunction = (aether, code) ->
   unless aether.esperEngine
     aether.esperEngine = new esper.Engine
       strict: aether.language.id isnt 'python'
-      foreignObjectMode: 'smart'
+      foreignObjectMode: if aether.options.protectAPI then 'smart' else 'link'
       extraErrorInfo: true
       addExtraErrorInfoToStacks: true
 
@@ -122,7 +122,7 @@ makeYieldFilter = (aether) -> (engine) ->
   #console.log "----"
 
   top = frame_stack[0]
-  
+
   if top.type is 'loop'
     if frame_stack[1].ast.type is 'WhileStatement' and frame_stack[1].ast.test.type is 'Literal'
       if aether.whileLoopMarker?
