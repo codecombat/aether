@@ -157,7 +157,7 @@ module.exports.createThread = (aether, fx) ->
   internalFx = esper.Value.getBookmark fx
   engine = aether.esperEngine.fork()
   upgradeEvaluator aether, engine.evaluator
-  return engine.makeFunctionFromClosure internalFx, -> false  # TODO: pass makeYieldFilter(aether) and fix that to handle while-true yielding properly
+  return engine.makeFunctionFromClosure internalFx, makeYieldFilter(aether)
 
 module.exports.upgradeEvaluator = upgradeEvaluator = (aether, evaluator) ->
   executionCount = 0
