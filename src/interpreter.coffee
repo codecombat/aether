@@ -74,7 +74,6 @@ module.exports.createFunction = (aether, code) ->
       strict: aether.language.id isnt 'python'
       foreignObjectMode: if aether.options.protectAPI then 'smart' else 'link'
       extraErrorInfo: true
-      addExtraErrorInfoToStacks: true
 
   engine = aether.esperEngine
   #console.log JSON.stringify(aether.ast, null, '  ')
