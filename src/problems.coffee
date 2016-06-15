@@ -125,15 +125,11 @@ extractTranspileErrorDetails = (options) ->
     when 'filbert'
       if error.loc
         columnOffset = 0
-        columnOffset++ while originalLines[lineOffset - 2][columnOffset] is ' '
         # filbert lines are 1-based, columns are 0-based
         row = error.loc.line - lineOffset - 1
         col = error.loc.column - columnOffset
         start = ranges.rowColToPos(row, col, code, codePrefix)
         end = ranges.rowColToPos(row, col + error.raisedAt - error.pos, code, codePrefix)
-        # Remove per-row indents
-        start.ofs -= row * 4
-        end.ofs -= row * 4
         options.range = [start, end]
     when 'iota'
       null

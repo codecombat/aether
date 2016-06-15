@@ -49,7 +49,7 @@ updateState = (aether, evaluator) ->
           variables = {}
           for s in [(frame_stack.length - 2) .. 0]
             p = frame_stack[s]
-            continue if not p.scope
+            continue unless p and p.scope
             for n in Object.keys(p.scope.object.properties)
               continue if n[0] is '_'
               variables[n] = p.value.debugString if p.value
@@ -87,12 +87,29 @@ module.exports.createFunction = (aether, code) ->
 
   if aether.language.injectCode?
     engine.evalASTSync(aether.language.injectCode)
+  else
+    engine.evalSync('') #Force context to be created
 
   for name in Object.keys addedGlobals
     engine.addGlobal(name, addedGlobals[name])
 
+  upgradeEvaluator aether, engine.evaluator
+
   try
-    engine.evalASTSync(aether.ast)
+    if aether.language.usesFunctionWrapping()
+      if aether.options.yieldConditionally
+        fx = engine.fetchFunction fxName, makeYieldFilter(aether)
+      else if aether.options.yieldAutomatically
+        fx = engine.fetchFunction fxName, (engine) -> true
+      else
+        fx = engine.fetchFunctionSync fxName
+    else
+      if aether.options.yieldConditionally
+        fx = engine.functionFromAST aether.ast, makeYieldFilter(aether)
+      else if aether.options.yieldAutomatically
+        fx = engine.functionFromAST aether.ast, (engine) -> true
+      else
+        fx = engine.functionFromASTSync aether.ast
   catch error
     console.log 'Esper: error parsing AST. Returning empty function.', error.message
     if aether.language.id is 'javascript'
@@ -103,21 +120,13 @@ module.exports.createFunction = (aether, code) ->
     engine.evalASTSync emptyAST
   #console.log require('escodegen').generate(aether.ast)
 
-  upgradeEvaluator aether, engine.evaluator
 
-  x = 0
 
-  if aether.options.yieldConditionally
-    fx = engine.fetchFunction fxName, makeYieldFilter(aether)
-  else if aether.options.yieldAutomatically
-    fx = engine.fetchFunction fxName, (engine) -> true
-  else
-    fx = engine.fetchFunctionSync fxName
 
   return fx
 
-makeYieldFilter = (aether) -> (engine) ->
-  frame_stack = engine.evaluator.frames
+makeYieldFilter = (aether) -> (engine, evaluator) ->
+  frame_stack = evaluator.frames
   #console.log x.type + " " + x.ast?.type for x in frame_stack
   #console.log "----"
 

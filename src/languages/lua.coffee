@@ -57,11 +57,10 @@ module.exports = class Lua extends Language
 
     lintProblems
 
+  usesFunctionWrapping: () -> false
 
   wrapResult: (ast, name, params) ->
-    params = ({type: 'Identifier', name: arg} for arg in params)
-    ast = {type: "Program", body:[{type: "FunctionDeclaration", id: {type: "Identifier", name: name or 'foo'}, params: params, body: ast}]}
-    ast.body[0].body.body.unshift {"type": "VariableDeclaration","declarations": [
+    ast.body.unshift {"type": "VariableDeclaration","declarations": [
          { "type": "VariableDeclarator", "id": {"type": "Identifier", "name": "self" },"init": {"type": "ThisExpression"} }
       ],"kind": "var", "userCode": false}
     ast

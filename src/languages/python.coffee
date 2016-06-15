@@ -78,7 +78,7 @@ module.exports = class Python extends Language
     problems = []
 
     try
-      ast = parserHolder.parser.parse rawCode, locations: true, ranges: true
+      ast = parserHolder.parser.parse rawCode, locations: true, ranges: true, allowReturnOutsideFunction: true
 
       # Check for empty loop
       traversal.walkASTCorrect ast, (node) =>
@@ -126,14 +126,7 @@ module.exports = class Python extends Language
 
     problems
 
-  # Wrap the user code in a function. Store @wrappedCodePrefix and @wrappedCodeSuffix.
-  wrap: (rawCode, aether) ->
-    @wrappedCodePrefix ?="""
-    def #{aether.options.functionName or 'foo'}(#{aether.options.functionParameters.join(', ')}):
-    \n"""
-    @wrappedCodeSuffix ?= "\n"
-    indentedCode = (@indent + line for line in rawCode.split '\n').join '\n'
-    @wrappedCodePrefix + indentedCode + @wrappedCodeSuffix
+  usesFunctionWrapping: () -> false
 
   removeWrappedIndent: (range) ->
     # Assumes range not in @wrappedCodePrefix
@@ -146,7 +139,7 @@ module.exports = class Python extends Language
 
   # Using a third-party parser, produce an AST in the standardized Mozilla format.
   parse: (code, aether) ->
-    ast = parserHolder.parser.parse code, {locations: false, ranges: true}
+    ast = parserHolder.parser.parse code, {locations: false, ranges: true, allowReturnOutsideFunction: true}
     selfToThis ast
     ast
 
@@ -175,7 +168,7 @@ module.exports = class Python extends Language
     result
 
   selfToThis = (ast) ->
-    ast.body[0].body.body.unshift {"type": "VariableDeclaration","declarations": [{ "type": "VariableDeclarator", "id": {"type": "Identifier", "name": "self" },"init": {"type": "ThisExpression"} }],"kind": "var", "userCode": false}  # var self = this;
+    ast.body.unshift {"type": "VariableDeclaration","declarations": [{ "type": "VariableDeclarator", "id": {"type": "Identifier", "name": "self" },"init": {"type": "ThisExpression"} }],"kind": "var", "userCode": false}  # var self = this;
     ast
 
   setupInterpreter: (esper) ->

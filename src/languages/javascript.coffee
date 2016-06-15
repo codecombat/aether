@@ -144,13 +144,7 @@ module.exports = class JavaScript extends Language
     beautified = escodegen.generate ast, {comment: true, parse: esprima.parse}
     beautified
 
-  # Wrap the user code in a function. Store @wrappedCodePrefix and @wrappedCodeSuffix.
-  wrap: (rawCode, aether) ->
-    @wrappedCodePrefix ?="""
-    function #{aether.options.functionName or 'foo'}(#{aether.options.functionParameters.join(', ')}) {
-    """
-    @wrappedCodeSuffix ?= "\n}"
-    @wrappedCodePrefix + rawCode + @wrappedCodeSuffix
+  usesFunctionWrapping: () -> false
 
   # Hacky McHack step for things we can't easily change via AST transforms (which preserve statement ranges).
   # TODO: Should probably refactor and get rid of this soon.
@@ -164,10 +158,13 @@ module.exports = class JavaScript extends Language
   # Using a third-party parser, produce an AST in the standardized Mozilla format.
   parse: (code, aether) ->
     # loc: https://github.com/codecombat/aether/issues/71
-    ast = esprima.parse code, {range: true, loc: true}
+    ast = esprima.parse code, {range: true, loc: true, tolerant: true}
+    errors = []
+    if ast.errors
+      errors = (x for x in ast.errors when x.description isnt 'Illegal return statement')
+      delete ast.errors
 
-    if ast? and ast.body.length isnt 1
-      throw new SyntaxError('You seem to have code outside your function. Are your { and } braces matched?');
+    throw errors[0] if errors[0]
     ast
 
   # Optional: if parseDammit() is implemented, then if parse() throws an error, we'll try again using parseDammit().
