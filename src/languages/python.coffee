@@ -48,7 +48,6 @@ module.exports = class Python extends Language
     rangeIndex = 0
     lines = rawCode.split '\n'
     for line, lineNumber in lines
-      rangeIndex += @wrappedCodeIndentLen # + 4 for future wrapped indent
       if line.match(/^\s*loop\b/, "") and lineNumber < lines.length - 1
         start = line.indexOf 'loop'
         end = start + 4
@@ -131,10 +130,6 @@ module.exports = class Python extends Language
   removeWrappedIndent: (range) ->
     # Assumes range not in @wrappedCodePrefix
     range = _.cloneDeep range
-    range[0].ofs -= @wrappedCodeIndentLen * (range[0].row + 1)
-    range[0].col -= @wrappedCodeIndentLen
-    range[1].ofs -= @wrappedCodeIndentLen * (range[1].row + 1)
-    range[1].col -= @wrappedCodeIndentLen
     range
 
   # Using a third-party parser, produce an AST in the standardized Mozilla format.
