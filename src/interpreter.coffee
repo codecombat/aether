@@ -85,7 +85,7 @@ module.exports.createFunction = (aether, code) ->
   aether.language.setupInterpreter engine
 
   if aether.language.injectCode?
-    engine.evalASTSync(aether.language.injectCode)
+    engine.evalASTSync(aether.language.injectCode, {nonUserCode: true})
   else
     engine.evalSync('') #Force context to be created
 
@@ -132,20 +132,16 @@ makeYieldFilter = (aether) -> (engine, evaluator) ->
   top = frame_stack[0]
 
   if top.type is 'loop'
-    if frame_stack[1].ast.type is 'WhileStatement' and frame_stack[1].ast.test.type is 'Literal'
-      if aether.whileLoopMarker?
-        if not top.marked
-          top.marked = true
-          top.mark = aether.whileLoopMarker()
-        else if not top.ast?
-          currentMark = aether.whileLoopMarker()
-          if currentMark is top.mark
-            #console.log "[Aether] Forcing while-true loop to yield."
-            top.mark = currentMark + 1
-            return true
-          else
-            #console.log "[Aether] Loop Avoided, mark #{top.mark} isnt #{currentMark}"
-            top.mark = currentMark
+    if top.srcAst.type is 'WhileStatement' and top.srcAst.test.type is 'Literal'
+      if aether.whileLoopMarker? and top.srcAst.test is top.ast
+        currentMark = aether.whileLoopMarker()
+        if currentMark is top.mark
+          #console.log "[Aether] Forcing while-true loop to yield, repeat #{currentMark}"
+          top.mark = currentMark + 1
+          return true
+        else
+          #console.log "[Aether] Loop Avoided, mark #{top.mark} isnt #{currentMark}"
+          top.mark = currentMark
       else
         if not top.marked
           top.marked = true
