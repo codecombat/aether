@@ -74,6 +74,7 @@ module.exports.createFunction = (aether, code) ->
       strict: aether.language.id isnt 'python'
       foreignObjectMode: if aether.options.protectAPI then 'smart' else 'link'
       extraErrorInfo: true
+      yieldPower: 2
 
   engine = aether.esperEngine
   #console.log JSON.stringify(aether.ast, null, '  ')
@@ -124,16 +125,18 @@ module.exports.createFunction = (aether, code) ->
 
   return fx
 
-makeYieldFilter = (aether) -> (engine, evaluator) ->
+makeYieldFilter = (aether) -> (engine, evaluator, e) ->
+
   frame_stack = evaluator.frames
   #console.log x.type + " " + x.ast?.type for x in frame_stack
   #console.log "----"
 
   top = frame_stack[0]
 
-  if top.type is 'loop'
+
+  if e? and e.type is 'event' and e.event is 'loopBodyStart'
     if top.srcAst.type is 'WhileStatement' and top.srcAst.test.type is 'Literal'
-      if aether.whileLoopMarker? and top.srcAst.test is top.ast
+      if aether.whileLoopMarker?
         currentMark = aether.whileLoopMarker()
         if currentMark is top.mark
           #console.log "[Aether] Forcing while-true loop to yield, repeat #{currentMark}"
@@ -142,12 +145,6 @@ makeYieldFilter = (aether) -> (engine, evaluator) ->
         else
           #console.log "[Aether] Loop Avoided, mark #{top.mark} isnt #{currentMark}"
           top.mark = currentMark
-      else
-        if not top.marked
-          top.marked = true
-        else if not top.ast?
-          if not top.didYield
-            return true
 
   if aether._shouldYield
     yieldValue = aether._shouldYield
@@ -165,10 +162,10 @@ module.exports.createThread = (aether, fx) ->
 
 module.exports.upgradeEvaluator = upgradeEvaluator = (aether, evaluator) ->
   executionCount = 0
-  evaluator.instrument = ->
+  evaluator.instrument = (evalu, evt) ->
     if ++executionCount > aether.options.executionLimit
       throw new TypeError 'Statement execution limit reached'
-    updateState aether, evaluator
+    updateState aether, evalu, evt
 
 
 emptyAST = {"type":"Program","body":[{"type":"FunctionDeclaration","id":{"type":"Identifier","name":"plan","range":[9,13],"loc":{"start":{"line":1,"column":9},"end":{"line":1,"column":13}},"originalRange":{"start":{"ofs":-8,"row":0,"col":-8},"end":{"ofs":-4,"row":0,"col":-4}}},"params":[],"defaults":[],"body":{"type":"BlockStatement","body":[{"type":"VariableDeclaration","declarations":[{"type":"VariableDeclarator","id":{"type":"Identifier","name":"hero"},"init":{"type":"ThisExpression"}}],"kind":"var","userCode":false}],"range":[16,19],"loc":{"start":{"line":1,"column":16},"end":{"line":2,"column":1}},"originalRange":{"start":{"ofs":-1,"row":0,"col":-1},"end":{"ofs":2,"row":1,"col":1}}},"rest":null,"generator":false,"expression":false,"range":[0,19],"loc":{"start":{"line":1,"column":0},"end":{"line":2,"column":1}},"originalRange":{"start":{"ofs":-17,"row":0,"col":-17},"end":{"ofs":2,"row":1,"col":1}}}],"range":[0,19],"loc":{"start":{"line":1,"column":0},"end":{"line":2,"column":1}},"originalRange":{"start":{"ofs":-17,"row":0,"col":-17},"end":{"ofs":2,"row":1,"col":1}}}
