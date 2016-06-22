@@ -235,7 +235,11 @@ module.exports = class Aether
 
   getStatementCount: ->
     count = 0
-    root = @ast.body[0].body # We assume the 'code' is one function hanging inside the program.
+    if @language.usesFunctionWrapping()
+      root = @ast.body[0].body # We assume the 'code' is one function hanging inside the program.
+    else
+      root = @ast.body
+
     #console.log(JSON.stringify root, null, '  ')
     traversal.walkASTCorrect root, (node) ->
       return if not node.type?
