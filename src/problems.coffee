@@ -274,10 +274,19 @@ class HintCreator
       when 'python' then 'self'
       when 'cofeescript' then '@'
       else 'this'
-    @thisValueAccess = switch languageID
+    @realThisValueAccess = switch languageID
       when 'python' then 'self.'
       when 'cofeescript' then '@'
       else 'this.'
+
+    # We use `hero` as `this` in CodeCombat now, so all `this` related hints
+    # we get in the problem context should really refrence `hero`
+    @thisValueAccess = switch languageID
+      when 'python' then 'hero.'
+      when 'cofeescript' then 'hero.'
+      when 'lua' then 'hero:'
+      else 'hero.'
+
     @newVariableTemplate = switch languageID
       when 'javascript' then _.template('var <%= name %> = ')
       else _.template('<%= name %> = ')
@@ -285,12 +294,32 @@ class HintCreator
       when 'python' then new RegExp "self\\.(\\w+)\\s*\\("
       when 'cofeescript' then new RegExp "@(\\w+)\\s*\\("
       else new RegExp "this\\.(\\w+)\\("
+
     @context = context ? {}
 
   getHint: (code, {message, range, error, aether}) ->
     return unless @context?
     if error.code is 'UndefinedVariable' and error.when is 'write' and aether.language.id is 'javascript'
       return "Missing `var`. Use `var #{error.ident} =` to make a new variable."
+
+    if error.code is "CallNonFunction"
+      ast = error.targetAst
+      if ast.type is "MemberExpression" and not ast.computed
+        extra = ""
+        target = ast.property.name
+        if error.candidates?
+          candidatesLow = (s.toLowerCase() for s in error.candidates)
+          idx = candidatesLow.indexOf(target.toLowerCase())
+          if idx isnt -1
+            newName = error.targetName.replace target, error.candidates[idx]
+            return "Look out for capitalization: `#{error.targetName}` should be `#{newName}`."
+          sm = @getScoreMatch target, [{candidates: error.candidates, msgFormatFn: (match) -> match}]
+          if sm?
+            newName = error.targetName.replace target, sm
+            return "Look out for spelling issues: did you mean `#{newName}` instead of `#{error.targetName}`?"
+        
+        return "`#{ast.object.srcName}` has no method `#{ast.property.name}`."
+
     if (missingMethodMatch = message.match(/has no method '(.*?)'/)) or message.match(/is not a function/) or message.match(/has no method/)
       # NOTE: We only get this for valid thisValue and parens: self.blahblah()
       # NOTE: We get different error messages for this based on javascript engine:
