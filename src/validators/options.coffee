@@ -27,7 +27,7 @@ module.exports = (options) ->
         type: 'string'
         description: "Input language"
         minLength:1
-        'enum': ['javascript', 'coffeescript', 'python', 'lua', 'java']
+        'enum': ['javascript', 'coffeescript', 'python', 'lua', 'java', 'html']
       languageVersion:
         type: ['string', 'null', 'undefined']  # TODO: remove option soon
       problems:
@@ -56,7 +56,7 @@ module.exports = (options) ->
       includeStyle:
         type: 'boolean'
         default: true
-      protectAPI:  # TODO: remove option soon
+      protectAPI:
         type: ['boolean', 'null', 'undefined']
         default: false
       simpleLoops:
