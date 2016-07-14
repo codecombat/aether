@@ -18,6 +18,7 @@ module.exports = (grunt) ->
           {src: 'build/coffeescript.js', dest: 'build/coffeescript.min.js'}
           {src: 'build/javascript.js', dest: 'build/javascript.min.js'}
           {src: 'build/java.js', dest: 'build/java.min.js'}
+          {src: 'build/html.js', dest: 'build/html.min.js'}
         ]
 
     coffeelint:
@@ -84,7 +85,7 @@ module.exports = (grunt) ->
           ignore: ['lodash', 'filbert',
             'filbert/filbert_loose', 'lua2js',
             'coffee-script-redux', 'jshint', 'cashew-js',
-            'esper.js']
+            'esper.js', 'deku', 'htmlparser2']
       parsers:
         files: [
           {src: 'parsers/python.js', dest: 'build/python.js'}
@@ -92,6 +93,7 @@ module.exports = (grunt) ->
           {src: 'parsers/coffeescript.js', dest: 'build/coffeescript.js'}
           {src: 'parsers/javascript.js', dest: 'build/javascript.js'}
           {src: 'parsers/java.js', dest: 'build/java.js'}
+          {src: 'parsers/html.js', dest: 'build/html.js'}
         ]
       # We're not using jasmine but now jasmine_node,
       # so we don't need to browserify the tests
