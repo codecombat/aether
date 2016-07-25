@@ -48,6 +48,14 @@ module.exports = class Aether
 
     @setLanguage @options.language
     @allGlobals = @options.globals.concat protectBuiltins.builtinNames, Object.keys(@language.runtimeGlobals)  # After setLanguage, which can add globals.
+    #if statementStack[0]?
+    #  rng = statementStack[0].originalRange
+    #  aether.lastStatementRange = [rng.start, rng.end] if rng
+
+    Object.defineProperty @, 'lastStatementRange',
+      get: () ->
+        rng = @esperEngine?.evaluator?.lastASTNodeProcessed?.originalRange
+        return [rng.start, rng.end] if rng
 
   # Language can be changed after construction. (It will reset Aether's state.)
   setLanguage: (language) ->

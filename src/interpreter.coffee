@@ -31,10 +31,6 @@ updateState = (aether, evaluator) ->
   astStack = (x.ast for x in frame_stack when x.ast?)
   statementStack = ( x for x in astStack when isStatement x.type )
 
-  if statementStack[0]?
-    rng = statementStack[0].originalRange
-    aether.lastStatementRange = [rng.start, rng.end] if rng
-
   if top.ast?
     ++aether.metrics.callsExecuted if aether.options.includeMetrics and top.ast.type == 'CallExpression'
 
