@@ -18,3 +18,4 @@ module.exports = defaults =
   includeStyle: true
   protectBuiltins: true
   protectAPI: false
+  debug: false

@@ -10,7 +10,7 @@ try {
 	insideAether = false;
 }
 
-describe('Java Milestones', function() {
+xdescribe('Java Milestones', function() {
 
 if ( false ) {
 	var x = describe;

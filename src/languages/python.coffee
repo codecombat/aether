@@ -22,7 +22,7 @@ module.exports = class Python extends Language
       parserHolder.parser = self?.aetherFilbert ? require 'filbert'
       unless parserHolder.parser.pythonRuntime
         console.error "Couldn't import Python runtime; our filbert import only gave us", parserHolder.parser
-    parserHolder.parserLoose ?= self?.aetherFilbertLoose ? require 'filbert/filbert_loose'
+    parserHolder.parserLoose ?= self?.aetherFilbertLoose ? require 'filbert'
     @runtimeGlobals =
       __pythonRuntime: parserHolder.parser.pythonRuntime
 

@@ -53,7 +53,7 @@ module.exports = class Aether
     #  aether.lastStatementRange = [rng.start, rng.end] if rng
 
     Object.defineProperty @, 'lastStatementRange',
-      get: () ->
+      get: () -> 
         rng = @esperEngine?.evaluator?.lastASTNodeProcessed?.originalRange
         return [rng.start, rng.end] if rng
 

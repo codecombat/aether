@@ -74,3 +74,6 @@ module.exports = (options) ->
       useInterpreter:  # TODO: remove option soon
         type: ['boolean', 'null', 'undefined']
         default: true
+      debug:
+        type: ['boolean']
+        default: false

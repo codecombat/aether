@@ -1,6 +1,6 @@
 Aether = require '../aether'
 
-describe "Java test suite", ->
+xdescribe "Java test suite", ->
   describe "Java Basics", ->
     aether = new Aether language: "java"
     it "05 - JAVA - return 1000", ->

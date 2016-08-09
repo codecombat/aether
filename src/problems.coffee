@@ -216,10 +216,6 @@ getTranspileHint = (msg, context, languageID, code, range, simpleLoops=false) ->
 # Runtime Errors
 
 extractRuntimeErrorDetails = (options) ->
-  # NOTE: lastStatementRange set via instrumentation.logStatementStart(originalNode.originalRange)
-  options.range ?= options.aether?.lastStatementRange
-
-
   if error = options.error
     options.kind ?= error.name  # I think this will pick up [Error, EvalError, RangeError, ReferenceError, SyntaxError, TypeError, URIError, DOMException]
 
@@ -227,10 +223,14 @@ extractRuntimeErrorDetails = (options) ->
       options.message = error.toString()
     else
       options.message = error.message or error.toString()
-
+    console.log("Extracting", error)
     options.hint = error.hint or getRuntimeHint options
     options.level ?= error.level
     options.userInfo ?= error.userInfo
+
+  # NOTE: lastStatementRange set via instrumentation.logStatementStart(originalNode.originalRange)
+  options.range ?= options.aether?.lastStatementRange
+
 
   if options.range?
     lineNumber = options.range[0].row + 1

@@ -71,7 +71,7 @@ describe "CS test Suite!", ->
       expect(aether.run()).toEqual 100
       expect(aether.problems.errors).toEqual []
 
-    xit "Should Map", ->
+    it "Should Map", ->
       # See: https://github.com/codecombat/aether/issues/97
       code = "return (num for num in [10..1])"
 

@@ -71,6 +71,7 @@ module.exports.createFunction = (aether, code) ->
       foreignObjectMode: if aether.options.protectAPI then 'smart' else 'link'
       extraErrorInfo: true
       yieldPower: 2
+      debug: aether.options.debug
 
   engine = aether.esperEngine
   #console.log JSON.stringify(aether.ast, null, '  ')
@@ -121,6 +122,10 @@ module.exports.createFunction = (aether, code) ->
 
   return fx
 
+debugDumper = _.debounce (evaluator) ->
+  evaluator.dumpProfilingInformation()
+,5000
+
 makeYieldFilter = (aether) -> (engine, evaluator, e) ->
 
   frame_stack = evaluator.frames
@@ -159,6 +164,7 @@ module.exports.createThread = (aether, fx) ->
 module.exports.upgradeEvaluator = upgradeEvaluator = (aether, evaluator) ->
   executionCount = 0
   evaluator.instrument = (evalu, evt) ->
+    debugDumper evaluator
     if ++executionCount > aether.options.executionLimit
       throw new TypeError 'Statement execution limit reached'
     updateState aether, evalu, evt
