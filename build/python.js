@@ -332,6 +332,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	            args = args || [];
 	            self["$d"] = new Sk.builtin.dict([]);
+	            self["$d"].mp$ass_subscript(new Sk.builtin.str("__dict__"), self["$d"]);
 
 	            if (klass.prototype.tp$base !== undefined) {
 	                if (klass.prototype.tp$base.sk$klass) {
@@ -840,14 +841,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (other.ob$type != Sk.builtin.type) {
 	        return undefined;
 	    }
-
 	    if (!this["$r"] || !other["$r"]) {
 	        return undefined;
 	    }
-
-	    r1 = this["$r"]();
-	    r2 = other["$r"]();
-
+	    r1 = new Sk.builtin.str(this["$r"]().v.slice(1,6));
+	    r2 = new Sk.builtin.str(other["$r"]().v.slice(1,6));
+	    if (this["$r"]().v.slice(1,6) !== "class") {
+	        r1 = this["$r"]();
+	        r2 = other["$r"]();
+	    }
 	    return r1.tp$richcompare(r2, op);
 	};
 
@@ -1907,7 +1909,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return new Sk.builtin.object();
 	    }
 
-
 	    return this;
 	};
 
@@ -1958,14 +1959,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	    // otherwise, look in the type for a descr
 	    if (descr !== undefined && descr !== null && descr.ob$type !== undefined) {
 	        f = descr.ob$type.tp$descr_get;
+	        if (!(f) && descr["__get__"]) {
+	            f = descr["__get__"];
+	            return Sk.misceval.callsimOrSuspend(f, descr, this, Sk.builtin.none.none$);
+	        }
 	        // todo;
-	        //if (f && descr.tp$descr_set) // is a data descriptor if it has a set
-	        //return f.call(descr, this, this.ob$type);
-	    }
+	        // if (f && descr.tp$descr_set) // is a data descriptor if it has a set
+	        // return f.call(descr, this, this.ob$type);
 
-	    if (f) {
-	        // non-data descriptor
-	        return f.call(descr, this, this.ob$type);
+	        if (f) {
+	            // non-data descriptor
+	            return f.call(descr, this, this.ob$type);
+	        }
 	    }
 
 	    if (descr !== undefined) {
@@ -1985,10 +1990,29 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var objname = Sk.abstr.typeName(this);
 	    var pyname;
 	    var dict;
+	    var tp = this.ob$type;
+	    var descr;
+	    var f;
+
 	    goog.asserts.assert(typeof name === "string");
-	    // todo; lots o' stuff
+	    goog.asserts.assert(tp !== undefined, "object has no ob$type!");
 
 	    dict = this["$d"] || this.constructor["$d"];
+
+	    descr = Sk.builtin.type.typeLookup(tp, name);
+
+	    // otherwise, look in the type for a descr
+	    if (descr !== undefined && descr !== null && descr.ob$type !== undefined) {
+	        //f = descr.ob$type.tp$descr_set;
+	        if (descr["__set__"]) {
+	            f = descr["__set__"];
+	            Sk.misceval.callsimOrSuspend(f, descr, this, value);
+	            return;
+	        }
+	        // todo;
+	        //if (f && descr.tp$descr_set) // is a data descriptor if it has a set
+	        //return f.call(descr, this, this.ob$type);
+	    }
 
 	    if (dict.mp$ass_subscript) {
 	        pyname = new Sk.builtin.str(name);
@@ -2161,6 +2185,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 	Sk.builtin.hashCount = 1;
+	Sk.builtin.idCount = 1;
 
 	/**
 	 * Return the hash value of this instance.
@@ -2545,7 +2570,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (obj == null) {
 	        return this;
 	    }
-	    return new Sk.builtin.method(this, obj);
+	    return new Sk.builtin.method(this, obj, objtype);
 	};
 	Sk.builtin.func.prototype.tp$call = function (args, kw) {
 	    var j;
@@ -6150,7 +6175,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	                found: Sk.nameForToken(type),
 	                found_val: value,
 	                inside: Sk.nameForToken(tp.node.type),
-	                node: tp.node
+	                node: tp.node,
+	                parent: this.stack.length > 1 ? this.stack[this.stack.length - 2].node : undefined
 	            };
 	            var reason = "expected " + ar.join(', ') + " but found " + extra.found + " while parsing " + extra.inside;
 
@@ -11085,7 +11111,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 3 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
+
+	var Sk = __webpack_require__(1);
 
 	function splat(e) {
 		console.log("GOT ERROR!");
@@ -11125,7 +11153,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	function friendlyString(s) {
 		switch (s) {
 		case 'if_stmt': return 'if statement';
+		case 'while_stmt': return 'while statement';
+		default: return '?' + s + '?';
 		} 
+	}
+
+	function nodeToType(n) {
+		var type = Sk.nameForToken(n.type);
+		if ( type === 'suite' ) return nodeToType(n.children[0]);
+		return friendlyString(type);
 	}
 
 	function makeErrorFriendly(e) {
@@ -11134,7 +11170,8 @@ return /******/ (function(modules) { // webpackBootstrap
 			if ( e.extra.expected.indexOf('T_COLON') !== -1 ) {
 				//We might be missing a colon.
 				if ( e.extra.found == 'T_NEWLINE' ) {
-					return "Need a `:` on the end of the line following `" + e.extra.found_val + "`.";
+					var after = (e.context && e.context[2] ? e.context[2] : e.extra.found_val).replace(/\s+$/,'');
+					return "Need a `:` on the end of the line following `" + after + "`.";
 				}
 				if ( e.extra.found == 'T_EQUAL' ) {
 					return "Can't assign to a variable within the condition of an " + friendlyString(e.extra.inside);
@@ -11150,7 +11187,8 @@ return /******/ (function(modules) { // webpackBootstrap
 			}
 
 			if ( e.extra.expected.indexOf('T_INDENT') !== -1 ) {
-				return 'Expected an indented code block.  Use an indented `pass` above this line to keep the block empty';
+				var name  = nodeToType(e.extra.parent || e.extra.node);
+				return 'Empty ' + name + '. Put 4 spaces in front of statements inside the ' + name + '.';
 			}
 
 			if ( e.extra.found === 'T_NAME' ) {
