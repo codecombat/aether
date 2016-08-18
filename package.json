@@ -28,7 +28,7 @@
     "esper.js": "^0.1.0",
     "esprima": "^2.7.1",
     "estraverse": "~1.5.0",
-    "filbert": "~0.1.17",
+    "skulpty": "git://github.com/codecombat/skulpty",
     "htmlparser2": "^3.9.1",
     "jshint": "~2.3.0",
     "lodash": "~2.4.1",

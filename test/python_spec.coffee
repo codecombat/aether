@@ -1,6 +1,6 @@
 Aether = require '../aether'
 
-list = require('filbert').pythonRuntime.utils.createList
+list = require('skulpty').pythonRuntime.utils.createList
 
 describe "Python test suite", ->
   describe "Basics", ->

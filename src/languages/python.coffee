@@ -19,10 +19,10 @@ module.exports = class Python extends Language
     unless parserHolder.parser?.pythonRuntime?
       if parserHolder.parser?
         console.log 'Aether python parser ONLY missing pythonRuntime'
-      parserHolder.parser = self?.aetherFilbert ? require 'filbert'
+      parserHolder.parser = self?.aetherFilbert ? require 'skulpty'
       unless parserHolder.parser.pythonRuntime
         console.error "Couldn't import Python runtime; our filbert import only gave us", parserHolder.parser
-    parserHolder.parserLoose ?= self?.aetherFilbertLoose ? require 'filbert'
+    parserHolder.parserLoose ?= self?.aetherFilbertLoose ? require 'skulpty'
     @runtimeGlobals =
       __pythonRuntime: parserHolder.parser.pythonRuntime
 

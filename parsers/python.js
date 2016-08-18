@@ -1,2 +1,2 @@
-window.aetherFilbert = require('filbert');
-window.aetherFilbertLoose = require('filbert/filbert_loose');
+window.aetherFilbert = require('skulpty');
+window.aetherFilbertLoose = require('skulpty');

@@ -11073,6 +11073,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	function transformWhile(node, ctx) {
+		if ( node.orelse && node.orelse.length > 0 ) abort("else: statement for while unsupported.");
 		return {
 			type: "WhileStatement",
 			test: transform(node.test, ctx),
@@ -11833,9 +11834,7 @@ return /******/ (function(modules) { // webpackBootstrap
 });
 ;
 },{}],2:[function(require,module,exports){
+window.aetherFilbert = require('skulpty');
+window.aetherFilbertLoose = require('skulpty');
 
-},{}],3:[function(require,module,exports){
-window.aetherFilbert = require('filbert');
-window.aetherFilbertLoose = require('filbert/filbert_loose');
-
-},{"filbert":1,"filbert/filbert_loose":2}]},{},[3]);
+},{"skulpty":1}]},{},[2]);
