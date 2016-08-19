@@ -9991,7 +9991,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 	Sk.builtin.IndentationError = function(str, file, line, row, extra) {
-		var err = new SyntaxError('Indentation Error:' + str, file, line);
+		var err = new SyntaxError('Indentation Error: ' + str, file, line);
 		err.context = [[line, row], [line, row]];
 		err.extra = {
 		};
@@ -11200,6 +11200,25 @@ return /******/ (function(modules) { // webpackBootstrap
 						return '`elseif` should be shortened to `elif`';
 				} 
 			}
+
+			if ( e.extra.inside === 'trailer' ) {
+				//We are parsing either an arglist or a subscript.
+				if ( e.extra.expected.indexOf('T_RPAR') === 0 ) {
+					//Expected ), must be a arglsit;
+					return 'Function calls paramaters must be seperated by `,`s';
+				}
+			}
+
+			if ( e.extra.found === 'T_INDENT' ) {
+				if ( e.extra.expected.indexOf('stmt') !== -1 ) {
+					return 'No indent is needed here.';
+				}
+			}
+
+			if ( e.extra.expected.indexOf('subscriptlist') === 0 ) {
+				return "Malformed subscript";
+			}
+
 			return 'Unexpected token: ' + e.message;
 		}
 
