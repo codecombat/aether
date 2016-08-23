@@ -97,8 +97,8 @@ return /******/ (function(modules) { // webpackBootstrap
 		if ( n.children )
 		for ( var i = 0; i < n.children.length; ++i ) {
 			var r = decorate(n.children[i], code, offsets, options);
-			range[0] = Math.min(range[0], r[0]);
-			range[1] = Math.max(range[1], r[1]);
+			range[0] = Math.min(range[0], r[0]) + 1;
+			range[1] = Math.max(range[1], r[1]) + 1;
 		}
 
 		
@@ -10100,8 +10100,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function transform(node, ctx) {
 		//console.log(node.lineno, node.col_offset);
-		var result = dispatch(node, ctx);
-		result.range = node.range;
+		var result = dispatch(node, ctx);;
 		result.loc = node.loc;
 		result.str = node.str;
 		return result;
@@ -11154,6 +11153,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		switch (s) {
 		case 'if_stmt': return 'if statement';
 		case 'while_stmt': return 'while statement';
+		case 'funcdef': return 'function';
 		default: return '?' + s + '?';
 		} 
 	}
@@ -11172,9 +11172,11 @@ return /******/ (function(modules) { // webpackBootstrap
 				if ( e.extra.found == 'T_NEWLINE' ) {
 					var after = (e.context && e.context[2] ? e.context[2] : e.extra.found_val).replace(/\s+$/,'');
 					return "Need a `:` on the end of the line following `" + after + "`.";
-				}
-				if ( e.extra.found == 'T_EQUAL' ) {
-					return "Can't assign to a variable within the condition of an " + friendlyString(e.extra.inside);
+				} else if ( e.extra.found == 'T_NAME' ) {
+					var after = (e.context && e.context[2] ? e.context[2] : e.extra.found_val).replace(/\s+$/,'');
+					return "Need a `:` after `" + after + "`.";
+				} else if ( e.extra.found == 'T_EQUAL' ) {
+					return "Can't assign to a variable within the condition of an " + friendlyString(e.extra.inside) + ".  Did you mean to use `==` instead of `=`?";
 				}
 			}
 
