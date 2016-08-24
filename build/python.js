@@ -63,7 +63,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var defaultOptions = {
 		locations: true,
-		ranges: false,
+		ranges: true,
 		sippets: true,
 		filename: 'file.py',
 		useLet: false,
@@ -76,12 +76,14 @@ return /******/ (function(modules) { // webpackBootstrap
 			if ( offsets[i] > x ) break;
 			best = i;
 		}
-
-		return {line: best+2, column: x - ( best > 0 ? offsets[best] : 0) };
+		var off = best >= 0 ? offsets[best] : 0;
+		return {line: best+2, column: x - off, pos: x };
 	}
 
 	function locToRange(line, col, offsets) {
-		return (line < 2 ? 0 : offsets[line - 2]) + col;
+		var loff = 0;
+		if ( line > 2 && (line-2) < offsets.length ) loff = offsets[line-2];
+		return loff + col;
 	}
 
 	function decorate(n, code, offsets, options) {
@@ -92,16 +94,15 @@ return /******/ (function(modules) { // webpackBootstrap
 			numrange === numrange ? numrange : -Infinity
 		];
 		
-		if ( n.value ) range[1] += (n.value.length-1);
+		if ( n.value ) range[1] += (n.value.length);
 
 		if ( n.children )
 		for ( var i = 0; i < n.children.length; ++i ) {
 			var r = decorate(n.children[i], code, offsets, options);
-			range[0] = Math.min(range[0], r[0]) + 1;
-			range[1] = Math.max(range[1], r[1]) + 1;
+			range[0] = Math.min(range[0], r[0]);
+			range[1] = Math.max(range[1], r[1]);
 		}
 
-		
 		if ( options.ranges ) n.range = range;
 		if ( options.locations ) {
 			n.loc = {
@@ -126,7 +127,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		while ( true ) {
 			idx = code.indexOf("\n", idx+1);
 			if ( idx < 0 ) break;
-			lineOffsets.push(idx);
+			lineOffsets.push(idx+1);
 		}
 
 		try {
@@ -135,7 +136,7 @@ return /******/ (function(modules) { // webpackBootstrap
 			ast = Sk.astFromParse(parse.cst, options.filename, parse.flags);
 		} catch ( e ) {
 			if ( e.extra && e.extra.node ) decorate(e.extra.node, code, lineOffsets, options);
-			improveError(e, options);
+			improveError(e, options, code);
 			if ( e.loc ) {
 				e.pos = locToRange(e.loc.line, e.loc.column, lineOffsets);
 			}
@@ -3999,6 +4000,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    this.callback = callback;
 	    this.lnum = 0;
 	    this.parenlev = 0;
+	    this.parenstack = [];
 	    this.continued = false;
 	    this.namechars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_";
 	    this.numchars = "0123456789";
@@ -4267,7 +4269,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    if (this.contstr.length > 0) {
 	        if (!line) {
-	            throw new Sk.builtin.SyntaxError("EOF in multi-line string", this.filename, this.strstart[0], this.strstart[1], this.contline);
+	            throw new Sk.builtin.SyntaxError("EOF in multi-line string", this.filename, this.strstart[0], this.strstart[1], {
+	                kind: "STRING_EOF",
+	                line: this.contline
+	            });
 	        }
 	        this.endprog.lastIndex = 0;
 	        endmatch = this.endprog.test(line);
@@ -4370,7 +4375,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    else // continued statement
 	    {
 	        if (!line) {
-	            throw new Sk.builtin.SyntaxError("EOF in multi-line statement", this.filename, this.lnum, 0, line);
+	            throw new Sk.builtin.SyntaxError("EOF in multi-line statement", this.filename, this.lnum, 0, {
+	                kind: 'STATEMENT_EOF',
+	                parenlev: this.parenlev,
+	                parenstack: this.parenstack
+	            });
 	        }
 	        this.continued = false;
 	    }
@@ -4468,9 +4477,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	            else {
 	                if ('([{'.indexOf(initial) !== -1) {
 	                    this.parenlev += 1;
+	                    this.parenstack.push([initial, this.lnum, pos]);
 	                }
 	                else if (')]}'.indexOf(initial) !== -1) {
 	                    this.parenlev -= 1;
+	                    this.parenstack.pop();
 	                }
 	                if (this.callback(Sk.Tokenizer.Tokens.T_OP, token, spos, epos, line)) {
 	                    return 'done';
@@ -9978,7 +9989,8 @@ return /******/ (function(modules) { // webpackBootstrap
 		}
 
 		return '???:' + v;
-	}
+	};
+
 	Sk.builtin.str.prototype.valueOf = function() { return this.v; };
 	Sk.builtin.str.prototype.toString = function() { return this.v; };
 
@@ -9998,6 +10010,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		err.line = line;
 		return err;
 	};
+
 
 	module.exports = Sk;
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
@@ -10100,8 +10113,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function transform(node, ctx) {
 		//console.log(node.lineno, node.col_offset);
-		var result = dispatch(node, ctx);;
-		result.loc = node.loc;
+		var result = dispatch(node, ctx);
+		if ( node.range ) result.range = [node.range[0], node.range[1]];
+		if ( node.loc ) result.loc = node.loc;
 		result.str = node.str;
 		return result;
 	}
@@ -11126,7 +11140,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		}, '  '));
 	}
 
-	function improveError(e, options) {
+	function improveError(e, options, code) {
 		var r;
 		if ( e.context && e.context.length >0 ) {
 			r = e.context[0];	
@@ -11139,14 +11153,18 @@ return /******/ (function(modules) { // webpackBootstrap
 		}
 
 		if ( r ) {
-			e.loc = {line: r[0], column: r[1]};
-			e.line = r[0];
-			e.column = r[1];
+			setErrorPos(e, r[0], r[1]);
 		}
 
 		if ( options.friendlyErrors && e.extra ) {
-			e.message = makeErrorFriendly(e);
+			e.message = makeErrorFriendly(e, code);
 		}
+	}
+
+	function setErrorPos(e, line, col) {
+		e.loc = {line: line, column: col};
+		e.line = line;
+		e.column = col;
 	}
 
 	function friendlyString(s) {
@@ -11164,16 +11182,18 @@ return /******/ (function(modules) { // webpackBootstrap
 		return friendlyString(type);
 	}
 
-	function makeErrorFriendly(e) {
+	function makeErrorFriendly(e, code) {
 		//console.log("EX", e.message, e.extra);
 		if ( e.extra.kind == "DAG_MISS" ) {
 			if ( e.extra.expected.indexOf('T_COLON') !== -1 ) {
 				//We might be missing a colon.
+				var after = (e.context && e.context[2] ? e.context[2] : e.extra.found_val).replace(/\s+$/,'');
+				var lc = e.extra.node.children[e.extra.node.children.length-1];
+				if ( lc.value === 'else' ) after = 'else';
+
 				if ( e.extra.found == 'T_NEWLINE' ) {
-					var after = (e.context && e.context[2] ? e.context[2] : e.extra.found_val).replace(/\s+$/,'');
 					return "Need a `:` on the end of the line following `" + after + "`.";
 				} else if ( e.extra.found == 'T_NAME' ) {
-					var after = (e.context && e.context[2] ? e.context[2] : e.extra.found_val).replace(/\s+$/,'');
 					return "Need a `:` after `" + after + "`.";
 				} else if ( e.extra.found == 'T_EQUAL' ) {
 					return "Can't assign to a variable within the condition of an " + friendlyString(e.extra.inside) + ".  Did you mean to use `==` instead of `=`?";
@@ -11189,7 +11209,19 @@ return /******/ (function(modules) { // webpackBootstrap
 			}
 
 			if ( e.extra.expected.indexOf('T_INDENT') !== -1 ) {
-				var name  = nodeToType(e.extra.parent || e.extra.node);
+				var lc = e.extra.parent || e.extra.node;
+				var name  = nodeToType(lc);
+				if ( name === 'if statement' ) {
+					//Scan for the most recent part of the ifstatement.
+					for ( var i = 0; i < lc.children.length; ++i ) {
+						if ( ["if", "elif", "else"].indexOf(lc.children[i].value) !== -1 ) {
+							console.log(i, lc.children[i].value);
+							name = lc.children[i].value + ' statement';
+						}
+					}
+				}
+				console.log("L",lc);
+				if ( lc.value === 'else' ) name = 'else statement';
 				return 'Empty ' + name + '. Put 4 spaces in front of statements inside the ' + name + '.';
 			}
 
@@ -11207,6 +11239,19 @@ return /******/ (function(modules) { // webpackBootstrap
 				//We are parsing either an arglist or a subscript.
 				if ( e.extra.expected.indexOf('T_RPAR') === 0 ) {
 					//Expected ), must be a arglsit;
+					if ( e.line > e.extra.node.lineno ) {
+						//Our arglist is incomplete, and we have made it to the next line,.
+						//Likely they just forgot to close their ()'s
+						setErrorPos(e, e.extra.node.lineno, e.extra.node.col_offset);
+						var t = e.extra.node.loc;
+						e.context = [
+							[t.start.line,t.start.column],
+							[t.end.line,t.end.column]
+						];
+						console.log("Cz", e.context);
+						return 'Unclosed `(` in function arguments.' + e.extra.node.lineno;
+
+					}
 					return 'Function calls paramaters must be seperated by `,`s';
 				}
 			}
@@ -11221,11 +11266,41 @@ return /******/ (function(modules) { // webpackBootstrap
 				return "Malformed subscript";
 			}
 
-			return 'Unexpected token: ' + e.message;
-		}
+			if ( e.extra.expected.indexOf('T_NEWLINE') !== -1 ) {
+				var n = e.extra.node;
+				
+				if ( e.extra.node.children[0] ) {
+					var n = e.extra.node.children[0];
+					var previousType = Sk.nameForToken(n.type);
+				
+					if ( previousType == 'small_stmt' ) {
+						while ( n.children && n.children.length == 1 ) n = n.children[0];
+						var what = code.substring(n.range[0], n.range[1]);
+						console.log("N", n);
+						return 'If you want to call `' + what +'` as function, you need `()`\'s';
+					}
+				}
+				console.log("c", nodeToType(e.extra.node.children[0]));
+				//console.log("RR", nodeToType(e.extra.node.childern[0]));
+			}
 
-		if ( e.extra.kind == "CLASSIFY" ) {
+			return 'Unexpected token: ' + e.message;
+		} else if ( e.extra.kind == "CLASSIFY" ) {
+			if ( e.extra.value === '"' ) return 'Unterminated string. Add a matching `"` at the end of your string.';
 			return 'Unterminated `' + e.extra.value + '`';
+		} else if ( e.extra.kind == "STRING_EOF" ) {
+			return 'Unterminated muti-line string. Add a matching `"""` at the end of your string.';
+		} else if ( e.extra.kind == "STATEMENT_EOF" ) {
+			if ( e.extra.parenlev > 0 ) {
+				var top = e.extra.parenstack[e.extra.parenstack.length-1];
+				var kind = top[0];
+				var types = '([{';
+				var pair = ')]}';
+				var close = pair[types.indexOf(kind)];
+				setErrorPos(e, top[1], top[2]-1);
+				return 'Unmatched `' + kind + '`.  Every opening `' + kind + '` needs a closing `' + close + '` to match it.';
+			}
+			return e.message;
 		}
 
 		return e.message;
