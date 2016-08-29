@@ -133,6 +133,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		try {
 			parse = Sk.parse(options.filename, code);
 			decorate(parse.cst, code, lineOffsets, options);
+			parse.flags = parse.flags | Sk.Parser.CO_FUTURE_UNICODE_LITERALS; //Enable future unicode literals
 			ast = Sk.astFromParse(parse.cst, options.filename, parse.flags);
 		} catch ( e ) {
 			if ( e.extra && e.extra.node ) decorate(e.extra.node, code, lineOffsets, options);
@@ -9991,6 +9992,8 @@ return /******/ (function(modules) { // webpackBootstrap
 		return '???:' + v;
 	};
 
+	//Sk.python3 = true;
+	Sk.Parser = Parser;
 	Sk.builtin.str.prototype.valueOf = function() { return this.v; };
 	Sk.builtin.str.prototype.toString = function() { return this.v; };
 
@@ -11215,12 +11218,10 @@ return /******/ (function(modules) { // webpackBootstrap
 					//Scan for the most recent part of the ifstatement.
 					for ( var i = 0; i < lc.children.length; ++i ) {
 						if ( ["if", "elif", "else"].indexOf(lc.children[i].value) !== -1 ) {
-							console.log(i, lc.children[i].value);
 							name = lc.children[i].value + ' statement';
 						}
 					}
 				}
-				console.log("L",lc);
 				if ( lc.value === 'else' ) name = 'else statement';
 				return 'Empty ' + name + '. Put 4 spaces in front of statements inside the ' + name + '.';
 			}
@@ -11248,7 +11249,6 @@ return /******/ (function(modules) { // webpackBootstrap
 							[t.start.line,t.start.column],
 							[t.end.line,t.end.column]
 						];
-						console.log("Cz", e.context);
 						return 'Unclosed `(` in function arguments.' + e.extra.node.lineno;
 
 					}
@@ -11276,12 +11276,9 @@ return /******/ (function(modules) { // webpackBootstrap
 					if ( previousType == 'small_stmt' ) {
 						while ( n.children && n.children.length == 1 ) n = n.children[0];
 						var what = code.substring(n.range[0], n.range[1]);
-						console.log("N", n);
 						return 'If you want to call `' + what +'` as function, you need `()`\'s';
 					}
 				}
-				console.log("c", nodeToType(e.extra.node.children[0]));
-				//console.log("RR", nodeToType(e.extra.node.childern[0]));
 			}
 
 			return 'Unexpected token: ' + e.message;
