@@ -11240,7 +11240,7 @@ return /******/ (function(modules) { // webpackBootstrap
 				//We are parsing either an arglist or a subscript.
 				if ( e.extra.expected.indexOf('T_RPAR') === 0 ) {
 					//Expected ), must be a arglsit;
-					if ( e.line > e.extra.node.lineno ) {
+					if ( t && e.line > e.extra.node.lineno ) {
 						//Our arglist is incomplete, and we have made it to the next line,.
 						//Likely they just forgot to close their ()'s
 						setErrorPos(e, e.extra.node.lineno, e.extra.node.col_offset);
