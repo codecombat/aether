@@ -11240,15 +11240,22 @@ return /******/ (function(modules) { // webpackBootstrap
 				//We are parsing either an arglist or a subscript.
 				if ( e.extra.expected.indexOf('T_RPAR') === 0 ) {
 					//Expected ), must be a arglsit;
-					if ( t && e.line > e.extra.node.lineno ) {
+					if ( e.line > e.extra.node.lineno ) {
 						//Our arglist is incomplete, and we have made it to the next line,.
 						//Likely they just forgot to close their ()'s
 						setErrorPos(e, e.extra.node.lineno, e.extra.node.col_offset);
 						var t = e.extra.node.loc;
-						e.context = [
-							[t.start.line,t.start.column],
-							[t.end.line,t.end.column]
-						];
+						if ( t ) {
+							e.context = [
+								[t.start.line,t.start.column],
+								[t.end.line,t.end.column]
+							];
+						} else {
+							e.context = [
+								[e.extra.node.lineno, e.extra.node.col_offset],
+								[e.extra.node.lineno, e.extra.node.col_offset]
+							];
+						}
 						return 'Unclosed `(` in function arguments.' + e.extra.node.lineno;
 
 					}
