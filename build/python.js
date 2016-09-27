@@ -11194,7 +11194,9 @@ return /******/ (function(modules) { // webpackBootstrap
 				var lc = e.extra.node.children[e.extra.node.children.length-1];
 				if ( lc.value === 'else' ) after = 'else';
 
-				if ( e.extra.found == 'T_NEWLINE' ) {
+				if ( e.extra.found == 'T_SEMI' ) {
+					return "Replace the `;` at the end of `" + after + "` with a `:`";
+				} else if ( e.extra.found == 'T_NEWLINE' ) {
 					return "Need a `:` on the end of the line following `" + after + "`.";
 				} else if ( e.extra.found == 'T_NAME' ) {
 					return "Need a `:` after `" + after + "`.";
@@ -11236,6 +11238,11 @@ return /******/ (function(modules) { // webpackBootstrap
 				} 
 			}
 
+			if ( e.extra.found === 'T_AMPER' && e.extra.inside == 'and_expr' ) {
+				return 'Python uses the word `and` instead of `&&` for boolean AND expressions.';
+			}
+
+
 			if ( e.extra.inside === 'trailer' ) {
 				//We are parsing either an arglist or a subscript.
 				if ( e.extra.expected.indexOf('T_RPAR') === 0 ) {
@@ -11245,17 +11252,10 @@ return /******/ (function(modules) { // webpackBootstrap
 						//Likely they just forgot to close their ()'s
 						setErrorPos(e, e.extra.node.lineno, e.extra.node.col_offset);
 						var t = e.extra.node.loc;
-						if ( t ) {
-							e.context = [
-								[t.start.line,t.start.column],
-								[t.end.line,t.end.column]
-							];
-						} else {
-							e.context = [
-								[e.extra.node.lineno, e.extra.node.col_offset],
-								[e.extra.node.lineno, e.extra.node.col_offset]
-							];
-						}
+						e.context = [
+							[t.start.line,t.start.column],
+							[t.end.line,t.end.column]
+						];
 						return 'Unclosed `(` in function arguments.' + e.extra.node.lineno;
 
 					}
@@ -11316,18 +11316,19 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 4 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
-	var pythonRuntime = module.exports = {
-
-	    // Shim JavaScript objects that impersonate Python equivalents
-
-	    // TODO: use 'type' or isSequence instead of 'instanceof Array' to id these
-
+	(function() {
+	  'use strict';
+	  var pythonRuntime = {
 	    internal: {
 	      // Only used within runtime
 	      isSeq: function (a) { return a && (a._type === "list" || a._type === "tuple"); },
 	      slice: function (obj, start, end, step) {
+	        var slice;
+	        if ( typeof obj === 'string' ) slice = function(x,y) { return obj.substring(x,y); }
+	        else slice = obj.slice.bind(obj);
+
 	        if (step == null || step === 0) step = 1; // TODO: step === 0 is a runtime error
 	        if (start == null) {
 	          if (step < 0) start = obj.length - 1;
@@ -11340,13 +11341,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        var ret = new pythonRuntime.objects.list(), tmp, i;
 	        if (step < 0) {
-	          tmp = obj.slice(end + 1, start + 1);
+	          tmp = slice(end + 1, start + 1);
 	          for (i = tmp.length - 1; i >= 0; i += step) ret.append(tmp[i]);
 	        } else {
-	          tmp = obj.slice(start, end);
-	          if (step === 1) ret = pythonRuntime.utils.createList(tmp);
+	          tmp = slice(start, end);
+	          if (step === 1 && typeof tmp !== 'string') ret = pythonRuntime.utils.createList(tmp);
 	          else for (i = 0; i < tmp.length; i += step) ret.append(tmp[i]);
 	        }
+	        if ( typeof obj === 'string' ) return ret.join('');
 	        return ret;
 	      },
 	      isJSArray: Array.isArray || function(obj) {
@@ -11843,6 +11845,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	      },
 	      list: function (iterable) {
 	        var ret = new pythonRuntime.objects.list();
+	        if ( arguments.length == 0 ) return ret;
+	        if ( arguments.length > 1 ) throw new TypeError('list() takes at most 1 argument (' + arguments.length + ' given)');
 	        if (iterable instanceof Array) for (var i in iterable) ret.push(iterable[i]);
 	        else for (var i in iterable) ret.push(i);
 	        return ret;
@@ -11964,7 +11968,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 
 	  Object.defineProperties(PythonDict.prototype, pythonRuntime.utils.dictPropertyDescriptor);
-
+	  if ( true ) module.exports = pythonRuntime;
+	  return pythonRuntime;
+	})();
 
 
 /***/ }
