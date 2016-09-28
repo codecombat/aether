@@ -7,6 +7,7 @@ module.exports = class Language
   runtimeGlobals: {}  # Like {__lua: require('lua2js').runtime}
   thisValue: 'this' # E.g. in Python it is 'self'
   thisValueAccess: 'this.' # E.g. in Python it is 'self.'
+  heroValueAccess: 'hero.'
   wrappedCodeIndentLen: 0
 
   constructor: ->

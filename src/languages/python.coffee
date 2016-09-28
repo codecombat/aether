@@ -10,6 +10,7 @@ module.exports = class Python extends Language
   parserID: 'filbert'
   thisValue: 'self'
   thisValueAccess: 'self.'
+  heroValueAccess: 'hero.'
   wrappedCodeIndentLen: 4
 
   constructor: ->

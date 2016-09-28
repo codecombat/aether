@@ -6,6 +6,7 @@ module.exports = class Lua extends Language
   name: 'Lua'
   id: 'lua'
   parserID: 'lua2js'
+  heroValueAccess: 'hero:'
 
   constructor: ->
     super arguments...

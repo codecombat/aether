@@ -14,6 +14,7 @@ module.exports = class JavaScript extends Language
   parserID: 'esprima'
   thisValue: 'this'
   thisValueAccess: 'this.'
+  heroValueAccess: 'hero.'
 
   constructor: ->
     super arguments...

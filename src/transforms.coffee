@@ -71,8 +71,8 @@ module.exports.makeCheckThisKeywords = makeCheckThisKeywords = (globals, varName
         return if /\$$/.test v  # accum$ in CoffeeScript Redux isn't handled properly
         return if problemContext?.thisMethods? and v not in problemContext.thisMethods
         # TODO: '@' in CoffeeScript isn't really a keyword
-        message = "Missing `#{language.thisValue}` keyword; should be `#{language.thisValueAccess}#{v}`."
-        hint = "There is no function `#{v}`, but `#{language.thisValue}` has a method `#{v}`."
+        message = "Missing `hero` keyword; should be `#{language.heroValueAccess}#{v}`."
+        hint = "There is no function `#{v}`, but `hero` has a method `#{v}`."
         if node.originalRange
           range = language.removeWrappedIndent [node.originalRange.start, node.originalRange.end]
         problem = @createUserCodeProblem type: 'transpile', reporter: 'aether', kind: 'MissingThis', message: message, hint: hint, range: range  # TODO: code/codePrefix?

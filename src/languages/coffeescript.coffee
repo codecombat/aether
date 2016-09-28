@@ -11,6 +11,7 @@ module.exports = class CoffeeScript extends Language
   parserID: 'csredux'
   thisValue:'@'
   thisValueAccess:'@'
+  heroValueAccess:'hero.'
   wrappedCodeIndentLen: 4
 
   constructor: ->
