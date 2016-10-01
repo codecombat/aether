@@ -211,7 +211,7 @@ getTranspileHint = (msg, context, languageID, code, range, simpleLoops=false) ->
 
     # Catchall hint for 'Unexpected token' error
     if /Unexpected [token|identifier]/.test(msg)
-      return "Please double-check your code carefully."
+      return "There is a problem with your code."
 
 # Runtime Errors
 
