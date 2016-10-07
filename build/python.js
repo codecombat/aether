@@ -10022,7 +10022,17 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 2 */
 /***/ function(module, exports) {
 
+	'use strict';
+
 	var isArray = Array.isArray;
+
+	function getOpName(op) {
+		if (op.name) return op.name;
+		//Work around browsers that dont suport Function#name (like IE11)
+		var matches = op.toString().match(/function ([^)]+)\(/);
+		if ( matches === null ) return undefined;
+		return matches[1];
+	}
 
 	function abort(why) {
 		console.log(new Error("ABORT:" + why).stack);
@@ -10203,13 +10213,14 @@ return /******/ (function(modules) { // webpackBootstrap
 		var right = transform(node.value, ctx);
 		var left = transform(node.target, ctx);
 		var tn = createTempName("left");
+		var opName = getOpName(node.op);
 		return [
 			var_(ident(tn), left),
 			ensureStatement({
 				type: "AssignmentExpression",
 				operator: '=',
 				left: left,
-				right: createBinOp(left, node.op.name, right)
+				right: createBinOp(left, opName, right)
 			})
 		];
 	}
@@ -10280,7 +10291,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	function transformBinOp(node, ctx) {
 		var left = transform(node.left, ctx);
 		var right = transform(node.right, ctx);
-		return createBinOp(left, node.op.name, right);
+		return createBinOp(left, getOpName(node.op), right);
 	}
 
 	function transformBoolOp(node, ctx) {
@@ -10288,13 +10299,14 @@ return /******/ (function(modules) { // webpackBootstrap
 		for ( var i = 0; i < node.values.length; ++i ) {
 			fvals[i] = transform(node.values[i], ctx);
 		}
+		var opName = getOpName(node.op);
 		var operators = {
 			'And': '&&',
 			'Or': '||'
 		};
 
-		if ( !(node.op.name in operators ) ) abort("Unknown bool opeartor: " + node.op.name);
-		var opstr = operators[node.op.name];
+		if ( !(opName in operators ) ) abort("Unknown bool opeartor: " + opName);
+		var opstr = operators[opName];
 
 		var result = fvals.pop();
 		while ( fvals.length > 0 ) {
@@ -10526,19 +10538,19 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function makeCop(left, op, right) {
 
-	var fxOps = {
+		var fxOps = {
 			"In_": "in",
 			"NotIn": "in"
 		};
-
-		if ( op.name in fxOps  ) {
+		var opName = getOpName(op);
+		if ( opName in fxOps  ) {
 			var call = {
 				type: "CallExpression",
-				callee: makeVariableName("__pythonRuntime.ops." + fxOps[op.name]),
+				callee: makeVariableName("__pythonRuntime.ops." + fxOps[opName]),
 				arguments: [left, right]
 			};
 
-			if ( op.name == "NotIn" ) {
+			if ( opName == "NotIn" ) {
 				return {
 					type: "UnaryExpression",
 					argument: call,
@@ -10561,8 +10573,8 @@ return /******/ (function(modules) { // webpackBootstrap
 			"IsNot": "!=="
 		};
 		
-		if ( !(op.name in operators) ) abort("Unsuported Compare operator: " + op.name);
-		return binOp(left, operators[op.name], right);
+		if ( !(opName in operators) ) abort("Unsuported Compare operator: " + opName);
+		return binOp(left, operators[opName], right);
 	}
 
 	function transformCompare(node, ctx) {
@@ -11088,11 +11100,12 @@ return /******/ (function(modules) { // webpackBootstrap
 			"Add": "add",
 			"Mult": "multiply",
 		};
+		var opName = getOpName(node.op);
 
-		if ( node.op.name in fxOps  ) {
+		if ( opName in fxOps  ) {
 			var call = {
 				type: "CallExpression",
-				callee: makeVariableName("__pythonRuntime.ops." + fxOps[node.op.name]),
+				callee: makeVariableName("__pythonRuntime.ops." + fxOps[opName]),
 				arguments: [argument]
 			};
 			return call;
@@ -11104,12 +11117,12 @@ return /******/ (function(modules) { // webpackBootstrap
 			"Invert": "~"
 		};
 
-		if ( !(node.op.name in operators) ) abort("Unknown unary operator: " + node.op.name);
+		if ( !(opName in operators) ) abort("Unknown unary operator: " + opName);
 
 		return {
 			type: "UnaryExpression",
 			argument: argument,
-			operator: operators[node.op.name]
+			operator: operators[opName]
 		};
 		
 	}
@@ -11125,9 +11138,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	module.exports = transform;
 
+
 /***/ },
 /* 3 */
 /***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
 
 	var Sk = __webpack_require__(1);
 
@@ -11147,7 +11163,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		var r;
 		if ( e.context && e.context.length >0 ) {
 			r = e.context[0];	
-		} 
+		}
 
 		if ( e.extra && e.extra.node ) {
 			if ( !r ) {
@@ -11314,11 +11330,22 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	module.exports = improveError;
 
+
 /***/ },
 /* 4 */
 /***/ function(module, exports, __webpack_require__) {
 
-	(function() {
+	(function (root, factory) {
+	  'use strict';
+	  if(true)
+	    module.exports = factory();
+	  else if(typeof define === 'function' && define.amd)
+	    define([], factory);
+	  else if(typeof exports === 'object')
+	    exports["__pythonRuntime"] = factory();
+	  else
+	    root["__pythonRuntime"] = factory();
+	}(this, function() {
 	  'use strict';
 	  var pythonRuntime = {
 	    internal: {
@@ -11968,9 +11995,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 
 	  Object.defineProperties(PythonDict.prototype, pythonRuntime.utils.dictPropertyDescriptor);
-	  if ( true ) module.exports = pythonRuntime;
 	  return pythonRuntime;
-	})();
+	}));
+
 
 
 /***/ }
