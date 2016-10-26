@@ -89,7 +89,7 @@ module.exports = class Python extends Language
           type: 'transpile'
           reporter: 'aether'
           level: 'warning'
-          message: "Empty loop. Put 4 spaces in front of statements inside loops. Hint: you can do that by pressing the \"Tab\" button on your keyboard a the start of a new line."
+          message: "Empty loop. Put 4 spaces in front of statements inside loops. Hint: Press \"Tab\" a the start of a new line."
           range: [
               ofs: node.range[0]
               row: node.loc.start.line - 1
@@ -111,7 +111,7 @@ module.exports = class Python extends Language
             reporter: 'aether'
             level: 'warning'
             # TODO: Try 'belong to' instead of 'inside' if players still have problems
-            message: "Empty if statement. Put 4 spaces in front of statements inside the if statement. Hint: you can do that by pressing the \"Tab\" button on your keyboard a the start of a new line."
+            message: "Empty if statement. Put 4 spaces in front of statements inside the if statement. Hint: Press \"Tab\" a the start of a new line."
             range: [
                 ofs: node.range[0]
                 row: node.loc.start.line - 1
