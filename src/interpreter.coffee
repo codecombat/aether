@@ -94,6 +94,7 @@ module.exports.createFunction = (aether, code) ->
 
   try
     if aether.language.usesFunctionWrapping()
+      engine.evalASTSync aether.ast
       if aether.options.yieldConditionally
         fx = engine.fetchFunction fxName, makeYieldFilter(aether)
       else if aether.options.yieldAutomatically
