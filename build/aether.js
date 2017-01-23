@@ -10642,7 +10642,7 @@ define(function (require, exports, module) {
 },{"amdefine":37}],37:[function(require,module,exports){
 (function (process,__filename){
 /** vim: et:ts=4:sw=4:sts=4
- * @license amdefine 1.0.0 Copyright (c) 2011-2015, The Dojo Foundation All Rights Reserved.
+ * @license amdefine 1.0.1 Copyright (c) 2011-2016, The Dojo Foundation All Rights Reserved.
  * Available via the MIT or new BSD license.
  * see: http://github.com/jrburke/amdefine for details
  */
@@ -27780,12 +27780,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var isArray = Array.isArray;
 
+	//TODO: Find a way to not have to do this.
 	function getOpName(op) {
-		if (op.name) return op.name;
-		//Work around browsers that dont suport Function#name (like IE11)
-		var matches = op.toString().match(/function ([^)]+)\(/);
-		if ( matches === null ) return undefined;
-		return matches[1];
+		if (op.prototype._astname) {
+			return op.prototype._astname;
+		}
+		throw new Error("Coudlnt decode operator name for: " + (op.name || op.toString()));
 	}
 
 	function abort(why) {
@@ -27915,6 +27915,7 @@ return /******/ (function(modules) { // webpackBootstrap
 			case 'Continue': return tranformContinue(node, ctx);
 			case 'Compare': return transformCompare(node, ctx);
 			case 'Dict': return transformDict(node, ctx);
+			case 'Delete': return transformDel(node, ctx);
 			case 'Expr': return transformExpr(node, ctx);
 			case 'For': return transformFor(node, ctx);
 			case 'FunctionDef': return transformFunctionDef(node, ctx);
@@ -27939,7 +27940,7 @@ return /******/ (function(modules) { // webpackBootstrap
 			default:
 				console.log("Dont know how to transform: " + node._astname);
 				console.log(JSON.stringify(node, null, '  '));
-				throw new Error("Up");
+				throw new Error("Dont know how to transform: " + node._astname);
 		}
 	}
 
@@ -28037,7 +28038,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 		};
 
-		if ( !(op in operators) ) abort("Unknwon binary operator: " + op);
+		if ( !(op in operators) ) abort("Unknown binary operator: " + op);
 
 		return binOp(left, operators[op], right);
 	}
@@ -28294,6 +28295,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 		var fxOps = {
 			"In_": "in",
+			"In": "in",
 			"NotIn": "in"
 		};
 		var opName = getOpName(op);
@@ -28350,6 +28352,29 @@ return /******/ (function(modules) { // webpackBootstrap
 
 		return result;
 		
+	}
+
+	function transformDel(node, ctx) {
+		var result = [];
+		for ( var i = 0; i < node.targets.length; ++i ) {
+			var st = node.targets[i];
+			var partial = transform(st, ctx);
+			result.push({
+				type: "AssignmentExpression",
+				operator: "=",
+				left: partial,
+				right: {
+					type: "UnaryExpression",
+					argument: literal(0),
+					operator: 'void',
+					prefix: true
+				}
+			});
+		}
+		return ensureStatement({
+			type: "SequenceExpression",
+			expressions: result
+		});
 	}
 
 	function transformDict(node, ctx) {
@@ -28483,11 +28508,12 @@ return /******/ (function(modules) { // webpackBootstrap
 		var iter = transform(node.iter, ctx);
 		var body = ensureStatement(transform(node.body, ctx));
 
+		if ( node.orelse && node.orelse.length > 0 ) abort("else: for-else statement unsupported.");
 		return createForLoop(iident, tident, iter, node.target, body, ctx);
 	}
 
 	function prepareFunctionBody(node, ctx) {
-			var args = node.args.args.slice(0);
+		var args = node.args.args.slice(0);
 		if  ( ctx.inClass ) {
 			//TODO: Make sure it's named self, maybe?
 			args.shift();
@@ -29252,8 +29278,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	          },
 	          "pop": {
 	            value: function (i) {
-	              if (!i)
-	                i = this.length - 1;
+	              if (arguments.length<1) i = this.length - 1;
 	              var item = this[i];
 	              this.splice(i, 1);
 	              return item;
