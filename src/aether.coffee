@@ -120,13 +120,7 @@ module.exports = class Aether
   transpile: (@raw) ->
     @reset()
     rawCode = @raw
-    if @options.simpleLoops
-      rawCode = _.cloneDeep @raw
-      [rawCode, @replacedLoops, loopProblems] = @language.replaceLoops rawCode
     @problems = @lint rawCode
-    loopProblems ?= []
-    if loopProblems.length > 0
-      @problems.warnings.push loopProblems...
     @pure = @purifyCode rawCode
     @pure
 

@@ -57,8 +57,14 @@ updateState = (aether, evaluator) ->
 
         bottom.flow.statements.push f unless not f.range # Dont push statements without ranges
 
-module.exports.createFunction = (aether, code) ->
+module.exports.parse = (aether, code) ->
   esper = window?.esper ? self?.esper ? global?.esper ? require 'esper.js'
+  esper.plugin 'lang-' + aether.language.id
+  return esper.languages[aether.language.id].parser(code, inFunctionBody: true)
+
+module.exports.createFunction = (aether) ->
+  esper = window?.esper ? self?.esper ? global?.esper ? require 'esper.js'
+  esper.plugin 'lang-' + aether.language.id
   state = {}
   #aether.flow.states.push state
   messWithLoops = false
@@ -67,11 +73,12 @@ module.exports.createFunction = (aether, code) ->
 
   unless aether.esperEngine
     aether.esperEngine = new esper.Engine
-      strict: aether.language.id isnt 'python'
+      strict: aether.language.id not in ['python', 'lua']
       foreignObjectMode: if aether.options.protectAPI then 'smart' else 'link'
       extraErrorInfo: true
       yieldPower: 2
       debug: aether.options.debug
+      language: aether.language.id
 
   engine = aether.esperEngine
   #console.log JSON.stringify(aether.ast, null, '  ')
@@ -79,13 +86,7 @@ module.exports.createFunction = (aether, code) ->
   #fxName = aether.ast.body[0].id.name
   fxName = aether.options.functionName or 'foo'
   #console.log JSON.stringify(aether.ast, null, "  ")
-
   aether.language.setupInterpreter engine
-
-  if aether.language.injectCode?
-    engine.evalASTSync(aether.language.injectCode, {nonUserCode: true})
-  else
-    engine.evalSync('') #Force context to be created
 
   for name in Object.keys addedGlobals
     engine.addGlobal(name, addedGlobals[name])
@@ -93,6 +94,7 @@ module.exports.createFunction = (aether, code) ->
   upgradeEvaluator aether, engine.evaluator
 
   try
+    # Only Coffeescript at this point.
     if aether.language.usesFunctionWrapping()
       engine.evalASTSync aether.ast
       if aether.options.yieldConditionally
@@ -137,9 +139,12 @@ makeYieldFilter = (aether) -> (engine, evaluator, e) ->
 
 
   if e? and e.type is 'event' and e.event is 'loopBodyStart'
+    if top.srcAst.type is 'WhileStatement' and aether.options.alwaysYieldAtTopOfLoops
+      if top.mark? then return true else top.mark = 1
+    
     if top.srcAst.type is 'WhileStatement' and top.srcAst.test.type is 'Literal'
       if aether.whileLoopMarker?
-        currentMark = aether.whileLoopMarker()
+        currentMark = aether.whileLoopMarker(top)
         if currentMark is top.mark
           #console.log "[Aether] Forcing while-true loop to yield, repeat #{currentMark}"
           top.mark = currentMark + 1

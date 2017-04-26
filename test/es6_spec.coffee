@@ -752,7 +752,7 @@ describe "JavaScript Test Suite", ->
     it "loop{", ->
       code = """
       var total = 0
-      loop{
+      while (true) {
         total += 1
         break;
       }
@@ -765,7 +765,7 @@ describe "JavaScript Test Suite", ->
     it "loop {}", ->
       code = """
       var total = 0
-      loop { total += 1; if (total >= 12) {break;}}
+      while (true) { total += 1; if (total >= 12) {break;}}
       return total
       """
       aether = new Aether language: "javascript", simpleLoops: true
@@ -785,7 +785,7 @@ describe "JavaScript Test Suite", ->
           this.slay();
           break;
         }
-        loop {
+        while (true) {
           this.slay();
           if (this.getKillCount() >= 5) {
             break;
@@ -809,7 +809,7 @@ describe "JavaScript Test Suite", ->
       aether = new Aether yieldConditionally: true, simpleLoops: true
       code = """
         var x = 0;
-        loop {
+        while (true) {
           x++;
         }
       """
@@ -829,7 +829,7 @@ describe "JavaScript Test Suite", ->
         getKillCount: -> return @killCount
       code = """
         var x = 0;
-        loop {
+        while (true) {
           x++;
           if (x >= 3) break;
         }
@@ -850,7 +850,7 @@ describe "JavaScript Test Suite", ->
           aether._shouldYield = true
         getKillCount: -> return @killCount
       code = """
-        loop {
+        while (true) {
           this.slay();
           if (this.getKillCount() >= 5) {
             break;
@@ -858,11 +858,11 @@ describe "JavaScript Test Suite", ->
         }
         function f() {
           var x = 0;
-          loop {
+          while (true) {
             x++;
             if (x > 10) break;
           }
-          loop {
+          while (true) {
             this.slay();
             if (this.getKillCount() >= 15) {
               break;
@@ -904,9 +904,9 @@ describe "JavaScript Test Suite", ->
         function f() {
           // outer auto yield, inner yield
           var x = 0;
-          loop {
+          while (true) {
             var y = 0;
-            loop {
+            while (true) {
               this.slay();
               y++;
               if (y >= 2) break;
@@ -919,10 +919,10 @@ describe "JavaScript Test Suite", ->
 
         // outer yield, inner auto yield
         var x = 0;
-        loop {
+        while (true) {
           this.slay();
           var y = 0;
-          loop {
+          while (true) {
             y++;
             if (y >= 4) break;
           }
@@ -932,9 +932,9 @@ describe "JavaScript Test Suite", ->
 
         // outer and inner auto yield
         x = 0;
-        loop {
+        while (true) {
           y = 0;
-          loop {
+          while (true) {
             y++;
             if (y >= 6) break;
           }
@@ -944,10 +944,10 @@ describe "JavaScript Test Suite", ->
 
         // outer and inner yields
         x = 0;
-        loop {
+        while (true) {
           this.slay();
           y = 0;
-          loop {
+          while (true) {
             this.slay();
             y++;
             if (y >= 9) break;
@@ -1011,7 +1011,7 @@ describe "JavaScript Test Suite", ->
           this.slay();
           break;
         }
-        loop {
+        while (true) {
           this.slay();
           if (this.getKillCount() >= 5) {
             break;

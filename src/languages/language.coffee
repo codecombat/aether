@@ -30,13 +30,6 @@ module.exports = class Language
     b = b.replace(/^[ \t]+\/\/.*/g, '').trimRight()
     return a.split('\n').length isnt b.split('\n').length
 
-  # Replace 'loop' statement with equivalent of 'while(true)'
-  # Return updated code, and an array of starting range indexes for replaced loop keywords
-  # E.g. in JavaScript 'loop {}' is replaced with 'while(true) {}'
-  replaceLoops: (rawCode) ->
-    console.warn "Simple loop not implemented for #{@name}"
-    [rawCode, []]
-
   # Return an array of UserCodeProblems detected during linting.
   lint: (rawCode, aether) ->
     []

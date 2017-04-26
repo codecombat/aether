@@ -241,7 +241,7 @@ describe "#{language} Test suite", ->
       dude =
         x: 0
       code = """
-        loop
+        while true do
            self.x = self.x + 1
         end
       """
