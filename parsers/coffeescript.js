@@ -1,1 +1,1 @@
-window.aetherCoffeeScriptRedux = require('coffee-script-redux');
+window.aetherCoffeeScriptRedux = {};

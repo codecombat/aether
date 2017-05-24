@@ -215,6 +215,14 @@ getTranspileHint = (msg, context, languageID, code, range, simpleLoops=false) ->
 
 # Runtime Errors
 
+
+esperLocToAetherLoc = (loc) ->
+  return undefined unless loc? and loc.start? and loc.end?
+  [
+    {row: loc.start.line-1, col: loc.start.column, ofs: loc.start.pos},
+    {row: loc.end.line-1, col: loc.end.column, ofs: loc.end.pos}
+  ]
+
 extractRuntimeErrorDetails = (options) ->
   if error = options.error
     options.kind ?= error.name  # I think this will pick up [Error, EvalError, RangeError, ReferenceError, SyntaxError, TypeError, URIError, DOMException]
@@ -223,14 +231,18 @@ extractRuntimeErrorDetails = (options) ->
       options.message = error.toString()
     else
       options.message = error.message or error.toString()
-    console.log("Extracting", error)
     options.hint = error.hint or getRuntimeHint options
     options.level ?= error.level
     options.userInfo ?= error.userInfo
 
   # NOTE: lastStatementRange set via instrumentation.logStatementStart(originalNode.originalRange)
   options.range ?= options.aether?.lastStatementRange
+  if options.aether?
+    loc = options.aether?.esperEngine?.evaluator?.topFrame?.ast?.loc
+    options.range ?= esperLocToAetherLoc loc
 
+  if options.error.name?
+    options.message = "#{options.error.name}: #{options.message}"
 
   if options.range?
     lineNumber = options.range[0].row + 1

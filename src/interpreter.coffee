@@ -94,7 +94,7 @@ module.exports.createFunction = (aether) ->
   upgradeEvaluator aether, engine.evaluator
 
   try
-    # Only Coffeescript at this point.
+    # Hopefully No One
     if aether.language.usesFunctionWrapping()
       engine.evalASTSync aether.ast
       if aether.options.yieldConditionally
@@ -104,6 +104,7 @@ module.exports.createFunction = (aether) ->
       else
         fx = engine.fetchFunctionSync fxName
     else
+      #console.log "Okay NO Wrap", require('escodegen').generate(aether.ast)
       if aether.options.yieldConditionally
         fx = engine.functionFromAST aether.ast, makeYieldFilter(aether)
       else if aether.options.yieldAutomatically
@@ -120,10 +121,9 @@ module.exports.createFunction = (aether) ->
     engine.evalASTSync emptyAST
   #console.log require('escodegen').generate(aether.ast)
 
-
-
-
   return fx
+
+
 
 debugDumper = _.debounce (evaluator) ->
   evaluator.dumpProfilingInformation()
@@ -139,10 +139,11 @@ makeYieldFilter = (aether) -> (engine, evaluator, e) ->
 
 
   if e? and e.type is 'event' and e.event is 'loopBodyStart'
-    if top.srcAst.type is 'WhileStatement' and aether.options.alwaysYieldAtTopOfLoops
-      if top.mark? then return true else top.mark = 1
     
     if top.srcAst.type is 'WhileStatement' and top.srcAst.test.type is 'Literal'
+      if aether.options.whileTrueAutoYield or aether.options.simpleLoops
+        if top.mark? then return true else top.mark = 1
+
       if aether.whileLoopMarker?
         currentMark = aether.whileLoopMarker(top)
         if currentMark is top.mark

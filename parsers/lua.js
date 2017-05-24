@@ -1,1 +1,1 @@
-window.aetherLua2JS = require('lua2js');
+window.aetherLua2JS = {};

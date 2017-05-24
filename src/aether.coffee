@@ -143,13 +143,13 @@ module.exports = class Aether
     try
       fn ?= @createFunction()
     catch error
-      problem = @createUserCodeProblem error: error, code: @raw, type: 'transpile', reporter: 'aether'
+      problem = @createUserCodeProblem error: error, code: @raw, type: 'transpile', reporter: 'aether', aether: @
       @addProblem problem
       return
     try
       fn args...
     catch error
-      problem = @createUserCodeProblem error: error, code: @raw, type: 'runtime', reporter: 'aether'
+      problem = @createUserCodeProblem error: error, code: @raw, type: 'runtime', reporter: 'aether', aether: @
       @addProblem problem
       return
 
@@ -186,40 +186,15 @@ module.exports = class Aether
       transforms.makeCheckIncompleteMembers @language, @options.problemContext
     ]
     try
-      [transformedCode, transformedAST] = @transform wrappedCode, preNormalizationTransforms, @language.parse
-      @ast = transformedAST
+      #[transformedCode, transformedAST] = @transform wrappedCode, preNormalizationTransforms, @language.parse
+      @ast = interpreter.parse @, wrappedCode
     catch error
       problemOptions = error: error, code: wrappedCode, codePrefix: @language.wrappedCodePrefix, reporter: @language.parserID, kind: error.index or error.id, type: 'transpile'
       @addProblem @createUserCodeProblem problemOptions
-      return '' unless @language.parseDammit
-      originalNodeRanges.splice()  # Reset any ranges we did find; we'll try again.
-      try
-        [transformedCode, transformedAST] = @transform wrappedCode, preNormalizationTransforms, @language.parseDammit
-        @ast = transformedAST
-      catch error
-        problemOptions.kind = error.index or error.id
-        problemOptions.reporter = 'acorn_loose' if @language.id is 'javascript'
-        @addProblem @createUserCodeProblem problemOptions
-        return ''
+      return ''
+    
+    return wrappedCode
 
-    # Now we've shed all the trappings of the original language behind; it's just JavaScript from here on.
-    nodeGatherer = transforms.makeGatherNodeRanges originalNodeRanges, wrappedCode, @language.wrappedCodePrefix
-
-    traversal.walkASTCorrect @ast, (node) =>
-      nodeGatherer(node)
-      if node.originalRange?
-        startEndRangeArray = @language.removeWrappedIndent [node.originalRange.start, node.originalRange.end]
-        node.originalRange =
-          start: startEndRangeArray[0]
-          end: startEndRangeArray[1]
-
-    # TODO: return nothing, or the AST, and make sure CodeCombat can handle it returning nothing
-    return rawCode
-
-  transform: (code, transforms, parseFn) ->
-    transformedCode = traversal.morphAST code, (_.bind t, @ for t in transforms), parseFn, @
-    transformedAST = parseFn transformedCode, @
-    [transformedCode, transformedAST]
 
   @getFunctionBody: (func) ->
     # Remove function() { ... } wrapper and any extra indentation
@@ -236,6 +211,9 @@ module.exports = class Aether
     @language.convertToNativeType(obj)
 
   getStatementCount: ->
+    esper = window?.esper ? self?.esper ? global?.esper ? require 'esper.js'
+    esper.plugin 'lang-' + @language.id
+    
     count = 0
     if @language.usesFunctionWrapping()
       root = @ast.body[0].body # We assume the 'code' is one function hanging inside the program.

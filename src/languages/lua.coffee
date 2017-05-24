@@ -10,9 +10,6 @@ module.exports = class Lua extends Language
 
   constructor: ->
     super arguments...
-    parserHolder.lua2js ?= self?.aetherLua2JS ? require 'lua2js'
-    @runtimeGlobals = parserHolder.lua2js.stdlib
-    @injectCode = require 'aether-lang-stdlibs/lua-stdlib.ast.json'
     @fidMap = {}
 
   obviouslyCannotTranspile: (rawCode) ->
@@ -58,21 +55,3 @@ module.exports = class Lua extends Language
     catch error
       return {"type": "BlockStatement": body:[{type: "EmptyStatement"}]}
 
-  pryOpenCall: (call, val, finder) ->
-    node = call.right
-    if val[1] != "__lua"
-      return null
-
-    if val[2] == "call"
-      target = node.arguments[1]
-      #if @fidMap[target.name]
-      #  return @fidMap[target]
-      return finder(target)
-
-    if val[2] == "makeFunction"
-        @fidMap[node.arguments[0].name] = finder(call.left)
-
-    return null
-
-  rewriteFunctionID: (fid) ->
-    @fidMap[fid] or fid

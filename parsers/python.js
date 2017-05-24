@@ -1,2 +1,2 @@
-window.aetherFilbert = require('skulpty');
-window.aetherFilbertLoose = require('skulpty');
+window.aetherFilbert = {};
+window.aetherFilbertLoose = {};
