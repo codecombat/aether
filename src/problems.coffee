@@ -272,27 +272,29 @@ class HintCreator
     # TODO: move this language-specific stuff to language-specific code
     @thisValue = switch languageID
       when 'python' then 'self'
-      when 'cofeescript' then '@'
+      when 'coffeescript' then '@'
       else 'this'
     @realThisValueAccess = switch languageID
       when 'python' then 'self.'
-      when 'cofeescript' then '@'
+      when 'coffeescript' then '@'
       else 'this.'
 
+    @thisValueAlias = context.thisValueAlias ? 'hero'
     # We use `hero` as `this` in CodeCombat now, so all `this` related hints
-    # we get in the problem context should really refrence `hero`
+    # we get in the problem context should really reference `hero`.
+    # Customizable via context, for example, `game` instead of `hero`.
     @thisValueAccess = switch languageID
-      when 'python' then 'hero.'
-      when 'cofeescript' then 'hero.'
-      when 'lua' then 'hero:'
-      else 'hero.'
+      when 'python' then "#{@thisValueAlias}."
+      when 'coffeescript' then "#{@thisValueAlias}."
+      when 'lua' then "#{@thisValueAlias}:"
+      else "#{@thisValueAlias}."
 
     @newVariableTemplate = switch languageID
       when 'javascript' then _.template('var <%= name %> = ')
       else _.template('<%= name %> = ')
     @methodRegex = switch languageID
       when 'python' then new RegExp "self\\.(\\w+)\\s*\\("
-      when 'cofeescript' then new RegExp "@(\\w+)\\s*\\("
+      when 'coffeescript' then new RegExp "@(\\w+)\\s*\\("
       else new RegExp "this\\.(\\w+)\\("
 
     @context = context ? {}
@@ -317,7 +319,7 @@ class HintCreator
           if sm?
             newName = error.targetName.replace target, sm
             return "Look out for spelling issues: did you mean `#{newName}` instead of `#{error.targetName}`?"
-        
+
         return "`#{ast.object.srcName}` has no method `#{ast.property.name}`."
 
     if (missingMethodMatch = message.match(/has no method '(.*?)'/)) or message.match(/is not a function/) or message.match(/has no method/)
