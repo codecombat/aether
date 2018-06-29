@@ -200,21 +200,11 @@
     };
 
     Aether.prototype.transpile = function(raw) {
-      var loopProblems, rawCode, _ref3, _ref4;
+      var rawCode;
       this.raw = raw;
       this.reset();
       rawCode = this.raw;
-      if (this.options.simpleLoops) {
-        rawCode = _.cloneDeep(this.raw);
-        _ref3 = this.language.replaceLoops(rawCode), rawCode = _ref3[0], this.replacedLoops = _ref3[1], loopProblems = _ref3[2];
-      }
       this.problems = this.lint(rawCode);
-      if (loopProblems == null) {
-        loopProblems = [];
-      }
-      if (loopProblems.length > 0) {
-        (_ref4 = this.problems.warnings).push.apply(_ref4, loopProblems);
-      }
       this.pure = this.purifyCode(rawCode);
       return this.pure;
     };
@@ -447,7 +437,7 @@
 }).call(this);
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./defaults":2,"./execution":3,"./interpreter":4,"./languages/languages":10,"./problems":13,"./protectBuiltins":14,"./transforms":16,"./traversal":17,"./validators/options":18,"esprima":39,"lodash":41}],2:[function(require,module,exports){
+},{"./defaults":2,"./execution":3,"./interpreter":4,"./languages/languages":10,"./problems":13,"./protectBuiltins":14,"./transforms":16,"./traversal":17,"./validators/options":18,"esprima":27,"lodash":24}],2:[function(require,module,exports){
 (function (global){
 (function() {
   var defaults, execution, _, _ref, _ref1, _ref2;
@@ -479,7 +469,7 @@
 }).call(this);
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./execution":3,"lodash":41}],3:[function(require,module,exports){
+},{"./execution":3,"lodash":24}],3:[function(require,module,exports){
 (function() {
   var execution;
 
@@ -663,8 +653,8 @@
     }
   };
 
-  module.exports.createFunction = function(aether, code) {
-    var engine, error, esper, fx, fxName, messWithLoops, name, state, _i, _len, _ref3, _ref4, _ref5, _ref6;
+  module.exports.createFunction = function(aether) {
+    var engine, error, esper, fx, fxName, messWithLoops, name, state, _i, _len, _ref3, _ref4, _ref5, _ref6, _ref7;
     esper = (_ref3 = (_ref4 = (_ref5 = typeof window !== "undefined" && window !== null ? window.esper : void 0) != null ? _ref5 : typeof self !== "undefined" && self !== null ? self.esper : void 0) != null ? _ref4 : typeof global !== "undefined" && global !== null ? global.esper : void 0) != null ? _ref3 : require('esper.js');
     state = {};
     messWithLoops = false;
@@ -673,7 +663,7 @@
     }
     if (!aether.esperEngine) {
       aether.esperEngine = new esper.Engine({
-        strict: aether.language.id !== 'python',
+        strict: (_ref6 = aether.language.id) !== 'python' && _ref6 !== 'lua',
         foreignObjectMode: aether.options.protectAPI ? 'smart' : 'link',
         extraErrorInfo: true,
         yieldPower: 2,
@@ -690,9 +680,9 @@
     } else {
       engine.evalSync('');
     }
-    _ref6 = Object.keys(addedGlobals);
-    for (_i = 0, _len = _ref6.length; _i < _len; _i++) {
-      name = _ref6[_i];
+    _ref7 = Object.keys(addedGlobals);
+    for (_i = 0, _len = _ref7.length; _i < _len; _i++) {
+      name = _ref7[_i];
       engine.addGlobal(name, addedGlobals[name]);
     }
     upgradeEvaluator(aether, engine.evaluator);
@@ -748,9 +738,16 @@
       frame_stack = evaluator.frames;
       top = frame_stack[0];
       if ((e != null) && e.type === 'event' && e.event === 'loopBodyStart') {
+        if (top.srcAst.type === 'WhileStatement' && aether.options.alwaysYieldAtTopOfLoops) {
+          if (top.mark != null) {
+            return true;
+          } else {
+            top.mark = 1;
+          }
+        }
         if (top.srcAst.type === 'WhileStatement' && top.srcAst.test.type === 'Literal') {
           if (aether.whileLoopMarker != null) {
-            currentMark = aether.whileLoopMarker();
+            currentMark = aether.whileLoopMarker(top);
             if (currentMark === top.mark) {
               top.mark = currentMark + 1;
               return true;
@@ -927,7 +924,7 @@
 }).call(this);
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./protectBuiltins":14,"esper.js":41,"lodash":41}],5:[function(require,module,exports){
+},{"./protectBuiltins":14,"esper.js":24,"lodash":24}],5:[function(require,module,exports){
 (function (global){
 (function() {
   var CoffeeScript, Language, StructuredCode, estraverse, fixLocations, parserHolder, _, _ref, _ref1, _ref2,
@@ -1153,7 +1150,7 @@
 }).call(this);
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./language":9,"coffee-script-redux":41,"estraverse":40,"lodash":41}],6:[function(require,module,exports){
+},{"./language":9,"coffee-script-redux":24,"estraverse":28,"lodash":24}],6:[function(require,module,exports){
 (function (global){
 (function() {
   var HTML, Language, _, _ref, _ref1, _ref2,
@@ -1200,7 +1197,7 @@
 }).call(this);
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./language":9,"lodash":41}],7:[function(require,module,exports){
+},{"./language":9,"lodash":24}],7:[function(require,module,exports){
 (function() {
   var Java, Language, parserHolder,
     __hasProp = {}.hasOwnProperty,
@@ -1252,7 +1249,7 @@
 
 }).call(this);
 
-},{"./language":9,"cashew-js":41}],8:[function(require,module,exports){
+},{"./language":9,"cashew-js":24}],8:[function(require,module,exports){
 (function (global){
 (function() {
   var JavaScript, Language, acorn_loose, escodegen, esprima, jshintHolder, traversal, _, _ref, _ref1, _ref2,
@@ -1352,33 +1349,6 @@
       traversal.walkAST(aAST, removeLocations);
       traversal.walkAST(bAST, removeLocations);
       return !_.isEqual(aAST, bAST);
-    };
-
-    JavaScript.prototype.replaceLoops = function(rawCode) {
-      var a, convertedCode, line, lineNumber, lines, rangeIndex, replacedLoops, start, _i, _len, _ref3;
-      if (rawCode.indexOf('loop') === -1) {
-        return [rawCode, []];
-      }
-      convertedCode = "";
-      replacedLoops = [];
-      rangeIndex = 0;
-      lines = rawCode.split('\n');
-      for (lineNumber = _i = 0, _len = lines.length; _i < _len; lineNumber = ++_i) {
-        line = lines[lineNumber];
-        if (line.replace(/^\s+/g, "").indexOf('loop') === 0) {
-          start = line.indexOf('loop');
-          a = line.split("");
-          [].splice.apply(a, [start, (start + 3) - start + 1].concat(_ref3 = 'while (true)'.split(""))), _ref3;
-          line = a.join("");
-          replacedLoops.push(rangeIndex + start);
-        }
-        convertedCode += line;
-        if (lineNumber !== lines.length - 1) {
-          convertedCode += '\n';
-        }
-        rangeIndex += line.length + 1;
-      }
-      return [convertedCode, replacedLoops];
     };
 
     JavaScript.prototype.lint = function(rawCode, aether) {
@@ -1581,7 +1551,7 @@
 }).call(this);
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../traversal":17,"./language":9,"acorn/acorn_loose":20,"escodegen":23,"esprima":39,"jshint":41,"lodash":41}],9:[function(require,module,exports){
+},{"../traversal":17,"./language":9,"acorn/acorn_loose":20,"escodegen":25,"esprima":27,"jshint":24,"lodash":24}],9:[function(require,module,exports){
 (function (global){
 (function() {
   var Language, _, _ref, _ref1, _ref2;
@@ -1624,11 +1594,6 @@
       a = a.replace(/^[ \t]+\/\/.*/g, '').trimRight();
       b = b.replace(/^[ \t]+\/\/.*/g, '').trimRight();
       return a.split('\n').length !== b.split('\n').length;
-    };
-
-    Language.prototype.replaceLoops = function(rawCode) {
-      console.warn("Simple loop not implemented for " + this.name);
-      return [rawCode, []];
     };
 
     Language.prototype.lint = function(rawCode, aether) {
@@ -1715,7 +1680,7 @@
 }).call(this);
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"lodash":41}],10:[function(require,module,exports){
+},{"lodash":24}],10:[function(require,module,exports){
 (function() {
   module.exports = {
     javascript: require('./javascript'),
@@ -1777,33 +1742,6 @@
         encloseWithFunctions: false
       });
       return ast;
-    };
-
-    Lua.prototype.replaceLoops = function(rawCode) {
-      var a, convertedCode, line, lineNumber, lines, rangeIndex, replacedLoops, start, _i, _len, _ref;
-      if (rawCode.indexOf('loop') === -1) {
-        return [rawCode, []];
-      }
-      convertedCode = "";
-      replacedLoops = [];
-      rangeIndex = 0;
-      lines = rawCode.split('\n');
-      for (lineNumber = _i = 0, _len = lines.length; _i < _len; lineNumber = ++_i) {
-        line = lines[lineNumber];
-        if (line.replace(/^\s+/g, "").indexOf('loop') === 0) {
-          start = line.indexOf('loop');
-          a = line.split("");
-          [].splice.apply(a, [start, (start + 3) - start + 1].concat(_ref = 'while true do'.split(""))), _ref;
-          line = a.join("");
-          replacedLoops.push(rangeIndex + start);
-        }
-        convertedCode += line;
-        if (lineNumber !== lines.length - 1) {
-          convertedCode += '\n';
-        }
-        rangeIndex += line.length + 1;
-      }
-      return [convertedCode, replacedLoops];
     };
 
     Lua.prototype.lint = function(rawCode, aether) {
@@ -1918,7 +1856,7 @@
 
 }).call(this);
 
-},{"../ranges":15,"./language":9,"aether-lang-stdlibs/lua-stdlib.ast.json":21,"lua2js":41}],12:[function(require,module,exports){
+},{"../ranges":15,"./language":9,"aether-lang-stdlibs/lua-stdlib.ast.json":21,"lua2js":24}],12:[function(require,module,exports){
 (function (global){
 (function() {
   var Language, Python, parserHolder, traversal, _, _ref, _ref1, _ref2,
@@ -1992,53 +1930,6 @@
         error = _error;
         return true;
       }
-    };
-
-    Python.prototype.replaceLoops = function(rawCode) {
-      var a, convertedCode, end, line, lineNumber, lines, problems, rangeIndex, start, _i, _len, _ref3;
-      if (!rawCode.match(/^\s*loop/m)) {
-        return [rawCode, []];
-      }
-      convertedCode = "";
-      this.replacedLoops = [];
-      problems = [];
-      rangeIndex = 0;
-      lines = rawCode.split('\n');
-      for (lineNumber = _i = 0, _len = lines.length; _i < _len; lineNumber = ++_i) {
-        line = lines[lineNumber];
-        if (line.match(/^\s*loop\b/, "") && lineNumber < lines.length - 1) {
-          start = line.indexOf('loop');
-          end = start + 4;
-          while (end < line.length && line[end].match(/\s/)) {
-            end++;
-          }
-          if (line[end] !== ':') {
-            problems.push({
-              type: 'transpile',
-              message: "You are missing a ':' after 'loop'. Try `loop:`",
-              range: [
-                {
-                  row: lineNumber,
-                  column: start
-                }, {
-                  row: lineNumber,
-                  column: end
-                }
-              ]
-            });
-          }
-          a = line.split("");
-          [].splice.apply(a, [start, end - start + 1].concat(_ref3 = 'while True:'.split(""))), _ref3;
-          line = a.join("");
-          this.replacedLoops.push(rangeIndex + start);
-        }
-        convertedCode += line;
-        if (lineNumber !== lines.length - 1) {
-          convertedCode += '\n';
-        }
-        rangeIndex += line.length + 1;
-      }
-      return [convertedCode, this.replacedLoops, problems];
     };
 
     Python.prototype.lint = function(rawCode, aether) {
@@ -2236,7 +2127,7 @@
 }).call(this);
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../traversal":17,"./language":9,"aether-lang-stdlibs/python-stdlib.ast.json":22,"lodash":41,"skulpty":44}],13:[function(require,module,exports){
+},{"../traversal":17,"./language":9,"aether-lang-stdlibs/python-stdlib.ast.json":22,"lodash":24,"skulpty":34}],13:[function(require,module,exports){
 (function (global){
 (function() {
   var HintCreator, acceptMatchThreshold, extractRuntimeErrorDetails, extractTranspileErrorDetails, getRuntimeHint, getTranspileHint, ranges, scoreFuzziness, string_score, _, _ref, _ref1, _ref2,
@@ -2514,11 +2405,12 @@
 
   HintCreator = (function() {
     function HintCreator(context, languageID) {
+      var _ref3;
       this.thisValue = (function() {
         switch (languageID) {
           case 'python':
             return 'self';
-          case 'cofeescript':
+          case 'coffeescript':
             return '@';
           default:
             return 'this';
@@ -2528,24 +2420,25 @@
         switch (languageID) {
           case 'python':
             return 'self.';
-          case 'cofeescript':
+          case 'coffeescript':
             return '@';
           default:
             return 'this.';
         }
       })();
+      this.thisValueAlias = (_ref3 = context.thisValueAlias) != null ? _ref3 : 'hero';
       this.thisValueAccess = (function() {
         switch (languageID) {
           case 'python':
-            return 'hero.';
-          case 'cofeescript':
-            return 'hero.';
+            return "" + this.thisValueAlias + ".";
+          case 'coffeescript':
+            return "" + this.thisValueAlias + ".";
           case 'lua':
-            return 'hero:';
+            return "" + this.thisValueAlias + ":";
           default:
-            return 'hero.';
+            return "" + this.thisValueAlias + ".";
         }
-      })();
+      }).call(this);
       this.newVariableTemplate = (function() {
         switch (languageID) {
           case 'javascript':
@@ -2558,7 +2451,7 @@
         switch (languageID) {
           case 'python':
             return new RegExp("self\\.(\\w+)\\s*\\(");
-          case 'cofeescript':
+          case 'coffeescript':
             return new RegExp("@(\\w+)\\s*\\(");
           default:
             return new RegExp("this\\.(\\w+)\\(");
@@ -2847,7 +2740,7 @@
 }).call(this);
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./ranges":15,"lodash":41,"string_score":45}],14:[function(require,module,exports){
+},{"./ranges":15,"lodash":24,"string_score":45}],14:[function(require,module,exports){
 (function (global){
 (function() {
   var addGlobal, addedGlobals, builtinClones, builtinNames, builtinObjectNames, builtinReal, defineProperty, getOwnPropertyDescriptor, getOwnPropertyNames, globalScope, name, problems, replaceBuiltin, _, _i, _len, _ref, _ref1, _ref2;
@@ -2896,7 +2789,7 @@
 }).call(this);
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./problems":13,"lodash":41}],15:[function(require,module,exports){
+},{"./problems":13,"lodash":24}],15:[function(require,module,exports){
 (function() {
   var buildRowOffsets, lastRowOffsets, lastRowOffsetsPrefix, lastRowOffsetsSource, locToPos, locsToRange, offsetToPos, offsetToRow, offsetsToRange, rowColToPos, rowColsToRange, stringifyPos, stringifyRange;
 
@@ -3202,7 +3095,7 @@
 }).call(this);
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./ranges":15,"esprima":39,"lodash":41}],17:[function(require,module,exports){
+},{"./ranges":15,"esprima":27,"lodash":24}],17:[function(require,module,exports){
 (function (global){
 (function() {
   var insertHelpers, morphAST, walkAST, walkASTCorrect, _, _ref, _ref1, _ref2;
@@ -3308,7 +3201,7 @@
 }).call(this);
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"lodash":41}],18:[function(require,module,exports){
+},{"lodash":24}],18:[function(require,module,exports){
 (function() {
   var tv4;
 
@@ -3395,7 +3288,7 @@
         simpleLoops: {
           type: 'boolean',
           "default": false,
-          description: "Whether simple loops will be supported, per language.  E.g. 'loop()' will be transpiled as 'while(true)'."
+          description: "Whether simple loops will be supported, per language.  E.g. 'loop()' will be transpiled as 'while(true)'. Deprecated: simple loops are no longer supported."
         },
         protectBuiltins: {
           type: 'boolean',
@@ -5925,6 +5818,313 @@ module.exports={"type":"Program","body":[{"type":"VariableDeclaration","declarat
 module.exports={"range":[0,22849],"loc":{"start":{"line":1,"column":0},"end":{"line":662,"column":4}},"type":"Program","body":[{"range":[0,22849],"loc":{"start":{"line":1,"column":0},"end":{"line":662,"column":4}},"type":"ExpressionStatement","expression":{"range":[1,22847],"loc":{"start":{"line":1,"column":1},"end":{"line":662,"column":2}},"type":"CallExpression","callee":{"range":[1,351],"loc":{"start":{"line":1,"column":1},"end":{"line":11,"column":1}},"type":"FunctionExpression","id":null,"params":[{"range":[11,15],"loc":{"start":{"line":1,"column":11},"end":{"line":1,"column":15}},"type":"Identifier","name":"root"},{"range":[17,24],"loc":{"start":{"line":1,"column":17},"end":{"line":1,"column":24}},"type":"Identifier","name":"factory"}],"defaults":[],"body":{"range":[26,351],"loc":{"start":{"line":1,"column":26},"end":{"line":11,"column":1}},"type":"BlockStatement","body":[{"range":[30,43],"loc":{"start":{"line":2,"column":2},"end":{"line":2,"column":15}},"type":"ExpressionStatement","expression":{"range":[30,42],"loc":{"start":{"line":2,"column":2},"end":{"line":2,"column":14}},"type":"Literal","value":"use strict","raw":"'use strict'"}},{"range":[46,349],"loc":{"start":{"line":3,"column":2},"end":{"line":10,"column":40}},"type":"IfStatement","test":{"range":[49,106],"loc":{"start":{"line":3,"column":5},"end":{"line":3,"column":62}},"type":"LogicalExpression","operator":"&&","left":{"range":[49,76],"loc":{"start":{"line":3,"column":5},"end":{"line":3,"column":32}},"type":"BinaryExpression","operator":"===","left":{"range":[49,63],"loc":{"start":{"line":3,"column":5},"end":{"line":3,"column":19}},"type":"UnaryExpression","operator":"typeof","argument":{"range":[56,63],"loc":{"start":{"line":3,"column":12},"end":{"line":3,"column":19}},"type":"Identifier","name":"exports"},"prefix":true},"right":{"range":[68,76],"loc":{"start":{"line":3,"column":24},"end":{"line":3,"column":32}},"type":"Literal","value":"object","raw":"'object'"}},"right":{"range":[80,106],"loc":{"start":{"line":3,"column":36},"end":{"line":3,"column":62}},"type":"BinaryExpression","operator":"===","left":{"range":[80,93],"loc":{"start":{"line":3,"column":36},"end":{"line":3,"column":49}},"type":"UnaryExpression","operator":"typeof","argument":{"range":[87,93],"loc":{"start":{"line":3,"column":43},"end":{"line":3,"column":49}},"type":"Identifier","name":"module"},"prefix":true},"right":{"range":[98,106],"loc":{"start":{"line":3,"column":54},"end":{"line":3,"column":62}},"type":"Literal","value":"object","raw":"'object'"}}},"consequent":{"range":[112,139],"loc":{"start":{"line":4,"column":4},"end":{"line":4,"column":31}},"type":"ExpressionStatement","expression":{"range":[112,138],"loc":{"start":{"line":4,"column":4},"end":{"line":4,"column":30}},"type":"AssignmentExpression","operator":"=","left":{"range":[112,126],"loc":{"start":{"line":4,"column":4},"end":{"line":4,"column":18}},"type":"MemberExpression","computed":false,"object":{"range":[112,118],"loc":{"start":{"line":4,"column":4},"end":{"line":4,"column":10}},"type":"Identifier","name":"module"},"property":{"range":[119,126],"loc":{"start":{"line":4,"column":11},"end":{"line":4,"column":18}},"type":"Identifier","name":"exports"}},"right":{"range":[129,138],"loc":{"start":{"line":4,"column":21},"end":{"line":4,"column":30}},"type":"CallExpression","callee":{"range":[129,136],"loc":{"start":{"line":4,"column":21},"end":{"line":4,"column":28}},"type":"Identifier","name":"factory"},"arguments":[]}}},"alternate":{"range":[147,349],"loc":{"start":{"line":5,"column":7},"end":{"line":10,"column":40}},"type":"IfStatement","test":{"range":[150,192],"loc":{"start":{"line":5,"column":10},"end":{"line":5,"column":52}},"type":"LogicalExpression","operator":"&&","left":{"range":[150,178],"loc":{"start":{"line":5,"column":10},"end":{"line":5,"column":38}},"type":"BinaryExpression","operator":"===","left":{"range":[150,163],"loc":{"start":{"line":5,"column":10},"end":{"line":5,"column":23}},"type":"UnaryExpression","operator":"typeof","argument":{"range":[157,163],"loc":{"start":{"line":5,"column":17},"end":{"line":5,"column":23}},"type":"Identifier","name":"define"},"prefix":true},"right":{"range":[168,178],"loc":{"start":{"line":5,"column":28},"end":{"line":5,"column":38}},"type":"Literal","value":"function","raw":"'function'"}},"right":{"range":[182,192],"loc":{"start":{"line":5,"column":42},"end":{"line":5,"column":52}},"type":"MemberExpression","computed":false,"object":{"range":[182,188],"loc":{"start":{"line":5,"column":42},"end":{"line":5,"column":48}},"type":"Identifier","name":"define"},"property":{"range":[189,192],"loc":{"start":{"line":5,"column":49},"end":{"line":5,"column":52}},"type":"Identifier","name":"amd"}}},"consequent":{"range":[198,218],"loc":{"start":{"line":6,"column":4},"end":{"line":6,"column":24}},"type":"ExpressionStatement","expression":{"range":[198,217],"loc":{"start":{"line":6,"column":4},"end":{"line":6,"column":23}},"type":"CallExpression","callee":{"range":[198,204],"loc":{"start":{"line":6,"column":4},"end":{"line":6,"column":10}},"type":"Identifier","name":"define"},"arguments":[{"range":[205,207],"loc":{"start":{"line":6,"column":11},"end":{"line":6,"column":13}},"type":"ArrayExpression","elements":[]},{"range":[209,216],"loc":{"start":{"line":6,"column":15},"end":{"line":6,"column":22}},"type":"Identifier","name":"factory"}]}},"alternate":{"range":[226,349],"loc":{"start":{"line":7,"column":7},"end":{"line":10,"column":40}},"type":"IfStatement","test":{"range":[229,256],"loc":{"start":{"line":7,"column":10},"end":{"line":7,"column":37}},"type":"BinaryExpression","operator":"===","left":{"range":[229,243],"loc":{"start":{"line":7,"column":10},"end":{"line":7,"column":24}},"type":"UnaryExpression","operator":"typeof","argument":{"range":[236,243],"loc":{"start":{"line":7,"column":17},"end":{"line":7,"column":24}},"type":"Identifier","name":"exports"},"prefix":true},"right":{"range":[248,256],"loc":{"start":{"line":7,"column":29},"end":{"line":7,"column":37}},"type":"Literal","value":"object","raw":"'object'"}},"consequent":{"range":[262,301],"loc":{"start":{"line":8,"column":4},"end":{"line":8,"column":43}},"type":"ExpressionStatement","expression":{"range":[262,300],"loc":{"start":{"line":8,"column":4},"end":{"line":8,"column":42}},"type":"AssignmentExpression","operator":"=","left":{"range":[262,288],"loc":{"start":{"line":8,"column":4},"end":{"line":8,"column":30}},"type":"MemberExpression","computed":true,"object":{"range":[262,269],"loc":{"start":{"line":8,"column":4},"end":{"line":8,"column":11}},"type":"Identifier","name":"exports"},"property":{"range":[270,287],"loc":{"start":{"line":8,"column":12},"end":{"line":8,"column":29}},"type":"Literal","value":"__pythonRuntime","raw":"\"__pythonRuntime\""}},"right":{"range":[291,300],"loc":{"start":{"line":8,"column":33},"end":{"line":8,"column":42}},"type":"CallExpression","callee":{"range":[291,298],"loc":{"start":{"line":8,"column":33},"end":{"line":8,"column":40}},"type":"Identifier","name":"factory"},"arguments":[]}}},"alternate":{"range":[313,349],"loc":{"start":{"line":10,"column":4},"end":{"line":10,"column":40}},"type":"ExpressionStatement","expression":{"range":[313,348],"loc":{"start":{"line":10,"column":4},"end":{"line":10,"column":39}},"type":"AssignmentExpression","operator":"=","left":{"range":[313,336],"loc":{"start":{"line":10,"column":4},"end":{"line":10,"column":27}},"type":"MemberExpression","computed":true,"object":{"range":[313,317],"loc":{"start":{"line":10,"column":4},"end":{"line":10,"column":8}},"type":"Identifier","name":"root"},"property":{"range":[318,335],"loc":{"start":{"line":10,"column":9},"end":{"line":10,"column":26}},"type":"Literal","value":"__pythonRuntime","raw":"\"__pythonRuntime\""}},"right":{"range":[339,348],"loc":{"start":{"line":10,"column":30},"end":{"line":10,"column":39}},"type":"CallExpression","callee":{"range":[339,346],"loc":{"start":{"line":10,"column":30},"end":{"line":10,"column":37}},"type":"Identifier","name":"factory"},"arguments":[]}}}}}}]},"generator":false,"expression":false},"arguments":[{"range":[352,356],"loc":{"start":{"line":11,"column":2},"end":{"line":11,"column":6}},"type":"ThisExpression"},{"range":[358,22846],"loc":{"start":{"line":11,"column":8},"end":{"line":662,"column":1}},"type":"FunctionExpression","id":null,"params":[],"defaults":[],"body":{"range":[369,22846],"loc":{"start":{"line":11,"column":19},"end":{"line":662,"column":1}},"type":"BlockStatement","body":[{"range":[373,386],"loc":{"start":{"line":12,"column":2},"end":{"line":12,"column":15}},"type":"ExpressionStatement","expression":{"range":[373,385],"loc":{"start":{"line":12,"column":2},"end":{"line":12,"column":14}},"type":"Literal","value":"use strict","raw":"'use strict'"}},{"range":[389,22694],"loc":{"start":{"line":13,"column":2},"end":{"line":654,"column":4}},"type":"VariableDeclaration","declarations":[{"range":[393,22693],"loc":{"start":{"line":13,"column":6},"end":{"line":654,"column":3}},"type":"VariableDeclarator","id":{"range":[393,406],"loc":{"start":{"line":13,"column":6},"end":{"line":13,"column":19}},"type":"Identifier","name":"pythonRuntime"},"init":{"range":[409,22693],"loc":{"start":{"line":13,"column":22},"end":{"line":654,"column":3}},"type":"ObjectExpression","properties":[{"range":[415,1777],"loc":{"start":{"line":14,"column":4},"end":{"line":47,"column":5}},"type":"Property","key":{"range":[415,423],"loc":{"start":{"line":14,"column":4},"end":{"line":14,"column":12}},"type":"Identifier","name":"internal"},"computed":false,"value":{"range":[425,1777],"loc":{"start":{"line":14,"column":14},"end":{"line":47,"column":5}},"type":"ObjectExpression","properties":[{"range":[467,547],"loc":{"start":{"line":16,"column":6},"end":{"line":16,"column":86}},"type":"Property","key":{"range":[467,472],"loc":{"start":{"line":16,"column":6},"end":{"line":16,"column":11}},"type":"Identifier","name":"isSeq"},"computed":false,"value":{"range":[474,547],"loc":{"start":{"line":16,"column":13},"end":{"line":16,"column":86}},"type":"FunctionExpression","id":null,"params":[{"range":[484,485],"loc":{"start":{"line":16,"column":23},"end":{"line":16,"column":24}},"type":"Identifier","name":"a"}],"defaults":[],"body":{"range":[487,547],"loc":{"start":{"line":16,"column":26},"end":{"line":16,"column":86}},"type":"BlockStatement","body":[{"range":[489,545],"loc":{"start":{"line":16,"column":28},"end":{"line":16,"column":84}},"type":"ReturnStatement","argument":{"range":[496,544],"loc":{"start":{"line":16,"column":35},"end":{"line":16,"column":83}},"type":"LogicalExpression","operator":"&&","left":{"range":[496,497],"loc":{"start":{"line":16,"column":35},"end":{"line":16,"column":36}},"type":"Identifier","name":"a"},"right":{"range":[502,543],"loc":{"start":{"line":16,"column":41},"end":{"line":16,"column":82}},"type":"LogicalExpression","operator":"||","left":{"range":[502,520],"loc":{"start":{"line":16,"column":41},"end":{"line":16,"column":59}},"type":"BinaryExpression","operator":"===","left":{"range":[502,509],"loc":{"start":{"line":16,"column":41},"end":{"line":16,"column":48}},"type":"MemberExpression","computed":false,"object":{"range":[502,503],"loc":{"start":{"line":16,"column":41},"end":{"line":16,"column":42}},"type":"Identifier","name":"a"},"property":{"range":[504,509],"loc":{"start":{"line":16,"column":43},"end":{"line":16,"column":48}},"type":"Identifier","name":"_type"}},"right":{"range":[514,520],"loc":{"start":{"line":16,"column":53},"end":{"line":16,"column":59}},"type":"Literal","value":"list","raw":"\"list\""}},"right":{"range":[524,543],"loc":{"start":{"line":16,"column":63},"end":{"line":16,"column":82}},"type":"BinaryExpression","operator":"===","left":{"range":[524,531],"loc":{"start":{"line":16,"column":63},"end":{"line":16,"column":70}},"type":"MemberExpression","computed":false,"object":{"range":[524,525],"loc":{"start":{"line":16,"column":63},"end":{"line":16,"column":64}},"type":"Identifier","name":"a"},"property":{"range":[526,531],"loc":{"start":{"line":16,"column":65},"end":{"line":16,"column":70}},"type":"Identifier","name":"_type"}},"right":{"range":[536,543],"loc":{"start":{"line":16,"column":75},"end":{"line":16,"column":82}},"type":"Literal","value":"tuple","raw":"\"tuple\""}}}}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[555,1656],"loc":{"start":{"line":17,"column":6},"end":{"line":43,"column":7}},"type":"Property","key":{"range":[555,560],"loc":{"start":{"line":17,"column":6},"end":{"line":17,"column":11}},"type":"Identifier","name":"slice"},"computed":false,"value":{"range":[562,1656],"loc":{"start":{"line":17,"column":13},"end":{"line":43,"column":7}},"type":"FunctionExpression","id":null,"params":[{"range":[572,575],"loc":{"start":{"line":17,"column":23},"end":{"line":17,"column":26}},"type":"Identifier","name":"obj"},{"range":[577,582],"loc":{"start":{"line":17,"column":28},"end":{"line":17,"column":33}},"type":"Identifier","name":"start"},{"range":[584,587],"loc":{"start":{"line":17,"column":35},"end":{"line":17,"column":38}},"type":"Identifier","name":"end"},{"range":[589,593],"loc":{"start":{"line":17,"column":40},"end":{"line":17,"column":44}},"type":"Identifier","name":"step"}],"defaults":[],"body":{"range":[595,1656],"loc":{"start":{"line":17,"column":46},"end":{"line":43,"column":7}},"type":"BlockStatement","body":[{"range":[605,615],"loc":{"start":{"line":18,"column":8},"end":{"line":18,"column":18}},"type":"VariableDeclaration","declarations":[{"range":[609,614],"loc":{"start":{"line":18,"column":12},"end":{"line":18,"column":17}},"type":"VariableDeclarator","id":{"range":[609,614],"loc":{"start":{"line":18,"column":12},"end":{"line":18,"column":17}},"type":"Identifier","name":"slice"},"init":null}],"kind":"var"},{"range":[624,749],"loc":{"start":{"line":19,"column":8},"end":{"line":20,"column":41}},"type":"IfStatement","test":{"range":[629,652],"loc":{"start":{"line":19,"column":13},"end":{"line":19,"column":36}},"type":"BinaryExpression","operator":"===","left":{"range":[629,639],"loc":{"start":{"line":19,"column":13},"end":{"line":19,"column":23}},"type":"UnaryExpression","operator":"typeof","argument":{"range":[636,639],"loc":{"start":{"line":19,"column":20},"end":{"line":19,"column":23}},"type":"Identifier","name":"obj"},"prefix":true},"right":{"range":[644,652],"loc":{"start":{"line":19,"column":28},"end":{"line":19,"column":36}},"type":"Literal","value":"string","raw":"'string'"}},"consequent":{"range":[655,707],"loc":{"start":{"line":19,"column":39},"end":{"line":19,"column":91}},"type":"ExpressionStatement","expression":{"range":[655,707],"loc":{"start":{"line":19,"column":39},"end":{"line":19,"column":91}},"type":"AssignmentExpression","operator":"=","left":{"range":[655,660],"loc":{"start":{"line":19,"column":39},"end":{"line":19,"column":44}},"type":"Identifier","name":"slice"},"right":{"range":[663,707],"loc":{"start":{"line":19,"column":47},"end":{"line":19,"column":91}},"type":"FunctionExpression","id":null,"params":[{"range":[672,673],"loc":{"start":{"line":19,"column":56},"end":{"line":19,"column":57}},"type":"Identifier","name":"x"},{"range":[674,675],"loc":{"start":{"line":19,"column":58},"end":{"line":19,"column":59}},"type":"Identifier","name":"y"}],"defaults":[],"body":{"range":[677,707],"loc":{"start":{"line":19,"column":61},"end":{"line":19,"column":91}},"type":"BlockStatement","body":[{"range":[679,705],"loc":{"start":{"line":19,"column":63},"end":{"line":19,"column":89}},"type":"ReturnStatement","argument":{"range":[686,704],"loc":{"start":{"line":19,"column":70},"end":{"line":19,"column":88}},"type":"CallExpression","callee":{"range":[686,699],"loc":{"start":{"line":19,"column":70},"end":{"line":19,"column":83}},"type":"MemberExpression","computed":false,"object":{"range":[686,689],"loc":{"start":{"line":19,"column":70},"end":{"line":19,"column":73}},"type":"Identifier","name":"obj"},"property":{"range":[690,699],"loc":{"start":{"line":19,"column":74},"end":{"line":19,"column":83}},"type":"Identifier","name":"substring"}},"arguments":[{"range":[700,701],"loc":{"start":{"line":19,"column":84},"end":{"line":19,"column":85}},"type":"Identifier","name":"x"},{"range":[702,703],"loc":{"start":{"line":19,"column":86},"end":{"line":19,"column":87}},"type":"Identifier","name":"y"}]}}]},"generator":false,"expression":false}}},"alternate":{"range":[721,749],"loc":{"start":{"line":20,"column":13},"end":{"line":20,"column":41}},"type":"ExpressionStatement","expression":{"range":[721,748],"loc":{"start":{"line":20,"column":13},"end":{"line":20,"column":40}},"type":"AssignmentExpression","operator":"=","left":{"range":[721,726],"loc":{"start":{"line":20,"column":13},"end":{"line":20,"column":18}},"type":"Identifier","name":"slice"},"right":{"range":[729,748],"loc":{"start":{"line":20,"column":21},"end":{"line":20,"column":40}},"type":"CallExpression","callee":{"range":[729,743],"loc":{"start":{"line":20,"column":21},"end":{"line":20,"column":35}},"type":"MemberExpression","computed":false,"object":{"range":[729,738],"loc":{"start":{"line":20,"column":21},"end":{"line":20,"column":30}},"type":"MemberExpression","computed":false,"object":{"range":[729,732],"loc":{"start":{"line":20,"column":21},"end":{"line":20,"column":24}},"type":"Identifier","name":"obj"},"property":{"range":[733,738],"loc":{"start":{"line":20,"column":25},"end":{"line":20,"column":30}},"type":"Identifier","name":"slice"}},"property":{"range":[739,743],"loc":{"start":{"line":20,"column":31},"end":{"line":20,"column":35}},"type":"Identifier","name":"bind"}},"arguments":[{"range":[744,747],"loc":{"start":{"line":20,"column":36},"end":{"line":20,"column":39}},"type":"Identifier","name":"obj"}]}}}},{"range":[759,800],"loc":{"start":{"line":22,"column":8},"end":{"line":22,"column":49}},"type":"IfStatement","test":{"range":[763,789],"loc":{"start":{"line":22,"column":12},"end":{"line":22,"column":38}},"type":"LogicalExpression","operator":"||","left":{"range":[763,775],"loc":{"start":{"line":22,"column":12},"end":{"line":22,"column":24}},"type":"BinaryExpression","operator":"==","left":{"range":[763,767],"loc":{"start":{"line":22,"column":12},"end":{"line":22,"column":16}},"type":"Identifier","name":"step"},"right":{"range":[771,775],"loc":{"start":{"line":22,"column":20},"end":{"line":22,"column":24}},"type":"Literal","value":null,"raw":"null"}},"right":{"range":[779,789],"loc":{"start":{"line":22,"column":28},"end":{"line":22,"column":38}},"type":"BinaryExpression","operator":"===","left":{"range":[779,783],"loc":{"start":{"line":22,"column":28},"end":{"line":22,"column":32}},"type":"Identifier","name":"step"},"right":{"range":[788,789],"loc":{"start":{"line":22,"column":37},"end":{"line":22,"column":38}},"type":"Literal","value":0,"raw":"0"}}},"consequent":{"range":[791,800],"loc":{"start":{"line":22,"column":40},"end":{"line":22,"column":49}},"type":"ExpressionStatement","expression":{"range":[791,799],"loc":{"start":{"line":22,"column":40},"end":{"line":22,"column":48}},"type":"AssignmentExpression","operator":"=","left":{"range":[791,795],"loc":{"start":{"line":22,"column":40},"end":{"line":22,"column":44}},"type":"Identifier","name":"step"},"right":{"range":[798,799],"loc":{"start":{"line":22,"column":47},"end":{"line":22,"column":48}},"type":"Literal","value":1,"raw":"1"}}},"alternate":null},{"range":[848,993],"loc":{"start":{"line":23,"column":8},"end":{"line":26,"column":50}},"type":"IfStatement","test":{"range":[852,865],"loc":{"start":{"line":23,"column":12},"end":{"line":23,"column":25}},"type":"BinaryExpression","operator":"==","left":{"range":[852,857],"loc":{"start":{"line":23,"column":12},"end":{"line":23,"column":17}},"type":"Identifier","name":"start"},"right":{"range":[861,865],"loc":{"start":{"line":23,"column":21},"end":{"line":23,"column":25}},"type":"Literal","value":null,"raw":"null"}},"consequent":{"range":[867,952],"loc":{"start":{"line":23,"column":27},"end":{"line":26,"column":9}},"type":"BlockStatement","body":[{"range":[879,942],"loc":{"start":{"line":24,"column":10},"end":{"line":25,"column":25}},"type":"IfStatement","test":{"range":[883,891],"loc":{"start":{"line":24,"column":14},"end":{"line":24,"column":22}},"type":"BinaryExpression","operator":"<","left":{"range":[883,887],"loc":{"start":{"line":24,"column":14},"end":{"line":24,"column":18}},"type":"Identifier","name":"step"},"right":{"range":[890,891],"loc":{"start":{"line":24,"column":21},"end":{"line":24,"column":22}},"type":"Literal","value":0,"raw":"0"}},"consequent":{"range":[893,916],"loc":{"start":{"line":24,"column":24},"end":{"line":24,"column":47}},"type":"ExpressionStatement","expression":{"range":[893,915],"loc":{"start":{"line":24,"column":24},"end":{"line":24,"column":46}},"type":"AssignmentExpression","operator":"=","left":{"range":[893,898],"loc":{"start":{"line":24,"column":24},"end":{"line":24,"column":29}},"type":"Identifier","name":"start"},"right":{"range":[901,915],"loc":{"start":{"line":24,"column":32},"end":{"line":24,"column":46}},"type":"BinaryExpression","operator":"-","left":{"range":[901,911],"loc":{"start":{"line":24,"column":32},"end":{"line":24,"column":42}},"type":"MemberExpression","computed":false,"object":{"range":[901,904],"loc":{"start":{"line":24,"column":32},"end":{"line":24,"column":35}},"type":"Identifier","name":"obj"},"property":{"range":[905,911],"loc":{"start":{"line":24,"column":36},"end":{"line":24,"column":42}},"type":"Identifier","name":"length"}},"right":{"range":[914,915],"loc":{"start":{"line":24,"column":45},"end":{"line":24,"column":46}},"type":"Literal","value":1,"raw":"1"}}}},"alternate":{"range":[932,942],"loc":{"start":{"line":25,"column":15},"end":{"line":25,"column":25}},"type":"ExpressionStatement","expression":{"range":[932,941],"loc":{"start":{"line":25,"column":15},"end":{"line":25,"column":24}},"type":"AssignmentExpression","operator":"=","left":{"range":[932,937],"loc":{"start":{"line":25,"column":15},"end":{"line":25,"column":20}},"type":"Identifier","name":"start"},"right":{"range":[940,941],"loc":{"start":{"line":25,"column":23},"end":{"line":25,"column":24}},"type":"Literal","value":0,"raw":"0"}}}}]},"alternate":{"range":[958,993],"loc":{"start":{"line":26,"column":15},"end":{"line":26,"column":50}},"type":"IfStatement","test":{"range":[962,971],"loc":{"start":{"line":26,"column":19},"end":{"line":26,"column":28}},"type":"BinaryExpression","operator":"<","left":{"range":[962,967],"loc":{"start":{"line":26,"column":19},"end":{"line":26,"column":24}},"type":"Identifier","name":"start"},"right":{"range":[970,971],"loc":{"start":{"line":26,"column":27},"end":{"line":26,"column":28}},"type":"Literal","value":0,"raw":"0"}},"consequent":{"range":[973,993],"loc":{"start":{"line":26,"column":30},"end":{"line":26,"column":50}},"type":"ExpressionStatement","expression":{"range":[973,992],"loc":{"start":{"line":26,"column":30},"end":{"line":26,"column":49}},"type":"AssignmentExpression","operator":"+=","left":{"range":[973,978],"loc":{"start":{"line":26,"column":30},"end":{"line":26,"column":35}},"type":"Identifier","name":"start"},"right":{"range":[982,992],"loc":{"start":{"line":26,"column":39},"end":{"line":26,"column":49}},"type":"MemberExpression","computed":false,"object":{"range":[982,985],"loc":{"start":{"line":26,"column":39},"end":{"line":26,"column":42}},"type":"Identifier","name":"obj"},"property":{"range":[986,992],"loc":{"start":{"line":26,"column":43},"end":{"line":26,"column":49}},"type":"Identifier","name":"length"}}}},"alternate":null}},{"range":[1002,1134],"loc":{"start":{"line":27,"column":8},"end":{"line":30,"column":46}},"type":"IfStatement","test":{"range":[1006,1017],"loc":{"start":{"line":27,"column":12},"end":{"line":27,"column":23}},"type":"BinaryExpression","operator":"==","left":{"range":[1006,1009],"loc":{"start":{"line":27,"column":12},"end":{"line":27,"column":15}},"type":"Identifier","name":"end"},"right":{"range":[1013,1017],"loc":{"start":{"line":27,"column":19},"end":{"line":27,"column":23}},"type":"Literal","value":null,"raw":"null"}},"consequent":{"range":[1019,1097],"loc":{"start":{"line":27,"column":25},"end":{"line":30,"column":9}},"type":"BlockStatement","body":[{"range":[1031,1087],"loc":{"start":{"line":28,"column":10},"end":{"line":29,"column":32}},"type":"IfStatement","test":{"range":[1035,1043],"loc":{"start":{"line":28,"column":14},"end":{"line":28,"column":22}},"type":"BinaryExpression","operator":"<","left":{"range":[1035,1039],"loc":{"start":{"line":28,"column":14},"end":{"line":28,"column":18}},"type":"Identifier","name":"step"},"right":{"range":[1042,1043],"loc":{"start":{"line":28,"column":21},"end":{"line":28,"column":22}},"type":"Literal","value":0,"raw":"0"}},"consequent":{"range":[1045,1054],"loc":{"start":{"line":28,"column":24},"end":{"line":28,"column":33}},"type":"ExpressionStatement","expression":{"range":[1045,1053],"loc":{"start":{"line":28,"column":24},"end":{"line":28,"column":32}},"type":"AssignmentExpression","operator":"=","left":{"range":[1045,1048],"loc":{"start":{"line":28,"column":24},"end":{"line":28,"column":27}},"type":"Identifier","name":"end"},"right":{"range":[1051,1053],"loc":{"start":{"line":28,"column":30},"end":{"line":28,"column":32}},"type":"UnaryExpression","operator":"-","argument":{"range":[1052,1053],"loc":{"start":{"line":28,"column":31},"end":{"line":28,"column":32}},"type":"Literal","value":1,"raw":"1"},"prefix":true}}},"alternate":{"range":[1070,1087],"loc":{"start":{"line":29,"column":15},"end":{"line":29,"column":32}},"type":"ExpressionStatement","expression":{"range":[1070,1086],"loc":{"start":{"line":29,"column":15},"end":{"line":29,"column":31}},"type":"AssignmentExpression","operator":"=","left":{"range":[1070,1073],"loc":{"start":{"line":29,"column":15},"end":{"line":29,"column":18}},"type":"Identifier","name":"end"},"right":{"range":[1076,1086],"loc":{"start":{"line":29,"column":21},"end":{"line":29,"column":31}},"type":"MemberExpression","computed":false,"object":{"range":[1076,1079],"loc":{"start":{"line":29,"column":21},"end":{"line":29,"column":24}},"type":"Identifier","name":"obj"},"property":{"range":[1080,1086],"loc":{"start":{"line":29,"column":25},"end":{"line":29,"column":31}},"type":"Identifier","name":"length"}}}}}]},"alternate":{"range":[1103,1134],"loc":{"start":{"line":30,"column":15},"end":{"line":30,"column":46}},"type":"IfStatement","test":{"range":[1107,1114],"loc":{"start":{"line":30,"column":19},"end":{"line":30,"column":26}},"type":"BinaryExpression","operator":"<","left":{"range":[1107,1110],"loc":{"start":{"line":30,"column":19},"end":{"line":30,"column":22}},"type":"Identifier","name":"end"},"right":{"range":[1113,1114],"loc":{"start":{"line":30,"column":25},"end":{"line":30,"column":26}},"type":"Literal","value":0,"raw":"0"}},"consequent":{"range":[1116,1134],"loc":{"start":{"line":30,"column":28},"end":{"line":30,"column":46}},"type":"ExpressionStatement","expression":{"range":[1116,1133],"loc":{"start":{"line":30,"column":28},"end":{"line":30,"column":45}},"type":"AssignmentExpression","operator":"+=","left":{"range":[1116,1119],"loc":{"start":{"line":30,"column":28},"end":{"line":30,"column":31}},"type":"Identifier","name":"end"},"right":{"range":[1123,1133],"loc":{"start":{"line":30,"column":35},"end":{"line":30,"column":45}},"type":"MemberExpression","computed":false,"object":{"range":[1123,1126],"loc":{"start":{"line":30,"column":35},"end":{"line":30,"column":38}},"type":"Identifier","name":"obj"},"property":{"range":[1127,1133],"loc":{"start":{"line":30,"column":39},"end":{"line":30,"column":45}},"type":"Identifier","name":"length"}}}},"alternate":null}},{"range":[1144,1195],"loc":{"start":{"line":32,"column":8},"end":{"line":32,"column":59}},"type":"VariableDeclaration","declarations":[{"range":[1148,1186],"loc":{"start":{"line":32,"column":12},"end":{"line":32,"column":50}},"type":"VariableDeclarator","id":{"range":[1148,1151],"loc":{"start":{"line":32,"column":12},"end":{"line":32,"column":15}},"type":"Identifier","name":"ret"},"init":{"range":[1154,1186],"loc":{"start":{"line":32,"column":18},"end":{"line":32,"column":50}},"type":"NewExpression","callee":{"range":[1158,1184],"loc":{"start":{"line":32,"column":22},"end":{"line":32,"column":48}},"type":"MemberExpression","computed":false,"object":{"range":[1158,1179],"loc":{"start":{"line":32,"column":22},"end":{"line":32,"column":43}},"type":"MemberExpression","computed":false,"object":{"range":[1158,1171],"loc":{"start":{"line":32,"column":22},"end":{"line":32,"column":35}},"type":"Identifier","name":"pythonRuntime"},"property":{"range":[1172,1179],"loc":{"start":{"line":32,"column":36},"end":{"line":32,"column":43}},"type":"Identifier","name":"objects"}},"property":{"range":[1180,1184],"loc":{"start":{"line":32,"column":44},"end":{"line":32,"column":48}},"type":"Identifier","name":"list"}},"arguments":[]}},{"range":[1188,1191],"loc":{"start":{"line":32,"column":52},"end":{"line":32,"column":55}},"type":"VariableDeclarator","id":{"range":[1188,1191],"loc":{"start":{"line":32,"column":52},"end":{"line":32,"column":55}},"type":"Identifier","name":"tmp"},"init":null},{"range":[1193,1194],"loc":{"start":{"line":32,"column":57},"end":{"line":32,"column":58}},"type":"VariableDeclarator","id":{"range":[1193,1194],"loc":{"start":{"line":32,"column":57},"end":{"line":32,"column":58}},"type":"Identifier","name":"i"},"init":null}],"kind":"var"},{"range":[1204,1568],"loc":{"start":{"line":33,"column":8},"end":{"line":40,"column":9}},"type":"IfStatement","test":{"range":[1208,1216],"loc":{"start":{"line":33,"column":12},"end":{"line":33,"column":20}},"type":"BinaryExpression","operator":"<","left":{"range":[1208,1212],"loc":{"start":{"line":33,"column":12},"end":{"line":33,"column":16}},"type":"Identifier","name":"step"},"right":{"range":[1215,1216],"loc":{"start":{"line":33,"column":19},"end":{"line":33,"column":20}},"type":"Literal","value":0,"raw":"0"}},"consequent":{"range":[1218,1346],"loc":{"start":{"line":33,"column":22},"end":{"line":36,"column":9}},"type":"BlockStatement","body":[{"range":[1230,1262],"loc":{"start":{"line":34,"column":10},"end":{"line":34,"column":42}},"type":"ExpressionStatement","expression":{"range":[1230,1261],"loc":{"start":{"line":34,"column":10},"end":{"line":34,"column":41}},"type":"AssignmentExpression","operator":"=","left":{"range":[1230,1233],"loc":{"start":{"line":34,"column":10},"end":{"line":34,"column":13}},"type":"Identifier","name":"tmp"},"right":{"range":[1236,1261],"loc":{"start":{"line":34,"column":16},"end":{"line":34,"column":41}},"type":"CallExpression","callee":{"range":[1236,1241],"loc":{"start":{"line":34,"column":16},"end":{"line":34,"column":21}},"type":"Identifier","name":"slice"},"arguments":[{"range":[1242,1249],"loc":{"start":{"line":34,"column":22},"end":{"line":34,"column":29}},"type":"BinaryExpression","operator":"+","left":{"range":[1242,1245],"loc":{"start":{"line":34,"column":22},"end":{"line":34,"column":25}},"type":"Identifier","name":"end"},"right":{"range":[1248,1249],"loc":{"start":{"line":34,"column":28},"end":{"line":34,"column":29}},"type":"Literal","value":1,"raw":"1"}},{"range":[1251,1260],"loc":{"start":{"line":34,"column":31},"end":{"line":34,"column":40}},"type":"BinaryExpression","operator":"+","left":{"range":[1251,1256],"loc":{"start":{"line":34,"column":31},"end":{"line":34,"column":36}},"type":"Identifier","name":"start"},"right":{"range":[1259,1260],"loc":{"start":{"line":34,"column":39},"end":{"line":34,"column":40}},"type":"Literal","value":1,"raw":"1"}}]}}},{"range":[1273,1336],"loc":{"start":{"line":35,"column":10},"end":{"line":35,"column":73}},"type":"ForStatement","init":{"range":[1278,1296],"loc":{"start":{"line":35,"column":15},"end":{"line":35,"column":33}},"type":"AssignmentExpression","operator":"=","left":{"range":[1278,1279],"loc":{"start":{"line":35,"column":15},"end":{"line":35,"column":16}},"type":"Identifier","name":"i"},"right":{"range":[1282,1296],"loc":{"start":{"line":35,"column":19},"end":{"line":35,"column":33}},"type":"BinaryExpression","operator":"-","left":{"range":[1282,1292],"loc":{"start":{"line":35,"column":19},"end":{"line":35,"column":29}},"type":"MemberExpression","computed":false,"object":{"range":[1282,1285],"loc":{"start":{"line":35,"column":19},"end":{"line":35,"column":22}},"type":"Identifier","name":"tmp"},"property":{"range":[1286,1292],"loc":{"start":{"line":35,"column":23},"end":{"line":35,"column":29}},"type":"Identifier","name":"length"}},"right":{"range":[1295,1296],"loc":{"start":{"line":35,"column":32},"end":{"line":35,"column":33}},"type":"Literal","value":1,"raw":"1"}}},"test":{"range":[1298,1304],"loc":{"start":{"line":35,"column":35},"end":{"line":35,"column":41}},"type":"BinaryExpression","operator":">=","left":{"range":[1298,1299],"loc":{"start":{"line":35,"column":35},"end":{"line":35,"column":36}},"type":"Identifier","name":"i"},"right":{"range":[1303,1304],"loc":{"start":{"line":35,"column":40},"end":{"line":35,"column":41}},"type":"Literal","value":0,"raw":"0"}},"update":{"range":[1306,1315],"loc":{"start":{"line":35,"column":43},"end":{"line":35,"column":52}},"type":"AssignmentExpression","operator":"+=","left":{"range":[1306,1307],"loc":{"start":{"line":35,"column":43},"end":{"line":35,"column":44}},"type":"Identifier","name":"i"},"right":{"range":[1311,1315],"loc":{"start":{"line":35,"column":48},"end":{"line":35,"column":52}},"type":"Identifier","name":"step"}},"body":{"range":[1317,1336],"loc":{"start":{"line":35,"column":54},"end":{"line":35,"column":73}},"type":"ExpressionStatement","expression":{"range":[1317,1335],"loc":{"start":{"line":35,"column":54},"end":{"line":35,"column":72}},"type":"CallExpression","callee":{"range":[1317,1327],"loc":{"start":{"line":35,"column":54},"end":{"line":35,"column":64}},"type":"MemberExpression","computed":false,"object":{"range":[1317,1320],"loc":{"start":{"line":35,"column":54},"end":{"line":35,"column":57}},"type":"Identifier","name":"ret"},"property":{"range":[1321,1327],"loc":{"start":{"line":35,"column":58},"end":{"line":35,"column":64}},"type":"Identifier","name":"append"}},"arguments":[{"range":[1328,1334],"loc":{"start":{"line":35,"column":65},"end":{"line":35,"column":71}},"type":"MemberExpression","computed":true,"object":{"range":[1328,1331],"loc":{"start":{"line":35,"column":65},"end":{"line":35,"column":68}},"type":"Identifier","name":"tmp"},"property":{"range":[1332,1333],"loc":{"start":{"line":35,"column":69},"end":{"line":35,"column":70}},"type":"Identifier","name":"i"}}]}}}]},"alternate":{"range":[1352,1568],"loc":{"start":{"line":36,"column":15},"end":{"line":40,"column":9}},"type":"BlockStatement","body":[{"range":[1364,1388],"loc":{"start":{"line":37,"column":10},"end":{"line":37,"column":34}},"type":"ExpressionStatement","expression":{"range":[1364,1387],"loc":{"start":{"line":37,"column":10},"end":{"line":37,"column":33}},"type":"AssignmentExpression","operator":"=","left":{"range":[1364,1367],"loc":{"start":{"line":37,"column":10},"end":{"line":37,"column":13}},"type":"Identifier","name":"tmp"},"right":{"range":[1370,1387],"loc":{"start":{"line":37,"column":16},"end":{"line":37,"column":33}},"type":"CallExpression","callee":{"range":[1370,1375],"loc":{"start":{"line":37,"column":16},"end":{"line":37,"column":21}},"type":"Identifier","name":"slice"},"arguments":[{"range":[1376,1381],"loc":{"start":{"line":37,"column":22},"end":{"line":37,"column":27}},"type":"Identifier","name":"start"},{"range":[1383,1386],"loc":{"start":{"line":37,"column":29},"end":{"line":37,"column":32}},"type":"Identifier","name":"end"}]}}},{"range":[1399,1558],"loc":{"start":{"line":38,"column":10},"end":{"line":39,"column":73}},"type":"IfStatement","test":{"range":[1403,1440],"loc":{"start":{"line":38,"column":14},"end":{"line":38,"column":51}},"type":"LogicalExpression","operator":"&&","left":{"range":[1403,1413],"loc":{"start":{"line":38,"column":14},"end":{"line":38,"column":24}},"type":"BinaryExpression","operator":"===","left":{"range":[1403,1407],"loc":{"start":{"line":38,"column":14},"end":{"line":38,"column":18}},"type":"Identifier","name":"step"},"right":{"range":[1412,1413],"loc":{"start":{"line":38,"column":23},"end":{"line":38,"column":24}},"type":"Literal","value":1,"raw":"1"}},"right":{"range":[1417,1440],"loc":{"start":{"line":38,"column":28},"end":{"line":38,"column":51}},"type":"BinaryExpression","operator":"!==","left":{"range":[1417,1427],"loc":{"start":{"line":38,"column":28},"end":{"line":38,"column":38}},"type":"UnaryExpression","operator":"typeof","argument":{"range":[1424,1427],"loc":{"start":{"line":38,"column":35},"end":{"line":38,"column":38}},"type":"Identifier","name":"tmp"},"prefix":true},"right":{"range":[1432,1440],"loc":{"start":{"line":38,"column":43},"end":{"line":38,"column":51}},"type":"Literal","value":"string","raw":"'string'"}}},"consequent":{"range":[1442,1484],"loc":{"start":{"line":38,"column":53},"end":{"line":38,"column":95}},"type":"ExpressionStatement","expression":{"range":[1442,1483],"loc":{"start":{"line":38,"column":53},"end":{"line":38,"column":94}},"type":"AssignmentExpression","operator":"=","left":{"range":[1442,1445],"loc":{"start":{"line":38,"column":53},"end":{"line":38,"column":56}},"type":"Identifier","name":"ret"},"right":{"range":[1448,1483],"loc":{"start":{"line":38,"column":59},"end":{"line":38,"column":94}},"type":"CallExpression","callee":{"range":[1448,1478],"loc":{"start":{"line":38,"column":59},"end":{"line":38,"column":89}},"type":"MemberExpression","computed":false,"object":{"range":[1448,1467],"loc":{"start":{"line":38,"column":59},"end":{"line":38,"column":78}},"type":"MemberExpression","computed":false,"object":{"range":[1448,1461],"loc":{"start":{"line":38,"column":59},"end":{"line":38,"column":72}},"type":"Identifier","name":"pythonRuntime"},"property":{"range":[1462,1467],"loc":{"start":{"line":38,"column":73},"end":{"line":38,"column":78}},"type":"Identifier","name":"utils"}},"property":{"range":[1468,1478],"loc":{"start":{"line":38,"column":79},"end":{"line":38,"column":89}},"type":"Identifier","name":"createList"}},"arguments":[{"range":[1479,1482],"loc":{"start":{"line":38,"column":90},"end":{"line":38,"column":93}},"type":"Identifier","name":"tmp"}]}}},"alternate":{"range":[1500,1558],"loc":{"start":{"line":39,"column":15},"end":{"line":39,"column":73}},"type":"ForStatement","init":{"range":[1505,1510],"loc":{"start":{"line":39,"column":20},"end":{"line":39,"column":25}},"type":"AssignmentExpression","operator":"=","left":{"range":[1505,1506],"loc":{"start":{"line":39,"column":20},"end":{"line":39,"column":21}},"type":"Identifier","name":"i"},"right":{"range":[1509,1510],"loc":{"start":{"line":39,"column":24},"end":{"line":39,"column":25}},"type":"Literal","value":0,"raw":"0"}},"test":{"range":[1512,1526],"loc":{"start":{"line":39,"column":27},"end":{"line":39,"column":41}},"type":"BinaryExpression","operator":"<","left":{"range":[1512,1513],"loc":{"start":{"line":39,"column":27},"end":{"line":39,"column":28}},"type":"Identifier","name":"i"},"right":{"range":[1516,1526],"loc":{"start":{"line":39,"column":31},"end":{"line":39,"column":41}},"type":"MemberExpression","computed":false,"object":{"range":[1516,1519],"loc":{"start":{"line":39,"column":31},"end":{"line":39,"column":34}},"type":"Identifier","name":"tmp"},"property":{"range":[1520,1526],"loc":{"start":{"line":39,"column":35},"end":{"line":39,"column":41}},"type":"Identifier","name":"length"}}},"update":{"range":[1528,1537],"loc":{"start":{"line":39,"column":43},"end":{"line":39,"column":52}},"type":"AssignmentExpression","operator":"+=","left":{"range":[1528,1529],"loc":{"start":{"line":39,"column":43},"end":{"line":39,"column":44}},"type":"Identifier","name":"i"},"right":{"range":[1533,1537],"loc":{"start":{"line":39,"column":48},"end":{"line":39,"column":52}},"type":"Identifier","name":"step"}},"body":{"range":[1539,1558],"loc":{"start":{"line":39,"column":54},"end":{"line":39,"column":73}},"type":"ExpressionStatement","expression":{"range":[1539,1557],"loc":{"start":{"line":39,"column":54},"end":{"line":39,"column":72}},"type":"CallExpression","callee":{"range":[1539,1549],"loc":{"start":{"line":39,"column":54},"end":{"line":39,"column":64}},"type":"MemberExpression","computed":false,"object":{"range":[1539,1542],"loc":{"start":{"line":39,"column":54},"end":{"line":39,"column":57}},"type":"Identifier","name":"ret"},"property":{"range":[1543,1549],"loc":{"start":{"line":39,"column":58},"end":{"line":39,"column":64}},"type":"Identifier","name":"append"}},"arguments":[{"range":[1550,1556],"loc":{"start":{"line":39,"column":65},"end":{"line":39,"column":71}},"type":"MemberExpression","computed":true,"object":{"range":[1550,1553],"loc":{"start":{"line":39,"column":65},"end":{"line":39,"column":68}},"type":"Identifier","name":"tmp"},"property":{"range":[1554,1555],"loc":{"start":{"line":39,"column":69},"end":{"line":39,"column":70}},"type":"Identifier","name":"i"}}]}}}}]}},{"range":[1577,1628],"loc":{"start":{"line":41,"column":8},"end":{"line":41,"column":59}},"type":"IfStatement","test":{"range":[1582,1605],"loc":{"start":{"line":41,"column":13},"end":{"line":41,"column":36}},"type":"BinaryExpression","operator":"===","left":{"range":[1582,1592],"loc":{"start":{"line":41,"column":13},"end":{"line":41,"column":23}},"type":"UnaryExpression","operator":"typeof","argument":{"range":[1589,1592],"loc":{"start":{"line":41,"column":20},"end":{"line":41,"column":23}},"type":"Identifier","name":"obj"},"prefix":true},"right":{"range":[1597,1605],"loc":{"start":{"line":41,"column":28},"end":{"line":41,"column":36}},"type":"Literal","value":"string","raw":"'string'"}},"consequent":{"range":[1608,1628],"loc":{"start":{"line":41,"column":39},"end":{"line":41,"column":59}},"type":"ReturnStatement","argument":{"range":[1615,1627],"loc":{"start":{"line":41,"column":46},"end":{"line":41,"column":58}},"type":"CallExpression","callee":{"range":[1615,1623],"loc":{"start":{"line":41,"column":46},"end":{"line":41,"column":54}},"type":"MemberExpression","computed":false,"object":{"range":[1615,1618],"loc":{"start":{"line":41,"column":46},"end":{"line":41,"column":49}},"type":"Identifier","name":"ret"},"property":{"range":[1619,1623],"loc":{"start":{"line":41,"column":50},"end":{"line":41,"column":54}},"type":"Identifier","name":"join"}},"arguments":[{"range":[1624,1626],"loc":{"start":{"line":41,"column":55},"end":{"line":41,"column":57}},"type":"Literal","value":"","raw":"''"}]}},"alternate":null},{"range":[1637,1648],"loc":{"start":{"line":42,"column":8},"end":{"line":42,"column":19}},"type":"ReturnStatement","argument":{"range":[1644,1647],"loc":{"start":{"line":42,"column":15},"end":{"line":42,"column":18}},"type":"Identifier","name":"ret"}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[1664,1771],"loc":{"start":{"line":44,"column":6},"end":{"line":46,"column":7}},"type":"Property","key":{"range":[1664,1673],"loc":{"start":{"line":44,"column":6},"end":{"line":44,"column":15}},"type":"Identifier","name":"isJSArray"},"computed":false,"value":{"range":[1675,1771],"loc":{"start":{"line":44,"column":17},"end":{"line":46,"column":7}},"type":"LogicalExpression","operator":"||","left":{"range":[1675,1688],"loc":{"start":{"line":44,"column":17},"end":{"line":44,"column":30}},"type":"MemberExpression","computed":false,"object":{"range":[1675,1680],"loc":{"start":{"line":44,"column":17},"end":{"line":44,"column":22}},"type":"Identifier","name":"Array"},"property":{"range":[1681,1688],"loc":{"start":{"line":44,"column":23},"end":{"line":44,"column":30}},"type":"Identifier","name":"isArray"}},"right":{"range":[1692,1771],"loc":{"start":{"line":44,"column":34},"end":{"line":46,"column":7}},"type":"FunctionExpression","id":null,"params":[{"range":[1701,1704],"loc":{"start":{"line":44,"column":43},"end":{"line":44,"column":46}},"type":"Identifier","name":"obj"}],"defaults":[],"body":{"range":[1706,1771],"loc":{"start":{"line":44,"column":48},"end":{"line":46,"column":7}},"type":"BlockStatement","body":[{"range":[1716,1763],"loc":{"start":{"line":45,"column":8},"end":{"line":45,"column":55}},"type":"ReturnStatement","argument":{"range":[1723,1762],"loc":{"start":{"line":45,"column":15},"end":{"line":45,"column":54}},"type":"BinaryExpression","operator":"===","left":{"range":[1723,1741],"loc":{"start":{"line":45,"column":15},"end":{"line":45,"column":33}},"type":"CallExpression","callee":{"range":[1723,1736],"loc":{"start":{"line":45,"column":15},"end":{"line":45,"column":28}},"type":"MemberExpression","computed":false,"object":{"range":[1723,1731],"loc":{"start":{"line":45,"column":15},"end":{"line":45,"column":23}},"type":"Identifier","name":"toString"},"property":{"range":[1732,1736],"loc":{"start":{"line":45,"column":24},"end":{"line":45,"column":28}},"type":"Identifier","name":"call"}},"arguments":[{"range":[1737,1740],"loc":{"start":{"line":45,"column":29},"end":{"line":45,"column":32}},"type":"Identifier","name":"obj"}]},"right":{"range":[1746,1762],"loc":{"start":{"line":45,"column":38},"end":{"line":45,"column":54}},"type":"Literal","value":"[object Array]","raw":"'[object Array]'"}}}]},"generator":false,"expression":false}},"kind":"init","method":false,"shorthand":false}]},"kind":"init","method":false,"shorthand":false},{"range":[1784,9897],"loc":{"start":{"line":49,"column":4},"end":{"line":303,"column":5}},"type":"Property","key":{"range":[1784,1789],"loc":{"start":{"line":49,"column":4},"end":{"line":49,"column":9}},"type":"Identifier","name":"utils"},"computed":false,"value":{"range":[1791,9897],"loc":{"start":{"line":49,"column":11},"end":{"line":303,"column":5}},"type":"ObjectExpression","properties":[{"range":[1799,2127],"loc":{"start":{"line":50,"column":6},"end":{"line":57,"column":7}},"type":"Property","key":{"range":[1799,1809],"loc":{"start":{"line":50,"column":6},"end":{"line":50,"column":16}},"type":"Identifier","name":"createDict"},"computed":false,"value":{"range":[1811,2127],"loc":{"start":{"line":50,"column":18},"end":{"line":57,"column":7}},"type":"FunctionExpression","id":null,"params":[],"defaults":[],"body":{"range":[1823,2127],"loc":{"start":{"line":50,"column":30},"end":{"line":57,"column":7}},"type":"BlockStatement","body":[{"range":[1833,1876],"loc":{"start":{"line":51,"column":8},"end":{"line":51,"column":51}},"type":"VariableDeclaration","declarations":[{"range":[1837,1875],"loc":{"start":{"line":51,"column":12},"end":{"line":51,"column":50}},"type":"VariableDeclarator","id":{"range":[1837,1840],"loc":{"start":{"line":51,"column":12},"end":{"line":51,"column":15}},"type":"Identifier","name":"ret"},"init":{"range":[1843,1875],"loc":{"start":{"line":51,"column":18},"end":{"line":51,"column":50}},"type":"NewExpression","callee":{"range":[1847,1873],"loc":{"start":{"line":51,"column":22},"end":{"line":51,"column":48}},"type":"MemberExpression","computed":false,"object":{"range":[1847,1868],"loc":{"start":{"line":51,"column":22},"end":{"line":51,"column":43}},"type":"MemberExpression","computed":false,"object":{"range":[1847,1860],"loc":{"start":{"line":51,"column":22},"end":{"line":51,"column":35}},"type":"Identifier","name":"pythonRuntime"},"property":{"range":[1861,1868],"loc":{"start":{"line":51,"column":36},"end":{"line":51,"column":43}},"type":"Identifier","name":"objects"}},"property":{"range":[1869,1873],"loc":{"start":{"line":51,"column":44},"end":{"line":51,"column":48}},"type":"Identifier","name":"dict"}},"arguments":[]}}],"kind":"var"},{"range":[1885,2099],"loc":{"start":{"line":52,"column":8},"end":{"line":55,"column":75}},"type":"IfStatement","test":{"range":[1889,1945],"loc":{"start":{"line":52,"column":12},"end":{"line":52,"column":68}},"type":"LogicalExpression","operator":"&&","left":{"range":[1889,1911],"loc":{"start":{"line":52,"column":12},"end":{"line":52,"column":34}},"type":"BinaryExpression","operator":"===","left":{"range":[1889,1905],"loc":{"start":{"line":52,"column":12},"end":{"line":52,"column":28}},"type":"MemberExpression","computed":false,"object":{"range":[1889,1898],"loc":{"start":{"line":52,"column":12},"end":{"line":52,"column":21}},"type":"Identifier","name":"arguments"},"property":{"range":[1899,1905],"loc":{"start":{"line":52,"column":22},"end":{"line":52,"column":28}},"type":"Identifier","name":"length"}},"right":{"range":[1910,1911],"loc":{"start":{"line":52,"column":33},"end":{"line":52,"column":34}},"type":"Literal","value":1,"raw":"1"}},"right":{"range":[1915,1945],"loc":{"start":{"line":52,"column":38},"end":{"line":52,"column":68}},"type":"BinaryExpression","operator":"instanceof","left":{"range":[1915,1927],"loc":{"start":{"line":52,"column":38},"end":{"line":52,"column":50}},"type":"MemberExpression","computed":true,"object":{"range":[1915,1924],"loc":{"start":{"line":52,"column":38},"end":{"line":52,"column":47}},"type":"Identifier","name":"arguments"},"property":{"range":[1925,1926],"loc":{"start":{"line":52,"column":48},"end":{"line":52,"column":49}},"type":"Literal","value":0,"raw":"0"}},"right":{"range":[1939,1945],"loc":{"start":{"line":52,"column":62},"end":{"line":52,"column":68}},"type":"Identifier","name":"Object"}}},"consequent":{"range":[1957,2010],"loc":{"start":{"line":53,"column":10},"end":{"line":53,"column":63}},"type":"ForInStatement","left":{"range":[1962,1967],"loc":{"start":{"line":53,"column":15},"end":{"line":53,"column":20}},"type":"VariableDeclaration","declarations":[{"range":[1966,1967],"loc":{"start":{"line":53,"column":19},"end":{"line":53,"column":20}},"type":"VariableDeclarator","id":{"range":[1966,1967],"loc":{"start":{"line":53,"column":19},"end":{"line":53,"column":20}},"type":"Identifier","name":"k"},"init":null}],"kind":"var"},"right":{"range":[1971,1983],"loc":{"start":{"line":53,"column":24},"end":{"line":53,"column":36}},"type":"MemberExpression","computed":true,"object":{"range":[1971,1980],"loc":{"start":{"line":53,"column":24},"end":{"line":53,"column":33}},"type":"Identifier","name":"arguments"},"property":{"range":[1981,1982],"loc":{"start":{"line":53,"column":34},"end":{"line":53,"column":35}},"type":"Literal","value":0,"raw":"0"}},"body":{"range":[1985,2010],"loc":{"start":{"line":53,"column":38},"end":{"line":53,"column":63}},"type":"ExpressionStatement","expression":{"range":[1985,2009],"loc":{"start":{"line":53,"column":38},"end":{"line":53,"column":62}},"type":"AssignmentExpression","operator":"=","left":{"range":[1985,1991],"loc":{"start":{"line":53,"column":38},"end":{"line":53,"column":44}},"type":"MemberExpression","computed":true,"object":{"range":[1985,1988],"loc":{"start":{"line":53,"column":38},"end":{"line":53,"column":41}},"type":"Identifier","name":"ret"},"property":{"range":[1989,1990],"loc":{"start":{"line":53,"column":42},"end":{"line":53,"column":43}},"type":"Identifier","name":"k"}},"right":{"range":[1994,2009],"loc":{"start":{"line":53,"column":47},"end":{"line":53,"column":62}},"type":"MemberExpression","computed":true,"object":{"range":[1994,2006],"loc":{"start":{"line":53,"column":47},"end":{"line":53,"column":59}},"type":"MemberExpression","computed":true,"object":{"range":[1994,2003],"loc":{"start":{"line":53,"column":47},"end":{"line":53,"column":56}},"type":"Identifier","name":"arguments"},"property":{"range":[2004,2005],"loc":{"start":{"line":53,"column":57},"end":{"line":53,"column":58}},"type":"Literal","value":0,"raw":"0"}},"property":{"range":[2007,2008],"loc":{"start":{"line":53,"column":60},"end":{"line":53,"column":61}},"type":"Identifier","name":"k"}}}},"each":false},"alternate":{"range":[2034,2099],"loc":{"start":{"line":55,"column":10},"end":{"line":55,"column":75}},"type":"ThrowStatement","argument":{"range":[2040,2098],"loc":{"start":{"line":55,"column":16},"end":{"line":55,"column":74}},"type":"CallExpression","callee":{"range":[2040,2049],"loc":{"start":{"line":55,"column":16},"end":{"line":55,"column":25}},"type":"Identifier","name":"TypeError"},"arguments":[{"range":[2050,2097],"loc":{"start":{"line":55,"column":26},"end":{"line":55,"column":73}},"type":"Literal","value":"createDict expects a single JavaScript object","raw":"\"createDict expects a single JavaScript object\""}]}}},{"range":[2108,2119],"loc":{"start":{"line":56,"column":8},"end":{"line":56,"column":19}},"type":"ReturnStatement","argument":{"range":[2115,2118],"loc":{"start":{"line":56,"column":15},"end":{"line":56,"column":18}},"type":"Identifier","name":"ret"}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[2135,2749],"loc":{"start":{"line":58,"column":6},"end":{"line":70,"column":7}},"type":"Property","key":{"range":[2135,2150],"loc":{"start":{"line":58,"column":6},"end":{"line":58,"column":21}},"type":"Identifier","name":"createParamsObj"},"computed":false,"value":{"range":[2152,2749],"loc":{"start":{"line":58,"column":23},"end":{"line":70,"column":7}},"type":"FunctionExpression","id":null,"params":[],"defaults":[],"body":{"range":[2164,2749],"loc":{"start":{"line":58,"column":35},"end":{"line":70,"column":7}},"type":"BlockStatement","body":[{"range":[2334,2421],"loc":{"start":{"line":61,"column":8},"end":{"line":61,"column":95}},"type":"VariableDeclaration","declarations":[{"range":[2338,2420],"loc":{"start":{"line":61,"column":12},"end":{"line":61,"column":94}},"type":"VariableDeclarator","id":{"range":[2338,2344],"loc":{"start":{"line":61,"column":12},"end":{"line":61,"column":18}},"type":"Identifier","name":"params"},"init":{"range":[2347,2420],"loc":{"start":{"line":61,"column":21},"end":{"line":61,"column":94}},"type":"ObjectExpression","properties":[{"range":[2349,2390],"loc":{"start":{"line":61,"column":23},"end":{"line":61,"column":64}},"type":"Property","key":{"range":[2349,2356],"loc":{"start":{"line":61,"column":23},"end":{"line":61,"column":30}},"type":"Identifier","name":"formals"},"computed":false,"value":{"range":[2358,2390],"loc":{"start":{"line":61,"column":32},"end":{"line":61,"column":64}},"type":"NewExpression","callee":{"range":[2362,2388],"loc":{"start":{"line":61,"column":36},"end":{"line":61,"column":62}},"type":"MemberExpression","computed":false,"object":{"range":[2362,2383],"loc":{"start":{"line":61,"column":36},"end":{"line":61,"column":57}},"type":"MemberExpression","computed":false,"object":{"range":[2362,2375],"loc":{"start":{"line":61,"column":36},"end":{"line":61,"column":49}},"type":"Identifier","name":"pythonRuntime"},"property":{"range":[2376,2383],"loc":{"start":{"line":61,"column":50},"end":{"line":61,"column":57}},"type":"Identifier","name":"objects"}},"property":{"range":[2384,2388],"loc":{"start":{"line":61,"column":58},"end":{"line":61,"column":62}},"type":"Identifier","name":"list"}},"arguments":[]},"kind":"init","method":false,"shorthand":false},{"range":[2392,2418],"loc":{"start":{"line":61,"column":66},"end":{"line":61,"column":92}},"type":"Property","key":{"range":[2392,2400],"loc":{"start":{"line":61,"column":66},"end":{"line":61,"column":74}},"type":"Identifier","name":"keywords"},"computed":false,"value":{"range":[2402,2418],"loc":{"start":{"line":61,"column":76},"end":{"line":61,"column":92}},"type":"NewExpression","callee":{"range":[2406,2416],"loc":{"start":{"line":61,"column":80},"end":{"line":61,"column":90}},"type":"Identifier","name":"PythonDict"},"arguments":[]},"kind":"init","method":false,"shorthand":false}]}}],"kind":"var"},{"range":[2430,2718],"loc":{"start":{"line":62,"column":8},"end":{"line":68,"column":9}},"type":"ForStatement","init":{"range":[2435,2444],"loc":{"start":{"line":62,"column":13},"end":{"line":62,"column":22}},"type":"VariableDeclaration","declarations":[{"range":[2439,2444],"loc":{"start":{"line":62,"column":17},"end":{"line":62,"column":22}},"type":"VariableDeclarator","id":{"range":[2439,2440],"loc":{"start":{"line":62,"column":17},"end":{"line":62,"column":18}},"type":"Identifier","name":"i"},"init":{"range":[2443,2444],"loc":{"start":{"line":62,"column":21},"end":{"line":62,"column":22}},"type":"Literal","value":0,"raw":"0"}}],"kind":"var"},"test":{"range":[2446,2466],"loc":{"start":{"line":62,"column":24},"end":{"line":62,"column":44}},"type":"BinaryExpression","operator":"<","left":{"range":[2446,2447],"loc":{"start":{"line":62,"column":24},"end":{"line":62,"column":25}},"type":"Identifier","name":"i"},"right":{"range":[2450,2466],"loc":{"start":{"line":62,"column":28},"end":{"line":62,"column":44}},"type":"MemberExpression","computed":false,"object":{"range":[2450,2459],"loc":{"start":{"line":62,"column":28},"end":{"line":62,"column":37}},"type":"Identifier","name":"arguments"},"property":{"range":[2460,2466],"loc":{"start":{"line":62,"column":38},"end":{"line":62,"column":44}},"type":"Identifier","name":"length"}}},"update":{"range":[2468,2471],"loc":{"start":{"line":62,"column":46},"end":{"line":62,"column":49}},"type":"UpdateExpression","operator":"++","argument":{"range":[2468,2469],"loc":{"start":{"line":62,"column":46},"end":{"line":62,"column":47}},"type":"Identifier","name":"i"},"prefix":false},"body":{"range":[2473,2718],"loc":{"start":{"line":62,"column":51},"end":{"line":68,"column":9}},"type":"BlockStatement","body":[{"range":[2485,2708],"loc":{"start":{"line":63,"column":10},"end":{"line":67,"column":49}},"type":"IfStatement","test":{"range":[2489,2532],"loc":{"start":{"line":63,"column":14},"end":{"line":63,"column":57}},"type":"LogicalExpression","operator":"&&","left":{"range":[2489,2501],"loc":{"start":{"line":63,"column":14},"end":{"line":63,"column":26}},"type":"MemberExpression","computed":true,"object":{"range":[2489,2498],"loc":{"start":{"line":63,"column":14},"end":{"line":63,"column":23}},"type":"Identifier","name":"arguments"},"property":{"range":[2499,2500],"loc":{"start":{"line":63,"column":24},"end":{"line":63,"column":25}},"type":"Identifier","name":"i"}},"right":{"range":[2505,2532],"loc":{"start":{"line":63,"column":30},"end":{"line":63,"column":57}},"type":"BinaryExpression","operator":"===","left":{"range":[2505,2523],"loc":{"start":{"line":63,"column":30},"end":{"line":63,"column":48}},"type":"MemberExpression","computed":false,"object":{"range":[2505,2517],"loc":{"start":{"line":63,"column":30},"end":{"line":63,"column":42}},"type":"MemberExpression","computed":true,"object":{"range":[2505,2514],"loc":{"start":{"line":63,"column":30},"end":{"line":63,"column":39}},"type":"Identifier","name":"arguments"},"property":{"range":[2515,2516],"loc":{"start":{"line":63,"column":40},"end":{"line":63,"column":41}},"type":"Identifier","name":"i"}},"property":{"range":[2518,2523],"loc":{"start":{"line":63,"column":43},"end":{"line":63,"column":48}},"type":"Identifier","name":"__kwp"}},"right":{"range":[2528,2532],"loc":{"start":{"line":63,"column":53},"end":{"line":63,"column":57}},"type":"Literal","value":true,"raw":"true"}}},"consequent":{"range":[2534,2658],"loc":{"start":{"line":63,"column":59},"end":{"line":66,"column":11}},"type":"BlockStatement","body":[{"range":[2548,2646],"loc":{"start":{"line":64,"column":12},"end":{"line":65,"column":70}},"type":"ForInStatement","left":{"range":[2553,2558],"loc":{"start":{"line":64,"column":17},"end":{"line":64,"column":22}},"type":"VariableDeclaration","declarations":[{"range":[2557,2558],"loc":{"start":{"line":64,"column":21},"end":{"line":64,"column":22}},"type":"VariableDeclarator","id":{"range":[2557,2558],"loc":{"start":{"line":64,"column":21},"end":{"line":64,"column":22}},"type":"Identifier","name":"k"},"init":null}],"kind":"var"},"right":{"range":[2562,2574],"loc":{"start":{"line":64,"column":26},"end":{"line":64,"column":38}},"type":"MemberExpression","computed":true,"object":{"range":[2562,2571],"loc":{"start":{"line":64,"column":26},"end":{"line":64,"column":35}},"type":"Identifier","name":"arguments"},"property":{"range":[2572,2573],"loc":{"start":{"line":64,"column":36},"end":{"line":64,"column":37}},"type":"Identifier","name":"i"}},"body":{"range":[2590,2646],"loc":{"start":{"line":65,"column":14},"end":{"line":65,"column":70}},"type":"IfStatement","test":{"range":[2594,2607],"loc":{"start":{"line":65,"column":18},"end":{"line":65,"column":31}},"type":"BinaryExpression","operator":"!==","left":{"range":[2594,2595],"loc":{"start":{"line":65,"column":18},"end":{"line":65,"column":19}},"type":"Identifier","name":"k"},"right":{"range":[2600,2607],"loc":{"start":{"line":65,"column":24},"end":{"line":65,"column":31}},"type":"Literal","value":"__kwp","raw":"'__kwp'"}},"consequent":{"range":[2609,2646],"loc":{"start":{"line":65,"column":33},"end":{"line":65,"column":70}},"type":"ExpressionStatement","expression":{"range":[2609,2645],"loc":{"start":{"line":65,"column":33},"end":{"line":65,"column":69}},"type":"AssignmentExpression","operator":"=","left":{"range":[2609,2627],"loc":{"start":{"line":65,"column":33},"end":{"line":65,"column":51}},"type":"MemberExpression","computed":true,"object":{"range":[2609,2624],"loc":{"start":{"line":65,"column":33},"end":{"line":65,"column":48}},"type":"MemberExpression","computed":false,"object":{"range":[2609,2615],"loc":{"start":{"line":65,"column":33},"end":{"line":65,"column":39}},"type":"Identifier","name":"params"},"property":{"range":[2616,2624],"loc":{"start":{"line":65,"column":40},"end":{"line":65,"column":48}},"type":"Identifier","name":"keywords"}},"property":{"range":[2625,2626],"loc":{"start":{"line":65,"column":49},"end":{"line":65,"column":50}},"type":"Identifier","name":"k"}},"right":{"range":[2630,2645],"loc":{"start":{"line":65,"column":54},"end":{"line":65,"column":69}},"type":"MemberExpression","computed":true,"object":{"range":[2630,2642],"loc":{"start":{"line":65,"column":54},"end":{"line":65,"column":66}},"type":"MemberExpression","computed":true,"object":{"range":[2630,2639],"loc":{"start":{"line":65,"column":54},"end":{"line":65,"column":63}},"type":"Identifier","name":"arguments"},"property":{"range":[2640,2641],"loc":{"start":{"line":65,"column":64},"end":{"line":65,"column":65}},"type":"Identifier","name":"i"}},"property":{"range":[2643,2644],"loc":{"start":{"line":65,"column":67},"end":{"line":65,"column":68}},"type":"Identifier","name":"k"}}}},"alternate":null},"each":false}]},"alternate":{"range":[2674,2708],"loc":{"start":{"line":67,"column":15},"end":{"line":67,"column":49}},"type":"ExpressionStatement","expression":{"range":[2674,2707],"loc":{"start":{"line":67,"column":15},"end":{"line":67,"column":48}},"type":"CallExpression","callee":{"range":[2674,2693],"loc":{"start":{"line":67,"column":15},"end":{"line":67,"column":34}},"type":"MemberExpression","computed":false,"object":{"range":[2674,2688],"loc":{"start":{"line":67,"column":15},"end":{"line":67,"column":29}},"type":"MemberExpression","computed":false,"object":{"range":[2674,2680],"loc":{"start":{"line":67,"column":15},"end":{"line":67,"column":21}},"type":"Identifier","name":"params"},"property":{"range":[2681,2688],"loc":{"start":{"line":67,"column":22},"end":{"line":67,"column":29}},"type":"Identifier","name":"formals"}},"property":{"range":[2689,2693],"loc":{"start":{"line":67,"column":30},"end":{"line":67,"column":34}},"type":"Identifier","name":"push"}},"arguments":[{"range":[2694,2706],"loc":{"start":{"line":67,"column":35},"end":{"line":67,"column":47}},"type":"MemberExpression","computed":true,"object":{"range":[2694,2703],"loc":{"start":{"line":67,"column":35},"end":{"line":67,"column":44}},"type":"Identifier","name":"arguments"},"property":{"range":[2704,2705],"loc":{"start":{"line":67,"column":45},"end":{"line":67,"column":46}},"type":"Identifier","name":"i"}}]}}}]}},{"range":[2727,2741],"loc":{"start":{"line":69,"column":8},"end":{"line":69,"column":22}},"type":"ReturnStatement","argument":{"range":[2734,2740],"loc":{"start":{"line":69,"column":15},"end":{"line":69,"column":21}},"type":"Identifier","name":"params"}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[2757,2901],"loc":{"start":{"line":71,"column":6},"end":{"line":74,"column":7}},"type":"Property","key":{"range":[2757,2770],"loc":{"start":{"line":71,"column":6},"end":{"line":71,"column":19}},"type":"Identifier","name":"convertToList"},"computed":false,"value":{"range":[2772,2901],"loc":{"start":{"line":71,"column":21},"end":{"line":74,"column":7}},"type":"FunctionExpression","id":null,"params":[{"range":[2782,2786],"loc":{"start":{"line":71,"column":31},"end":{"line":71,"column":35}},"type":"Identifier","name":"list"}],"defaults":[],"body":{"range":[2788,2901],"loc":{"start":{"line":71,"column":37},"end":{"line":74,"column":7}},"type":"BlockStatement","body":[{"range":[2798,2872],"loc":{"start":{"line":72,"column":8},"end":{"line":72,"column":82}},"type":"ExpressionStatement","expression":{"range":[2798,2871],"loc":{"start":{"line":72,"column":8},"end":{"line":72,"column":81}},"type":"CallExpression","callee":{"range":[2798,2821],"loc":{"start":{"line":72,"column":8},"end":{"line":72,"column":31}},"type":"MemberExpression","computed":false,"object":{"range":[2798,2804],"loc":{"start":{"line":72,"column":8},"end":{"line":72,"column":14}},"type":"Identifier","name":"Object"},"property":{"range":[2805,2821],"loc":{"start":{"line":72,"column":15},"end":{"line":72,"column":31}},"type":"Identifier","name":"defineProperties"}},"arguments":[{"range":[2822,2826],"loc":{"start":{"line":72,"column":32},"end":{"line":72,"column":36}},"type":"Identifier","name":"list"},{"range":[2828,2870],"loc":{"start":{"line":72,"column":38},"end":{"line":72,"column":80}},"type":"MemberExpression","computed":false,"object":{"range":[2828,2847],"loc":{"start":{"line":72,"column":38},"end":{"line":72,"column":57}},"type":"MemberExpression","computed":false,"object":{"range":[2828,2841],"loc":{"start":{"line":72,"column":38},"end":{"line":72,"column":51}},"type":"Identifier","name":"pythonRuntime"},"property":{"range":[2842,2847],"loc":{"start":{"line":72,"column":52},"end":{"line":72,"column":57}},"type":"Identifier","name":"utils"}},"property":{"range":[2848,2870],"loc":{"start":{"line":72,"column":58},"end":{"line":72,"column":80}},"type":"Identifier","name":"listPropertyDescriptor"}}]}},{"range":[2881,2893],"loc":{"start":{"line":73,"column":8},"end":{"line":73,"column":20}},"type":"ReturnStatement","argument":{"range":[2888,2892],"loc":{"start":{"line":73,"column":15},"end":{"line":73,"column":19}},"type":"Identifier","name":"list"}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[2909,3053],"loc":{"start":{"line":75,"column":6},"end":{"line":78,"column":7}},"type":"Property","key":{"range":[2909,2922],"loc":{"start":{"line":75,"column":6},"end":{"line":75,"column":19}},"type":"Identifier","name":"convertToDict"},"computed":false,"value":{"range":[2924,3053],"loc":{"start":{"line":75,"column":21},"end":{"line":78,"column":7}},"type":"FunctionExpression","id":null,"params":[{"range":[2934,2938],"loc":{"start":{"line":75,"column":31},"end":{"line":75,"column":35}},"type":"Identifier","name":"dict"}],"defaults":[],"body":{"range":[2940,3053],"loc":{"start":{"line":75,"column":37},"end":{"line":78,"column":7}},"type":"BlockStatement","body":[{"range":[2950,3024],"loc":{"start":{"line":76,"column":8},"end":{"line":76,"column":82}},"type":"ExpressionStatement","expression":{"range":[2950,3023],"loc":{"start":{"line":76,"column":8},"end":{"line":76,"column":81}},"type":"CallExpression","callee":{"range":[2950,2973],"loc":{"start":{"line":76,"column":8},"end":{"line":76,"column":31}},"type":"MemberExpression","computed":false,"object":{"range":[2950,2956],"loc":{"start":{"line":76,"column":8},"end":{"line":76,"column":14}},"type":"Identifier","name":"Object"},"property":{"range":[2957,2973],"loc":{"start":{"line":76,"column":15},"end":{"line":76,"column":31}},"type":"Identifier","name":"defineProperties"}},"arguments":[{"range":[2974,2978],"loc":{"start":{"line":76,"column":32},"end":{"line":76,"column":36}},"type":"Identifier","name":"dict"},{"range":[2980,3022],"loc":{"start":{"line":76,"column":38},"end":{"line":76,"column":80}},"type":"MemberExpression","computed":false,"object":{"range":[2980,2999],"loc":{"start":{"line":76,"column":38},"end":{"line":76,"column":57}},"type":"MemberExpression","computed":false,"object":{"range":[2980,2993],"loc":{"start":{"line":76,"column":38},"end":{"line":76,"column":51}},"type":"Identifier","name":"pythonRuntime"},"property":{"range":[2994,2999],"loc":{"start":{"line":76,"column":52},"end":{"line":76,"column":57}},"type":"Identifier","name":"utils"}},"property":{"range":[3000,3022],"loc":{"start":{"line":76,"column":58},"end":{"line":76,"column":80}},"type":"Identifier","name":"dictPropertyDescriptor"}}]}},{"range":[3033,3045],"loc":{"start":{"line":77,"column":8},"end":{"line":77,"column":20}},"type":"ReturnStatement","argument":{"range":[3040,3044],"loc":{"start":{"line":77,"column":15},"end":{"line":77,"column":19}},"type":"Identifier","name":"dict"}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[3062,7781],"loc":{"start":{"line":79,"column":6},"end":{"line":231,"column":7}},"type":"Property","key":{"range":[3062,3084],"loc":{"start":{"line":79,"column":6},"end":{"line":79,"column":28}},"type":"Identifier","name":"listPropertyDescriptor"},"computed":false,"value":{"range":[3086,7781],"loc":{"start":{"line":79,"column":30},"end":{"line":231,"column":7}},"type":"ObjectExpression","properties":[{"range":[3098,3199],"loc":{"start":{"line":80,"column":10},"end":{"line":83,"column":11}},"type":"Property","key":{"range":[3098,3105],"loc":{"start":{"line":80,"column":10},"end":{"line":80,"column":17}},"type":"Literal","value":"_type","raw":"\"_type\""},"computed":false,"value":{"range":[3107,3199],"loc":{"start":{"line":80,"column":19},"end":{"line":83,"column":11}},"type":"ObjectExpression","properties":[{"range":[3121,3156],"loc":{"start":{"line":81,"column":12},"end":{"line":81,"column":47}},"type":"Property","key":{"range":[3121,3124],"loc":{"start":{"line":81,"column":12},"end":{"line":81,"column":15}},"type":"Identifier","name":"get"},"computed":false,"value":{"range":[3126,3156],"loc":{"start":{"line":81,"column":17},"end":{"line":81,"column":47}},"type":"FunctionExpression","id":null,"params":[],"defaults":[],"body":{"range":[3138,3156],"loc":{"start":{"line":81,"column":29},"end":{"line":81,"column":47}},"type":"BlockStatement","body":[{"range":[3140,3154],"loc":{"start":{"line":81,"column":31},"end":{"line":81,"column":45}},"type":"ReturnStatement","argument":{"range":[3147,3153],"loc":{"start":{"line":81,"column":38},"end":{"line":81,"column":44}},"type":"Literal","value":"list","raw":"'list'"}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[3170,3187],"loc":{"start":{"line":82,"column":12},"end":{"line":82,"column":29}},"type":"Property","key":{"range":[3170,3180],"loc":{"start":{"line":82,"column":12},"end":{"line":82,"column":22}},"type":"Identifier","name":"enumerable"},"computed":false,"value":{"range":[3182,3187],"loc":{"start":{"line":82,"column":24},"end":{"line":82,"column":29}},"type":"Literal","value":false,"raw":"false"},"kind":"init","method":false,"shorthand":false}]},"kind":"init","method":false,"shorthand":false},{"range":[3211,3314],"loc":{"start":{"line":84,"column":10},"end":{"line":87,"column":11}},"type":"Property","key":{"range":[3211,3222],"loc":{"start":{"line":84,"column":10},"end":{"line":84,"column":21}},"type":"Literal","value":"_isPython","raw":"\"_isPython\""},"computed":false,"value":{"range":[3224,3314],"loc":{"start":{"line":84,"column":23},"end":{"line":87,"column":11}},"type":"ObjectExpression","properties":[{"range":[3238,3271],"loc":{"start":{"line":85,"column":12},"end":{"line":85,"column":45}},"type":"Property","key":{"range":[3238,3241],"loc":{"start":{"line":85,"column":12},"end":{"line":85,"column":15}},"type":"Identifier","name":"get"},"computed":false,"value":{"range":[3243,3271],"loc":{"start":{"line":85,"column":17},"end":{"line":85,"column":45}},"type":"FunctionExpression","id":null,"params":[],"defaults":[],"body":{"range":[3255,3271],"loc":{"start":{"line":85,"column":29},"end":{"line":85,"column":45}},"type":"BlockStatement","body":[{"range":[3257,3269],"loc":{"start":{"line":85,"column":31},"end":{"line":85,"column":43}},"type":"ReturnStatement","argument":{"range":[3264,3268],"loc":{"start":{"line":85,"column":38},"end":{"line":85,"column":42}},"type":"Literal","value":true,"raw":"true"}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[3285,3302],"loc":{"start":{"line":86,"column":12},"end":{"line":86,"column":29}},"type":"Property","key":{"range":[3285,3295],"loc":{"start":{"line":86,"column":12},"end":{"line":86,"column":22}},"type":"Identifier","name":"enumerable"},"computed":false,"value":{"range":[3297,3302],"loc":{"start":{"line":86,"column":24},"end":{"line":86,"column":29}},"type":"Literal","value":false,"raw":"false"},"kind":"init","method":false,"shorthand":false}]},"kind":"init","method":false,"shorthand":false},{"range":[3326,3456],"loc":{"start":{"line":88,"column":10},"end":{"line":93,"column":11}},"type":"Property","key":{"range":[3326,3334],"loc":{"start":{"line":88,"column":10},"end":{"line":88,"column":18}},"type":"Literal","value":"append","raw":"\"append\""},"computed":false,"value":{"range":[3336,3456],"loc":{"start":{"line":88,"column":20},"end":{"line":93,"column":11}},"type":"ObjectExpression","properties":[{"range":[3350,3413],"loc":{"start":{"line":89,"column":12},"end":{"line":91,"column":13}},"type":"Property","key":{"range":[3350,3355],"loc":{"start":{"line":89,"column":12},"end":{"line":89,"column":17}},"type":"Identifier","name":"value"},"computed":false,"value":{"range":[3357,3413],"loc":{"start":{"line":89,"column":19},"end":{"line":91,"column":13}},"type":"FunctionExpression","id":null,"params":[{"range":[3367,3368],"loc":{"start":{"line":89,"column":29},"end":{"line":89,"column":30}},"type":"Identifier","name":"x"}],"defaults":[],"body":{"range":[3370,3413],"loc":{"start":{"line":89,"column":32},"end":{"line":91,"column":13}},"type":"BlockStatement","body":[{"range":[3386,3399],"loc":{"start":{"line":90,"column":14},"end":{"line":90,"column":27}},"type":"ExpressionStatement","expression":{"range":[3386,3398],"loc":{"start":{"line":90,"column":14},"end":{"line":90,"column":26}},"type":"CallExpression","callee":{"range":[3386,3395],"loc":{"start":{"line":90,"column":14},"end":{"line":90,"column":23}},"type":"MemberExpression","computed":false,"object":{"range":[3386,3390],"loc":{"start":{"line":90,"column":14},"end":{"line":90,"column":18}},"type":"ThisExpression"},"property":{"range":[3391,3395],"loc":{"start":{"line":90,"column":19},"end":{"line":90,"column":23}},"type":"Identifier","name":"push"}},"arguments":[{"range":[3396,3397],"loc":{"start":{"line":90,"column":24},"end":{"line":90,"column":25}},"type":"Identifier","name":"x"}]}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[3427,3444],"loc":{"start":{"line":92,"column":12},"end":{"line":92,"column":29}},"type":"Property","key":{"range":[3427,3437],"loc":{"start":{"line":92,"column":12},"end":{"line":92,"column":22}},"type":"Identifier","name":"enumerable"},"computed":false,"value":{"range":[3439,3444],"loc":{"start":{"line":92,"column":24},"end":{"line":92,"column":29}},"type":"Literal","value":false,"raw":"false"},"kind":"init","method":false,"shorthand":false}]},"kind":"init","method":false,"shorthand":false},{"range":[3468,3611],"loc":{"start":{"line":94,"column":10},"end":{"line":99,"column":11}},"type":"Property","key":{"range":[3468,3475],"loc":{"start":{"line":94,"column":10},"end":{"line":94,"column":17}},"type":"Literal","value":"clear","raw":"\"clear\""},"computed":false,"value":{"range":[3477,3611],"loc":{"start":{"line":94,"column":19},"end":{"line":99,"column":11}},"type":"ObjectExpression","properties":[{"range":[3491,3568],"loc":{"start":{"line":95,"column":12},"end":{"line":97,"column":13}},"type":"Property","key":{"range":[3491,3496],"loc":{"start":{"line":95,"column":12},"end":{"line":95,"column":17}},"type":"Identifier","name":"value"},"computed":false,"value":{"range":[3498,3568],"loc":{"start":{"line":95,"column":19},"end":{"line":97,"column":13}},"type":"FunctionExpression","id":null,"params":[],"defaults":[],"body":{"range":[3510,3568],"loc":{"start":{"line":95,"column":31},"end":{"line":97,"column":13}},"type":"BlockStatement","body":[{"range":[3526,3554],"loc":{"start":{"line":96,"column":14},"end":{"line":96,"column":42}},"type":"ExpressionStatement","expression":{"range":[3526,3553],"loc":{"start":{"line":96,"column":14},"end":{"line":96,"column":41}},"type":"CallExpression","callee":{"range":[3526,3537],"loc":{"start":{"line":96,"column":14},"end":{"line":96,"column":25}},"type":"MemberExpression","computed":false,"object":{"range":[3526,3530],"loc":{"start":{"line":96,"column":14},"end":{"line":96,"column":18}},"type":"ThisExpression"},"property":{"range":[3531,3537],"loc":{"start":{"line":96,"column":19},"end":{"line":96,"column":25}},"type":"Identifier","name":"splice"}},"arguments":[{"range":[3538,3539],"loc":{"start":{"line":96,"column":26},"end":{"line":96,"column":27}},"type":"Literal","value":0,"raw":"0"},{"range":[3541,3552],"loc":{"start":{"line":96,"column":29},"end":{"line":96,"column":40}},"type":"MemberExpression","computed":false,"object":{"range":[3541,3545],"loc":{"start":{"line":96,"column":29},"end":{"line":96,"column":33}},"type":"ThisExpression"},"property":{"range":[3546,3552],"loc":{"start":{"line":96,"column":34},"end":{"line":96,"column":40}},"type":"Identifier","name":"length"}}]}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[3582,3599],"loc":{"start":{"line":98,"column":12},"end":{"line":98,"column":29}},"type":"Property","key":{"range":[3582,3592],"loc":{"start":{"line":98,"column":12},"end":{"line":98,"column":22}},"type":"Identifier","name":"enumerable"},"computed":false,"value":{"range":[3594,3599],"loc":{"start":{"line":98,"column":24},"end":{"line":98,"column":29}},"type":"Literal","value":false,"raw":"false"},"kind":"init","method":false,"shorthand":false}]},"kind":"init","method":false,"shorthand":false},{"range":[3623,3758],"loc":{"start":{"line":100,"column":10},"end":{"line":105,"column":11}},"type":"Property","key":{"range":[3623,3629],"loc":{"start":{"line":100,"column":10},"end":{"line":100,"column":16}},"type":"Literal","value":"copy","raw":"\"copy\""},"computed":false,"value":{"range":[3631,3758],"loc":{"start":{"line":100,"column":18},"end":{"line":105,"column":11}},"type":"ObjectExpression","properties":[{"range":[3645,3715],"loc":{"start":{"line":101,"column":12},"end":{"line":103,"column":13}},"type":"Property","key":{"range":[3645,3650],"loc":{"start":{"line":101,"column":12},"end":{"line":101,"column":17}},"type":"Identifier","name":"value"},"computed":false,"value":{"range":[3652,3715],"loc":{"start":{"line":101,"column":19},"end":{"line":103,"column":13}},"type":"FunctionExpression","id":null,"params":[],"defaults":[],"body":{"range":[3664,3715],"loc":{"start":{"line":101,"column":31},"end":{"line":103,"column":13}},"type":"BlockStatement","body":[{"range":[3680,3701],"loc":{"start":{"line":102,"column":14},"end":{"line":102,"column":35}},"type":"ReturnStatement","argument":{"range":[3687,3700],"loc":{"start":{"line":102,"column":21},"end":{"line":102,"column":34}},"type":"CallExpression","callee":{"range":[3687,3697],"loc":{"start":{"line":102,"column":21},"end":{"line":102,"column":31}},"type":"MemberExpression","computed":false,"object":{"range":[3687,3691],"loc":{"start":{"line":102,"column":21},"end":{"line":102,"column":25}},"type":"ThisExpression"},"property":{"range":[3692,3697],"loc":{"start":{"line":102,"column":26},"end":{"line":102,"column":31}},"type":"Identifier","name":"slice"}},"arguments":[{"range":[3698,3699],"loc":{"start":{"line":102,"column":32},"end":{"line":102,"column":33}},"type":"Literal","value":0,"raw":"0"}]}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[3729,3746],"loc":{"start":{"line":104,"column":12},"end":{"line":104,"column":29}},"type":"Property","key":{"range":[3729,3739],"loc":{"start":{"line":104,"column":12},"end":{"line":104,"column":22}},"type":"Identifier","name":"enumerable"},"computed":false,"value":{"range":[3741,3746],"loc":{"start":{"line":104,"column":24},"end":{"line":104,"column":29}},"type":"Literal","value":false,"raw":"false"},"kind":"init","method":false,"shorthand":false}]},"kind":"init","method":false,"shorthand":false},{"range":[3770,4012],"loc":{"start":{"line":106,"column":10},"end":{"line":114,"column":11}},"type":"Property","key":{"range":[3770,3777],"loc":{"start":{"line":106,"column":10},"end":{"line":106,"column":17}},"type":"Literal","value":"count","raw":"\"count\""},"computed":false,"value":{"range":[3779,4012],"loc":{"start":{"line":106,"column":19},"end":{"line":114,"column":11}},"type":"ObjectExpression","properties":[{"range":[3793,3969],"loc":{"start":{"line":107,"column":12},"end":{"line":112,"column":13}},"type":"Property","key":{"range":[3793,3798],"loc":{"start":{"line":107,"column":12},"end":{"line":107,"column":17}},"type":"Identifier","name":"value"},"computed":false,"value":{"range":[3800,3969],"loc":{"start":{"line":107,"column":19},"end":{"line":112,"column":13}},"type":"FunctionExpression","id":null,"params":[{"range":[3810,3811],"loc":{"start":{"line":107,"column":29},"end":{"line":107,"column":30}},"type":"Identifier","name":"x"}],"defaults":[],"body":{"range":[3813,3969],"loc":{"start":{"line":107,"column":32},"end":{"line":112,"column":13}},"type":"BlockStatement","body":[{"range":[3829,3839],"loc":{"start":{"line":108,"column":14},"end":{"line":108,"column":24}},"type":"VariableDeclaration","declarations":[{"range":[3833,3838],"loc":{"start":{"line":108,"column":18},"end":{"line":108,"column":23}},"type":"VariableDeclarator","id":{"range":[3833,3834],"loc":{"start":{"line":108,"column":18},"end":{"line":108,"column":19}},"type":"Identifier","name":"c"},"init":{"range":[3837,3838],"loc":{"start":{"line":108,"column":22},"end":{"line":108,"column":23}},"type":"Literal","value":0,"raw":"0"}}],"kind":"var"},{"range":[3854,3931],"loc":{"start":{"line":109,"column":14},"end":{"line":110,"column":39}},"type":"ForStatement","init":{"range":[3859,3868],"loc":{"start":{"line":109,"column":19},"end":{"line":109,"column":28}},"type":"VariableDeclaration","declarations":[{"range":[3863,3868],"loc":{"start":{"line":109,"column":23},"end":{"line":109,"column":28}},"type":"VariableDeclarator","id":{"range":[3863,3864],"loc":{"start":{"line":109,"column":23},"end":{"line":109,"column":24}},"type":"Identifier","name":"i"},"init":{"range":[3867,3868],"loc":{"start":{"line":109,"column":27},"end":{"line":109,"column":28}},"type":"Literal","value":0,"raw":"0"}}],"kind":"var"},"test":{"range":[3870,3885],"loc":{"start":{"line":109,"column":30},"end":{"line":109,"column":45}},"type":"BinaryExpression","operator":"<","left":{"range":[3870,3871],"loc":{"start":{"line":109,"column":30},"end":{"line":109,"column":31}},"type":"Identifier","name":"i"},"right":{"range":[3874,3885],"loc":{"start":{"line":109,"column":34},"end":{"line":109,"column":45}},"type":"MemberExpression","computed":false,"object":{"range":[3874,3878],"loc":{"start":{"line":109,"column":34},"end":{"line":109,"column":38}},"type":"ThisExpression"},"property":{"range":[3879,3885],"loc":{"start":{"line":109,"column":39},"end":{"line":109,"column":45}},"type":"Identifier","name":"length"}}},"update":{"range":[3887,3890],"loc":{"start":{"line":109,"column":47},"end":{"line":109,"column":50}},"type":"UpdateExpression","operator":"++","argument":{"range":[3887,3888],"loc":{"start":{"line":109,"column":47},"end":{"line":109,"column":48}},"type":"Identifier","name":"i"},"prefix":false},"body":{"range":[3908,3931],"loc":{"start":{"line":110,"column":16},"end":{"line":110,"column":39}},"type":"IfStatement","test":{"range":[3912,3925],"loc":{"start":{"line":110,"column":20},"end":{"line":110,"column":33}},"type":"BinaryExpression","operator":"===","left":{"range":[3912,3919],"loc":{"start":{"line":110,"column":20},"end":{"line":110,"column":27}},"type":"MemberExpression","computed":true,"object":{"range":[3912,3916],"loc":{"start":{"line":110,"column":20},"end":{"line":110,"column":24}},"type":"ThisExpression"},"property":{"range":[3917,3918],"loc":{"start":{"line":110,"column":25},"end":{"line":110,"column":26}},"type":"Identifier","name":"i"}},"right":{"range":[3924,3925],"loc":{"start":{"line":110,"column":32},"end":{"line":110,"column":33}},"type":"Identifier","name":"x"}},"consequent":{"range":[3927,3931],"loc":{"start":{"line":110,"column":35},"end":{"line":110,"column":39}},"type":"ExpressionStatement","expression":{"range":[3927,3930],"loc":{"start":{"line":110,"column":35},"end":{"line":110,"column":38}},"type":"UpdateExpression","operator":"++","argument":{"range":[3927,3928],"loc":{"start":{"line":110,"column":35},"end":{"line":110,"column":36}},"type":"Identifier","name":"c"},"prefix":false}},"alternate":null}},{"range":[3946,3955],"loc":{"start":{"line":111,"column":14},"end":{"line":111,"column":23}},"type":"ReturnStatement","argument":{"range":[3953,3954],"loc":{"start":{"line":111,"column":21},"end":{"line":111,"column":22}},"type":"Identifier","name":"c"}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[3983,4000],"loc":{"start":{"line":113,"column":12},"end":{"line":113,"column":29}},"type":"Property","key":{"range":[3983,3993],"loc":{"start":{"line":113,"column":12},"end":{"line":113,"column":22}},"type":"Identifier","name":"enumerable"},"computed":false,"value":{"range":[3995,4000],"loc":{"start":{"line":113,"column":24},"end":{"line":113,"column":29}},"type":"Literal","value":false,"raw":"false"},"kind":"init","method":false,"shorthand":false}]},"kind":"init","method":false,"shorthand":false},{"range":[4024,4561],"loc":{"start":{"line":115,"column":10},"end":{"line":130,"column":11}},"type":"Property","key":{"range":[4024,4032],"loc":{"start":{"line":115,"column":10},"end":{"line":115,"column":18}},"type":"Literal","value":"equals","raw":"\"equals\""},"computed":false,"value":{"range":[4034,4561],"loc":{"start":{"line":115,"column":20},"end":{"line":130,"column":11}},"type":"ObjectExpression","properties":[{"range":[4048,4518],"loc":{"start":{"line":116,"column":12},"end":{"line":128,"column":13}},"type":"Property","key":{"range":[4048,4053],"loc":{"start":{"line":116,"column":12},"end":{"line":116,"column":17}},"type":"Identifier","name":"value"},"computed":false,"value":{"range":[4055,4518],"loc":{"start":{"line":116,"column":19},"end":{"line":128,"column":13}},"type":"FunctionExpression","id":null,"params":[{"range":[4065,4066],"loc":{"start":{"line":116,"column":29},"end":{"line":116,"column":30}},"type":"Identifier","name":"x"}],"defaults":[],"body":{"range":[4068,4518],"loc":{"start":{"line":116,"column":32},"end":{"line":128,"column":13}},"type":"BlockStatement","body":[{"range":[4084,4476],"loc":{"start":{"line":117,"column":14},"end":{"line":126,"column":27}},"type":"TryStatement","block":{"range":[4088,4448],"loc":{"start":{"line":117,"column":18},"end":{"line":125,"column":15}},"type":"BlockStatement","body":[{"range":[4106,4149],"loc":{"start":{"line":118,"column":16},"end":{"line":118,"column":59}},"type":"IfStatement","test":{"range":[4110,4134],"loc":{"start":{"line":118,"column":20},"end":{"line":118,"column":44}},"type":"BinaryExpression","operator":"!==","left":{"range":[4110,4121],"loc":{"start":{"line":118,"column":20},"end":{"line":118,"column":31}},"type":"MemberExpression","computed":false,"object":{"range":[4110,4114],"loc":{"start":{"line":118,"column":20},"end":{"line":118,"column":24}},"type":"ThisExpression"},"property":{"range":[4115,4121],"loc":{"start":{"line":118,"column":25},"end":{"line":118,"column":31}},"type":"Identifier","name":"length"}},"right":{"range":[4126,4134],"loc":{"start":{"line":118,"column":36},"end":{"line":118,"column":44}},"type":"MemberExpression","computed":false,"object":{"range":[4126,4127],"loc":{"start":{"line":118,"column":36},"end":{"line":118,"column":37}},"type":"Identifier","name":"x"},"property":{"range":[4128,4134],"loc":{"start":{"line":118,"column":38},"end":{"line":118,"column":44}},"type":"Identifier","name":"length"}}},"consequent":{"range":[4136,4149],"loc":{"start":{"line":118,"column":46},"end":{"line":118,"column":59}},"type":"ReturnStatement","argument":{"range":[4143,4148],"loc":{"start":{"line":118,"column":53},"end":{"line":118,"column":58}},"type":"Literal","value":false,"raw":"false"}},"alternate":null},{"range":[4166,4403],"loc":{"start":{"line":119,"column":16},"end":{"line":123,"column":17}},"type":"ForStatement","init":{"range":[4171,4180],"loc":{"start":{"line":119,"column":21},"end":{"line":119,"column":30}},"type":"VariableDeclaration","declarations":[{"range":[4175,4180],"loc":{"start":{"line":119,"column":25},"end":{"line":119,"column":30}},"type":"VariableDeclarator","id":{"range":[4175,4176],"loc":{"start":{"line":119,"column":25},"end":{"line":119,"column":26}},"type":"Identifier","name":"i"},"init":{"range":[4179,4180],"loc":{"start":{"line":119,"column":29},"end":{"line":119,"column":30}},"type":"Literal","value":0,"raw":"0"}}],"kind":"var"},"test":{"range":[4182,4197],"loc":{"start":{"line":119,"column":32},"end":{"line":119,"column":47}},"type":"BinaryExpression","operator":"<","left":{"range":[4182,4183],"loc":{"start":{"line":119,"column":32},"end":{"line":119,"column":33}},"type":"Identifier","name":"i"},"right":{"range":[4186,4197],"loc":{"start":{"line":119,"column":36},"end":{"line":119,"column":47}},"type":"MemberExpression","computed":false,"object":{"range":[4186,4190],"loc":{"start":{"line":119,"column":36},"end":{"line":119,"column":40}},"type":"ThisExpression"},"property":{"range":[4191,4197],"loc":{"start":{"line":119,"column":41},"end":{"line":119,"column":47}},"type":"Identifier","name":"length"}}},"update":{"range":[4199,4202],"loc":{"start":{"line":119,"column":49},"end":{"line":119,"column":52}},"type":"UpdateExpression","operator":"++","argument":{"range":[4199,4200],"loc":{"start":{"line":119,"column":49},"end":{"line":119,"column":50}},"type":"Identifier","name":"i"},"prefix":false},"body":{"range":[4204,4403],"loc":{"start":{"line":119,"column":54},"end":{"line":123,"column":17}},"type":"BlockStatement","body":[{"range":[4224,4385],"loc":{"start":{"line":120,"column":18},"end":{"line":122,"column":60}},"type":"IfStatement","test":{"range":[4228,4260],"loc":{"start":{"line":120,"column":22},"end":{"line":120,"column":54}},"type":"CallExpression","callee":{"range":[4228,4250],"loc":{"start":{"line":120,"column":22},"end":{"line":120,"column":44}},"type":"MemberExpression","computed":false,"object":{"range":[4228,4235],"loc":{"start":{"line":120,"column":22},"end":{"line":120,"column":29}},"type":"MemberExpression","computed":true,"object":{"range":[4228,4232],"loc":{"start":{"line":120,"column":22},"end":{"line":120,"column":26}},"type":"ThisExpression"},"property":{"range":[4233,4234],"loc":{"start":{"line":120,"column":27},"end":{"line":120,"column":28}},"type":"Identifier","name":"i"}},"property":{"range":[4236,4250],"loc":{"start":{"line":120,"column":30},"end":{"line":120,"column":44}},"type":"Identifier","name":"hasOwnProperty"}},"arguments":[{"range":[4251,4259],"loc":{"start":{"line":120,"column":45},"end":{"line":120,"column":53}},"type":"Literal","value":"equals","raw":"\"equals\""}]},"consequent":{"range":[4262,4344],"loc":{"start":{"line":120,"column":56},"end":{"line":122,"column":19}},"type":"BlockStatement","body":[{"range":[4284,4324],"loc":{"start":{"line":121,"column":20},"end":{"line":121,"column":60}},"type":"IfStatement","test":{"range":[4288,4309],"loc":{"start":{"line":121,"column":24},"end":{"line":121,"column":45}},"type":"UnaryExpression","operator":"!","argument":{"range":[4289,4309],"loc":{"start":{"line":121,"column":25},"end":{"line":121,"column":45}},"type":"CallExpression","callee":{"range":[4289,4303],"loc":{"start":{"line":121,"column":25},"end":{"line":121,"column":39}},"type":"MemberExpression","computed":false,"object":{"range":[4289,4296],"loc":{"start":{"line":121,"column":25},"end":{"line":121,"column":32}},"type":"MemberExpression","computed":true,"object":{"range":[4289,4293],"loc":{"start":{"line":121,"column":25},"end":{"line":121,"column":29}},"type":"ThisExpression"},"property":{"range":[4294,4295],"loc":{"start":{"line":121,"column":30},"end":{"line":121,"column":31}},"type":"Identifier","name":"i"}},"property":{"range":[4297,4303],"loc":{"start":{"line":121,"column":33},"end":{"line":121,"column":39}},"type":"Identifier","name":"equals"}},"arguments":[{"range":[4304,4308],"loc":{"start":{"line":121,"column":40},"end":{"line":121,"column":44}},"type":"MemberExpression","computed":true,"object":{"range":[4304,4305],"loc":{"start":{"line":121,"column":40},"end":{"line":121,"column":41}},"type":"Identifier","name":"x"},"property":{"range":[4306,4307],"loc":{"start":{"line":121,"column":42},"end":{"line":121,"column":43}},"type":"Identifier","name":"i"}}]},"prefix":true},"consequent":{"range":[4311,4324],"loc":{"start":{"line":121,"column":47},"end":{"line":121,"column":60}},"type":"ReturnStatement","argument":{"range":[4318,4323],"loc":{"start":{"line":121,"column":54},"end":{"line":121,"column":59}},"type":"Literal","value":false,"raw":"false"}},"alternate":null}]},"alternate":{"range":[4350,4385],"loc":{"start":{"line":122,"column":25},"end":{"line":122,"column":60}},"type":"IfStatement","test":{"range":[4354,4370],"loc":{"start":{"line":122,"column":29},"end":{"line":122,"column":45}},"type":"BinaryExpression","operator":"!==","left":{"range":[4354,4361],"loc":{"start":{"line":122,"column":29},"end":{"line":122,"column":36}},"type":"MemberExpression","computed":true,"object":{"range":[4354,4358],"loc":{"start":{"line":122,"column":29},"end":{"line":122,"column":33}},"type":"ThisExpression"},"property":{"range":[4359,4360],"loc":{"start":{"line":122,"column":34},"end":{"line":122,"column":35}},"type":"Identifier","name":"i"}},"right":{"range":[4366,4370],"loc":{"start":{"line":122,"column":41},"end":{"line":122,"column":45}},"type":"MemberExpression","computed":true,"object":{"range":[4366,4367],"loc":{"start":{"line":122,"column":41},"end":{"line":122,"column":42}},"type":"Identifier","name":"x"},"property":{"range":[4368,4369],"loc":{"start":{"line":122,"column":43},"end":{"line":122,"column":44}},"type":"Identifier","name":"i"}}},"consequent":{"range":[4372,4385],"loc":{"start":{"line":122,"column":47},"end":{"line":122,"column":60}},"type":"ReturnStatement","argument":{"range":[4379,4384],"loc":{"start":{"line":122,"column":54},"end":{"line":122,"column":59}},"type":"Literal","value":false,"raw":"false"}},"alternate":null}}]}},{"range":[4420,4432],"loc":{"start":{"line":124,"column":16},"end":{"line":124,"column":28}},"type":"ReturnStatement","argument":{"range":[4427,4431],"loc":{"start":{"line":124,"column":23},"end":{"line":124,"column":27}},"type":"Literal","value":true,"raw":"true"}}]},"guardedHandlers":[],"handlers":[{"range":[4463,4476],"loc":{"start":{"line":126,"column":14},"end":{"line":126,"column":27}},"type":"CatchClause","param":{"range":[4470,4471],"loc":{"start":{"line":126,"column":21},"end":{"line":126,"column":22}},"type":"Identifier","name":"e"},"body":{"range":[4473,4476],"loc":{"start":{"line":126,"column":24},"end":{"line":126,"column":27}},"type":"BlockStatement","body":[]}}],"handler":{"range":[4463,4476],"loc":{"start":{"line":126,"column":14},"end":{"line":126,"column":27}},"type":"CatchClause","param":{"range":[4470,4471],"loc":{"start":{"line":126,"column":21},"end":{"line":126,"column":22}},"type":"Identifier","name":"e"},"body":{"range":[4473,4476],"loc":{"start":{"line":126,"column":24},"end":{"line":126,"column":27}},"type":"BlockStatement","body":[]}},"finalizer":null},{"range":[4491,4504],"loc":{"start":{"line":127,"column":14},"end":{"line":127,"column":27}},"type":"ReturnStatement","argument":{"range":[4498,4503],"loc":{"start":{"line":127,"column":21},"end":{"line":127,"column":26}},"type":"Literal","value":false,"raw":"false"}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[4532,4549],"loc":{"start":{"line":129,"column":12},"end":{"line":129,"column":29}},"type":"Property","key":{"range":[4532,4542],"loc":{"start":{"line":129,"column":12},"end":{"line":129,"column":22}},"type":"Identifier","name":"enumerable"},"computed":false,"value":{"range":[4544,4549],"loc":{"start":{"line":129,"column":24},"end":{"line":129,"column":29}},"type":"Literal","value":false,"raw":"false"},"kind":"init","method":false,"shorthand":false}]},"kind":"init","method":false,"shorthand":false},{"range":[4573,4741],"loc":{"start":{"line":131,"column":10},"end":{"line":136,"column":11}},"type":"Property","key":{"range":[4573,4581],"loc":{"start":{"line":131,"column":10},"end":{"line":131,"column":18}},"type":"Literal","value":"extend","raw":"\"extend\""},"computed":false,"value":{"range":[4583,4741],"loc":{"start":{"line":131,"column":20},"end":{"line":136,"column":11}},"type":"ObjectExpression","properties":[{"range":[4597,4698],"loc":{"start":{"line":132,"column":12},"end":{"line":134,"column":13}},"type":"Property","key":{"range":[4597,4602],"loc":{"start":{"line":132,"column":12},"end":{"line":132,"column":17}},"type":"Identifier","name":"value"},"computed":false,"value":{"range":[4604,4698],"loc":{"start":{"line":132,"column":19},"end":{"line":134,"column":13}},"type":"FunctionExpression","id":null,"params":[{"range":[4614,4615],"loc":{"start":{"line":132,"column":29},"end":{"line":132,"column":30}},"type":"Identifier","name":"L"}],"defaults":[],"body":{"range":[4617,4698],"loc":{"start":{"line":132,"column":32},"end":{"line":134,"column":13}},"type":"BlockStatement","body":[{"range":[4633,4684],"loc":{"start":{"line":133,"column":14},"end":{"line":133,"column":65}},"type":"ForStatement","init":{"range":[4638,4647],"loc":{"start":{"line":133,"column":19},"end":{"line":133,"column":28}},"type":"VariableDeclaration","declarations":[{"range":[4642,4647],"loc":{"start":{"line":133,"column":23},"end":{"line":133,"column":28}},"type":"VariableDeclarator","id":{"range":[4642,4643],"loc":{"start":{"line":133,"column":23},"end":{"line":133,"column":24}},"type":"Identifier","name":"i"},"init":{"range":[4646,4647],"loc":{"start":{"line":133,"column":27},"end":{"line":133,"column":28}},"type":"Literal","value":0,"raw":"0"}}],"kind":"var"},"test":{"range":[4649,4661],"loc":{"start":{"line":133,"column":30},"end":{"line":133,"column":42}},"type":"BinaryExpression","operator":"<","left":{"range":[4649,4650],"loc":{"start":{"line":133,"column":30},"end":{"line":133,"column":31}},"type":"Identifier","name":"i"},"right":{"range":[4653,4661],"loc":{"start":{"line":133,"column":34},"end":{"line":133,"column":42}},"type":"MemberExpression","computed":false,"object":{"range":[4653,4654],"loc":{"start":{"line":133,"column":34},"end":{"line":133,"column":35}},"type":"Identifier","name":"L"},"property":{"range":[4655,4661],"loc":{"start":{"line":133,"column":36},"end":{"line":133,"column":42}},"type":"Identifier","name":"length"}}},"update":{"range":[4663,4666],"loc":{"start":{"line":133,"column":44},"end":{"line":133,"column":47}},"type":"UpdateExpression","operator":"++","argument":{"range":[4663,4664],"loc":{"start":{"line":133,"column":44},"end":{"line":133,"column":45}},"type":"Identifier","name":"i"},"prefix":false},"body":{"range":[4668,4684],"loc":{"start":{"line":133,"column":49},"end":{"line":133,"column":65}},"type":"ExpressionStatement","expression":{"range":[4668,4683],"loc":{"start":{"line":133,"column":49},"end":{"line":133,"column":64}},"type":"CallExpression","callee":{"range":[4668,4677],"loc":{"start":{"line":133,"column":49},"end":{"line":133,"column":58}},"type":"MemberExpression","computed":false,"object":{"range":[4668,4672],"loc":{"start":{"line":133,"column":49},"end":{"line":133,"column":53}},"type":"ThisExpression"},"property":{"range":[4673,4677],"loc":{"start":{"line":133,"column":54},"end":{"line":133,"column":58}},"type":"Identifier","name":"push"}},"arguments":[{"range":[4678,4682],"loc":{"start":{"line":133,"column":59},"end":{"line":133,"column":63}},"type":"MemberExpression","computed":true,"object":{"range":[4678,4679],"loc":{"start":{"line":133,"column":59},"end":{"line":133,"column":60}},"type":"Identifier","name":"L"},"property":{"range":[4680,4681],"loc":{"start":{"line":133,"column":61},"end":{"line":133,"column":62}},"type":"Identifier","name":"i"}}]}}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[4712,4729],"loc":{"start":{"line":135,"column":12},"end":{"line":135,"column":29}},"type":"Property","key":{"range":[4712,4722],"loc":{"start":{"line":135,"column":12},"end":{"line":135,"column":22}},"type":"Identifier","name":"enumerable"},"computed":false,"value":{"range":[4724,4729],"loc":{"start":{"line":135,"column":24},"end":{"line":135,"column":29}},"type":"Literal","value":false,"raw":"false"},"kind":"init","method":false,"shorthand":false}]},"kind":"init","method":false,"shorthand":false},{"range":[4753,4892],"loc":{"start":{"line":137,"column":10},"end":{"line":142,"column":11}},"type":"Property","key":{"range":[4753,4760],"loc":{"start":{"line":137,"column":10},"end":{"line":137,"column":17}},"type":"Literal","value":"index","raw":"\"index\""},"computed":false,"value":{"range":[4762,4892],"loc":{"start":{"line":137,"column":19},"end":{"line":142,"column":11}},"type":"ObjectExpression","properties":[{"range":[4776,4849],"loc":{"start":{"line":138,"column":12},"end":{"line":140,"column":13}},"type":"Property","key":{"range":[4776,4781],"loc":{"start":{"line":138,"column":12},"end":{"line":138,"column":17}},"type":"Identifier","name":"value"},"computed":false,"value":{"range":[4783,4849],"loc":{"start":{"line":138,"column":19},"end":{"line":140,"column":13}},"type":"FunctionExpression","id":null,"params":[{"range":[4793,4794],"loc":{"start":{"line":138,"column":29},"end":{"line":138,"column":30}},"type":"Identifier","name":"x"}],"defaults":[],"body":{"range":[4796,4849],"loc":{"start":{"line":138,"column":32},"end":{"line":140,"column":13}},"type":"BlockStatement","body":[{"range":[4812,4835],"loc":{"start":{"line":139,"column":14},"end":{"line":139,"column":37}},"type":"ReturnStatement","argument":{"range":[4819,4834],"loc":{"start":{"line":139,"column":21},"end":{"line":139,"column":36}},"type":"CallExpression","callee":{"range":[4819,4831],"loc":{"start":{"line":139,"column":21},"end":{"line":139,"column":33}},"type":"MemberExpression","computed":false,"object":{"range":[4819,4823],"loc":{"start":{"line":139,"column":21},"end":{"line":139,"column":25}},"type":"ThisExpression"},"property":{"range":[4824,4831],"loc":{"start":{"line":139,"column":26},"end":{"line":139,"column":33}},"type":"Identifier","name":"indexOf"}},"arguments":[{"range":[4832,4833],"loc":{"start":{"line":139,"column":34},"end":{"line":139,"column":35}},"type":"Identifier","name":"x"}]}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[4863,4880],"loc":{"start":{"line":141,"column":12},"end":{"line":141,"column":29}},"type":"Property","key":{"range":[4863,4873],"loc":{"start":{"line":141,"column":12},"end":{"line":141,"column":22}},"type":"Identifier","name":"enumerable"},"computed":false,"value":{"range":[4875,4880],"loc":{"start":{"line":141,"column":24},"end":{"line":141,"column":29}},"type":"Literal","value":false,"raw":"false"},"kind":"init","method":false,"shorthand":false}]},"kind":"init","method":false,"shorthand":false},{"range":[4904,5370],"loc":{"start":{"line":143,"column":10},"end":{"line":156,"column":11}},"type":"Property","key":{"range":[4904,4913],"loc":{"start":{"line":143,"column":10},"end":{"line":143,"column":19}},"type":"Literal","value":"indexOf","raw":"\"indexOf\""},"computed":false,"value":{"range":[4915,5370],"loc":{"start":{"line":143,"column":21},"end":{"line":156,"column":11}},"type":"ObjectExpression","properties":[{"range":[4929,5327],"loc":{"start":{"line":144,"column":12},"end":{"line":154,"column":13}},"type":"Property","key":{"range":[4929,4934],"loc":{"start":{"line":144,"column":12},"end":{"line":144,"column":17}},"type":"Identifier","name":"value"},"computed":false,"value":{"range":[4936,5327],"loc":{"start":{"line":144,"column":19},"end":{"line":154,"column":13}},"type":"FunctionExpression","id":null,"params":[{"range":[4946,4947],"loc":{"start":{"line":144,"column":29},"end":{"line":144,"column":30}},"type":"Identifier","name":"x"},{"range":[4949,4958],"loc":{"start":{"line":144,"column":32},"end":{"line":144,"column":41}},"type":"Identifier","name":"fromIndex"}],"defaults":[],"body":{"range":[4960,5327],"loc":{"start":{"line":144,"column":43},"end":{"line":154,"column":13}},"type":"BlockStatement","body":[{"range":[4976,5288],"loc":{"start":{"line":145,"column":14},"end":{"line":152,"column":27}},"type":"TryStatement","block":{"range":[4980,5260],"loc":{"start":{"line":145,"column":18},"end":{"line":151,"column":15}},"type":"BlockStatement","body":[{"range":[4998,5244],"loc":{"start":{"line":146,"column":16},"end":{"line":150,"column":17}},"type":"ForStatement","init":{"range":[5003,5036],"loc":{"start":{"line":146,"column":21},"end":{"line":146,"column":54}},"type":"VariableDeclaration","declarations":[{"range":[5007,5036],"loc":{"start":{"line":146,"column":25},"end":{"line":146,"column":54}},"type":"VariableDeclarator","id":{"range":[5007,5008],"loc":{"start":{"line":146,"column":25},"end":{"line":146,"column":26}},"type":"Identifier","name":"i"},"init":{"range":[5011,5036],"loc":{"start":{"line":146,"column":29},"end":{"line":146,"column":54}},"type":"ConditionalExpression","test":{"range":[5011,5020],"loc":{"start":{"line":146,"column":29},"end":{"line":146,"column":38}},"type":"Identifier","name":"fromIndex"},"consequent":{"range":[5023,5032],"loc":{"start":{"line":146,"column":41},"end":{"line":146,"column":50}},"type":"Identifier","name":"fromIndex"},"alternate":{"range":[5035,5036],"loc":{"start":{"line":146,"column":53},"end":{"line":146,"column":54}},"type":"Literal","value":0,"raw":"0"}}}],"kind":"var"},"test":{"range":[5038,5053],"loc":{"start":{"line":146,"column":56},"end":{"line":146,"column":71}},"type":"BinaryExpression","operator":"<","left":{"range":[5038,5039],"loc":{"start":{"line":146,"column":56},"end":{"line":146,"column":57}},"type":"Identifier","name":"i"},"right":{"range":[5042,5053],"loc":{"start":{"line":146,"column":60},"end":{"line":146,"column":71}},"type":"MemberExpression","computed":false,"object":{"range":[5042,5046],"loc":{"start":{"line":146,"column":60},"end":{"line":146,"column":64}},"type":"ThisExpression"},"property":{"range":[5047,5053],"loc":{"start":{"line":146,"column":65},"end":{"line":146,"column":71}},"type":"Identifier","name":"length"}}},"update":{"range":[5055,5058],"loc":{"start":{"line":146,"column":73},"end":{"line":146,"column":76}},"type":"UpdateExpression","operator":"++","argument":{"range":[5055,5056],"loc":{"start":{"line":146,"column":73},"end":{"line":146,"column":74}},"type":"Identifier","name":"i"},"prefix":false},"body":{"range":[5060,5244],"loc":{"start":{"line":146,"column":78},"end":{"line":150,"column":17}},"type":"BlockStatement","body":[{"range":[5080,5226],"loc":{"start":{"line":147,"column":18},"end":{"line":149,"column":53}},"type":"IfStatement","test":{"range":[5084,5116],"loc":{"start":{"line":147,"column":22},"end":{"line":147,"column":54}},"type":"CallExpression","callee":{"range":[5084,5106],"loc":{"start":{"line":147,"column":22},"end":{"line":147,"column":44}},"type":"MemberExpression","computed":false,"object":{"range":[5084,5091],"loc":{"start":{"line":147,"column":22},"end":{"line":147,"column":29}},"type":"MemberExpression","computed":true,"object":{"range":[5084,5088],"loc":{"start":{"line":147,"column":22},"end":{"line":147,"column":26}},"type":"ThisExpression"},"property":{"range":[5089,5090],"loc":{"start":{"line":147,"column":27},"end":{"line":147,"column":28}},"type":"Identifier","name":"i"}},"property":{"range":[5092,5106],"loc":{"start":{"line":147,"column":30},"end":{"line":147,"column":44}},"type":"Identifier","name":"hasOwnProperty"}},"arguments":[{"range":[5107,5115],"loc":{"start":{"line":147,"column":45},"end":{"line":147,"column":53}},"type":"Literal","value":"equals","raw":"\"equals\""}]},"consequent":{"range":[5118,5192],"loc":{"start":{"line":147,"column":56},"end":{"line":149,"column":19}},"type":"BlockStatement","body":[{"range":[5140,5172],"loc":{"start":{"line":148,"column":20},"end":{"line":148,"column":52}},"type":"IfStatement","test":{"range":[5144,5161],"loc":{"start":{"line":148,"column":24},"end":{"line":148,"column":41}},"type":"CallExpression","callee":{"range":[5144,5158],"loc":{"start":{"line":148,"column":24},"end":{"line":148,"column":38}},"type":"MemberExpression","computed":false,"object":{"range":[5144,5151],"loc":{"start":{"line":148,"column":24},"end":{"line":148,"column":31}},"type":"MemberExpression","computed":true,"object":{"range":[5144,5148],"loc":{"start":{"line":148,"column":24},"end":{"line":148,"column":28}},"type":"ThisExpression"},"property":{"range":[5149,5150],"loc":{"start":{"line":148,"column":29},"end":{"line":148,"column":30}},"type":"Identifier","name":"i"}},"property":{"range":[5152,5158],"loc":{"start":{"line":148,"column":32},"end":{"line":148,"column":38}},"type":"Identifier","name":"equals"}},"arguments":[{"range":[5159,5160],"loc":{"start":{"line":148,"column":39},"end":{"line":148,"column":40}},"type":"Identifier","name":"x"}]},"consequent":{"range":[5163,5172],"loc":{"start":{"line":148,"column":43},"end":{"line":148,"column":52}},"type":"ReturnStatement","argument":{"range":[5170,5171],"loc":{"start":{"line":148,"column":50},"end":{"line":148,"column":51}},"type":"Identifier","name":"i"}},"alternate":null}]},"alternate":{"range":[5198,5226],"loc":{"start":{"line":149,"column":25},"end":{"line":149,"column":53}},"type":"IfStatement","test":{"range":[5202,5215],"loc":{"start":{"line":149,"column":29},"end":{"line":149,"column":42}},"type":"BinaryExpression","operator":"===","left":{"range":[5202,5209],"loc":{"start":{"line":149,"column":29},"end":{"line":149,"column":36}},"type":"MemberExpression","computed":true,"object":{"range":[5202,5206],"loc":{"start":{"line":149,"column":29},"end":{"line":149,"column":33}},"type":"ThisExpression"},"property":{"range":[5207,5208],"loc":{"start":{"line":149,"column":34},"end":{"line":149,"column":35}},"type":"Identifier","name":"i"}},"right":{"range":[5214,5215],"loc":{"start":{"line":149,"column":41},"end":{"line":149,"column":42}},"type":"Identifier","name":"x"}},"consequent":{"range":[5217,5226],"loc":{"start":{"line":149,"column":44},"end":{"line":149,"column":53}},"type":"ReturnStatement","argument":{"range":[5224,5225],"loc":{"start":{"line":149,"column":51},"end":{"line":149,"column":52}},"type":"Identifier","name":"i"}},"alternate":null}}]}}]},"guardedHandlers":[],"handlers":[{"range":[5275,5288],"loc":{"start":{"line":152,"column":14},"end":{"line":152,"column":27}},"type":"CatchClause","param":{"range":[5282,5283],"loc":{"start":{"line":152,"column":21},"end":{"line":152,"column":22}},"type":"Identifier","name":"e"},"body":{"range":[5285,5288],"loc":{"start":{"line":152,"column":24},"end":{"line":152,"column":27}},"type":"BlockStatement","body":[]}}],"handler":{"range":[5275,5288],"loc":{"start":{"line":152,"column":14},"end":{"line":152,"column":27}},"type":"CatchClause","param":{"range":[5282,5283],"loc":{"start":{"line":152,"column":21},"end":{"line":152,"column":22}},"type":"Identifier","name":"e"},"body":{"range":[5285,5288],"loc":{"start":{"line":152,"column":24},"end":{"line":152,"column":27}},"type":"BlockStatement","body":[]}},"finalizer":null},{"range":[5303,5313],"loc":{"start":{"line":153,"column":14},"end":{"line":153,"column":24}},"type":"ReturnStatement","argument":{"range":[5310,5312],"loc":{"start":{"line":153,"column":21},"end":{"line":153,"column":23}},"type":"UnaryExpression","operator":"-","argument":{"range":[5311,5312],"loc":{"start":{"line":153,"column":22},"end":{"line":153,"column":23}},"type":"Literal","value":1,"raw":"1"},"prefix":true}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[5341,5358],"loc":{"start":{"line":155,"column":12},"end":{"line":155,"column":29}},"type":"Property","key":{"range":[5341,5351],"loc":{"start":{"line":155,"column":12},"end":{"line":155,"column":22}},"type":"Identifier","name":"enumerable"},"computed":false,"value":{"range":[5353,5358],"loc":{"start":{"line":155,"column":24},"end":{"line":155,"column":29}},"type":"Literal","value":false,"raw":"false"},"kind":"init","method":false,"shorthand":false}]},"kind":"init","method":false,"shorthand":false},{"range":[5382,5523],"loc":{"start":{"line":157,"column":10},"end":{"line":162,"column":11}},"type":"Property","key":{"range":[5382,5390],"loc":{"start":{"line":157,"column":10},"end":{"line":157,"column":18}},"type":"Literal","value":"insert","raw":"\"insert\""},"computed":false,"value":{"range":[5392,5523],"loc":{"start":{"line":157,"column":20},"end":{"line":162,"column":11}},"type":"ObjectExpression","properties":[{"range":[5406,5480],"loc":{"start":{"line":158,"column":12},"end":{"line":160,"column":13}},"type":"Property","key":{"range":[5406,5411],"loc":{"start":{"line":158,"column":12},"end":{"line":158,"column":17}},"type":"Identifier","name":"value"},"computed":false,"value":{"range":[5413,5480],"loc":{"start":{"line":158,"column":19},"end":{"line":160,"column":13}},"type":"FunctionExpression","id":null,"params":[{"range":[5423,5424],"loc":{"start":{"line":158,"column":29},"end":{"line":158,"column":30}},"type":"Identifier","name":"i"},{"range":[5426,5427],"loc":{"start":{"line":158,"column":32},"end":{"line":158,"column":33}},"type":"Identifier","name":"x"}],"defaults":[],"body":{"range":[5429,5480],"loc":{"start":{"line":158,"column":35},"end":{"line":160,"column":13}},"type":"BlockStatement","body":[{"range":[5445,5466],"loc":{"start":{"line":159,"column":14},"end":{"line":159,"column":35}},"type":"ExpressionStatement","expression":{"range":[5445,5465],"loc":{"start":{"line":159,"column":14},"end":{"line":159,"column":34}},"type":"CallExpression","callee":{"range":[5445,5456],"loc":{"start":{"line":159,"column":14},"end":{"line":159,"column":25}},"type":"MemberExpression","computed":false,"object":{"range":[5445,5449],"loc":{"start":{"line":159,"column":14},"end":{"line":159,"column":18}},"type":"ThisExpression"},"property":{"range":[5450,5456],"loc":{"start":{"line":159,"column":19},"end":{"line":159,"column":25}},"type":"Identifier","name":"splice"}},"arguments":[{"range":[5457,5458],"loc":{"start":{"line":159,"column":26},"end":{"line":159,"column":27}},"type":"Identifier","name":"i"},{"range":[5460,5461],"loc":{"start":{"line":159,"column":29},"end":{"line":159,"column":30}},"type":"Literal","value":0,"raw":"0"},{"range":[5463,5464],"loc":{"start":{"line":159,"column":32},"end":{"line":159,"column":33}},"type":"Identifier","name":"x"}]}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[5494,5511],"loc":{"start":{"line":161,"column":12},"end":{"line":161,"column":29}},"type":"Property","key":{"range":[5494,5504],"loc":{"start":{"line":161,"column":12},"end":{"line":161,"column":22}},"type":"Identifier","name":"enumerable"},"computed":false,"value":{"range":[5506,5511],"loc":{"start":{"line":161,"column":24},"end":{"line":161,"column":29}},"type":"Literal","value":false,"raw":"false"},"kind":"init","method":false,"shorthand":false}]},"kind":"init","method":false,"shorthand":false},{"range":[5535,5787],"loc":{"start":{"line":163,"column":10},"end":{"line":172,"column":11}},"type":"Property","key":{"range":[5535,5540],"loc":{"start":{"line":163,"column":10},"end":{"line":163,"column":15}},"type":"Literal","value":"pop","raw":"\"pop\""},"computed":false,"value":{"range":[5542,5787],"loc":{"start":{"line":163,"column":17},"end":{"line":172,"column":11}},"type":"ObjectExpression","properties":[{"range":[5556,5744],"loc":{"start":{"line":164,"column":12},"end":{"line":170,"column":13}},"type":"Property","key":{"range":[5556,5561],"loc":{"start":{"line":164,"column":12},"end":{"line":164,"column":17}},"type":"Identifier","name":"value"},"computed":false,"value":{"range":[5563,5744],"loc":{"start":{"line":164,"column":19},"end":{"line":170,"column":13}},"type":"FunctionExpression","id":null,"params":[{"range":[5573,5574],"loc":{"start":{"line":164,"column":29},"end":{"line":164,"column":30}},"type":"Identifier","name":"i"}],"defaults":[],"body":{"range":[5576,5744],"loc":{"start":{"line":164,"column":32},"end":{"line":170,"column":13}},"type":"BlockStatement","body":[{"range":[5592,5636],"loc":{"start":{"line":165,"column":14},"end":{"line":166,"column":36}},"type":"IfStatement","test":{"range":[5596,5598],"loc":{"start":{"line":165,"column":18},"end":{"line":165,"column":20}},"type":"UnaryExpression","operator":"!","argument":{"range":[5597,5598],"loc":{"start":{"line":165,"column":19},"end":{"line":165,"column":20}},"type":"Identifier","name":"i"},"prefix":true},"consequent":{"range":[5616,5636],"loc":{"start":{"line":166,"column":16},"end":{"line":166,"column":36}},"type":"ExpressionStatement","expression":{"range":[5616,5635],"loc":{"start":{"line":166,"column":16},"end":{"line":166,"column":35}},"type":"AssignmentExpression","operator":"=","left":{"range":[5616,5617],"loc":{"start":{"line":166,"column":16},"end":{"line":166,"column":17}},"type":"Identifier","name":"i"},"right":{"range":[5620,5635],"loc":{"start":{"line":166,"column":20},"end":{"line":166,"column":35}},"type":"BinaryExpression","operator":"-","left":{"range":[5620,5631],"loc":{"start":{"line":166,"column":20},"end":{"line":166,"column":31}},"type":"MemberExpression","computed":false,"object":{"range":[5620,5624],"loc":{"start":{"line":166,"column":20},"end":{"line":166,"column":24}},"type":"ThisExpression"},"property":{"range":[5625,5631],"loc":{"start":{"line":166,"column":25},"end":{"line":166,"column":31}},"type":"Identifier","name":"length"}},"right":{"range":[5634,5635],"loc":{"start":{"line":166,"column":34},"end":{"line":166,"column":35}},"type":"Literal","value":1,"raw":"1"}}}},"alternate":null},{"range":[5651,5670],"loc":{"start":{"line":167,"column":14},"end":{"line":167,"column":33}},"type":"VariableDeclaration","declarations":[{"range":[5655,5669],"loc":{"start":{"line":167,"column":18},"end":{"line":167,"column":32}},"type":"VariableDeclarator","id":{"range":[5655,5659],"loc":{"start":{"line":167,"column":18},"end":{"line":167,"column":22}},"type":"Identifier","name":"item"},"init":{"range":[5662,5669],"loc":{"start":{"line":167,"column":25},"end":{"line":167,"column":32}},"type":"MemberExpression","computed":true,"object":{"range":[5662,5666],"loc":{"start":{"line":167,"column":25},"end":{"line":167,"column":29}},"type":"ThisExpression"},"property":{"range":[5667,5668],"loc":{"start":{"line":167,"column":30},"end":{"line":167,"column":31}},"type":"Identifier","name":"i"}}}],"kind":"var"},{"range":[5685,5703],"loc":{"start":{"line":168,"column":14},"end":{"line":168,"column":32}},"type":"ExpressionStatement","expression":{"range":[5685,5702],"loc":{"start":{"line":168,"column":14},"end":{"line":168,"column":31}},"type":"CallExpression","callee":{"range":[5685,5696],"loc":{"start":{"line":168,"column":14},"end":{"line":168,"column":25}},"type":"MemberExpression","computed":false,"object":{"range":[5685,5689],"loc":{"start":{"line":168,"column":14},"end":{"line":168,"column":18}},"type":"ThisExpression"},"property":{"range":[5690,5696],"loc":{"start":{"line":168,"column":19},"end":{"line":168,"column":25}},"type":"Identifier","name":"splice"}},"arguments":[{"range":[5697,5698],"loc":{"start":{"line":168,"column":26},"end":{"line":168,"column":27}},"type":"Identifier","name":"i"},{"range":[5700,5701],"loc":{"start":{"line":168,"column":29},"end":{"line":168,"column":30}},"type":"Literal","value":1,"raw":"1"}]}},{"range":[5718,5730],"loc":{"start":{"line":169,"column":14},"end":{"line":169,"column":26}},"type":"ReturnStatement","argument":{"range":[5725,5729],"loc":{"start":{"line":169,"column":21},"end":{"line":169,"column":25}},"type":"Identifier","name":"item"}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[5758,5775],"loc":{"start":{"line":171,"column":12},"end":{"line":171,"column":29}},"type":"Property","key":{"range":[5758,5768],"loc":{"start":{"line":171,"column":12},"end":{"line":171,"column":22}},"type":"Identifier","name":"enumerable"},"computed":false,"value":{"range":[5770,5775],"loc":{"start":{"line":171,"column":24},"end":{"line":171,"column":29}},"type":"Literal","value":false,"raw":"false"},"kind":"init","method":false,"shorthand":false}]},"kind":"init","method":false,"shorthand":false},{"range":[5799,5993],"loc":{"start":{"line":173,"column":10},"end":{"line":178,"column":11}},"type":"Property","key":{"range":[5799,5809],"loc":{"start":{"line":173,"column":10},"end":{"line":173,"column":20}},"type":"Literal","value":"_pySlice","raw":"\"_pySlice\""},"computed":false,"value":{"range":[5811,5993],"loc":{"start":{"line":173,"column":22},"end":{"line":178,"column":11}},"type":"ObjectExpression","properties":[{"range":[5825,5950],"loc":{"start":{"line":174,"column":12},"end":{"line":176,"column":13}},"type":"Property","key":{"range":[5825,5830],"loc":{"start":{"line":174,"column":12},"end":{"line":174,"column":17}},"type":"Identifier","name":"value"},"computed":false,"value":{"range":[5832,5950],"loc":{"start":{"line":174,"column":19},"end":{"line":176,"column":13}},"type":"FunctionExpression","id":null,"params":[{"range":[5842,5847],"loc":{"start":{"line":174,"column":29},"end":{"line":174,"column":34}},"type":"Identifier","name":"start"},{"range":[5849,5852],"loc":{"start":{"line":174,"column":36},"end":{"line":174,"column":39}},"type":"Identifier","name":"end"},{"range":[5854,5858],"loc":{"start":{"line":174,"column":41},"end":{"line":174,"column":45}},"type":"Identifier","name":"step"}],"defaults":[],"body":{"range":[5860,5950],"loc":{"start":{"line":174,"column":47},"end":{"line":176,"column":13}},"type":"BlockStatement","body":[{"range":[5876,5936],"loc":{"start":{"line":175,"column":14},"end":{"line":175,"column":74}},"type":"ReturnStatement","argument":{"range":[5883,5935],"loc":{"start":{"line":175,"column":21},"end":{"line":175,"column":73}},"type":"CallExpression","callee":{"range":[5883,5911],"loc":{"start":{"line":175,"column":21},"end":{"line":175,"column":49}},"type":"MemberExpression","computed":false,"object":{"range":[5883,5905],"loc":{"start":{"line":175,"column":21},"end":{"line":175,"column":43}},"type":"MemberExpression","computed":false,"object":{"range":[5883,5896],"loc":{"start":{"line":175,"column":21},"end":{"line":175,"column":34}},"type":"Identifier","name":"pythonRuntime"},"property":{"range":[5897,5905],"loc":{"start":{"line":175,"column":35},"end":{"line":175,"column":43}},"type":"Identifier","name":"internal"}},"property":{"range":[5906,5911],"loc":{"start":{"line":175,"column":44},"end":{"line":175,"column":49}},"type":"Identifier","name":"slice"}},"arguments":[{"range":[5912,5916],"loc":{"start":{"line":175,"column":50},"end":{"line":175,"column":54}},"type":"ThisExpression"},{"range":[5918,5923],"loc":{"start":{"line":175,"column":56},"end":{"line":175,"column":61}},"type":"Identifier","name":"start"},{"range":[5925,5928],"loc":{"start":{"line":175,"column":63},"end":{"line":175,"column":66}},"type":"Identifier","name":"end"},{"range":[5930,5934],"loc":{"start":{"line":175,"column":68},"end":{"line":175,"column":72}},"type":"Identifier","name":"step"}]}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[5964,5981],"loc":{"start":{"line":177,"column":12},"end":{"line":177,"column":29}},"type":"Property","key":{"range":[5964,5974],"loc":{"start":{"line":177,"column":12},"end":{"line":177,"column":22}},"type":"Identifier","name":"enumerable"},"computed":false,"value":{"range":[5976,5981],"loc":{"start":{"line":177,"column":24},"end":{"line":177,"column":29}},"type":"Literal","value":false,"raw":"false"},"kind":"init","method":false,"shorthand":false}]},"kind":"init","method":false,"shorthand":false},{"range":[6005,6154],"loc":{"start":{"line":179,"column":10},"end":{"line":184,"column":11}},"type":"Property","key":{"range":[6005,6013],"loc":{"start":{"line":179,"column":10},"end":{"line":179,"column":18}},"type":"Literal","value":"remove","raw":"\"remove\""},"computed":false,"value":{"range":[6015,6154],"loc":{"start":{"line":179,"column":20},"end":{"line":184,"column":11}},"type":"ObjectExpression","properties":[{"range":[6029,6111],"loc":{"start":{"line":180,"column":12},"end":{"line":182,"column":13}},"type":"Property","key":{"range":[6029,6034],"loc":{"start":{"line":180,"column":12},"end":{"line":180,"column":17}},"type":"Identifier","name":"value"},"computed":false,"value":{"range":[6036,6111],"loc":{"start":{"line":180,"column":19},"end":{"line":182,"column":13}},"type":"FunctionExpression","id":null,"params":[{"range":[6046,6047],"loc":{"start":{"line":180,"column":29},"end":{"line":180,"column":30}},"type":"Identifier","name":"x"}],"defaults":[],"body":{"range":[6049,6111],"loc":{"start":{"line":180,"column":32},"end":{"line":182,"column":13}},"type":"BlockStatement","body":[{"range":[6065,6097],"loc":{"start":{"line":181,"column":14},"end":{"line":181,"column":46}},"type":"ExpressionStatement","expression":{"range":[6065,6096],"loc":{"start":{"line":181,"column":14},"end":{"line":181,"column":45}},"type":"CallExpression","callee":{"range":[6065,6076],"loc":{"start":{"line":181,"column":14},"end":{"line":181,"column":25}},"type":"MemberExpression","computed":false,"object":{"range":[6065,6069],"loc":{"start":{"line":181,"column":14},"end":{"line":181,"column":18}},"type":"ThisExpression"},"property":{"range":[6070,6076],"loc":{"start":{"line":181,"column":19},"end":{"line":181,"column":25}},"type":"Identifier","name":"splice"}},"arguments":[{"range":[6077,6092],"loc":{"start":{"line":181,"column":26},"end":{"line":181,"column":41}},"type":"CallExpression","callee":{"range":[6077,6089],"loc":{"start":{"line":181,"column":26},"end":{"line":181,"column":38}},"type":"MemberExpression","computed":false,"object":{"range":[6077,6081],"loc":{"start":{"line":181,"column":26},"end":{"line":181,"column":30}},"type":"ThisExpression"},"property":{"range":[6082,6089],"loc":{"start":{"line":181,"column":31},"end":{"line":181,"column":38}},"type":"Identifier","name":"indexOf"}},"arguments":[{"range":[6090,6091],"loc":{"start":{"line":181,"column":39},"end":{"line":181,"column":40}},"type":"Identifier","name":"x"}]},{"range":[6094,6095],"loc":{"start":{"line":181,"column":43},"end":{"line":181,"column":44}},"type":"Literal","value":1,"raw":"1"}]}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[6125,6142],"loc":{"start":{"line":183,"column":12},"end":{"line":183,"column":29}},"type":"Property","key":{"range":[6125,6135],"loc":{"start":{"line":183,"column":12},"end":{"line":183,"column":22}},"type":"Identifier","name":"enumerable"},"computed":false,"value":{"range":[6137,6142],"loc":{"start":{"line":183,"column":24},"end":{"line":183,"column":29}},"type":"Literal","value":false,"raw":"false"},"kind":"init","method":false,"shorthand":false}]},"kind":"init","method":false,"shorthand":false},{"range":[6166,7608],"loc":{"start":{"line":185,"column":10},"end":{"line":224,"column":11}},"type":"Property","key":{"range":[6166,6172],"loc":{"start":{"line":185,"column":10},"end":{"line":185,"column":16}},"type":"Literal","value":"sort","raw":"\"sort\""},"computed":false,"value":{"range":[6174,7608],"loc":{"start":{"line":185,"column":18},"end":{"line":224,"column":11}},"type":"ObjectExpression","properties":[{"range":[6188,7565],"loc":{"start":{"line":186,"column":12},"end":{"line":222,"column":13}},"type":"Property","key":{"range":[6188,6193],"loc":{"start":{"line":186,"column":12},"end":{"line":186,"column":17}},"type":"Identifier","name":"value"},"computed":false,"value":{"range":[6195,7565],"loc":{"start":{"line":186,"column":19},"end":{"line":222,"column":13}},"type":"FunctionExpression","id":null,"params":[{"range":[6204,6205],"loc":{"start":{"line":186,"column":28},"end":{"line":186,"column":29}},"type":"Identifier","name":"x"},{"range":[6207,6214],"loc":{"start":{"line":186,"column":31},"end":{"line":186,"column":38}},"type":"Identifier","name":"reverse"}],"defaults":[],"body":{"range":[6216,7565],"loc":{"start":{"line":186,"column":40},"end":{"line":222,"column":13}},"type":"BlockStatement","body":[{"range":[6232,6258],"loc":{"start":{"line":187,"column":14},"end":{"line":187,"column":40}},"type":"VariableDeclaration","declarations":[{"range":[6236,6257],"loc":{"start":{"line":187,"column":18},"end":{"line":187,"column":39}},"type":"VariableDeclarator","id":{"range":[6236,6241],"loc":{"start":{"line":187,"column":18},"end":{"line":187,"column":23}},"type":"Identifier","name":"list2"},"init":{"range":[6244,6257],"loc":{"start":{"line":187,"column":26},"end":{"line":187,"column":39}},"type":"CallExpression","callee":{"range":[6244,6254],"loc":{"start":{"line":187,"column":26},"end":{"line":187,"column":36}},"type":"MemberExpression","computed":false,"object":{"range":[6244,6248],"loc":{"start":{"line":187,"column":26},"end":{"line":187,"column":30}},"type":"ThisExpression"},"property":{"range":[6249,6254],"loc":{"start":{"line":187,"column":31},"end":{"line":187,"column":36}},"type":"Identifier","name":"slice"}},"arguments":[{"range":[6255,6256],"loc":{"start":{"line":187,"column":37},"end":{"line":187,"column":38}},"type":"Literal","value":0,"raw":"0"}]}}],"kind":"var"},{"range":[6273,6756],"loc":{"start":{"line":188,"column":14},"end":{"line":198,"column":15}},"type":"VariableDeclaration","declarations":[{"range":[6277,6756],"loc":{"start":{"line":188,"column":18},"end":{"line":198,"column":15}},"type":"VariableDeclarator","id":{"range":[6277,6286],"loc":{"start":{"line":188,"column":18},"end":{"line":188,"column":27}},"type":"Identifier","name":"apply_key"},"init":{"range":[6289,6756],"loc":{"start":{"line":188,"column":30},"end":{"line":198,"column":15}},"type":"FunctionExpression","id":null,"params":[{"range":[6298,6299],"loc":{"start":{"line":188,"column":39},"end":{"line":188,"column":40}},"type":"Identifier","name":"a"},{"range":[6301,6310],"loc":{"start":{"line":188,"column":42},"end":{"line":188,"column":51}},"type":"Identifier","name":"numerical"}],"defaults":[],"body":{"range":[6312,6756],"loc":{"start":{"line":188,"column":53},"end":{"line":198,"column":15}},"type":"BlockStatement","body":[{"range":[6330,6355],"loc":{"start":{"line":189,"column":16},"end":{"line":189,"column":41}},"type":"VariableDeclaration","declarations":[{"range":[6334,6354],"loc":{"start":{"line":189,"column":20},"end":{"line":189,"column":40}},"type":"VariableDeclarator","id":{"range":[6334,6339],"loc":{"start":{"line":189,"column":20},"end":{"line":189,"column":25}},"type":"Identifier","name":"list3"},"init":{"range":[6342,6354],"loc":{"start":{"line":189,"column":28},"end":{"line":189,"column":40}},"type":"CallExpression","callee":{"range":[6342,6351],"loc":{"start":{"line":189,"column":28},"end":{"line":189,"column":37}},"type":"MemberExpression","computed":false,"object":{"range":[6342,6347],"loc":{"start":{"line":189,"column":28},"end":{"line":189,"column":33}},"type":"Identifier","name":"list2"},"property":{"range":[6348,6351],"loc":{"start":{"line":189,"column":34},"end":{"line":189,"column":37}},"type":"Identifier","name":"map"}},"arguments":[{"range":[6352,6353],"loc":{"start":{"line":189,"column":38},"end":{"line":189,"column":39}},"type":"Identifier","name":"x"}]}}],"kind":"var"},{"range":[6454,6470],"loc":{"start":{"line":191,"column":16},"end":{"line":191,"column":32}},"type":"VariableDeclaration","declarations":[{"range":[6458,6470],"loc":{"start":{"line":191,"column":20},"end":{"line":191,"column":32}},"type":"VariableDeclarator","id":{"range":[6458,6465],"loc":{"start":{"line":191,"column":20},"end":{"line":191,"column":27}},"type":"Identifier","name":"mapping"},"init":{"range":[6468,6470],"loc":{"start":{"line":191,"column":30},"end":{"line":191,"column":32}},"type":"ObjectExpression","properties":[]}}],"kind":"var"},{"range":[6487,6536],"loc":{"start":{"line":192,"column":16},"end":{"line":192,"column":65}},"type":"ForInStatement","left":{"range":[6491,6496],"loc":{"start":{"line":192,"column":20},"end":{"line":192,"column":25}},"type":"VariableDeclaration","declarations":[{"range":[6495,6496],"loc":{"start":{"line":192,"column":24},"end":{"line":192,"column":25}},"type":"VariableDeclarator","id":{"range":[6495,6496],"loc":{"start":{"line":192,"column":24},"end":{"line":192,"column":25}},"type":"Identifier","name":"i"},"init":null}],"kind":"var"},"right":{"range":[6500,6505],"loc":{"start":{"line":192,"column":29},"end":{"line":192,"column":34}},"type":"Identifier","name":"list3"},"body":{"range":[6507,6536],"loc":{"start":{"line":192,"column":36},"end":{"line":192,"column":65}},"type":"ExpressionStatement","expression":{"range":[6507,6535],"loc":{"start":{"line":192,"column":36},"end":{"line":192,"column":64}},"type":"AssignmentExpression","operator":"=","left":{"range":[6507,6524],"loc":{"start":{"line":192,"column":36},"end":{"line":192,"column":53}},"type":"MemberExpression","computed":true,"object":{"range":[6507,6514],"loc":{"start":{"line":192,"column":36},"end":{"line":192,"column":43}},"type":"Identifier","name":"mapping"},"property":{"range":[6515,6523],"loc":{"start":{"line":192,"column":44},"end":{"line":192,"column":52}},"type":"MemberExpression","computed":true,"object":{"range":[6515,6520],"loc":{"start":{"line":192,"column":44},"end":{"line":192,"column":49}},"type":"Identifier","name":"list3"},"property":{"range":[6521,6522],"loc":{"start":{"line":192,"column":50},"end":{"line":192,"column":51}},"type":"Identifier","name":"i"}}},"right":{"range":[6527,6535],"loc":{"start":{"line":192,"column":56},"end":{"line":192,"column":64}},"type":"MemberExpression","computed":true,"object":{"range":[6527,6532],"loc":{"start":{"line":192,"column":56},"end":{"line":192,"column":61}},"type":"Identifier","name":"list2"},"property":{"range":[6533,6534],"loc":{"start":{"line":192,"column":62},"end":{"line":192,"column":63}},"type":"Identifier","name":"i"}}}},"each":false},{"range":[6553,6682],"loc":{"start":{"line":193,"column":16},"end":{"line":196,"column":30}},"type":"IfStatement","test":{"range":[6556,6565],"loc":{"start":{"line":193,"column":19},"end":{"line":193,"column":28}},"type":"Identifier","name":"numerical"},"consequent":{"range":[6585,6630],"loc":{"start":{"line":194,"column":18},"end":{"line":194,"column":63}},"type":"ExpressionStatement","expression":{"range":[6585,6629],"loc":{"start":{"line":194,"column":18},"end":{"line":194,"column":62}},"type":"CallExpression","callee":{"range":[6585,6595],"loc":{"start":{"line":194,"column":18},"end":{"line":194,"column":28}},"type":"MemberExpression","computed":false,"object":{"range":[6585,6590],"loc":{"start":{"line":194,"column":18},"end":{"line":194,"column":23}},"type":"Identifier","name":"list3"},"property":{"range":[6591,6595],"loc":{"start":{"line":194,"column":24},"end":{"line":194,"column":28}},"type":"Identifier","name":"sort"}},"arguments":[{"range":[6596,6628],"loc":{"start":{"line":194,"column":29},"end":{"line":194,"column":61}},"type":"FunctionExpression","id":null,"params":[{"range":[6605,6606],"loc":{"start":{"line":194,"column":38},"end":{"line":194,"column":39}},"type":"Identifier","name":"a"},{"range":[6608,6609],"loc":{"start":{"line":194,"column":41},"end":{"line":194,"column":42}},"type":"Identifier","name":"b"}],"defaults":[],"body":{"range":[6611,6628],"loc":{"start":{"line":194,"column":44},"end":{"line":194,"column":61}},"type":"BlockStatement","body":[{"range":[6613,6626],"loc":{"start":{"line":194,"column":46},"end":{"line":194,"column":59}},"type":"ReturnStatement","argument":{"range":[6620,6625],"loc":{"start":{"line":194,"column":53},"end":{"line":194,"column":58}},"type":"BinaryExpression","operator":"-","left":{"range":[6620,6621],"loc":{"start":{"line":194,"column":53},"end":{"line":194,"column":54}},"type":"Identifier","name":"a"},"right":{"range":[6624,6625],"loc":{"start":{"line":194,"column":57},"end":{"line":194,"column":58}},"type":"Identifier","name":"b"}}}]},"generator":false,"expression":false}]}},"alternate":{"range":[6670,6682],"loc":{"start":{"line":196,"column":18},"end":{"line":196,"column":30}},"type":"ExpressionStatement","expression":{"range":[6670,6682],"loc":{"start":{"line":196,"column":18},"end":{"line":196,"column":30}},"type":"CallExpression","callee":{"range":[6670,6680],"loc":{"start":{"line":196,"column":18},"end":{"line":196,"column":28}},"type":"MemberExpression","computed":false,"object":{"range":[6670,6675],"loc":{"start":{"line":196,"column":18},"end":{"line":196,"column":23}},"type":"Identifier","name":"list3"},"property":{"range":[6676,6680],"loc":{"start":{"line":196,"column":24},"end":{"line":196,"column":28}},"type":"Identifier","name":"sort"}},"arguments":[]}}},{"range":[6699,6740],"loc":{"start":{"line":197,"column":16},"end":{"line":197,"column":57}},"type":"ForInStatement","left":{"range":[6703,6708],"loc":{"start":{"line":197,"column":20},"end":{"line":197,"column":25}},"type":"VariableDeclaration","declarations":[{"range":[6707,6708],"loc":{"start":{"line":197,"column":24},"end":{"line":197,"column":25}},"type":"VariableDeclarator","id":{"range":[6707,6708],"loc":{"start":{"line":197,"column":24},"end":{"line":197,"column":25}},"type":"Identifier","name":"i"},"init":null}],"kind":"var"},"right":{"range":[6712,6713],"loc":{"start":{"line":197,"column":29},"end":{"line":197,"column":30}},"type":"Identifier","name":"a"},"body":{"range":[6715,6740],"loc":{"start":{"line":197,"column":32},"end":{"line":197,"column":57}},"type":"ExpressionStatement","expression":{"range":[6715,6739],"loc":{"start":{"line":197,"column":32},"end":{"line":197,"column":56}},"type":"AssignmentExpression","operator":"=","left":{"range":[6715,6719],"loc":{"start":{"line":197,"column":32},"end":{"line":197,"column":36}},"type":"MemberExpression","computed":true,"object":{"range":[6715,6716],"loc":{"start":{"line":197,"column":32},"end":{"line":197,"column":33}},"type":"Identifier","name":"a"},"property":{"range":[6717,6718],"loc":{"start":{"line":197,"column":34},"end":{"line":197,"column":35}},"type":"Identifier","name":"i"}},"right":{"range":[6722,6739],"loc":{"start":{"line":197,"column":39},"end":{"line":197,"column":56}},"type":"MemberExpression","computed":true,"object":{"range":[6722,6729],"loc":{"start":{"line":197,"column":39},"end":{"line":197,"column":46}},"type":"Identifier","name":"mapping"},"property":{"range":[6730,6738],"loc":{"start":{"line":197,"column":47},"end":{"line":197,"column":55}},"type":"MemberExpression","computed":true,"object":{"range":[6730,6735],"loc":{"start":{"line":197,"column":47},"end":{"line":197,"column":52}},"type":"Identifier","name":"list3"},"property":{"range":[6736,6737],"loc":{"start":{"line":197,"column":53},"end":{"line":197,"column":54}},"type":"Identifier","name":"i"}}}}},"each":false}]},"generator":false,"expression":false}}],"kind":"var"},{"range":[6771,7240],"loc":{"start":{"line":199,"column":14},"end":{"line":212,"column":15}},"type":"ForInStatement","left":{"range":[6775,6780],"loc":{"start":{"line":199,"column":18},"end":{"line":199,"column":23}},"type":"VariableDeclaration","declarations":[{"range":[6779,6780],"loc":{"start":{"line":199,"column":22},"end":{"line":199,"column":23}},"type":"VariableDeclarator","id":{"range":[6779,6780],"loc":{"start":{"line":199,"column":22},"end":{"line":199,"column":23}},"type":"Identifier","name":"i"},"init":null}],"kind":"var"},"right":{"range":[6784,6788],"loc":{"start":{"line":199,"column":27},"end":{"line":199,"column":31}},"type":"ThisExpression"},"body":{"range":[6790,7240],"loc":{"start":{"line":199,"column":33},"end":{"line":212,"column":15}},"type":"BlockStatement","body":[{"range":[6808,7224],"loc":{"start":{"line":200,"column":16},"end":{"line":211,"column":17}},"type":"IfStatement","test":{"range":[6811,6860],"loc":{"start":{"line":200,"column":19},"end":{"line":200,"column":68}},"type":"LogicalExpression","operator":"||","left":{"range":[6811,6838],"loc":{"start":{"line":200,"column":19},"end":{"line":200,"column":46}},"type":"BinaryExpression","operator":"!==","left":{"range":[6811,6825],"loc":{"start":{"line":200,"column":19},"end":{"line":200,"column":33}},"type":"UnaryExpression","operator":"typeof","argument":{"range":[6818,6825],"loc":{"start":{"line":200,"column":26},"end":{"line":200,"column":33}},"type":"MemberExpression","computed":true,"object":{"range":[6818,6822],"loc":{"start":{"line":200,"column":26},"end":{"line":200,"column":30}},"type":"ThisExpression"},"property":{"range":[6823,6824],"loc":{"start":{"line":200,"column":31},"end":{"line":200,"column":32}},"type":"Identifier","name":"i"}},"prefix":true},"right":{"range":[6830,6838],"loc":{"start":{"line":200,"column":38},"end":{"line":200,"column":46}},"type":"Literal","value":"number","raw":"'number'"}},"right":{"range":[6842,6860],"loc":{"start":{"line":200,"column":50},"end":{"line":200,"column":68}},"type":"UnaryExpression","operator":"!","argument":{"range":[6843,6860],"loc":{"start":{"line":200,"column":51},"end":{"line":200,"column":68}},"type":"CallExpression","callee":{"range":[6843,6851],"loc":{"start":{"line":200,"column":51},"end":{"line":200,"column":59}},"type":"Identifier","name":"isFinite"},"arguments":[{"range":[6852,6859],"loc":{"start":{"line":200,"column":60},"end":{"line":200,"column":67}},"type":"MemberExpression","computed":true,"object":{"range":[6852,6856],"loc":{"start":{"line":200,"column":60},"end":{"line":200,"column":64}},"type":"ThisExpression"},"property":{"range":[6857,6858],"loc":{"start":{"line":200,"column":65},"end":{"line":200,"column":66}},"type":"Identifier","name":"i"}}]},"prefix":true}},"consequent":{"range":[6862,7224],"loc":{"start":{"line":200,"column":70},"end":{"line":211,"column":17}},"type":"BlockStatement","body":[{"range":[6882,7114],"loc":{"start":{"line":201,"column":18},"end":{"line":207,"column":19}},"type":"IfStatement","test":{"range":[6885,6908],"loc":{"start":{"line":201,"column":21},"end":{"line":201,"column":44}},"type":"BinaryExpression","operator":"!=","left":{"range":[6885,6893],"loc":{"start":{"line":201,"column":21},"end":{"line":201,"column":29}},"type":"UnaryExpression","operator":"typeof","argument":{"range":[6892,6893],"loc":{"start":{"line":201,"column":28},"end":{"line":201,"column":29}},"type":"Identifier","name":"x"},"prefix":true},"right":{"range":[6897,6908],"loc":{"start":{"line":201,"column":33},"end":{"line":201,"column":44}},"type":"Literal","value":"undefined","raw":"'undefined'"}},"consequent":{"range":[6910,6975],"loc":{"start":{"line":201,"column":46},"end":{"line":203,"column":19}},"type":"BlockStatement","body":[{"range":[6932,6955],"loc":{"start":{"line":202,"column":20},"end":{"line":202,"column":43}},"type":"ExpressionStatement","expression":{"range":[6932,6954],"loc":{"start":{"line":202,"column":20},"end":{"line":202,"column":42}},"type":"CallExpression","callee":{"range":[6932,6941],"loc":{"start":{"line":202,"column":20},"end":{"line":202,"column":29}},"type":"Identifier","name":"apply_key"},"arguments":[{"range":[6942,6946],"loc":{"start":{"line":202,"column":30},"end":{"line":202,"column":34}},"type":"ThisExpression"},{"range":[6948,6953],"loc":{"start":{"line":202,"column":36},"end":{"line":202,"column":41}},"type":"Literal","value":false,"raw":"false"}]}}]},"alternate":{"range":[6999,7114],"loc":{"start":{"line":204,"column":23},"end":{"line":207,"column":19}},"type":"BlockStatement","body":[{"range":[7021,7034],"loc":{"start":{"line":205,"column":20},"end":{"line":205,"column":33}},"type":"ExpressionStatement","expression":{"range":[7021,7033],"loc":{"start":{"line":205,"column":20},"end":{"line":205,"column":32}},"type":"CallExpression","callee":{"range":[7021,7031],"loc":{"start":{"line":205,"column":20},"end":{"line":205,"column":30}},"type":"MemberExpression","computed":false,"object":{"range":[7021,7026],"loc":{"start":{"line":205,"column":20},"end":{"line":205,"column":25}},"type":"Identifier","name":"list2"},"property":{"range":[7027,7031],"loc":{"start":{"line":205,"column":26},"end":{"line":205,"column":30}},"type":"Identifier","name":"sort"}},"arguments":[]}},{"range":[7055,7094],"loc":{"start":{"line":206,"column":20},"end":{"line":206,"column":59}},"type":"ForInStatement","left":{"range":[7060,7065],"loc":{"start":{"line":206,"column":25},"end":{"line":206,"column":30}},"type":"VariableDeclaration","declarations":[{"range":[7064,7065],"loc":{"start":{"line":206,"column":29},"end":{"line":206,"column":30}},"type":"VariableDeclarator","id":{"range":[7064,7065],"loc":{"start":{"line":206,"column":29},"end":{"line":206,"column":30}},"type":"Identifier","name":"j"},"init":null}],"kind":"var"},"right":{"range":[7069,7073],"loc":{"start":{"line":206,"column":34},"end":{"line":206,"column":38}},"type":"ThisExpression"},"body":{"range":[7075,7094],"loc":{"start":{"line":206,"column":40},"end":{"line":206,"column":59}},"type":"ExpressionStatement","expression":{"range":[7075,7093],"loc":{"start":{"line":206,"column":40},"end":{"line":206,"column":58}},"type":"AssignmentExpression","operator":"=","left":{"range":[7075,7082],"loc":{"start":{"line":206,"column":40},"end":{"line":206,"column":47}},"type":"MemberExpression","computed":true,"object":{"range":[7075,7079],"loc":{"start":{"line":206,"column":40},"end":{"line":206,"column":44}},"type":"ThisExpression"},"property":{"range":[7080,7081],"loc":{"start":{"line":206,"column":45},"end":{"line":206,"column":46}},"type":"Identifier","name":"j"}},"right":{"range":[7085,7093],"loc":{"start":{"line":206,"column":50},"end":{"line":206,"column":58}},"type":"MemberExpression","computed":true,"object":{"range":[7085,7090],"loc":{"start":{"line":206,"column":50},"end":{"line":206,"column":55}},"type":"Identifier","name":"list2"},"property":{"range":[7091,7092],"loc":{"start":{"line":206,"column":56},"end":{"line":206,"column":57}},"type":"Identifier","name":"j"}}}},"each":false}]}},{"range":[7133,7180],"loc":{"start":{"line":208,"column":18},"end":{"line":209,"column":35}},"type":"IfStatement","test":{"range":[7136,7143],"loc":{"start":{"line":208,"column":21},"end":{"line":208,"column":28}},"type":"Identifier","name":"reverse"},"consequent":{"range":[7165,7180],"loc":{"start":{"line":209,"column":20},"end":{"line":209,"column":35}},"type":"ExpressionStatement","expression":{"range":[7165,7179],"loc":{"start":{"line":209,"column":20},"end":{"line":209,"column":34}},"type":"CallExpression","callee":{"range":[7165,7177],"loc":{"start":{"line":209,"column":20},"end":{"line":209,"column":32}},"type":"MemberExpression","computed":false,"object":{"range":[7165,7169],"loc":{"start":{"line":209,"column":20},"end":{"line":209,"column":24}},"type":"ThisExpression"},"property":{"range":[7170,7177],"loc":{"start":{"line":209,"column":25},"end":{"line":209,"column":32}},"type":"Identifier","name":"reverse"}},"arguments":[]}},"alternate":null},{"range":[7199,7206],"loc":{"start":{"line":210,"column":18},"end":{"line":210,"column":25}},"type":"ReturnStatement","argument":null}]},"alternate":null}]},"each":false},{"range":[7255,7493],"loc":{"start":{"line":213,"column":14},"end":{"line":219,"column":15}},"type":"IfStatement","test":{"range":[7258,7281],"loc":{"start":{"line":213,"column":17},"end":{"line":213,"column":40}},"type":"BinaryExpression","operator":"!=","left":{"range":[7258,7266],"loc":{"start":{"line":213,"column":17},"end":{"line":213,"column":25}},"type":"UnaryExpression","operator":"typeof","argument":{"range":[7265,7266],"loc":{"start":{"line":213,"column":24},"end":{"line":213,"column":25}},"type":"Identifier","name":"x"},"prefix":true},"right":{"range":[7270,7281],"loc":{"start":{"line":213,"column":29},"end":{"line":213,"column":40}},"type":"Literal","value":"undefined","raw":"'undefined'"}},"consequent":{"range":[7283,7339],"loc":{"start":{"line":213,"column":42},"end":{"line":215,"column":15}},"type":"BlockStatement","body":[{"range":[7301,7323],"loc":{"start":{"line":214,"column":16},"end":{"line":214,"column":38}},"type":"ExpressionStatement","expression":{"range":[7301,7322],"loc":{"start":{"line":214,"column":16},"end":{"line":214,"column":37}},"type":"CallExpression","callee":{"range":[7301,7310],"loc":{"start":{"line":214,"column":16},"end":{"line":214,"column":25}},"type":"Identifier","name":"apply_key"},"arguments":[{"range":[7311,7315],"loc":{"start":{"line":214,"column":26},"end":{"line":214,"column":30}},"type":"ThisExpression"},{"range":[7317,7321],"loc":{"start":{"line":214,"column":32},"end":{"line":214,"column":36}},"type":"Literal","value":true,"raw":"true"}]}}]},"alternate":{"range":[7359,7493],"loc":{"start":{"line":216,"column":19},"end":{"line":219,"column":15}},"type":"BlockStatement","body":[{"range":[7377,7422],"loc":{"start":{"line":217,"column":16},"end":{"line":217,"column":61}},"type":"ExpressionStatement","expression":{"range":[7377,7421],"loc":{"start":{"line":217,"column":16},"end":{"line":217,"column":60}},"type":"CallExpression","callee":{"range":[7377,7387],"loc":{"start":{"line":217,"column":16},"end":{"line":217,"column":26}},"type":"MemberExpression","computed":false,"object":{"range":[7377,7382],"loc":{"start":{"line":217,"column":16},"end":{"line":217,"column":21}},"type":"Identifier","name":"list2"},"property":{"range":[7383,7387],"loc":{"start":{"line":217,"column":22},"end":{"line":217,"column":26}},"type":"Identifier","name":"sort"}},"arguments":[{"range":[7388,7420],"loc":{"start":{"line":217,"column":27},"end":{"line":217,"column":59}},"type":"FunctionExpression","id":null,"params":[{"range":[7397,7398],"loc":{"start":{"line":217,"column":36},"end":{"line":217,"column":37}},"type":"Identifier","name":"a"},{"range":[7400,7401],"loc":{"start":{"line":217,"column":39},"end":{"line":217,"column":40}},"type":"Identifier","name":"b"}],"defaults":[],"body":{"range":[7403,7420],"loc":{"start":{"line":217,"column":42},"end":{"line":217,"column":59}},"type":"BlockStatement","body":[{"range":[7405,7418],"loc":{"start":{"line":217,"column":44},"end":{"line":217,"column":57}},"type":"ReturnStatement","argument":{"range":[7412,7417],"loc":{"start":{"line":217,"column":51},"end":{"line":217,"column":56}},"type":"BinaryExpression","operator":"-","left":{"range":[7412,7413],"loc":{"start":{"line":217,"column":51},"end":{"line":217,"column":52}},"type":"Identifier","name":"a"},"right":{"range":[7416,7417],"loc":{"start":{"line":217,"column":55},"end":{"line":217,"column":56}},"type":"Identifier","name":"b"}}}]},"generator":false,"expression":false}]}},{"range":[7439,7477],"loc":{"start":{"line":218,"column":16},"end":{"line":218,"column":54}},"type":"ForInStatement","left":{"range":[7443,7448],"loc":{"start":{"line":218,"column":20},"end":{"line":218,"column":25}},"type":"VariableDeclaration","declarations":[{"range":[7447,7448],"loc":{"start":{"line":218,"column":24},"end":{"line":218,"column":25}},"type":"VariableDeclarator","id":{"range":[7447,7448],"loc":{"start":{"line":218,"column":24},"end":{"line":218,"column":25}},"type":"Identifier","name":"i"},"init":null}],"kind":"var"},"right":{"range":[7452,7456],"loc":{"start":{"line":218,"column":29},"end":{"line":218,"column":33}},"type":"ThisExpression"},"body":{"range":[7458,7477],"loc":{"start":{"line":218,"column":35},"end":{"line":218,"column":54}},"type":"ExpressionStatement","expression":{"range":[7458,7476],"loc":{"start":{"line":218,"column":35},"end":{"line":218,"column":53}},"type":"AssignmentExpression","operator":"=","left":{"range":[7458,7465],"loc":{"start":{"line":218,"column":35},"end":{"line":218,"column":42}},"type":"MemberExpression","computed":true,"object":{"range":[7458,7462],"loc":{"start":{"line":218,"column":35},"end":{"line":218,"column":39}},"type":"ThisExpression"},"property":{"range":[7463,7464],"loc":{"start":{"line":218,"column":40},"end":{"line":218,"column":41}},"type":"Identifier","name":"i"}},"right":{"range":[7468,7476],"loc":{"start":{"line":218,"column":45},"end":{"line":218,"column":53}},"type":"MemberExpression","computed":true,"object":{"range":[7468,7473],"loc":{"start":{"line":218,"column":45},"end":{"line":218,"column":50}},"type":"Identifier","name":"list2"},"property":{"range":[7474,7475],"loc":{"start":{"line":218,"column":51},"end":{"line":218,"column":52}},"type":"Identifier","name":"i"}}}},"each":false}]}},{"range":[7508,7551],"loc":{"start":{"line":220,"column":14},"end":{"line":221,"column":31}},"type":"IfStatement","test":{"range":[7511,7518],"loc":{"start":{"line":220,"column":17},"end":{"line":220,"column":24}},"type":"Identifier","name":"reverse"},"consequent":{"range":[7536,7551],"loc":{"start":{"line":221,"column":16},"end":{"line":221,"column":31}},"type":"ExpressionStatement","expression":{"range":[7536,7550],"loc":{"start":{"line":221,"column":16},"end":{"line":221,"column":30}},"type":"CallExpression","callee":{"range":[7536,7548],"loc":{"start":{"line":221,"column":16},"end":{"line":221,"column":28}},"type":"MemberExpression","computed":false,"object":{"range":[7536,7540],"loc":{"start":{"line":221,"column":16},"end":{"line":221,"column":20}},"type":"ThisExpression"},"property":{"range":[7541,7548],"loc":{"start":{"line":221,"column":21},"end":{"line":221,"column":28}},"type":"Identifier","name":"reverse"}},"arguments":[]}},"alternate":null}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[7579,7596],"loc":{"start":{"line":223,"column":12},"end":{"line":223,"column":29}},"type":"Property","key":{"range":[7579,7589],"loc":{"start":{"line":223,"column":12},"end":{"line":223,"column":22}},"type":"Identifier","name":"enumerable"},"computed":false,"value":{"range":[7591,7596],"loc":{"start":{"line":223,"column":24},"end":{"line":223,"column":29}},"type":"Literal","value":false,"raw":"false"},"kind":"init","method":false,"shorthand":false}]},"kind":"init","method":false,"shorthand":false},{"range":[7620,7773],"loc":{"start":{"line":225,"column":10},"end":{"line":230,"column":11}},"type":"Property","key":{"range":[7620,7630],"loc":{"start":{"line":225,"column":10},"end":{"line":225,"column":20}},"type":"Literal","value":"toString","raw":"\"toString\""},"computed":false,"value":{"range":[7632,7773],"loc":{"start":{"line":225,"column":22},"end":{"line":230,"column":11}},"type":"ObjectExpression","properties":[{"range":[7646,7730],"loc":{"start":{"line":226,"column":12},"end":{"line":228,"column":13}},"type":"Property","key":{"range":[7646,7651],"loc":{"start":{"line":226,"column":12},"end":{"line":226,"column":17}},"type":"Identifier","name":"value"},"computed":false,"value":{"range":[7653,7730],"loc":{"start":{"line":226,"column":19},"end":{"line":228,"column":13}},"type":"FunctionExpression","id":null,"params":[],"defaults":[],"body":{"range":[7665,7730],"loc":{"start":{"line":226,"column":31},"end":{"line":228,"column":13}},"type":"BlockStatement","body":[{"range":[7681,7716],"loc":{"start":{"line":227,"column":14},"end":{"line":227,"column":49}},"type":"ReturnStatement","argument":{"range":[7688,7715],"loc":{"start":{"line":227,"column":21},"end":{"line":227,"column":48}},"type":"BinaryExpression","operator":"+","left":{"range":[7688,7709],"loc":{"start":{"line":227,"column":21},"end":{"line":227,"column":42}},"type":"BinaryExpression","operator":"+","left":{"range":[7688,7691],"loc":{"start":{"line":227,"column":21},"end":{"line":227,"column":24}},"type":"Literal","value":"[","raw":"'['"},"right":{"range":[7694,7709],"loc":{"start":{"line":227,"column":27},"end":{"line":227,"column":42}},"type":"CallExpression","callee":{"range":[7694,7703],"loc":{"start":{"line":227,"column":27},"end":{"line":227,"column":36}},"type":"MemberExpression","computed":false,"object":{"range":[7694,7698],"loc":{"start":{"line":227,"column":27},"end":{"line":227,"column":31}},"type":"ThisExpression"},"property":{"range":[7699,7703],"loc":{"start":{"line":227,"column":32},"end":{"line":227,"column":36}},"type":"Identifier","name":"join"}},"arguments":[{"range":[7704,7708],"loc":{"start":{"line":227,"column":37},"end":{"line":227,"column":41}},"type":"Literal","value":", ","raw":"', '"}]}},"right":{"range":[7712,7715],"loc":{"start":{"line":227,"column":45},"end":{"line":227,"column":48}},"type":"Literal","value":"]","raw":"']'"}}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[7744,7761],"loc":{"start":{"line":229,"column":12},"end":{"line":229,"column":29}},"type":"Property","key":{"range":[7744,7754],"loc":{"start":{"line":229,"column":12},"end":{"line":229,"column":22}},"type":"Identifier","name":"enumerable"},"computed":false,"value":{"range":[7756,7761],"loc":{"start":{"line":229,"column":24},"end":{"line":229,"column":29}},"type":"Literal","value":false,"raw":"false"},"kind":"init","method":false,"shorthand":false}]},"kind":"init","method":false,"shorthand":false}]},"kind":"init","method":false,"shorthand":false},{"range":[7789,8100],"loc":{"start":{"line":232,"column":6},"end":{"line":239,"column":7}},"type":"Property","key":{"range":[7789,7799],"loc":{"start":{"line":232,"column":6},"end":{"line":232,"column":16}},"type":"Identifier","name":"createList"},"computed":false,"value":{"range":[7801,8100],"loc":{"start":{"line":232,"column":18},"end":{"line":239,"column":7}},"type":"FunctionExpression","id":null,"params":[],"defaults":[],"body":{"range":[7813,8100],"loc":{"start":{"line":232,"column":30},"end":{"line":239,"column":7}},"type":"BlockStatement","body":[{"range":[7823,7866],"loc":{"start":{"line":233,"column":8},"end":{"line":233,"column":51}},"type":"VariableDeclaration","declarations":[{"range":[7827,7865],"loc":{"start":{"line":233,"column":12},"end":{"line":233,"column":50}},"type":"VariableDeclarator","id":{"range":[7827,7830],"loc":{"start":{"line":233,"column":12},"end":{"line":233,"column":15}},"type":"Identifier","name":"ret"},"init":{"range":[7833,7865],"loc":{"start":{"line":233,"column":18},"end":{"line":233,"column":50}},"type":"NewExpression","callee":{"range":[7837,7863],"loc":{"start":{"line":233,"column":22},"end":{"line":233,"column":48}},"type":"MemberExpression","computed":false,"object":{"range":[7837,7858],"loc":{"start":{"line":233,"column":22},"end":{"line":233,"column":43}},"type":"MemberExpression","computed":false,"object":{"range":[7837,7850],"loc":{"start":{"line":233,"column":22},"end":{"line":233,"column":35}},"type":"Identifier","name":"pythonRuntime"},"property":{"range":[7851,7858],"loc":{"start":{"line":233,"column":36},"end":{"line":233,"column":43}},"type":"Identifier","name":"objects"}},"property":{"range":[7859,7863],"loc":{"start":{"line":233,"column":44},"end":{"line":233,"column":48}},"type":"Identifier","name":"list"}},"arguments":[]}}],"kind":"var"},{"range":[7875,8072],"loc":{"start":{"line":234,"column":8},"end":{"line":237,"column":58}},"type":"IfStatement","test":{"range":[7879,7934],"loc":{"start":{"line":234,"column":12},"end":{"line":234,"column":67}},"type":"LogicalExpression","operator":"&&","left":{"range":[7879,7901],"loc":{"start":{"line":234,"column":12},"end":{"line":234,"column":34}},"type":"BinaryExpression","operator":"===","left":{"range":[7879,7895],"loc":{"start":{"line":234,"column":12},"end":{"line":234,"column":28}},"type":"MemberExpression","computed":false,"object":{"range":[7879,7888],"loc":{"start":{"line":234,"column":12},"end":{"line":234,"column":21}},"type":"Identifier","name":"arguments"},"property":{"range":[7889,7895],"loc":{"start":{"line":234,"column":22},"end":{"line":234,"column":28}},"type":"Identifier","name":"length"}},"right":{"range":[7900,7901],"loc":{"start":{"line":234,"column":33},"end":{"line":234,"column":34}},"type":"Literal","value":1,"raw":"1"}},"right":{"range":[7905,7934],"loc":{"start":{"line":234,"column":38},"end":{"line":234,"column":67}},"type":"BinaryExpression","operator":"instanceof","left":{"range":[7905,7917],"loc":{"start":{"line":234,"column":38},"end":{"line":234,"column":50}},"type":"MemberExpression","computed":true,"object":{"range":[7905,7914],"loc":{"start":{"line":234,"column":38},"end":{"line":234,"column":47}},"type":"Identifier","name":"arguments"},"property":{"range":[7915,7916],"loc":{"start":{"line":234,"column":48},"end":{"line":234,"column":49}},"type":"Literal","value":0,"raw":"0"}},"right":{"range":[7929,7934],"loc":{"start":{"line":234,"column":62},"end":{"line":234,"column":67}},"type":"Identifier","name":"Array"}}},"consequent":{"range":[7946,8000],"loc":{"start":{"line":235,"column":10},"end":{"line":235,"column":64}},"type":"ForInStatement","left":{"range":[7951,7956],"loc":{"start":{"line":235,"column":15},"end":{"line":235,"column":20}},"type":"VariableDeclaration","declarations":[{"range":[7955,7956],"loc":{"start":{"line":235,"column":19},"end":{"line":235,"column":20}},"type":"VariableDeclarator","id":{"range":[7955,7956],"loc":{"start":{"line":235,"column":19},"end":{"line":235,"column":20}},"type":"Identifier","name":"i"},"init":null}],"kind":"var"},"right":{"range":[7960,7972],"loc":{"start":{"line":235,"column":24},"end":{"line":235,"column":36}},"type":"MemberExpression","computed":true,"object":{"range":[7960,7969],"loc":{"start":{"line":235,"column":24},"end":{"line":235,"column":33}},"type":"Identifier","name":"arguments"},"property":{"range":[7970,7971],"loc":{"start":{"line":235,"column":34},"end":{"line":235,"column":35}},"type":"Literal","value":0,"raw":"0"}},"body":{"range":[7974,8000],"loc":{"start":{"line":235,"column":38},"end":{"line":235,"column":64}},"type":"ExpressionStatement","expression":{"range":[7974,7999],"loc":{"start":{"line":235,"column":38},"end":{"line":235,"column":63}},"type":"CallExpression","callee":{"range":[7974,7982],"loc":{"start":{"line":235,"column":38},"end":{"line":235,"column":46}},"type":"MemberExpression","computed":false,"object":{"range":[7974,7977],"loc":{"start":{"line":235,"column":38},"end":{"line":235,"column":41}},"type":"Identifier","name":"ret"},"property":{"range":[7978,7982],"loc":{"start":{"line":235,"column":42},"end":{"line":235,"column":46}},"type":"Identifier","name":"push"}},"arguments":[{"range":[7983,7998],"loc":{"start":{"line":235,"column":47},"end":{"line":235,"column":62}},"type":"MemberExpression","computed":true,"object":{"range":[7983,7995],"loc":{"start":{"line":235,"column":47},"end":{"line":235,"column":59}},"type":"MemberExpression","computed":true,"object":{"range":[7983,7992],"loc":{"start":{"line":235,"column":47},"end":{"line":235,"column":56}},"type":"Identifier","name":"arguments"},"property":{"range":[7993,7994],"loc":{"start":{"line":235,"column":57},"end":{"line":235,"column":58}},"type":"Literal","value":0,"raw":"0"}},"property":{"range":[7996,7997],"loc":{"start":{"line":235,"column":60},"end":{"line":235,"column":61}},"type":"Identifier","name":"i"}}]}},"each":false},"alternate":{"range":[8024,8072],"loc":{"start":{"line":237,"column":10},"end":{"line":237,"column":58}},"type":"ForInStatement","left":{"range":[8029,8034],"loc":{"start":{"line":237,"column":15},"end":{"line":237,"column":20}},"type":"VariableDeclaration","declarations":[{"range":[8033,8034],"loc":{"start":{"line":237,"column":19},"end":{"line":237,"column":20}},"type":"VariableDeclarator","id":{"range":[8033,8034],"loc":{"start":{"line":237,"column":19},"end":{"line":237,"column":20}},"type":"Identifier","name":"i"},"init":null}],"kind":"var"},"right":{"range":[8038,8047],"loc":{"start":{"line":237,"column":24},"end":{"line":237,"column":33}},"type":"Identifier","name":"arguments"},"body":{"range":[8049,8072],"loc":{"start":{"line":237,"column":35},"end":{"line":237,"column":58}},"type":"ExpressionStatement","expression":{"range":[8049,8071],"loc":{"start":{"line":237,"column":35},"end":{"line":237,"column":57}},"type":"CallExpression","callee":{"range":[8049,8057],"loc":{"start":{"line":237,"column":35},"end":{"line":237,"column":43}},"type":"MemberExpression","computed":false,"object":{"range":[8049,8052],"loc":{"start":{"line":237,"column":35},"end":{"line":237,"column":38}},"type":"Identifier","name":"ret"},"property":{"range":[8053,8057],"loc":{"start":{"line":237,"column":39},"end":{"line":237,"column":43}},"type":"Identifier","name":"push"}},"arguments":[{"range":[8058,8070],"loc":{"start":{"line":237,"column":44},"end":{"line":237,"column":56}},"type":"MemberExpression","computed":true,"object":{"range":[8058,8067],"loc":{"start":{"line":237,"column":44},"end":{"line":237,"column":53}},"type":"Identifier","name":"arguments"},"property":{"range":[8068,8069],"loc":{"start":{"line":237,"column":54},"end":{"line":237,"column":55}},"type":"Identifier","name":"i"}}]}},"each":false}},{"range":[8081,8092],"loc":{"start":{"line":238,"column":8},"end":{"line":238,"column":19}},"type":"ReturnStatement","argument":{"range":[8088,8091],"loc":{"start":{"line":238,"column":15},"end":{"line":238,"column":18}},"type":"Identifier","name":"ret"}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[8108,9891],"loc":{"start":{"line":240,"column":6},"end":{"line":302,"column":7}},"type":"Property","key":{"range":[8108,8130],"loc":{"start":{"line":240,"column":6},"end":{"line":240,"column":28}},"type":"Identifier","name":"dictPropertyDescriptor"},"computed":false,"value":{"range":[8132,9891],"loc":{"start":{"line":240,"column":30},"end":{"line":302,"column":7}},"type":"ObjectExpression","properties":[{"range":[8142,8236],"loc":{"start":{"line":241,"column":8},"end":{"line":244,"column":9}},"type":"Property","key":{"range":[8142,8149],"loc":{"start":{"line":241,"column":8},"end":{"line":241,"column":15}},"type":"Literal","value":"_type","raw":"\"_type\""},"computed":false,"value":{"range":[8151,8236],"loc":{"start":{"line":241,"column":17},"end":{"line":244,"column":9}},"type":"ObjectExpression","properties":[{"range":[8163,8197],"loc":{"start":{"line":242,"column":10},"end":{"line":242,"column":44}},"type":"Property","key":{"range":[8163,8166],"loc":{"start":{"line":242,"column":10},"end":{"line":242,"column":13}},"type":"Identifier","name":"get"},"computed":false,"value":{"range":[8168,8197],"loc":{"start":{"line":242,"column":15},"end":{"line":242,"column":44}},"type":"FunctionExpression","id":null,"params":[],"defaults":[],"body":{"range":[8180,8197],"loc":{"start":{"line":242,"column":27},"end":{"line":242,"column":44}},"type":"BlockStatement","body":[{"range":[8182,8196],"loc":{"start":{"line":242,"column":29},"end":{"line":242,"column":43}},"type":"ReturnStatement","argument":{"range":[8189,8195],"loc":{"start":{"line":242,"column":36},"end":{"line":242,"column":42}},"type":"Literal","value":"dict","raw":"'dict'"}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[8209,8226],"loc":{"start":{"line":243,"column":10},"end":{"line":243,"column":27}},"type":"Property","key":{"range":[8209,8219],"loc":{"start":{"line":243,"column":10},"end":{"line":243,"column":20}},"type":"Identifier","name":"enumerable"},"computed":false,"value":{"range":[8221,8226],"loc":{"start":{"line":243,"column":22},"end":{"line":243,"column":27}},"type":"Literal","value":false,"raw":"false"},"kind":"init","method":false,"shorthand":false}]},"kind":"init","method":false,"shorthand":false},{"range":[8246,8343],"loc":{"start":{"line":245,"column":8},"end":{"line":248,"column":9}},"type":"Property","key":{"range":[8246,8257],"loc":{"start":{"line":245,"column":8},"end":{"line":245,"column":19}},"type":"Literal","value":"_isPython","raw":"\"_isPython\""},"computed":false,"value":{"range":[8259,8343],"loc":{"start":{"line":245,"column":21},"end":{"line":248,"column":9}},"type":"ObjectExpression","properties":[{"range":[8271,8304],"loc":{"start":{"line":246,"column":10},"end":{"line":246,"column":43}},"type":"Property","key":{"range":[8271,8274],"loc":{"start":{"line":246,"column":10},"end":{"line":246,"column":13}},"type":"Identifier","name":"get"},"computed":false,"value":{"range":[8276,8304],"loc":{"start":{"line":246,"column":15},"end":{"line":246,"column":43}},"type":"FunctionExpression","id":null,"params":[],"defaults":[],"body":{"range":[8288,8304],"loc":{"start":{"line":246,"column":27},"end":{"line":246,"column":43}},"type":"BlockStatement","body":[{"range":[8290,8302],"loc":{"start":{"line":246,"column":29},"end":{"line":246,"column":41}},"type":"ReturnStatement","argument":{"range":[8297,8301],"loc":{"start":{"line":246,"column":36},"end":{"line":246,"column":40}},"type":"Literal","value":true,"raw":"true"}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[8316,8333],"loc":{"start":{"line":247,"column":10},"end":{"line":247,"column":27}},"type":"Property","key":{"range":[8316,8326],"loc":{"start":{"line":247,"column":10},"end":{"line":247,"column":20}},"type":"Identifier","name":"enumerable"},"computed":false,"value":{"range":[8328,8333],"loc":{"start":{"line":247,"column":22},"end":{"line":247,"column":27}},"type":"Literal","value":false,"raw":"false"},"kind":"init","method":false,"shorthand":false}]},"kind":"init","method":false,"shorthand":false},{"range":[8353,8620],"loc":{"start":{"line":249,"column":8},"end":{"line":256,"column":9}},"type":"Property","key":{"range":[8353,8360],"loc":{"start":{"line":249,"column":8},"end":{"line":249,"column":15}},"type":"Literal","value":"items","raw":"\"items\""},"computed":false,"value":{"range":[8362,8620],"loc":{"start":{"line":249,"column":17},"end":{"line":256,"column":9}},"type":"ObjectExpression","properties":[{"range":[8374,8581],"loc":{"start":{"line":250,"column":10},"end":{"line":254,"column":11}},"type":"Property","key":{"range":[8374,8379],"loc":{"start":{"line":250,"column":10},"end":{"line":250,"column":15}},"type":"Identifier","name":"value"},"computed":false,"value":{"range":[8381,8581],"loc":{"start":{"line":250,"column":17},"end":{"line":254,"column":11}},"type":"FunctionExpression","id":null,"params":[],"defaults":[],"body":{"range":[8393,8581],"loc":{"start":{"line":250,"column":29},"end":{"line":254,"column":11}},"type":"BlockStatement","body":[{"range":[8407,8452],"loc":{"start":{"line":251,"column":12},"end":{"line":251,"column":57}},"type":"VariableDeclaration","declarations":[{"range":[8411,8451],"loc":{"start":{"line":251,"column":16},"end":{"line":251,"column":56}},"type":"VariableDeclarator","id":{"range":[8411,8416],"loc":{"start":{"line":251,"column":16},"end":{"line":251,"column":21}},"type":"Identifier","name":"items"},"init":{"range":[8419,8451],"loc":{"start":{"line":251,"column":24},"end":{"line":251,"column":56}},"type":"NewExpression","callee":{"range":[8423,8449],"loc":{"start":{"line":251,"column":28},"end":{"line":251,"column":54}},"type":"MemberExpression","computed":false,"object":{"range":[8423,8444],"loc":{"start":{"line":251,"column":28},"end":{"line":251,"column":49}},"type":"MemberExpression","computed":false,"object":{"range":[8423,8436],"loc":{"start":{"line":251,"column":28},"end":{"line":251,"column":41}},"type":"Identifier","name":"pythonRuntime"},"property":{"range":[8437,8444],"loc":{"start":{"line":251,"column":42},"end":{"line":251,"column":49}},"type":"Identifier","name":"objects"}},"property":{"range":[8445,8449],"loc":{"start":{"line":251,"column":50},"end":{"line":251,"column":54}},"type":"Identifier","name":"list"}},"arguments":[]}}],"kind":"var"},{"range":[8465,8543],"loc":{"start":{"line":252,"column":12},"end":{"line":252,"column":90}},"type":"ForInStatement","left":{"range":[8470,8475],"loc":{"start":{"line":252,"column":17},"end":{"line":252,"column":22}},"type":"VariableDeclaration","declarations":[{"range":[8474,8475],"loc":{"start":{"line":252,"column":21},"end":{"line":252,"column":22}},"type":"VariableDeclarator","id":{"range":[8474,8475],"loc":{"start":{"line":252,"column":21},"end":{"line":252,"column":22}},"type":"Identifier","name":"k"},"init":null}],"kind":"var"},"right":{"range":[8479,8483],"loc":{"start":{"line":252,"column":26},"end":{"line":252,"column":30}},"type":"ThisExpression"},"body":{"range":[8485,8543],"loc":{"start":{"line":252,"column":32},"end":{"line":252,"column":90}},"type":"ExpressionStatement","expression":{"range":[8485,8542],"loc":{"start":{"line":252,"column":32},"end":{"line":252,"column":89}},"type":"CallExpression","callee":{"range":[8485,8497],"loc":{"start":{"line":252,"column":32},"end":{"line":252,"column":44}},"type":"MemberExpression","computed":false,"object":{"range":[8485,8490],"loc":{"start":{"line":252,"column":32},"end":{"line":252,"column":37}},"type":"Identifier","name":"items"},"property":{"range":[8491,8497],"loc":{"start":{"line":252,"column":38},"end":{"line":252,"column":44}},"type":"Identifier","name":"append"}},"arguments":[{"range":[8498,8541],"loc":{"start":{"line":252,"column":45},"end":{"line":252,"column":88}},"type":"NewExpression","callee":{"range":[8502,8529],"loc":{"start":{"line":252,"column":49},"end":{"line":252,"column":76}},"type":"MemberExpression","computed":false,"object":{"range":[8502,8523],"loc":{"start":{"line":252,"column":49},"end":{"line":252,"column":70}},"type":"MemberExpression","computed":false,"object":{"range":[8502,8515],"loc":{"start":{"line":252,"column":49},"end":{"line":252,"column":62}},"type":"Identifier","name":"pythonRuntime"},"property":{"range":[8516,8523],"loc":{"start":{"line":252,"column":63},"end":{"line":252,"column":70}},"type":"Identifier","name":"objects"}},"property":{"range":[8524,8529],"loc":{"start":{"line":252,"column":71},"end":{"line":252,"column":76}},"type":"Identifier","name":"tuple"}},"arguments":[{"range":[8530,8531],"loc":{"start":{"line":252,"column":77},"end":{"line":252,"column":78}},"type":"Identifier","name":"k"},{"range":[8533,8540],"loc":{"start":{"line":252,"column":80},"end":{"line":252,"column":87}},"type":"MemberExpression","computed":true,"object":{"range":[8533,8537],"loc":{"start":{"line":252,"column":80},"end":{"line":252,"column":84}},"type":"ThisExpression"},"property":{"range":[8538,8539],"loc":{"start":{"line":252,"column":85},"end":{"line":252,"column":86}},"type":"Identifier","name":"k"}}]}]}},"each":false},{"range":[8556,8569],"loc":{"start":{"line":253,"column":12},"end":{"line":253,"column":25}},"type":"ReturnStatement","argument":{"range":[8563,8568],"loc":{"start":{"line":253,"column":19},"end":{"line":253,"column":24}},"type":"Identifier","name":"items"}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[8593,8610],"loc":{"start":{"line":255,"column":10},"end":{"line":255,"column":27}},"type":"Property","key":{"range":[8593,8603],"loc":{"start":{"line":255,"column":10},"end":{"line":255,"column":20}},"type":"Identifier","name":"enumerable"},"computed":false,"value":{"range":[8605,8610],"loc":{"start":{"line":255,"column":22},"end":{"line":255,"column":27}},"type":"Literal","value":false,"raw":"false"},"kind":"init","method":false,"shorthand":false}]},"kind":"init","method":false,"shorthand":false},{"range":[8630,8766],"loc":{"start":{"line":257,"column":8},"end":{"line":262,"column":9}},"type":"Property","key":{"range":[8630,8638],"loc":{"start":{"line":257,"column":8},"end":{"line":257,"column":16}},"type":"Literal","value":"length","raw":"\"length\""},"computed":false,"value":{"range":[8640,8766],"loc":{"start":{"line":257,"column":18},"end":{"line":262,"column":9}},"type":"ObjectExpression","properties":[{"range":[8652,8727],"loc":{"start":{"line":258,"column":10},"end":{"line":260,"column":11}},"type":"Property","key":{"range":[8652,8655],"loc":{"start":{"line":258,"column":10},"end":{"line":258,"column":13}},"type":"Identifier","name":"get"},"computed":false,"value":{"range":[8657,8727],"loc":{"start":{"line":258,"column":15},"end":{"line":260,"column":11}},"type":"FunctionExpression","id":null,"params":[],"defaults":[],"body":{"range":[8669,8727],"loc":{"start":{"line":258,"column":27},"end":{"line":260,"column":11}},"type":"BlockStatement","body":[{"range":[8683,8715],"loc":{"start":{"line":259,"column":12},"end":{"line":259,"column":44}},"type":"ReturnStatement","argument":{"range":[8690,8714],"loc":{"start":{"line":259,"column":19},"end":{"line":259,"column":43}},"type":"MemberExpression","computed":false,"object":{"range":[8690,8707],"loc":{"start":{"line":259,"column":19},"end":{"line":259,"column":36}},"type":"CallExpression","callee":{"range":[8690,8701],"loc":{"start":{"line":259,"column":19},"end":{"line":259,"column":30}},"type":"MemberExpression","computed":false,"object":{"range":[8690,8696],"loc":{"start":{"line":259,"column":19},"end":{"line":259,"column":25}},"type":"Identifier","name":"Object"},"property":{"range":[8697,8701],"loc":{"start":{"line":259,"column":26},"end":{"line":259,"column":30}},"type":"Identifier","name":"keys"}},"arguments":[{"range":[8702,8706],"loc":{"start":{"line":259,"column":31},"end":{"line":259,"column":35}},"type":"ThisExpression"}]},"property":{"range":[8708,8714],"loc":{"start":{"line":259,"column":37},"end":{"line":259,"column":43}},"type":"Identifier","name":"length"}}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[8739,8756],"loc":{"start":{"line":261,"column":10},"end":{"line":261,"column":27}},"type":"Property","key":{"range":[8739,8749],"loc":{"start":{"line":261,"column":10},"end":{"line":261,"column":20}},"type":"Identifier","name":"enumerable"},"computed":false,"value":{"range":[8751,8756],"loc":{"start":{"line":261,"column":22},"end":{"line":261,"column":27}},"type":"Literal","value":false,"raw":"false"},"kind":"init","method":false,"shorthand":false}]},"kind":"init","method":false,"shorthand":false},{"range":[8776,8916],"loc":{"start":{"line":263,"column":8},"end":{"line":268,"column":9}},"type":"Property","key":{"range":[8776,8783],"loc":{"start":{"line":263,"column":8},"end":{"line":263,"column":15}},"type":"Literal","value":"clear","raw":"\"clear\""},"computed":false,"value":{"range":[8785,8916],"loc":{"start":{"line":263,"column":17},"end":{"line":268,"column":9}},"type":"ObjectExpression","properties":[{"range":[8797,8877],"loc":{"start":{"line":264,"column":10},"end":{"line":266,"column":11}},"type":"Property","key":{"range":[8797,8802],"loc":{"start":{"line":264,"column":10},"end":{"line":264,"column":15}},"type":"Identifier","name":"value"},"computed":false,"value":{"range":[8804,8877],"loc":{"start":{"line":264,"column":17},"end":{"line":266,"column":11}},"type":"FunctionExpression","id":null,"params":[],"defaults":[],"body":{"range":[8816,8877],"loc":{"start":{"line":264,"column":29},"end":{"line":266,"column":11}},"type":"BlockStatement","body":[{"range":[8830,8865],"loc":{"start":{"line":265,"column":12},"end":{"line":265,"column":47}},"type":"ForInStatement","left":{"range":[8835,8840],"loc":{"start":{"line":265,"column":17},"end":{"line":265,"column":22}},"type":"VariableDeclaration","declarations":[{"range":[8839,8840],"loc":{"start":{"line":265,"column":21},"end":{"line":265,"column":22}},"type":"VariableDeclarator","id":{"range":[8839,8840],"loc":{"start":{"line":265,"column":21},"end":{"line":265,"column":22}},"type":"Identifier","name":"i"},"init":null}],"kind":"var"},"right":{"range":[8844,8848],"loc":{"start":{"line":265,"column":26},"end":{"line":265,"column":30}},"type":"ThisExpression"},"body":{"range":[8850,8865],"loc":{"start":{"line":265,"column":32},"end":{"line":265,"column":47}},"type":"ExpressionStatement","expression":{"range":[8850,8864],"loc":{"start":{"line":265,"column":32},"end":{"line":265,"column":46}},"type":"UnaryExpression","operator":"delete","argument":{"range":[8857,8864],"loc":{"start":{"line":265,"column":39},"end":{"line":265,"column":46}},"type":"MemberExpression","computed":true,"object":{"range":[8857,8861],"loc":{"start":{"line":265,"column":39},"end":{"line":265,"column":43}},"type":"ThisExpression"},"property":{"range":[8862,8863],"loc":{"start":{"line":265,"column":44},"end":{"line":265,"column":45}},"type":"Identifier","name":"i"}},"prefix":true}},"each":false}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[8889,8906],"loc":{"start":{"line":267,"column":10},"end":{"line":267,"column":27}},"type":"Property","key":{"range":[8889,8899],"loc":{"start":{"line":267,"column":10},"end":{"line":267,"column":20}},"type":"Identifier","name":"enumerable"},"computed":false,"value":{"range":[8901,8906],"loc":{"start":{"line":267,"column":22},"end":{"line":267,"column":27}},"type":"Literal","value":false,"raw":"false"},"kind":"init","method":false,"shorthand":false}]},"kind":"init","method":false,"shorthand":false},{"range":[8926,9148],"loc":{"start":{"line":269,"column":8},"end":{"line":276,"column":9}},"type":"Property","key":{"range":[8926,8931],"loc":{"start":{"line":269,"column":8},"end":{"line":269,"column":13}},"type":"Literal","value":"get","raw":"\"get\""},"computed":false,"value":{"range":[8933,9148],"loc":{"start":{"line":269,"column":15},"end":{"line":276,"column":9}},"type":"ObjectExpression","properties":[{"range":[8945,9109],"loc":{"start":{"line":270,"column":10},"end":{"line":274,"column":11}},"type":"Property","key":{"range":[8945,8950],"loc":{"start":{"line":270,"column":10},"end":{"line":270,"column":15}},"type":"Identifier","name":"value"},"computed":false,"value":{"range":[8952,9109],"loc":{"start":{"line":270,"column":17},"end":{"line":274,"column":11}},"type":"FunctionExpression","id":null,"params":[{"range":[8962,8965],"loc":{"start":{"line":270,"column":27},"end":{"line":270,"column":30}},"type":"Identifier","name":"key"},{"range":[8967,8970],"loc":{"start":{"line":270,"column":32},"end":{"line":270,"column":35}},"type":"Identifier","name":"def"}],"defaults":[],"body":{"range":[8972,9109],"loc":{"start":{"line":270,"column":37},"end":{"line":274,"column":11}},"type":"BlockStatement","body":[{"range":[8986,9072],"loc":{"start":{"line":271,"column":12},"end":{"line":272,"column":51}},"type":"IfStatement","test":{"range":[8990,9001],"loc":{"start":{"line":271,"column":16},"end":{"line":271,"column":27}},"type":"BinaryExpression","operator":"in","left":{"range":[8990,8993],"loc":{"start":{"line":271,"column":16},"end":{"line":271,"column":19}},"type":"Identifier","name":"key"},"right":{"range":[8997,9001],"loc":{"start":{"line":271,"column":23},"end":{"line":271,"column":27}},"type":"ThisExpression"}},"consequent":{"range":[9003,9020],"loc":{"start":{"line":271,"column":29},"end":{"line":271,"column":46}},"type":"ReturnStatement","argument":{"range":[9010,9019],"loc":{"start":{"line":271,"column":36},"end":{"line":271,"column":45}},"type":"MemberExpression","computed":true,"object":{"range":[9010,9014],"loc":{"start":{"line":271,"column":36},"end":{"line":271,"column":40}},"type":"ThisExpression"},"property":{"range":[9015,9018],"loc":{"start":{"line":271,"column":41},"end":{"line":271,"column":44}},"type":"Identifier","name":"key"}}},"alternate":{"range":[9038,9072],"loc":{"start":{"line":272,"column":17},"end":{"line":272,"column":51}},"type":"IfStatement","test":{"range":[9042,9059],"loc":{"start":{"line":272,"column":21},"end":{"line":272,"column":38}},"type":"BinaryExpression","operator":"!==","left":{"range":[9042,9045],"loc":{"start":{"line":272,"column":21},"end":{"line":272,"column":24}},"type":"Identifier","name":"def"},"right":{"range":[9050,9059],"loc":{"start":{"line":272,"column":29},"end":{"line":272,"column":38}},"type":"Identifier","name":"undefined"}},"consequent":{"range":[9061,9072],"loc":{"start":{"line":272,"column":40},"end":{"line":272,"column":51}},"type":"ReturnStatement","argument":{"range":[9068,9071],"loc":{"start":{"line":272,"column":47},"end":{"line":272,"column":50}},"type":"Identifier","name":"def"}},"alternate":null}},{"range":[9085,9097],"loc":{"start":{"line":273,"column":12},"end":{"line":273,"column":24}},"type":"ReturnStatement","argument":{"range":[9092,9096],"loc":{"start":{"line":273,"column":19},"end":{"line":273,"column":23}},"type":"Literal","value":null,"raw":"null"}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[9121,9138],"loc":{"start":{"line":275,"column":10},"end":{"line":275,"column":27}},"type":"Property","key":{"range":[9121,9131],"loc":{"start":{"line":275,"column":10},"end":{"line":275,"column":20}},"type":"Identifier","name":"enumerable"},"computed":false,"value":{"range":[9133,9138],"loc":{"start":{"line":275,"column":22},"end":{"line":275,"column":27}},"type":"Literal","value":false,"raw":"false"},"kind":"init","method":false,"shorthand":false}]},"kind":"init","method":false,"shorthand":false},{"range":[9158,9287],"loc":{"start":{"line":277,"column":8},"end":{"line":282,"column":9}},"type":"Property","key":{"range":[9158,9164],"loc":{"start":{"line":277,"column":8},"end":{"line":277,"column":14}},"type":"Literal","value":"keys","raw":"\"keys\""},"computed":false,"value":{"range":[9166,9287],"loc":{"start":{"line":277,"column":16},"end":{"line":282,"column":9}},"type":"ObjectExpression","properties":[{"range":[9178,9248],"loc":{"start":{"line":278,"column":10},"end":{"line":280,"column":11}},"type":"Property","key":{"range":[9178,9183],"loc":{"start":{"line":278,"column":10},"end":{"line":278,"column":15}},"type":"Identifier","name":"value"},"computed":false,"value":{"range":[9185,9248],"loc":{"start":{"line":278,"column":17},"end":{"line":280,"column":11}},"type":"FunctionExpression","id":null,"params":[],"defaults":[],"body":{"range":[9197,9248],"loc":{"start":{"line":278,"column":29},"end":{"line":280,"column":11}},"type":"BlockStatement","body":[{"range":[9211,9236],"loc":{"start":{"line":279,"column":12},"end":{"line":279,"column":37}},"type":"ReturnStatement","argument":{"range":[9218,9235],"loc":{"start":{"line":279,"column":19},"end":{"line":279,"column":36}},"type":"CallExpression","callee":{"range":[9218,9229],"loc":{"start":{"line":279,"column":19},"end":{"line":279,"column":30}},"type":"MemberExpression","computed":false,"object":{"range":[9218,9224],"loc":{"start":{"line":279,"column":19},"end":{"line":279,"column":25}},"type":"Identifier","name":"Object"},"property":{"range":[9225,9229],"loc":{"start":{"line":279,"column":26},"end":{"line":279,"column":30}},"type":"Identifier","name":"keys"}},"arguments":[{"range":[9230,9234],"loc":{"start":{"line":279,"column":31},"end":{"line":279,"column":35}},"type":"ThisExpression"}]}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[9260,9277],"loc":{"start":{"line":281,"column":10},"end":{"line":281,"column":27}},"type":"Property","key":{"range":[9260,9270],"loc":{"start":{"line":281,"column":10},"end":{"line":281,"column":20}},"type":"Identifier","name":"enumerable"},"computed":false,"value":{"range":[9272,9277],"loc":{"start":{"line":281,"column":22},"end":{"line":281,"column":27}},"type":"Literal","value":false,"raw":"false"},"kind":"init","method":false,"shorthand":false}]},"kind":"init","method":false,"shorthand":false},{"range":[9297,9642],"loc":{"start":{"line":283,"column":8},"end":{"line":294,"column":9}},"type":"Property","key":{"range":[9297,9302],"loc":{"start":{"line":283,"column":8},"end":{"line":283,"column":13}},"type":"Literal","value":"pop","raw":"\"pop\""},"computed":false,"value":{"range":[9304,9642],"loc":{"start":{"line":283,"column":15},"end":{"line":294,"column":9}},"type":"ObjectExpression","properties":[{"range":[9316,9603],"loc":{"start":{"line":284,"column":10},"end":{"line":292,"column":11}},"type":"Property","key":{"range":[9316,9321],"loc":{"start":{"line":284,"column":10},"end":{"line":284,"column":15}},"type":"Identifier","name":"value"},"computed":false,"value":{"range":[9323,9603],"loc":{"start":{"line":284,"column":17},"end":{"line":292,"column":11}},"type":"FunctionExpression","id":null,"params":[{"range":[9333,9336],"loc":{"start":{"line":284,"column":27},"end":{"line":284,"column":30}},"type":"Identifier","name":"key"},{"range":[9338,9341],"loc":{"start":{"line":284,"column":32},"end":{"line":284,"column":35}},"type":"Identifier","name":"def"}],"defaults":[],"body":{"range":[9343,9603],"loc":{"start":{"line":284,"column":37},"end":{"line":292,"column":11}},"type":"BlockStatement","body":[{"range":[9357,9367],"loc":{"start":{"line":285,"column":12},"end":{"line":285,"column":22}},"type":"VariableDeclaration","declarations":[{"range":[9361,9366],"loc":{"start":{"line":285,"column":16},"end":{"line":285,"column":21}},"type":"VariableDeclarator","id":{"range":[9361,9366],"loc":{"start":{"line":285,"column":16},"end":{"line":285,"column":21}},"type":"Identifier","name":"value"},"init":null}],"kind":"var"},{"range":[9380,9565],"loc":{"start":{"line":286,"column":12},"end":{"line":290,"column":46}},"type":"IfStatement","test":{"range":[9384,9395],"loc":{"start":{"line":286,"column":16},"end":{"line":286,"column":27}},"type":"BinaryExpression","operator":"in","left":{"range":[9384,9387],"loc":{"start":{"line":286,"column":16},"end":{"line":286,"column":19}},"type":"Identifier","name":"key"},"right":{"range":[9391,9395],"loc":{"start":{"line":286,"column":23},"end":{"line":286,"column":27}},"type":"ThisExpression"}},"consequent":{"range":[9397,9477],"loc":{"start":{"line":286,"column":29},"end":{"line":289,"column":13}},"type":"BlockStatement","body":[{"range":[9413,9431],"loc":{"start":{"line":287,"column":14},"end":{"line":287,"column":32}},"type":"ExpressionStatement","expression":{"range":[9413,9430],"loc":{"start":{"line":287,"column":14},"end":{"line":287,"column":31}},"type":"AssignmentExpression","operator":"=","left":{"range":[9413,9418],"loc":{"start":{"line":287,"column":14},"end":{"line":287,"column":19}},"type":"Identifier","name":"value"},"right":{"range":[9421,9430],"loc":{"start":{"line":287,"column":22},"end":{"line":287,"column":31}},"type":"MemberExpression","computed":true,"object":{"range":[9421,9425],"loc":{"start":{"line":287,"column":22},"end":{"line":287,"column":26}},"type":"ThisExpression"},"property":{"range":[9426,9429],"loc":{"start":{"line":287,"column":27},"end":{"line":287,"column":30}},"type":"Identifier","name":"key"}}}},{"range":[9446,9463],"loc":{"start":{"line":288,"column":14},"end":{"line":288,"column":31}},"type":"ExpressionStatement","expression":{"range":[9446,9462],"loc":{"start":{"line":288,"column":14},"end":{"line":288,"column":30}},"type":"UnaryExpression","operator":"delete","argument":{"range":[9453,9462],"loc":{"start":{"line":288,"column":21},"end":{"line":288,"column":30}},"type":"MemberExpression","computed":true,"object":{"range":[9453,9457],"loc":{"start":{"line":288,"column":21},"end":{"line":288,"column":25}},"type":"ThisExpression"},"property":{"range":[9458,9461],"loc":{"start":{"line":288,"column":26},"end":{"line":288,"column":29}},"type":"Identifier","name":"key"}},"prefix":true}}]},"alternate":{"range":[9483,9565],"loc":{"start":{"line":289,"column":19},"end":{"line":290,"column":46}},"type":"IfStatement","test":{"range":[9487,9504],"loc":{"start":{"line":289,"column":23},"end":{"line":289,"column":40}},"type":"BinaryExpression","operator":"!==","left":{"range":[9487,9490],"loc":{"start":{"line":289,"column":23},"end":{"line":289,"column":26}},"type":"Identifier","name":"def"},"right":{"range":[9495,9504],"loc":{"start":{"line":289,"column":31},"end":{"line":289,"column":40}},"type":"Identifier","name":"undefined"}},"consequent":{"range":[9506,9518],"loc":{"start":{"line":289,"column":42},"end":{"line":289,"column":54}},"type":"ExpressionStatement","expression":{"range":[9506,9517],"loc":{"start":{"line":289,"column":42},"end":{"line":289,"column":53}},"type":"AssignmentExpression","operator":"=","left":{"range":[9506,9511],"loc":{"start":{"line":289,"column":42},"end":{"line":289,"column":47}},"type":"Identifier","name":"value"},"right":{"range":[9514,9517],"loc":{"start":{"line":289,"column":50},"end":{"line":289,"column":53}},"type":"Identifier","name":"def"}}},"alternate":{"range":[9536,9565],"loc":{"start":{"line":290,"column":17},"end":{"line":290,"column":46}},"type":"ReturnStatement","argument":{"range":[9543,9564],"loc":{"start":{"line":290,"column":24},"end":{"line":290,"column":45}},"type":"NewExpression","callee":{"range":[9547,9552],"loc":{"start":{"line":290,"column":28},"end":{"line":290,"column":33}},"type":"Identifier","name":"Error"},"arguments":[{"range":[9553,9563],"loc":{"start":{"line":290,"column":34},"end":{"line":290,"column":44}},"type":"Literal","value":"KeyError","raw":"\"KeyError\""}]}}}},{"range":[9578,9591],"loc":{"start":{"line":291,"column":12},"end":{"line":291,"column":25}},"type":"ReturnStatement","argument":{"range":[9585,9590],"loc":{"start":{"line":291,"column":19},"end":{"line":291,"column":24}},"type":"Identifier","name":"value"}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[9615,9632],"loc":{"start":{"line":293,"column":10},"end":{"line":293,"column":27}},"type":"Property","key":{"range":[9615,9625],"loc":{"start":{"line":293,"column":10},"end":{"line":293,"column":20}},"type":"Identifier","name":"enumerable"},"computed":false,"value":{"range":[9627,9632],"loc":{"start":{"line":293,"column":22},"end":{"line":293,"column":27}},"type":"Literal","value":false,"raw":"false"},"kind":"init","method":false,"shorthand":false}]},"kind":"init","method":false,"shorthand":false},{"range":[9644,9883],"loc":{"start":{"line":294,"column":11},"end":{"line":301,"column":9}},"type":"Property","key":{"range":[9644,9652],"loc":{"start":{"line":294,"column":11},"end":{"line":294,"column":19}},"type":"Literal","value":"values","raw":"\"values\""},"computed":false,"value":{"range":[9654,9883],"loc":{"start":{"line":294,"column":21},"end":{"line":301,"column":9}},"type":"ObjectExpression","properties":[{"range":[9666,9844],"loc":{"start":{"line":295,"column":10},"end":{"line":299,"column":11}},"type":"Property","key":{"range":[9666,9671],"loc":{"start":{"line":295,"column":10},"end":{"line":295,"column":15}},"type":"Identifier","name":"value"},"computed":false,"value":{"range":[9673,9844],"loc":{"start":{"line":295,"column":17},"end":{"line":299,"column":11}},"type":"FunctionExpression","id":null,"params":[],"defaults":[],"body":{"range":[9685,9844],"loc":{"start":{"line":295,"column":29},"end":{"line":299,"column":11}},"type":"BlockStatement","body":[{"range":[9699,9745],"loc":{"start":{"line":296,"column":12},"end":{"line":296,"column":58}},"type":"VariableDeclaration","declarations":[{"range":[9703,9744],"loc":{"start":{"line":296,"column":16},"end":{"line":296,"column":57}},"type":"VariableDeclarator","id":{"range":[9703,9709],"loc":{"start":{"line":296,"column":16},"end":{"line":296,"column":22}},"type":"Identifier","name":"values"},"init":{"range":[9712,9744],"loc":{"start":{"line":296,"column":25},"end":{"line":296,"column":57}},"type":"NewExpression","callee":{"range":[9716,9742],"loc":{"start":{"line":296,"column":29},"end":{"line":296,"column":55}},"type":"MemberExpression","computed":false,"object":{"range":[9716,9737],"loc":{"start":{"line":296,"column":29},"end":{"line":296,"column":50}},"type":"MemberExpression","computed":false,"object":{"range":[9716,9729],"loc":{"start":{"line":296,"column":29},"end":{"line":296,"column":42}},"type":"Identifier","name":"pythonRuntime"},"property":{"range":[9730,9737],"loc":{"start":{"line":296,"column":43},"end":{"line":296,"column":50}},"type":"Identifier","name":"objects"}},"property":{"range":[9738,9742],"loc":{"start":{"line":296,"column":51},"end":{"line":296,"column":55}},"type":"Identifier","name":"list"}},"arguments":[]}}],"kind":"var"},{"range":[9758,9805],"loc":{"start":{"line":297,"column":12},"end":{"line":297,"column":59}},"type":"ForInStatement","left":{"range":[9763,9770],"loc":{"start":{"line":297,"column":17},"end":{"line":297,"column":24}},"type":"VariableDeclaration","declarations":[{"range":[9767,9770],"loc":{"start":{"line":297,"column":21},"end":{"line":297,"column":24}},"type":"VariableDeclarator","id":{"range":[9767,9770],"loc":{"start":{"line":297,"column":21},"end":{"line":297,"column":24}},"type":"Identifier","name":"key"},"init":null}],"kind":"var"},"right":{"range":[9774,9778],"loc":{"start":{"line":297,"column":28},"end":{"line":297,"column":32}},"type":"ThisExpression"},"body":{"range":[9780,9805],"loc":{"start":{"line":297,"column":34},"end":{"line":297,"column":59}},"type":"ExpressionStatement","expression":{"range":[9780,9804],"loc":{"start":{"line":297,"column":34},"end":{"line":297,"column":58}},"type":"CallExpression","callee":{"range":[9780,9793],"loc":{"start":{"line":297,"column":34},"end":{"line":297,"column":47}},"type":"MemberExpression","computed":false,"object":{"range":[9780,9786],"loc":{"start":{"line":297,"column":34},"end":{"line":297,"column":40}},"type":"Identifier","name":"values"},"property":{"range":[9787,9793],"loc":{"start":{"line":297,"column":41},"end":{"line":297,"column":47}},"type":"Identifier","name":"append"}},"arguments":[{"range":[9794,9803],"loc":{"start":{"line":297,"column":48},"end":{"line":297,"column":57}},"type":"MemberExpression","computed":true,"object":{"range":[9794,9798],"loc":{"start":{"line":297,"column":48},"end":{"line":297,"column":52}},"type":"ThisExpression"},"property":{"range":[9799,9802],"loc":{"start":{"line":297,"column":53},"end":{"line":297,"column":56}},"type":"Identifier","name":"key"}}]}},"each":false},{"range":[9818,9832],"loc":{"start":{"line":298,"column":12},"end":{"line":298,"column":26}},"type":"ReturnStatement","argument":{"range":[9825,9831],"loc":{"start":{"line":298,"column":19},"end":{"line":298,"column":25}},"type":"Identifier","name":"values"}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[9856,9873],"loc":{"start":{"line":300,"column":10},"end":{"line":300,"column":27}},"type":"Property","key":{"range":[9856,9866],"loc":{"start":{"line":300,"column":10},"end":{"line":300,"column":20}},"type":"Identifier","name":"enumerable"},"computed":false,"value":{"range":[9868,9873],"loc":{"start":{"line":300,"column":22},"end":{"line":300,"column":27}},"type":"Literal","value":false,"raw":"false"},"kind":"init","method":false,"shorthand":false}]},"kind":"init","method":false,"shorthand":false}]},"kind":"init","method":false,"shorthand":false}]},"kind":"init","method":false,"shorthand":false},{"range":[9903,12066],"loc":{"start":{"line":304,"column":4},"end":{"line":356,"column":5}},"type":"Property","key":{"range":[9903,9906],"loc":{"start":{"line":304,"column":4},"end":{"line":304,"column":7}},"type":"Identifier","name":"ops"},"computed":false,"value":{"range":[9908,12066],"loc":{"start":{"line":304,"column":9},"end":{"line":356,"column":5}},"type":"ObjectExpression","properties":[{"range":[9916,10584],"loc":{"start":{"line":305,"column":6},"end":{"line":319,"column":7}},"type":"Property","key":{"range":[9916,9919],"loc":{"start":{"line":305,"column":6},"end":{"line":305,"column":9}},"type":"Identifier","name":"add"},"computed":false,"value":{"range":[9921,10584],"loc":{"start":{"line":305,"column":11},"end":{"line":319,"column":7}},"type":"FunctionExpression","id":null,"params":[{"range":[9931,9932],"loc":{"start":{"line":305,"column":21},"end":{"line":305,"column":22}},"type":"Identifier","name":"a"},{"range":[9934,9935],"loc":{"start":{"line":305,"column":24},"end":{"line":305,"column":25}},"type":"Identifier","name":"b"}],"defaults":[],"body":{"range":[9937,10584],"loc":{"start":{"line":305,"column":27},"end":{"line":319,"column":7}},"type":"BlockStatement","body":[{"range":[9947,10554],"loc":{"start":{"line":306,"column":8},"end":{"line":317,"column":9}},"type":"IfStatement","test":{"range":[9951,10042],"loc":{"start":{"line":306,"column":12},"end":{"line":306,"column":103}},"type":"LogicalExpression","operator":"&&","left":{"range":[9951,10007],"loc":{"start":{"line":306,"column":12},"end":{"line":306,"column":68}},"type":"LogicalExpression","operator":"&&","left":{"range":[9951,9972],"loc":{"start":{"line":306,"column":12},"end":{"line":306,"column":33}},"type":"BinaryExpression","operator":"===","left":{"range":[9951,9959],"loc":{"start":{"line":306,"column":12},"end":{"line":306,"column":20}},"type":"UnaryExpression","operator":"typeof","argument":{"range":[9958,9959],"loc":{"start":{"line":306,"column":19},"end":{"line":306,"column":20}},"type":"Identifier","name":"a"},"prefix":true},"right":{"range":[9964,9972],"loc":{"start":{"line":306,"column":25},"end":{"line":306,"column":33}},"type":"Literal","value":"object","raw":"'object'"}},"right":{"range":[9976,10007],"loc":{"start":{"line":306,"column":37},"end":{"line":306,"column":68}},"type":"CallExpression","callee":{"range":[9976,10004],"loc":{"start":{"line":306,"column":37},"end":{"line":306,"column":65}},"type":"MemberExpression","computed":false,"object":{"range":[9976,9998],"loc":{"start":{"line":306,"column":37},"end":{"line":306,"column":59}},"type":"MemberExpression","computed":false,"object":{"range":[9976,9989],"loc":{"start":{"line":306,"column":37},"end":{"line":306,"column":50}},"type":"Identifier","name":"pythonRuntime"},"property":{"range":[9990,9998],"loc":{"start":{"line":306,"column":51},"end":{"line":306,"column":59}},"type":"Identifier","name":"internal"}},"property":{"range":[9999,10004],"loc":{"start":{"line":306,"column":60},"end":{"line":306,"column":65}},"type":"Identifier","name":"isSeq"}},"arguments":[{"range":[10005,10006],"loc":{"start":{"line":306,"column":66},"end":{"line":306,"column":67}},"type":"Identifier","name":"a"}]}},"right":{"range":[10011,10042],"loc":{"start":{"line":306,"column":72},"end":{"line":306,"column":103}},"type":"CallExpression","callee":{"range":[10011,10039],"loc":{"start":{"line":306,"column":72},"end":{"line":306,"column":100}},"type":"MemberExpression","computed":false,"object":{"range":[10011,10033],"loc":{"start":{"line":306,"column":72},"end":{"line":306,"column":94}},"type":"MemberExpression","computed":false,"object":{"range":[10011,10024],"loc":{"start":{"line":306,"column":72},"end":{"line":306,"column":85}},"type":"Identifier","name":"pythonRuntime"},"property":{"range":[10025,10033],"loc":{"start":{"line":306,"column":86},"end":{"line":306,"column":94}},"type":"Identifier","name":"internal"}},"property":{"range":[10034,10039],"loc":{"start":{"line":306,"column":95},"end":{"line":306,"column":100}},"type":"Identifier","name":"isSeq"}},"arguments":[{"range":[10040,10041],"loc":{"start":{"line":306,"column":101},"end":{"line":306,"column":102}},"type":"Identifier","name":"b"}]}},"consequent":{"range":[10044,10554],"loc":{"start":{"line":306,"column":105},"end":{"line":317,"column":9}},"type":"BlockStatement","body":[{"range":[10056,10187],"loc":{"start":{"line":307,"column":10},"end":{"line":308,"column":106}},"type":"IfStatement","test":{"range":[10060,10079],"loc":{"start":{"line":307,"column":14},"end":{"line":307,"column":33}},"type":"BinaryExpression","operator":"!==","left":{"range":[10060,10067],"loc":{"start":{"line":307,"column":14},"end":{"line":307,"column":21}},"type":"MemberExpression","computed":false,"object":{"range":[10060,10061],"loc":{"start":{"line":307,"column":14},"end":{"line":307,"column":15}},"type":"Identifier","name":"a"},"property":{"range":[10062,10067],"loc":{"start":{"line":307,"column":16},"end":{"line":307,"column":21}},"type":"Identifier","name":"_type"}},"right":{"range":[10072,10079],"loc":{"start":{"line":307,"column":26},"end":{"line":307,"column":33}},"type":"MemberExpression","computed":false,"object":{"range":[10072,10073],"loc":{"start":{"line":307,"column":26},"end":{"line":307,"column":27}},"type":"Identifier","name":"b"},"property":{"range":[10074,10079],"loc":{"start":{"line":307,"column":28},"end":{"line":307,"column":33}},"type":"Identifier","name":"_type"}}},"consequent":{"range":[10093,10187],"loc":{"start":{"line":308,"column":12},"end":{"line":308,"column":106}},"type":"ThrowStatement","argument":{"range":[10099,10186],"loc":{"start":{"line":308,"column":18},"end":{"line":308,"column":105}},"type":"CallExpression","callee":{"range":[10099,10108],"loc":{"start":{"line":308,"column":18},"end":{"line":308,"column":27}},"type":"Identifier","name":"TypeError"},"arguments":[{"range":[10109,10185],"loc":{"start":{"line":308,"column":28},"end":{"line":308,"column":104}},"type":"BinaryExpression","operator":"+","left":{"range":[10109,10175],"loc":{"start":{"line":308,"column":28},"end":{"line":308,"column":94}},"type":"BinaryExpression","operator":"+","left":{"range":[10109,10164],"loc":{"start":{"line":308,"column":28},"end":{"line":308,"column":83}},"type":"BinaryExpression","operator":"+","left":{"range":[10109,10154],"loc":{"start":{"line":308,"column":28},"end":{"line":308,"column":73}},"type":"BinaryExpression","operator":"+","left":{"range":[10109,10142],"loc":{"start":{"line":308,"column":28},"end":{"line":308,"column":61}},"type":"BinaryExpression","operator":"+","left":{"range":[10109,10132],"loc":{"start":{"line":308,"column":28},"end":{"line":308,"column":51}},"type":"Literal","value":"can only concatenate ","raw":"\"can only concatenate \""},"right":{"range":[10135,10142],"loc":{"start":{"line":308,"column":54},"end":{"line":308,"column":61}},"type":"MemberExpression","computed":false,"object":{"range":[10135,10136],"loc":{"start":{"line":308,"column":54},"end":{"line":308,"column":55}},"type":"Identifier","name":"a"},"property":{"range":[10137,10142],"loc":{"start":{"line":308,"column":56},"end":{"line":308,"column":61}},"type":"Identifier","name":"_type"}}},"right":{"range":[10145,10154],"loc":{"start":{"line":308,"column":64},"end":{"line":308,"column":73}},"type":"Literal","value":" (not '","raw":"\" (not '\""}},"right":{"range":[10157,10164],"loc":{"start":{"line":308,"column":76},"end":{"line":308,"column":83}},"type":"MemberExpression","computed":false,"object":{"range":[10157,10158],"loc":{"start":{"line":308,"column":76},"end":{"line":308,"column":77}},"type":"Identifier","name":"b"},"property":{"range":[10159,10164],"loc":{"start":{"line":308,"column":78},"end":{"line":308,"column":83}},"type":"Identifier","name":"_type"}}},"right":{"range":[10167,10175],"loc":{"start":{"line":308,"column":86},"end":{"line":308,"column":94}},"type":"Literal","value":"') to ","raw":"\"') to \""}},"right":{"range":[10178,10185],"loc":{"start":{"line":308,"column":97},"end":{"line":308,"column":104}},"type":"MemberExpression","computed":false,"object":{"range":[10178,10179],"loc":{"start":{"line":308,"column":97},"end":{"line":308,"column":98}},"type":"Identifier","name":"a"},"property":{"range":[10180,10185],"loc":{"start":{"line":308,"column":99},"end":{"line":308,"column":104}},"type":"Identifier","name":"_type"}}}]}},"alternate":null},{"range":[10198,10206],"loc":{"start":{"line":309,"column":10},"end":{"line":309,"column":18}},"type":"VariableDeclaration","declarations":[{"range":[10202,10205],"loc":{"start":{"line":309,"column":14},"end":{"line":309,"column":17}},"type":"VariableDeclarator","id":{"range":[10202,10205],"loc":{"start":{"line":309,"column":14},"end":{"line":309,"column":17}},"type":"Identifier","name":"ret"},"init":null}],"kind":"var"},{"range":[10217,10361],"loc":{"start":{"line":310,"column":10},"end":{"line":311,"column":80}},"type":"IfStatement","test":{"range":[10221,10239],"loc":{"start":{"line":310,"column":14},"end":{"line":310,"column":32}},"type":"BinaryExpression","operator":"===","left":{"range":[10221,10228],"loc":{"start":{"line":310,"column":14},"end":{"line":310,"column":21}},"type":"MemberExpression","computed":false,"object":{"range":[10221,10222],"loc":{"start":{"line":310,"column":14},"end":{"line":310,"column":15}},"type":"Identifier","name":"a"},"property":{"range":[10223,10228],"loc":{"start":{"line":310,"column":16},"end":{"line":310,"column":21}},"type":"Identifier","name":"_type"}},"right":{"range":[10233,10239],"loc":{"start":{"line":310,"column":26},"end":{"line":310,"column":32}},"type":"Literal","value":"list","raw":"'list'"}},"consequent":{"range":[10241,10280],"loc":{"start":{"line":310,"column":34},"end":{"line":310,"column":73}},"type":"ExpressionStatement","expression":{"range":[10241,10279],"loc":{"start":{"line":310,"column":34},"end":{"line":310,"column":72}},"type":"AssignmentExpression","operator":"=","left":{"range":[10241,10244],"loc":{"start":{"line":310,"column":34},"end":{"line":310,"column":37}},"type":"Identifier","name":"ret"},"right":{"range":[10247,10279],"loc":{"start":{"line":310,"column":40},"end":{"line":310,"column":72}},"type":"NewExpression","callee":{"range":[10251,10277],"loc":{"start":{"line":310,"column":44},"end":{"line":310,"column":70}},"type":"MemberExpression","computed":false,"object":{"range":[10251,10272],"loc":{"start":{"line":310,"column":44},"end":{"line":310,"column":65}},"type":"MemberExpression","computed":false,"object":{"range":[10251,10264],"loc":{"start":{"line":310,"column":44},"end":{"line":310,"column":57}},"type":"Identifier","name":"pythonRuntime"},"property":{"range":[10265,10272],"loc":{"start":{"line":310,"column":58},"end":{"line":310,"column":65}},"type":"Identifier","name":"objects"}},"property":{"range":[10273,10277],"loc":{"start":{"line":310,"column":66},"end":{"line":310,"column":70}},"type":"Identifier","name":"list"}},"arguments":[]}}},"alternate":{"range":[10296,10361],"loc":{"start":{"line":311,"column":15},"end":{"line":311,"column":80}},"type":"IfStatement","test":{"range":[10300,10319],"loc":{"start":{"line":311,"column":19},"end":{"line":311,"column":38}},"type":"BinaryExpression","operator":"===","left":{"range":[10300,10307],"loc":{"start":{"line":311,"column":19},"end":{"line":311,"column":26}},"type":"MemberExpression","computed":false,"object":{"range":[10300,10301],"loc":{"start":{"line":311,"column":19},"end":{"line":311,"column":20}},"type":"Identifier","name":"a"},"property":{"range":[10302,10307],"loc":{"start":{"line":311,"column":21},"end":{"line":311,"column":26}},"type":"Identifier","name":"_type"}},"right":{"range":[10312,10319],"loc":{"start":{"line":311,"column":31},"end":{"line":311,"column":38}},"type":"Literal","value":"tuple","raw":"'tuple'"}},"consequent":{"range":[10321,10361],"loc":{"start":{"line":311,"column":40},"end":{"line":311,"column":80}},"type":"ExpressionStatement","expression":{"range":[10321,10360],"loc":{"start":{"line":311,"column":40},"end":{"line":311,"column":79}},"type":"AssignmentExpression","operator":"=","left":{"range":[10321,10324],"loc":{"start":{"line":311,"column":40},"end":{"line":311,"column":43}},"type":"Identifier","name":"ret"},"right":{"range":[10327,10360],"loc":{"start":{"line":311,"column":46},"end":{"line":311,"column":79}},"type":"NewExpression","callee":{"range":[10331,10358],"loc":{"start":{"line":311,"column":50},"end":{"line":311,"column":77}},"type":"MemberExpression","computed":false,"object":{"range":[10331,10352],"loc":{"start":{"line":311,"column":50},"end":{"line":311,"column":71}},"type":"MemberExpression","computed":false,"object":{"range":[10331,10344],"loc":{"start":{"line":311,"column":50},"end":{"line":311,"column":63}},"type":"Identifier","name":"pythonRuntime"},"property":{"range":[10345,10352],"loc":{"start":{"line":311,"column":64},"end":{"line":311,"column":71}},"type":"Identifier","name":"objects"}},"property":{"range":[10353,10358],"loc":{"start":{"line":311,"column":72},"end":{"line":311,"column":77}},"type":"Identifier","name":"tuple"}},"arguments":[]}}},"alternate":null}},{"range":[10372,10544],"loc":{"start":{"line":312,"column":10},"end":{"line":316,"column":11}},"type":"IfStatement","test":{"range":[10376,10379],"loc":{"start":{"line":312,"column":14},"end":{"line":312,"column":17}},"type":"Identifier","name":"ret"},"consequent":{"range":[10381,10544],"loc":{"start":{"line":312,"column":19},"end":{"line":316,"column":11}},"type":"BlockStatement","body":[{"range":[10395,10445],"loc":{"start":{"line":313,"column":12},"end":{"line":313,"column":62}},"type":"ForStatement","init":{"range":[10400,10409],"loc":{"start":{"line":313,"column":17},"end":{"line":313,"column":26}},"type":"VariableDeclaration","declarations":[{"range":[10404,10409],"loc":{"start":{"line":313,"column":21},"end":{"line":313,"column":26}},"type":"VariableDeclarator","id":{"range":[10404,10405],"loc":{"start":{"line":313,"column":21},"end":{"line":313,"column":22}},"type":"Identifier","name":"i"},"init":{"range":[10408,10409],"loc":{"start":{"line":313,"column":25},"end":{"line":313,"column":26}},"type":"Literal","value":0,"raw":"0"}}],"kind":"var"},"test":{"range":[10411,10423],"loc":{"start":{"line":313,"column":28},"end":{"line":313,"column":40}},"type":"BinaryExpression","operator":"<","left":{"range":[10411,10412],"loc":{"start":{"line":313,"column":28},"end":{"line":313,"column":29}},"type":"Identifier","name":"i"},"right":{"range":[10415,10423],"loc":{"start":{"line":313,"column":32},"end":{"line":313,"column":40}},"type":"MemberExpression","computed":false,"object":{"range":[10415,10416],"loc":{"start":{"line":313,"column":32},"end":{"line":313,"column":33}},"type":"Identifier","name":"a"},"property":{"range":[10417,10423],"loc":{"start":{"line":313,"column":34},"end":{"line":313,"column":40}},"type":"Identifier","name":"length"}}},"update":{"range":[10425,10428],"loc":{"start":{"line":313,"column":42},"end":{"line":313,"column":45}},"type":"UpdateExpression","operator":"++","argument":{"range":[10425,10426],"loc":{"start":{"line":313,"column":42},"end":{"line":313,"column":43}},"type":"Identifier","name":"i"},"prefix":false},"body":{"range":[10430,10445],"loc":{"start":{"line":313,"column":47},"end":{"line":313,"column":62}},"type":"ExpressionStatement","expression":{"range":[10430,10444],"loc":{"start":{"line":313,"column":47},"end":{"line":313,"column":61}},"type":"CallExpression","callee":{"range":[10430,10438],"loc":{"start":{"line":313,"column":47},"end":{"line":313,"column":55}},"type":"MemberExpression","computed":false,"object":{"range":[10430,10433],"loc":{"start":{"line":313,"column":47},"end":{"line":313,"column":50}},"type":"Identifier","name":"ret"},"property":{"range":[10434,10438],"loc":{"start":{"line":313,"column":51},"end":{"line":313,"column":55}},"type":"Identifier","name":"push"}},"arguments":[{"range":[10439,10443],"loc":{"start":{"line":313,"column":56},"end":{"line":313,"column":60}},"type":"MemberExpression","computed":true,"object":{"range":[10439,10440],"loc":{"start":{"line":313,"column":56},"end":{"line":313,"column":57}},"type":"Identifier","name":"a"},"property":{"range":[10441,10442],"loc":{"start":{"line":313,"column":58},"end":{"line":313,"column":59}},"type":"Identifier","name":"i"}}]}}},{"range":[10458,10508],"loc":{"start":{"line":314,"column":12},"end":{"line":314,"column":62}},"type":"ForStatement","init":{"range":[10463,10472],"loc":{"start":{"line":314,"column":17},"end":{"line":314,"column":26}},"type":"VariableDeclaration","declarations":[{"range":[10467,10472],"loc":{"start":{"line":314,"column":21},"end":{"line":314,"column":26}},"type":"VariableDeclarator","id":{"range":[10467,10468],"loc":{"start":{"line":314,"column":21},"end":{"line":314,"column":22}},"type":"Identifier","name":"i"},"init":{"range":[10471,10472],"loc":{"start":{"line":314,"column":25},"end":{"line":314,"column":26}},"type":"Literal","value":0,"raw":"0"}}],"kind":"var"},"test":{"range":[10474,10486],"loc":{"start":{"line":314,"column":28},"end":{"line":314,"column":40}},"type":"BinaryExpression","operator":"<","left":{"range":[10474,10475],"loc":{"start":{"line":314,"column":28},"end":{"line":314,"column":29}},"type":"Identifier","name":"i"},"right":{"range":[10478,10486],"loc":{"start":{"line":314,"column":32},"end":{"line":314,"column":40}},"type":"MemberExpression","computed":false,"object":{"range":[10478,10479],"loc":{"start":{"line":314,"column":32},"end":{"line":314,"column":33}},"type":"Identifier","name":"b"},"property":{"range":[10480,10486],"loc":{"start":{"line":314,"column":34},"end":{"line":314,"column":40}},"type":"Identifier","name":"length"}}},"update":{"range":[10488,10491],"loc":{"start":{"line":314,"column":42},"end":{"line":314,"column":45}},"type":"UpdateExpression","operator":"++","argument":{"range":[10488,10489],"loc":{"start":{"line":314,"column":42},"end":{"line":314,"column":43}},"type":"Identifier","name":"i"},"prefix":false},"body":{"range":[10493,10508],"loc":{"start":{"line":314,"column":47},"end":{"line":314,"column":62}},"type":"ExpressionStatement","expression":{"range":[10493,10507],"loc":{"start":{"line":314,"column":47},"end":{"line":314,"column":61}},"type":"CallExpression","callee":{"range":[10493,10501],"loc":{"start":{"line":314,"column":47},"end":{"line":314,"column":55}},"type":"MemberExpression","computed":false,"object":{"range":[10493,10496],"loc":{"start":{"line":314,"column":47},"end":{"line":314,"column":50}},"type":"Identifier","name":"ret"},"property":{"range":[10497,10501],"loc":{"start":{"line":314,"column":51},"end":{"line":314,"column":55}},"type":"Identifier","name":"push"}},"arguments":[{"range":[10502,10506],"loc":{"start":{"line":314,"column":56},"end":{"line":314,"column":60}},"type":"MemberExpression","computed":true,"object":{"range":[10502,10503],"loc":{"start":{"line":314,"column":56},"end":{"line":314,"column":57}},"type":"Identifier","name":"b"},"property":{"range":[10504,10505],"loc":{"start":{"line":314,"column":58},"end":{"line":314,"column":59}},"type":"Identifier","name":"i"}}]}}},{"range":[10521,10532],"loc":{"start":{"line":315,"column":12},"end":{"line":315,"column":23}},"type":"ReturnStatement","argument":{"range":[10528,10531],"loc":{"start":{"line":315,"column":19},"end":{"line":315,"column":22}},"type":"Identifier","name":"ret"}}]},"alternate":null}]},"alternate":null},{"range":[10563,10576],"loc":{"start":{"line":318,"column":8},"end":{"line":318,"column":21}},"type":"ReturnStatement","argument":{"range":[10570,10575],"loc":{"start":{"line":318,"column":15},"end":{"line":318,"column":20}},"type":"BinaryExpression","operator":"+","left":{"range":[10570,10571],"loc":{"start":{"line":318,"column":15},"end":{"line":318,"column":16}},"type":"Identifier","name":"a"},"right":{"range":[10574,10575],"loc":{"start":{"line":318,"column":19},"end":{"line":318,"column":20}},"type":"Identifier","name":"b"}}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[10592,10725],"loc":{"start":{"line":320,"column":6},"end":{"line":323,"column":7}},"type":"Property","key":{"range":[10592,10594],"loc":{"start":{"line":320,"column":6},"end":{"line":320,"column":8}},"type":"Identifier","name":"in"},"computed":false,"value":{"range":[10596,10725],"loc":{"start":{"line":320,"column":10},"end":{"line":323,"column":7}},"type":"FunctionExpression","id":null,"params":[{"range":[10606,10607],"loc":{"start":{"line":320,"column":20},"end":{"line":320,"column":21}},"type":"Identifier","name":"a"},{"range":[10609,10610],"loc":{"start":{"line":320,"column":23},"end":{"line":320,"column":24}},"type":"Identifier","name":"b"},{"range":[10612,10613],"loc":{"start":{"line":320,"column":26},"end":{"line":320,"column":27}},"type":"Identifier","name":"n"}],"defaults":[],"body":{"range":[10615,10725],"loc":{"start":{"line":320,"column":29},"end":{"line":323,"column":7}},"type":"BlockStatement","body":[{"range":[10625,10690],"loc":{"start":{"line":321,"column":8},"end":{"line":321,"column":73}},"type":"VariableDeclaration","declarations":[{"range":[10629,10689],"loc":{"start":{"line":321,"column":12},"end":{"line":321,"column":72}},"type":"VariableDeclarator","id":{"range":[10629,10630],"loc":{"start":{"line":321,"column":12},"end":{"line":321,"column":13}},"type":"Identifier","name":"r"},"init":{"range":[10633,10689],"loc":{"start":{"line":321,"column":16},"end":{"line":321,"column":72}},"type":"ConditionalExpression","test":{"range":[10633,10660],"loc":{"start":{"line":321,"column":16},"end":{"line":321,"column":43}},"type":"CallExpression","callee":{"range":[10633,10649],"loc":{"start":{"line":321,"column":16},"end":{"line":321,"column":32}},"type":"MemberExpression","computed":false,"object":{"range":[10633,10634],"loc":{"start":{"line":321,"column":16},"end":{"line":321,"column":17}},"type":"Identifier","name":"b"},"property":{"range":[10635,10649],"loc":{"start":{"line":321,"column":18},"end":{"line":321,"column":32}},"type":"Identifier","name":"hasOwnProperty"}},"arguments":[{"range":[10650,10659],"loc":{"start":{"line":321,"column":33},"end":{"line":321,"column":42}},"type":"Literal","value":"indexOf","raw":"'indexOf'"}]},"consequent":{"range":[10663,10680],"loc":{"start":{"line":321,"column":46},"end":{"line":321,"column":63}},"type":"BinaryExpression","operator":">=","left":{"range":[10663,10675],"loc":{"start":{"line":321,"column":46},"end":{"line":321,"column":58}},"type":"CallExpression","callee":{"range":[10663,10672],"loc":{"start":{"line":321,"column":46},"end":{"line":321,"column":55}},"type":"MemberExpression","computed":false,"object":{"range":[10663,10664],"loc":{"start":{"line":321,"column":46},"end":{"line":321,"column":47}},"type":"Identifier","name":"b"},"property":{"range":[10665,10672],"loc":{"start":{"line":321,"column":48},"end":{"line":321,"column":55}},"type":"Identifier","name":"indexOf"}},"arguments":[{"range":[10673,10674],"loc":{"start":{"line":321,"column":56},"end":{"line":321,"column":57}},"type":"Identifier","name":"a"}]},"right":{"range":[10679,10680],"loc":{"start":{"line":321,"column":62},"end":{"line":321,"column":63}},"type":"Literal","value":0,"raw":"0"}},"alternate":{"range":[10683,10689],"loc":{"start":{"line":321,"column":66},"end":{"line":321,"column":72}},"type":"BinaryExpression","operator":"in","left":{"range":[10683,10684],"loc":{"start":{"line":321,"column":66},"end":{"line":321,"column":67}},"type":"Identifier","name":"a"},"right":{"range":[10688,10689],"loc":{"start":{"line":321,"column":71},"end":{"line":321,"column":72}},"type":"Identifier","name":"b"}}}}],"kind":"var"},{"range":[10699,10717],"loc":{"start":{"line":322,"column":8},"end":{"line":322,"column":26}},"type":"ReturnStatement","argument":{"range":[10706,10716],"loc":{"start":{"line":322,"column":15},"end":{"line":322,"column":25}},"type":"ConditionalExpression","test":{"range":[10706,10707],"loc":{"start":{"line":322,"column":15},"end":{"line":322,"column":16}},"type":"Identifier","name":"n"},"consequent":{"range":[10710,10712],"loc":{"start":{"line":322,"column":19},"end":{"line":322,"column":21}},"type":"UnaryExpression","operator":"!","argument":{"range":[10711,10712],"loc":{"start":{"line":322,"column":20},"end":{"line":322,"column":21}},"type":"Identifier","name":"r"},"prefix":true},"alternate":{"range":[10715,10716],"loc":{"start":{"line":322,"column":24},"end":{"line":322,"column":25}},"type":"Identifier","name":"r"}}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[10733,11763],"loc":{"start":{"line":324,"column":6},"end":{"line":348,"column":7}},"type":"Property","key":{"range":[10733,10741],"loc":{"start":{"line":324,"column":6},"end":{"line":324,"column":14}},"type":"Identifier","name":"multiply"},"computed":false,"value":{"range":[10743,11763],"loc":{"start":{"line":324,"column":16},"end":{"line":348,"column":7}},"type":"FunctionExpression","id":null,"params":[{"range":[10753,10754],"loc":{"start":{"line":324,"column":26},"end":{"line":324,"column":27}},"type":"Identifier","name":"a"},{"range":[10756,10757],"loc":{"start":{"line":324,"column":29},"end":{"line":324,"column":30}},"type":"Identifier","name":"b"}],"defaults":[],"body":{"range":[10759,11763],"loc":{"start":{"line":324,"column":32},"end":{"line":348,"column":7}},"type":"BlockStatement","body":[{"range":[10826,11733],"loc":{"start":{"line":326,"column":8},"end":{"line":346,"column":9}},"type":"IfStatement","test":{"range":[10831,10852],"loc":{"start":{"line":326,"column":13},"end":{"line":326,"column":34}},"type":"BinaryExpression","operator":"===","left":{"range":[10831,10839],"loc":{"start":{"line":326,"column":13},"end":{"line":326,"column":21}},"type":"UnaryExpression","operator":"typeof","argument":{"range":[10838,10839],"loc":{"start":{"line":326,"column":20},"end":{"line":326,"column":21}},"type":"Identifier","name":"a"},"prefix":true},"right":{"range":[10844,10852],"loc":{"start":{"line":326,"column":26},"end":{"line":326,"column":34}},"type":"Literal","value":"object","raw":"'object'"}},"consequent":{"range":[10855,11733],"loc":{"start":{"line":326,"column":37},"end":{"line":346,"column":9}},"type":"BlockStatement","body":[{"range":[10867,11723],"loc":{"start":{"line":327,"column":10},"end":{"line":345,"column":11}},"type":"IfStatement","test":{"range":[10871,10925],"loc":{"start":{"line":327,"column":14},"end":{"line":327,"column":68}},"type":"LogicalExpression","operator":"&&","left":{"range":[10871,10902],"loc":{"start":{"line":327,"column":14},"end":{"line":327,"column":45}},"type":"CallExpression","callee":{"range":[10871,10899],"loc":{"start":{"line":327,"column":14},"end":{"line":327,"column":42}},"type":"MemberExpression","computed":false,"object":{"range":[10871,10893],"loc":{"start":{"line":327,"column":14},"end":{"line":327,"column":36}},"type":"MemberExpression","computed":false,"object":{"range":[10871,10884],"loc":{"start":{"line":327,"column":14},"end":{"line":327,"column":27}},"type":"Identifier","name":"pythonRuntime"},"property":{"range":[10885,10893],"loc":{"start":{"line":327,"column":28},"end":{"line":327,"column":36}},"type":"Identifier","name":"internal"}},"property":{"range":[10894,10899],"loc":{"start":{"line":327,"column":37},"end":{"line":327,"column":42}},"type":"Identifier","name":"isSeq"}},"arguments":[{"range":[10900,10901],"loc":{"start":{"line":327,"column":43},"end":{"line":327,"column":44}},"type":"Identifier","name":"a"}]},"right":{"range":[10906,10925],"loc":{"start":{"line":327,"column":49},"end":{"line":327,"column":68}},"type":"UnaryExpression","operator":"!","argument":{"range":[10907,10925],"loc":{"start":{"line":327,"column":50},"end":{"line":327,"column":68}},"type":"CallExpression","callee":{"range":[10907,10912],"loc":{"start":{"line":327,"column":50},"end":{"line":327,"column":55}},"type":"Identifier","name":"isNaN"},"arguments":[{"range":[10913,10924],"loc":{"start":{"line":327,"column":56},"end":{"line":327,"column":67}},"type":"CallExpression","callee":{"range":[10913,10921],"loc":{"start":{"line":327,"column":56},"end":{"line":327,"column":64}},"type":"Identifier","name":"parseInt"},"arguments":[{"range":[10922,10923],"loc":{"start":{"line":327,"column":65},"end":{"line":327,"column":66}},"type":"Identifier","name":"b"}]}]},"prefix":true}},"consequent":{"range":[10927,11292],"loc":{"start":{"line":327,"column":70},"end":{"line":336,"column":11}},"type":"BlockStatement","body":[{"range":[10941,10949],"loc":{"start":{"line":328,"column":12},"end":{"line":328,"column":20}},"type":"VariableDeclaration","declarations":[{"range":[10945,10948],"loc":{"start":{"line":328,"column":16},"end":{"line":328,"column":19}},"type":"VariableDeclarator","id":{"range":[10945,10948],"loc":{"start":{"line":328,"column":16},"end":{"line":328,"column":19}},"type":"Identifier","name":"ret"},"init":null}],"kind":"var"},{"range":[10962,11108],"loc":{"start":{"line":329,"column":12},"end":{"line":330,"column":82}},"type":"IfStatement","test":{"range":[10966,10984],"loc":{"start":{"line":329,"column":16},"end":{"line":329,"column":34}},"type":"BinaryExpression","operator":"===","left":{"range":[10966,10973],"loc":{"start":{"line":329,"column":16},"end":{"line":329,"column":23}},"type":"MemberExpression","computed":false,"object":{"range":[10966,10967],"loc":{"start":{"line":329,"column":16},"end":{"line":329,"column":17}},"type":"Identifier","name":"a"},"property":{"range":[10968,10973],"loc":{"start":{"line":329,"column":18},"end":{"line":329,"column":23}},"type":"Identifier","name":"_type"}},"right":{"range":[10978,10984],"loc":{"start":{"line":329,"column":28},"end":{"line":329,"column":34}},"type":"Literal","value":"list","raw":"'list'"}},"consequent":{"range":[10986,11025],"loc":{"start":{"line":329,"column":36},"end":{"line":329,"column":75}},"type":"ExpressionStatement","expression":{"range":[10986,11024],"loc":{"start":{"line":329,"column":36},"end":{"line":329,"column":74}},"type":"AssignmentExpression","operator":"=","left":{"range":[10986,10989],"loc":{"start":{"line":329,"column":36},"end":{"line":329,"column":39}},"type":"Identifier","name":"ret"},"right":{"range":[10992,11024],"loc":{"start":{"line":329,"column":42},"end":{"line":329,"column":74}},"type":"NewExpression","callee":{"range":[10996,11022],"loc":{"start":{"line":329,"column":46},"end":{"line":329,"column":72}},"type":"MemberExpression","computed":false,"object":{"range":[10996,11017],"loc":{"start":{"line":329,"column":46},"end":{"line":329,"column":67}},"type":"MemberExpression","computed":false,"object":{"range":[10996,11009],"loc":{"start":{"line":329,"column":46},"end":{"line":329,"column":59}},"type":"Identifier","name":"pythonRuntime"},"property":{"range":[11010,11017],"loc":{"start":{"line":329,"column":60},"end":{"line":329,"column":67}},"type":"Identifier","name":"objects"}},"property":{"range":[11018,11022],"loc":{"start":{"line":329,"column":68},"end":{"line":329,"column":72}},"type":"Identifier","name":"list"}},"arguments":[]}}},"alternate":{"range":[11043,11108],"loc":{"start":{"line":330,"column":17},"end":{"line":330,"column":82}},"type":"IfStatement","test":{"range":[11047,11066],"loc":{"start":{"line":330,"column":21},"end":{"line":330,"column":40}},"type":"BinaryExpression","operator":"===","left":{"range":[11047,11054],"loc":{"start":{"line":330,"column":21},"end":{"line":330,"column":28}},"type":"MemberExpression","computed":false,"object":{"range":[11047,11048],"loc":{"start":{"line":330,"column":21},"end":{"line":330,"column":22}},"type":"Identifier","name":"a"},"property":{"range":[11049,11054],"loc":{"start":{"line":330,"column":23},"end":{"line":330,"column":28}},"type":"Identifier","name":"_type"}},"right":{"range":[11059,11066],"loc":{"start":{"line":330,"column":33},"end":{"line":330,"column":40}},"type":"Literal","value":"tuple","raw":"'tuple'"}},"consequent":{"range":[11068,11108],"loc":{"start":{"line":330,"column":42},"end":{"line":330,"column":82}},"type":"ExpressionStatement","expression":{"range":[11068,11107],"loc":{"start":{"line":330,"column":42},"end":{"line":330,"column":81}},"type":"AssignmentExpression","operator":"=","left":{"range":[11068,11071],"loc":{"start":{"line":330,"column":42},"end":{"line":330,"column":45}},"type":"Identifier","name":"ret"},"right":{"range":[11074,11107],"loc":{"start":{"line":330,"column":48},"end":{"line":330,"column":81}},"type":"NewExpression","callee":{"range":[11078,11105],"loc":{"start":{"line":330,"column":52},"end":{"line":330,"column":79}},"type":"MemberExpression","computed":false,"object":{"range":[11078,11099],"loc":{"start":{"line":330,"column":52},"end":{"line":330,"column":73}},"type":"MemberExpression","computed":false,"object":{"range":[11078,11091],"loc":{"start":{"line":330,"column":52},"end":{"line":330,"column":65}},"type":"Identifier","name":"pythonRuntime"},"property":{"range":[11092,11099],"loc":{"start":{"line":330,"column":66},"end":{"line":330,"column":73}},"type":"Identifier","name":"objects"}},"property":{"range":[11100,11105],"loc":{"start":{"line":330,"column":74},"end":{"line":330,"column":79}},"type":"Identifier","name":"tuple"}},"arguments":[]}}},"alternate":null}},{"range":[11121,11280],"loc":{"start":{"line":331,"column":12},"end":{"line":335,"column":13}},"type":"IfStatement","test":{"range":[11125,11128],"loc":{"start":{"line":331,"column":16},"end":{"line":331,"column":19}},"type":"Identifier","name":"ret"},"consequent":{"range":[11130,11280],"loc":{"start":{"line":331,"column":21},"end":{"line":335,"column":13}},"type":"BlockStatement","body":[{"range":[11146,11240],"loc":{"start":{"line":332,"column":14},"end":{"line":333,"column":66}},"type":"ForStatement","init":{"range":[11151,11160],"loc":{"start":{"line":332,"column":19},"end":{"line":332,"column":28}},"type":"VariableDeclaration","declarations":[{"range":[11155,11160],"loc":{"start":{"line":332,"column":23},"end":{"line":332,"column":28}},"type":"VariableDeclarator","id":{"range":[11155,11156],"loc":{"start":{"line":332,"column":23},"end":{"line":332,"column":24}},"type":"Identifier","name":"i"},"init":{"range":[11159,11160],"loc":{"start":{"line":332,"column":27},"end":{"line":332,"column":28}},"type":"Literal","value":0,"raw":"0"}}],"kind":"var"},"test":{"range":[11162,11167],"loc":{"start":{"line":332,"column":30},"end":{"line":332,"column":35}},"type":"BinaryExpression","operator":"<","left":{"range":[11162,11163],"loc":{"start":{"line":332,"column":30},"end":{"line":332,"column":31}},"type":"Identifier","name":"i"},"right":{"range":[11166,11167],"loc":{"start":{"line":332,"column":34},"end":{"line":332,"column":35}},"type":"Identifier","name":"b"}},"update":{"range":[11169,11172],"loc":{"start":{"line":332,"column":37},"end":{"line":332,"column":40}},"type":"UpdateExpression","operator":"++","argument":{"range":[11169,11170],"loc":{"start":{"line":332,"column":37},"end":{"line":332,"column":38}},"type":"Identifier","name":"i"},"prefix":false},"body":{"range":[11190,11240],"loc":{"start":{"line":333,"column":16},"end":{"line":333,"column":66}},"type":"ForStatement","init":{"range":[11195,11204],"loc":{"start":{"line":333,"column":21},"end":{"line":333,"column":30}},"type":"VariableDeclaration","declarations":[{"range":[11199,11204],"loc":{"start":{"line":333,"column":25},"end":{"line":333,"column":30}},"type":"VariableDeclarator","id":{"range":[11199,11200],"loc":{"start":{"line":333,"column":25},"end":{"line":333,"column":26}},"type":"Identifier","name":"j"},"init":{"range":[11203,11204],"loc":{"start":{"line":333,"column":29},"end":{"line":333,"column":30}},"type":"Literal","value":0,"raw":"0"}}],"kind":"var"},"test":{"range":[11206,11218],"loc":{"start":{"line":333,"column":32},"end":{"line":333,"column":44}},"type":"BinaryExpression","operator":"<","left":{"range":[11206,11207],"loc":{"start":{"line":333,"column":32},"end":{"line":333,"column":33}},"type":"Identifier","name":"j"},"right":{"range":[11210,11218],"loc":{"start":{"line":333,"column":36},"end":{"line":333,"column":44}},"type":"MemberExpression","computed":false,"object":{"range":[11210,11211],"loc":{"start":{"line":333,"column":36},"end":{"line":333,"column":37}},"type":"Identifier","name":"a"},"property":{"range":[11212,11218],"loc":{"start":{"line":333,"column":38},"end":{"line":333,"column":44}},"type":"Identifier","name":"length"}}},"update":{"range":[11220,11223],"loc":{"start":{"line":333,"column":46},"end":{"line":333,"column":49}},"type":"UpdateExpression","operator":"++","argument":{"range":[11220,11221],"loc":{"start":{"line":333,"column":46},"end":{"line":333,"column":47}},"type":"Identifier","name":"j"},"prefix":false},"body":{"range":[11225,11240],"loc":{"start":{"line":333,"column":51},"end":{"line":333,"column":66}},"type":"ExpressionStatement","expression":{"range":[11225,11239],"loc":{"start":{"line":333,"column":51},"end":{"line":333,"column":65}},"type":"CallExpression","callee":{"range":[11225,11233],"loc":{"start":{"line":333,"column":51},"end":{"line":333,"column":59}},"type":"MemberExpression","computed":false,"object":{"range":[11225,11228],"loc":{"start":{"line":333,"column":51},"end":{"line":333,"column":54}},"type":"Identifier","name":"ret"},"property":{"range":[11229,11233],"loc":{"start":{"line":333,"column":55},"end":{"line":333,"column":59}},"type":"Identifier","name":"push"}},"arguments":[{"range":[11234,11238],"loc":{"start":{"line":333,"column":60},"end":{"line":333,"column":64}},"type":"MemberExpression","computed":true,"object":{"range":[11234,11235],"loc":{"start":{"line":333,"column":60},"end":{"line":333,"column":61}},"type":"Identifier","name":"a"},"property":{"range":[11236,11237],"loc":{"start":{"line":333,"column":62},"end":{"line":333,"column":63}},"type":"Identifier","name":"j"}}]}}}},{"range":[11255,11266],"loc":{"start":{"line":334,"column":14},"end":{"line":334,"column":25}},"type":"ReturnStatement","argument":{"range":[11262,11265],"loc":{"start":{"line":334,"column":21},"end":{"line":334,"column":24}},"type":"Identifier","name":"ret"}}]},"alternate":null}]},"alternate":{"range":[11298,11723],"loc":{"start":{"line":336,"column":17},"end":{"line":345,"column":11}},"type":"IfStatement","test":{"range":[11302,11356],"loc":{"start":{"line":336,"column":21},"end":{"line":336,"column":75}},"type":"LogicalExpression","operator":"&&","left":{"range":[11302,11333],"loc":{"start":{"line":336,"column":21},"end":{"line":336,"column":52}},"type":"CallExpression","callee":{"range":[11302,11330],"loc":{"start":{"line":336,"column":21},"end":{"line":336,"column":49}},"type":"MemberExpression","computed":false,"object":{"range":[11302,11324],"loc":{"start":{"line":336,"column":21},"end":{"line":336,"column":43}},"type":"MemberExpression","computed":false,"object":{"range":[11302,11315],"loc":{"start":{"line":336,"column":21},"end":{"line":336,"column":34}},"type":"Identifier","name":"pythonRuntime"},"property":{"range":[11316,11324],"loc":{"start":{"line":336,"column":35},"end":{"line":336,"column":43}},"type":"Identifier","name":"internal"}},"property":{"range":[11325,11330],"loc":{"start":{"line":336,"column":44},"end":{"line":336,"column":49}},"type":"Identifier","name":"isSeq"}},"arguments":[{"range":[11331,11332],"loc":{"start":{"line":336,"column":50},"end":{"line":336,"column":51}},"type":"Identifier","name":"b"}]},"right":{"range":[11337,11356],"loc":{"start":{"line":336,"column":56},"end":{"line":336,"column":75}},"type":"UnaryExpression","operator":"!","argument":{"range":[11338,11356],"loc":{"start":{"line":336,"column":57},"end":{"line":336,"column":75}},"type":"CallExpression","callee":{"range":[11338,11343],"loc":{"start":{"line":336,"column":57},"end":{"line":336,"column":62}},"type":"Identifier","name":"isNaN"},"arguments":[{"range":[11344,11355],"loc":{"start":{"line":336,"column":63},"end":{"line":336,"column":74}},"type":"CallExpression","callee":{"range":[11344,11352],"loc":{"start":{"line":336,"column":63},"end":{"line":336,"column":71}},"type":"Identifier","name":"parseInt"},"arguments":[{"range":[11353,11354],"loc":{"start":{"line":336,"column":72},"end":{"line":336,"column":73}},"type":"Identifier","name":"a"}]}]},"prefix":true}},"consequent":{"range":[11358,11723],"loc":{"start":{"line":336,"column":77},"end":{"line":345,"column":11}},"type":"BlockStatement","body":[{"range":[11372,11380],"loc":{"start":{"line":337,"column":12},"end":{"line":337,"column":20}},"type":"VariableDeclaration","declarations":[{"range":[11376,11379],"loc":{"start":{"line":337,"column":16},"end":{"line":337,"column":19}},"type":"VariableDeclarator","id":{"range":[11376,11379],"loc":{"start":{"line":337,"column":16},"end":{"line":337,"column":19}},"type":"Identifier","name":"ret"},"init":null}],"kind":"var"},{"range":[11393,11539],"loc":{"start":{"line":338,"column":12},"end":{"line":339,"column":82}},"type":"IfStatement","test":{"range":[11397,11415],"loc":{"start":{"line":338,"column":16},"end":{"line":338,"column":34}},"type":"BinaryExpression","operator":"===","left":{"range":[11397,11404],"loc":{"start":{"line":338,"column":16},"end":{"line":338,"column":23}},"type":"MemberExpression","computed":false,"object":{"range":[11397,11398],"loc":{"start":{"line":338,"column":16},"end":{"line":338,"column":17}},"type":"Identifier","name":"b"},"property":{"range":[11399,11404],"loc":{"start":{"line":338,"column":18},"end":{"line":338,"column":23}},"type":"Identifier","name":"_type"}},"right":{"range":[11409,11415],"loc":{"start":{"line":338,"column":28},"end":{"line":338,"column":34}},"type":"Literal","value":"list","raw":"'list'"}},"consequent":{"range":[11417,11456],"loc":{"start":{"line":338,"column":36},"end":{"line":338,"column":75}},"type":"ExpressionStatement","expression":{"range":[11417,11455],"loc":{"start":{"line":338,"column":36},"end":{"line":338,"column":74}},"type":"AssignmentExpression","operator":"=","left":{"range":[11417,11420],"loc":{"start":{"line":338,"column":36},"end":{"line":338,"column":39}},"type":"Identifier","name":"ret"},"right":{"range":[11423,11455],"loc":{"start":{"line":338,"column":42},"end":{"line":338,"column":74}},"type":"NewExpression","callee":{"range":[11427,11453],"loc":{"start":{"line":338,"column":46},"end":{"line":338,"column":72}},"type":"MemberExpression","computed":false,"object":{"range":[11427,11448],"loc":{"start":{"line":338,"column":46},"end":{"line":338,"column":67}},"type":"MemberExpression","computed":false,"object":{"range":[11427,11440],"loc":{"start":{"line":338,"column":46},"end":{"line":338,"column":59}},"type":"Identifier","name":"pythonRuntime"},"property":{"range":[11441,11448],"loc":{"start":{"line":338,"column":60},"end":{"line":338,"column":67}},"type":"Identifier","name":"objects"}},"property":{"range":[11449,11453],"loc":{"start":{"line":338,"column":68},"end":{"line":338,"column":72}},"type":"Identifier","name":"list"}},"arguments":[]}}},"alternate":{"range":[11474,11539],"loc":{"start":{"line":339,"column":17},"end":{"line":339,"column":82}},"type":"IfStatement","test":{"range":[11478,11497],"loc":{"start":{"line":339,"column":21},"end":{"line":339,"column":40}},"type":"BinaryExpression","operator":"===","left":{"range":[11478,11485],"loc":{"start":{"line":339,"column":21},"end":{"line":339,"column":28}},"type":"MemberExpression","computed":false,"object":{"range":[11478,11479],"loc":{"start":{"line":339,"column":21},"end":{"line":339,"column":22}},"type":"Identifier","name":"b"},"property":{"range":[11480,11485],"loc":{"start":{"line":339,"column":23},"end":{"line":339,"column":28}},"type":"Identifier","name":"_type"}},"right":{"range":[11490,11497],"loc":{"start":{"line":339,"column":33},"end":{"line":339,"column":40}},"type":"Literal","value":"tuple","raw":"'tuple'"}},"consequent":{"range":[11499,11539],"loc":{"start":{"line":339,"column":42},"end":{"line":339,"column":82}},"type":"ExpressionStatement","expression":{"range":[11499,11538],"loc":{"start":{"line":339,"column":42},"end":{"line":339,"column":81}},"type":"AssignmentExpression","operator":"=","left":{"range":[11499,11502],"loc":{"start":{"line":339,"column":42},"end":{"line":339,"column":45}},"type":"Identifier","name":"ret"},"right":{"range":[11505,11538],"loc":{"start":{"line":339,"column":48},"end":{"line":339,"column":81}},"type":"NewExpression","callee":{"range":[11509,11536],"loc":{"start":{"line":339,"column":52},"end":{"line":339,"column":79}},"type":"MemberExpression","computed":false,"object":{"range":[11509,11530],"loc":{"start":{"line":339,"column":52},"end":{"line":339,"column":73}},"type":"MemberExpression","computed":false,"object":{"range":[11509,11522],"loc":{"start":{"line":339,"column":52},"end":{"line":339,"column":65}},"type":"Identifier","name":"pythonRuntime"},"property":{"range":[11523,11530],"loc":{"start":{"line":339,"column":66},"end":{"line":339,"column":73}},"type":"Identifier","name":"objects"}},"property":{"range":[11531,11536],"loc":{"start":{"line":339,"column":74},"end":{"line":339,"column":79}},"type":"Identifier","name":"tuple"}},"arguments":[]}}},"alternate":null}},{"range":[11552,11711],"loc":{"start":{"line":340,"column":12},"end":{"line":344,"column":13}},"type":"IfStatement","test":{"range":[11556,11559],"loc":{"start":{"line":340,"column":16},"end":{"line":340,"column":19}},"type":"Identifier","name":"ret"},"consequent":{"range":[11561,11711],"loc":{"start":{"line":340,"column":21},"end":{"line":344,"column":13}},"type":"BlockStatement","body":[{"range":[11577,11671],"loc":{"start":{"line":341,"column":14},"end":{"line":342,"column":66}},"type":"ForStatement","init":{"range":[11582,11591],"loc":{"start":{"line":341,"column":19},"end":{"line":341,"column":28}},"type":"VariableDeclaration","declarations":[{"range":[11586,11591],"loc":{"start":{"line":341,"column":23},"end":{"line":341,"column":28}},"type":"VariableDeclarator","id":{"range":[11586,11587],"loc":{"start":{"line":341,"column":23},"end":{"line":341,"column":24}},"type":"Identifier","name":"i"},"init":{"range":[11590,11591],"loc":{"start":{"line":341,"column":27},"end":{"line":341,"column":28}},"type":"Literal","value":0,"raw":"0"}}],"kind":"var"},"test":{"range":[11593,11598],"loc":{"start":{"line":341,"column":30},"end":{"line":341,"column":35}},"type":"BinaryExpression","operator":"<","left":{"range":[11593,11594],"loc":{"start":{"line":341,"column":30},"end":{"line":341,"column":31}},"type":"Identifier","name":"i"},"right":{"range":[11597,11598],"loc":{"start":{"line":341,"column":34},"end":{"line":341,"column":35}},"type":"Identifier","name":"a"}},"update":{"range":[11600,11603],"loc":{"start":{"line":341,"column":37},"end":{"line":341,"column":40}},"type":"UpdateExpression","operator":"++","argument":{"range":[11600,11601],"loc":{"start":{"line":341,"column":37},"end":{"line":341,"column":38}},"type":"Identifier","name":"i"},"prefix":false},"body":{"range":[11621,11671],"loc":{"start":{"line":342,"column":16},"end":{"line":342,"column":66}},"type":"ForStatement","init":{"range":[11626,11635],"loc":{"start":{"line":342,"column":21},"end":{"line":342,"column":30}},"type":"VariableDeclaration","declarations":[{"range":[11630,11635],"loc":{"start":{"line":342,"column":25},"end":{"line":342,"column":30}},"type":"VariableDeclarator","id":{"range":[11630,11631],"loc":{"start":{"line":342,"column":25},"end":{"line":342,"column":26}},"type":"Identifier","name":"j"},"init":{"range":[11634,11635],"loc":{"start":{"line":342,"column":29},"end":{"line":342,"column":30}},"type":"Literal","value":0,"raw":"0"}}],"kind":"var"},"test":{"range":[11637,11649],"loc":{"start":{"line":342,"column":32},"end":{"line":342,"column":44}},"type":"BinaryExpression","operator":"<","left":{"range":[11637,11638],"loc":{"start":{"line":342,"column":32},"end":{"line":342,"column":33}},"type":"Identifier","name":"j"},"right":{"range":[11641,11649],"loc":{"start":{"line":342,"column":36},"end":{"line":342,"column":44}},"type":"MemberExpression","computed":false,"object":{"range":[11641,11642],"loc":{"start":{"line":342,"column":36},"end":{"line":342,"column":37}},"type":"Identifier","name":"b"},"property":{"range":[11643,11649],"loc":{"start":{"line":342,"column":38},"end":{"line":342,"column":44}},"type":"Identifier","name":"length"}}},"update":{"range":[11651,11654],"loc":{"start":{"line":342,"column":46},"end":{"line":342,"column":49}},"type":"UpdateExpression","operator":"++","argument":{"range":[11651,11652],"loc":{"start":{"line":342,"column":46},"end":{"line":342,"column":47}},"type":"Identifier","name":"j"},"prefix":false},"body":{"range":[11656,11671],"loc":{"start":{"line":342,"column":51},"end":{"line":342,"column":66}},"type":"ExpressionStatement","expression":{"range":[11656,11670],"loc":{"start":{"line":342,"column":51},"end":{"line":342,"column":65}},"type":"CallExpression","callee":{"range":[11656,11664],"loc":{"start":{"line":342,"column":51},"end":{"line":342,"column":59}},"type":"MemberExpression","computed":false,"object":{"range":[11656,11659],"loc":{"start":{"line":342,"column":51},"end":{"line":342,"column":54}},"type":"Identifier","name":"ret"},"property":{"range":[11660,11664],"loc":{"start":{"line":342,"column":55},"end":{"line":342,"column":59}},"type":"Identifier","name":"push"}},"arguments":[{"range":[11665,11669],"loc":{"start":{"line":342,"column":60},"end":{"line":342,"column":64}},"type":"MemberExpression","computed":true,"object":{"range":[11665,11666],"loc":{"start":{"line":342,"column":60},"end":{"line":342,"column":61}},"type":"Identifier","name":"b"},"property":{"range":[11667,11668],"loc":{"start":{"line":342,"column":62},"end":{"line":342,"column":63}},"type":"Identifier","name":"j"}}]}}}},{"range":[11686,11697],"loc":{"start":{"line":343,"column":14},"end":{"line":343,"column":25}},"type":"ReturnStatement","argument":{"range":[11693,11696],"loc":{"start":{"line":343,"column":21},"end":{"line":343,"column":24}},"type":"Identifier","name":"ret"}}]},"alternate":null}]},"alternate":null}}]},"alternate":null},{"range":[11742,11755],"loc":{"start":{"line":347,"column":8},"end":{"line":347,"column":21}},"type":"ReturnStatement","argument":{"range":[11749,11754],"loc":{"start":{"line":347,"column":15},"end":{"line":347,"column":20}},"type":"BinaryExpression","operator":"*","left":{"range":[11749,11750],"loc":{"start":{"line":347,"column":15},"end":{"line":347,"column":16}},"type":"Identifier","name":"a"},"right":{"range":[11753,11754],"loc":{"start":{"line":347,"column":19},"end":{"line":347,"column":20}},"type":"Identifier","name":"b"}}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[11771,12060],"loc":{"start":{"line":349,"column":6},"end":{"line":355,"column":7}},"type":"Property","key":{"range":[11771,11785],"loc":{"start":{"line":349,"column":6},"end":{"line":349,"column":20}},"type":"Identifier","name":"subscriptIndex"},"computed":false,"value":{"range":[11787,12060],"loc":{"start":{"line":349,"column":22},"end":{"line":355,"column":7}},"type":"FunctionExpression","id":null,"params":[{"range":[11797,11798],"loc":{"start":{"line":349,"column":32},"end":{"line":349,"column":33}},"type":"Identifier","name":"o"},{"range":[11800,11801],"loc":{"start":{"line":349,"column":35},"end":{"line":349,"column":36}},"type":"Identifier","name":"i"}],"defaults":[],"body":{"range":[11803,12060],"loc":{"start":{"line":349,"column":38},"end":{"line":355,"column":7}},"type":"BlockStatement","body":[{"range":[11813,11836],"loc":{"start":{"line":350,"column":8},"end":{"line":350,"column":31}},"type":"IfStatement","test":{"range":[11818,11824],"loc":{"start":{"line":350,"column":13},"end":{"line":350,"column":19}},"type":"BinaryExpression","operator":">=","left":{"range":[11818,11819],"loc":{"start":{"line":350,"column":13},"end":{"line":350,"column":14}},"type":"Identifier","name":"i"},"right":{"range":[11823,11824],"loc":{"start":{"line":350,"column":18},"end":{"line":350,"column":19}},"type":"Literal","value":0,"raw":"0"}},"consequent":{"range":[11827,11836],"loc":{"start":{"line":350,"column":22},"end":{"line":350,"column":31}},"type":"ReturnStatement","argument":{"range":[11834,11835],"loc":{"start":{"line":350,"column":29},"end":{"line":350,"column":30}},"type":"Identifier","name":"i"}},"alternate":null},{"range":[11845,11904],"loc":{"start":{"line":351,"column":8},"end":{"line":351,"column":67}},"type":"IfStatement","test":{"range":[11850,11881],"loc":{"start":{"line":351,"column":13},"end":{"line":351,"column":44}},"type":"CallExpression","callee":{"range":[11850,11878],"loc":{"start":{"line":351,"column":13},"end":{"line":351,"column":41}},"type":"MemberExpression","computed":false,"object":{"range":[11850,11872],"loc":{"start":{"line":351,"column":13},"end":{"line":351,"column":35}},"type":"MemberExpression","computed":false,"object":{"range":[11850,11863],"loc":{"start":{"line":351,"column":13},"end":{"line":351,"column":26}},"type":"Identifier","name":"pythonRuntime"},"property":{"range":[11864,11872],"loc":{"start":{"line":351,"column":27},"end":{"line":351,"column":35}},"type":"Identifier","name":"internal"}},"property":{"range":[11873,11878],"loc":{"start":{"line":351,"column":36},"end":{"line":351,"column":41}},"type":"Identifier","name":"isSeq"}},"arguments":[{"range":[11879,11880],"loc":{"start":{"line":351,"column":42},"end":{"line":351,"column":43}},"type":"Identifier","name":"o"}]},"consequent":{"range":[11884,11904],"loc":{"start":{"line":351,"column":47},"end":{"line":351,"column":67}},"type":"ReturnStatement","argument":{"range":[11891,11903],"loc":{"start":{"line":351,"column":54},"end":{"line":351,"column":66}},"type":"BinaryExpression","operator":"+","left":{"range":[11891,11899],"loc":{"start":{"line":351,"column":54},"end":{"line":351,"column":62}},"type":"MemberExpression","computed":false,"object":{"range":[11891,11892],"loc":{"start":{"line":351,"column":54},"end":{"line":351,"column":55}},"type":"Identifier","name":"o"},"property":{"range":[11893,11899],"loc":{"start":{"line":351,"column":56},"end":{"line":351,"column":62}},"type":"Identifier","name":"length"}},"right":{"range":[11902,11903],"loc":{"start":{"line":351,"column":65},"end":{"line":351,"column":66}},"type":"Identifier","name":"i"}}},"alternate":null},{"range":[11913,11976],"loc":{"start":{"line":352,"column":8},"end":{"line":352,"column":71}},"type":"IfStatement","test":{"range":[11918,11953],"loc":{"start":{"line":352,"column":13},"end":{"line":352,"column":48}},"type":"CallExpression","callee":{"range":[11918,11950],"loc":{"start":{"line":352,"column":13},"end":{"line":352,"column":45}},"type":"MemberExpression","computed":false,"object":{"range":[11918,11940],"loc":{"start":{"line":352,"column":13},"end":{"line":352,"column":35}},"type":"MemberExpression","computed":false,"object":{"range":[11918,11931],"loc":{"start":{"line":352,"column":13},"end":{"line":352,"column":26}},"type":"Identifier","name":"pythonRuntime"},"property":{"range":[11932,11940],"loc":{"start":{"line":352,"column":27},"end":{"line":352,"column":35}},"type":"Identifier","name":"internal"}},"property":{"range":[11941,11950],"loc":{"start":{"line":352,"column":36},"end":{"line":352,"column":45}},"type":"Identifier","name":"isJSArray"}},"arguments":[{"range":[11951,11952],"loc":{"start":{"line":352,"column":46},"end":{"line":352,"column":47}},"type":"Identifier","name":"o"}]},"consequent":{"range":[11956,11976],"loc":{"start":{"line":352,"column":51},"end":{"line":352,"column":71}},"type":"ReturnStatement","argument":{"range":[11963,11975],"loc":{"start":{"line":352,"column":58},"end":{"line":352,"column":70}},"type":"BinaryExpression","operator":"+","left":{"range":[11963,11971],"loc":{"start":{"line":352,"column":58},"end":{"line":352,"column":66}},"type":"MemberExpression","computed":false,"object":{"range":[11963,11964],"loc":{"start":{"line":352,"column":58},"end":{"line":352,"column":59}},"type":"Identifier","name":"o"},"property":{"range":[11965,11971],"loc":{"start":{"line":352,"column":60},"end":{"line":352,"column":66}},"type":"Identifier","name":"length"}},"right":{"range":[11974,11975],"loc":{"start":{"line":352,"column":69},"end":{"line":352,"column":70}},"type":"Identifier","name":"i"}}},"alternate":null},{"range":[11985,12034],"loc":{"start":{"line":353,"column":8},"end":{"line":353,"column":57}},"type":"IfStatement","test":{"range":[11990,12011],"loc":{"start":{"line":353,"column":13},"end":{"line":353,"column":34}},"type":"BinaryExpression","operator":"===","left":{"range":[11990,11998],"loc":{"start":{"line":353,"column":13},"end":{"line":353,"column":21}},"type":"UnaryExpression","operator":"typeof","argument":{"range":[11997,11998],"loc":{"start":{"line":353,"column":20},"end":{"line":353,"column":21}},"type":"Identifier","name":"o"},"prefix":true},"right":{"range":[12003,12011],"loc":{"start":{"line":353,"column":26},"end":{"line":353,"column":34}},"type":"Literal","value":"string","raw":"\"string\""}},"consequent":{"range":[12014,12034],"loc":{"start":{"line":353,"column":37},"end":{"line":353,"column":57}},"type":"ReturnStatement","argument":{"range":[12021,12033],"loc":{"start":{"line":353,"column":44},"end":{"line":353,"column":56}},"type":"BinaryExpression","operator":"+","left":{"range":[12021,12029],"loc":{"start":{"line":353,"column":44},"end":{"line":353,"column":52}},"type":"MemberExpression","computed":false,"object":{"range":[12021,12022],"loc":{"start":{"line":353,"column":44},"end":{"line":353,"column":45}},"type":"Identifier","name":"o"},"property":{"range":[12023,12029],"loc":{"start":{"line":353,"column":46},"end":{"line":353,"column":52}},"type":"Identifier","name":"length"}},"right":{"range":[12032,12033],"loc":{"start":{"line":353,"column":55},"end":{"line":353,"column":56}},"type":"Identifier","name":"i"}}},"alternate":null},{"range":[12043,12052],"loc":{"start":{"line":354,"column":8},"end":{"line":354,"column":17}},"type":"ReturnStatement","argument":{"range":[12050,12051],"loc":{"start":{"line":354,"column":15},"end":{"line":354,"column":16}},"type":"Identifier","name":"i"}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false}]},"kind":"init","method":false,"shorthand":false},{"range":[12073,14831],"loc":{"start":{"line":358,"column":4},"end":{"line":451,"column":5}},"type":"Property","key":{"range":[12073,12080],"loc":{"start":{"line":358,"column":4},"end":{"line":358,"column":11}},"type":"Identifier","name":"objects"},"computed":false,"value":{"range":[12082,14831],"loc":{"start":{"line":358,"column":13},"end":{"line":451,"column":5}},"type":"ObjectExpression","properties":[{"range":[12090,12265],"loc":{"start":{"line":359,"column":6},"end":{"line":363,"column":7}},"type":"Property","key":{"range":[12090,12094],"loc":{"start":{"line":359,"column":6},"end":{"line":359,"column":10}},"type":"Identifier","name":"dict"},"computed":false,"value":{"range":[12096,12265],"loc":{"start":{"line":359,"column":12},"end":{"line":363,"column":7}},"type":"FunctionExpression","id":null,"params":[],"defaults":[],"body":{"range":[12108,12265],"loc":{"start":{"line":359,"column":24},"end":{"line":363,"column":7}},"type":"BlockStatement","body":[{"range":[12118,12145],"loc":{"start":{"line":360,"column":8},"end":{"line":360,"column":35}},"type":"VariableDeclaration","declarations":[{"range":[12122,12144],"loc":{"start":{"line":360,"column":12},"end":{"line":360,"column":34}},"type":"VariableDeclarator","id":{"range":[12122,12125],"loc":{"start":{"line":360,"column":12},"end":{"line":360,"column":15}},"type":"Identifier","name":"obj"},"init":{"range":[12128,12144],"loc":{"start":{"line":360,"column":18},"end":{"line":360,"column":34}},"type":"NewExpression","callee":{"range":[12132,12142],"loc":{"start":{"line":360,"column":22},"end":{"line":360,"column":32}},"type":"Identifier","name":"PythonDict"},"arguments":[]}}],"kind":"var"},{"range":[12154,12237],"loc":{"start":{"line":361,"column":8},"end":{"line":361,"column":91}},"type":"ForStatement","init":{"range":[12159,12168],"loc":{"start":{"line":361,"column":13},"end":{"line":361,"column":22}},"type":"VariableDeclaration","declarations":[{"range":[12163,12168],"loc":{"start":{"line":361,"column":17},"end":{"line":361,"column":22}},"type":"VariableDeclarator","id":{"range":[12163,12164],"loc":{"start":{"line":361,"column":17},"end":{"line":361,"column":18}},"type":"Identifier","name":"i"},"init":{"range":[12167,12168],"loc":{"start":{"line":361,"column":21},"end":{"line":361,"column":22}},"type":"Literal","value":0,"raw":"0"}}],"kind":"var"},"test":{"range":[12170,12190],"loc":{"start":{"line":361,"column":24},"end":{"line":361,"column":44}},"type":"BinaryExpression","operator":"<","left":{"range":[12170,12171],"loc":{"start":{"line":361,"column":24},"end":{"line":361,"column":25}},"type":"Identifier","name":"i"},"right":{"range":[12174,12190],"loc":{"start":{"line":361,"column":28},"end":{"line":361,"column":44}},"type":"MemberExpression","computed":false,"object":{"range":[12174,12183],"loc":{"start":{"line":361,"column":28},"end":{"line":361,"column":37}},"type":"Identifier","name":"arguments"},"property":{"range":[12184,12190],"loc":{"start":{"line":361,"column":38},"end":{"line":361,"column":44}},"type":"Identifier","name":"length"}}},"update":{"range":[12192,12195],"loc":{"start":{"line":361,"column":46},"end":{"line":361,"column":49}},"type":"UpdateExpression","operator":"++","argument":{"range":[12194,12195],"loc":{"start":{"line":361,"column":48},"end":{"line":361,"column":49}},"type":"Identifier","name":"i"},"prefix":true},"body":{"range":[12198,12237],"loc":{"start":{"line":361,"column":52},"end":{"line":361,"column":91}},"type":"ExpressionStatement","expression":{"range":[12198,12236],"loc":{"start":{"line":361,"column":52},"end":{"line":361,"column":90}},"type":"AssignmentExpression","operator":"=","left":{"range":[12198,12218],"loc":{"start":{"line":361,"column":52},"end":{"line":361,"column":72}},"type":"MemberExpression","computed":true,"object":{"range":[12198,12201],"loc":{"start":{"line":361,"column":52},"end":{"line":361,"column":55}},"type":"Identifier","name":"obj"},"property":{"range":[12202,12217],"loc":{"start":{"line":361,"column":56},"end":{"line":361,"column":71}},"type":"MemberExpression","computed":true,"object":{"range":[12202,12214],"loc":{"start":{"line":361,"column":56},"end":{"line":361,"column":68}},"type":"MemberExpression","computed":true,"object":{"range":[12202,12211],"loc":{"start":{"line":361,"column":56},"end":{"line":361,"column":65}},"type":"Identifier","name":"arguments"},"property":{"range":[12212,12213],"loc":{"start":{"line":361,"column":66},"end":{"line":361,"column":67}},"type":"Identifier","name":"i"}},"property":{"range":[12215,12216],"loc":{"start":{"line":361,"column":69},"end":{"line":361,"column":70}},"type":"Literal","value":0,"raw":"0"}}},"right":{"range":[12221,12236],"loc":{"start":{"line":361,"column":75},"end":{"line":361,"column":90}},"type":"MemberExpression","computed":true,"object":{"range":[12221,12233],"loc":{"start":{"line":361,"column":75},"end":{"line":361,"column":87}},"type":"MemberExpression","computed":true,"object":{"range":[12221,12230],"loc":{"start":{"line":361,"column":75},"end":{"line":361,"column":84}},"type":"Identifier","name":"arguments"},"property":{"range":[12231,12232],"loc":{"start":{"line":361,"column":85},"end":{"line":361,"column":86}},"type":"Identifier","name":"i"}},"property":{"range":[12234,12235],"loc":{"start":{"line":361,"column":88},"end":{"line":361,"column":89}},"type":"Literal","value":1,"raw":"1"}}}}},{"range":[12246,12257],"loc":{"start":{"line":362,"column":8},"end":{"line":362,"column":19}},"type":"ReturnStatement","argument":{"range":[12253,12256],"loc":{"start":{"line":362,"column":15},"end":{"line":362,"column":18}},"type":"Identifier","name":"obj"}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[12273,12430],"loc":{"start":{"line":364,"column":6},"end":{"line":369,"column":7}},"type":"Property","key":{"range":[12273,12277],"loc":{"start":{"line":364,"column":6},"end":{"line":364,"column":10}},"type":"Identifier","name":"list"},"computed":false,"value":{"range":[12279,12430],"loc":{"start":{"line":364,"column":12},"end":{"line":369,"column":7}},"type":"FunctionExpression","id":null,"params":[],"defaults":[],"body":{"range":[12291,12430],"loc":{"start":{"line":364,"column":24},"end":{"line":369,"column":7}},"type":"BlockStatement","body":[{"range":[12301,12314],"loc":{"start":{"line":365,"column":8},"end":{"line":365,"column":21}},"type":"VariableDeclaration","declarations":[{"range":[12305,12313],"loc":{"start":{"line":365,"column":12},"end":{"line":365,"column":20}},"type":"VariableDeclarator","id":{"range":[12305,12308],"loc":{"start":{"line":365,"column":12},"end":{"line":365,"column":15}},"type":"Identifier","name":"arr"},"init":{"range":[12311,12313],"loc":{"start":{"line":365,"column":18},"end":{"line":365,"column":20}},"type":"ArrayExpression","elements":[]}}],"kind":"var"},{"range":[12323,12354],"loc":{"start":{"line":366,"column":8},"end":{"line":366,"column":39}},"type":"ExpressionStatement","expression":{"range":[12323,12353],"loc":{"start":{"line":366,"column":8},"end":{"line":366,"column":38}},"type":"CallExpression","callee":{"range":[12323,12337],"loc":{"start":{"line":366,"column":8},"end":{"line":366,"column":22}},"type":"MemberExpression","computed":false,"object":{"range":[12323,12331],"loc":{"start":{"line":366,"column":8},"end":{"line":366,"column":16}},"type":"MemberExpression","computed":false,"object":{"range":[12323,12326],"loc":{"start":{"line":366,"column":8},"end":{"line":366,"column":11}},"type":"Identifier","name":"arr"},"property":{"range":[12327,12331],"loc":{"start":{"line":366,"column":12},"end":{"line":366,"column":16}},"type":"Identifier","name":"push"}},"property":{"range":[12332,12337],"loc":{"start":{"line":366,"column":17},"end":{"line":366,"column":22}},"type":"Identifier","name":"apply"}},"arguments":[{"range":[12338,12341],"loc":{"start":{"line":366,"column":23},"end":{"line":366,"column":26}},"type":"Identifier","name":"arr"},{"range":[12343,12352],"loc":{"start":{"line":366,"column":28},"end":{"line":366,"column":37}},"type":"Identifier","name":"arguments"}]}},{"range":[12363,12402],"loc":{"start":{"line":367,"column":8},"end":{"line":367,"column":47}},"type":"ExpressionStatement","expression":{"range":[12363,12401],"loc":{"start":{"line":367,"column":8},"end":{"line":367,"column":46}},"type":"CallExpression","callee":{"range":[12363,12396],"loc":{"start":{"line":367,"column":8},"end":{"line":367,"column":41}},"type":"MemberExpression","computed":false,"object":{"range":[12363,12382],"loc":{"start":{"line":367,"column":8},"end":{"line":367,"column":27}},"type":"MemberExpression","computed":false,"object":{"range":[12363,12376],"loc":{"start":{"line":367,"column":8},"end":{"line":367,"column":21}},"type":"Identifier","name":"pythonRuntime"},"property":{"range":[12377,12382],"loc":{"start":{"line":367,"column":22},"end":{"line":367,"column":27}},"type":"Identifier","name":"utils"}},"property":{"range":[12383,12396],"loc":{"start":{"line":367,"column":28},"end":{"line":367,"column":41}},"type":"Identifier","name":"convertToList"}},"arguments":[{"range":[12397,12400],"loc":{"start":{"line":367,"column":42},"end":{"line":367,"column":45}},"type":"Identifier","name":"arr"}]}},{"range":[12411,12422],"loc":{"start":{"line":368,"column":8},"end":{"line":368,"column":19}},"type":"ReturnStatement","argument":{"range":[12418,12421],"loc":{"start":{"line":368,"column":15},"end":{"line":368,"column":18}},"type":"Identifier","name":"arr"}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[12438,14825],"loc":{"start":{"line":370,"column":6},"end":{"line":450,"column":7}},"type":"Property","key":{"range":[12438,12443],"loc":{"start":{"line":370,"column":6},"end":{"line":370,"column":11}},"type":"Identifier","name":"tuple"},"computed":false,"value":{"range":[12445,14825],"loc":{"start":{"line":370,"column":13},"end":{"line":450,"column":7}},"type":"FunctionExpression","id":null,"params":[],"defaults":[],"body":{"range":[12457,14825],"loc":{"start":{"line":370,"column":25},"end":{"line":450,"column":7}},"type":"BlockStatement","body":[{"range":[12467,12480],"loc":{"start":{"line":371,"column":8},"end":{"line":371,"column":21}},"type":"VariableDeclaration","declarations":[{"range":[12471,12479],"loc":{"start":{"line":371,"column":12},"end":{"line":371,"column":20}},"type":"VariableDeclarator","id":{"range":[12471,12474],"loc":{"start":{"line":371,"column":12},"end":{"line":371,"column":15}},"type":"Identifier","name":"arr"},"init":{"range":[12477,12479],"loc":{"start":{"line":371,"column":18},"end":{"line":371,"column":20}},"type":"ArrayExpression","elements":[]}}],"kind":"var"},{"range":[12489,12520],"loc":{"start":{"line":372,"column":8},"end":{"line":372,"column":39}},"type":"ExpressionStatement","expression":{"range":[12489,12519],"loc":{"start":{"line":372,"column":8},"end":{"line":372,"column":38}},"type":"CallExpression","callee":{"range":[12489,12503],"loc":{"start":{"line":372,"column":8},"end":{"line":372,"column":22}},"type":"MemberExpression","computed":false,"object":{"range":[12489,12497],"loc":{"start":{"line":372,"column":8},"end":{"line":372,"column":16}},"type":"MemberExpression","computed":false,"object":{"range":[12489,12492],"loc":{"start":{"line":372,"column":8},"end":{"line":372,"column":11}},"type":"Identifier","name":"arr"},"property":{"range":[12493,12497],"loc":{"start":{"line":372,"column":12},"end":{"line":372,"column":16}},"type":"Identifier","name":"push"}},"property":{"range":[12498,12503],"loc":{"start":{"line":372,"column":17},"end":{"line":372,"column":22}},"type":"Identifier","name":"apply"}},"arguments":[{"range":[12504,12507],"loc":{"start":{"line":372,"column":23},"end":{"line":372,"column":26}},"type":"Identifier","name":"arr"},{"range":[12509,12518],"loc":{"start":{"line":372,"column":28},"end":{"line":372,"column":37}},"type":"Identifier","name":"arguments"}]}},{"range":[12529,12662],"loc":{"start":{"line":373,"column":8},"end":{"line":377,"column":11}},"type":"ExpressionStatement","expression":{"range":[12529,12661],"loc":{"start":{"line":373,"column":8},"end":{"line":377,"column":10}},"type":"CallExpression","callee":{"range":[12529,12550],"loc":{"start":{"line":373,"column":8},"end":{"line":373,"column":29}},"type":"MemberExpression","computed":false,"object":{"range":[12529,12535],"loc":{"start":{"line":373,"column":8},"end":{"line":373,"column":14}},"type":"Identifier","name":"Object"},"property":{"range":[12536,12550],"loc":{"start":{"line":373,"column":15},"end":{"line":373,"column":29}},"type":"Identifier","name":"defineProperty"}},"arguments":[{"range":[12551,12554],"loc":{"start":{"line":373,"column":30},"end":{"line":373,"column":33}},"type":"Identifier","name":"arr"},{"range":[12556,12563],"loc":{"start":{"line":373,"column":35},"end":{"line":373,"column":42}},"type":"Literal","value":"_type","raw":"\"_type\""},{"range":[12573,12660],"loc":{"start":{"line":374,"column":8},"end":{"line":377,"column":9}},"type":"ObjectExpression","properties":[{"range":[12585,12621],"loc":{"start":{"line":375,"column":10},"end":{"line":375,"column":46}},"type":"Property","key":{"range":[12585,12588],"loc":{"start":{"line":375,"column":10},"end":{"line":375,"column":13}},"type":"Identifier","name":"get"},"computed":false,"value":{"range":[12590,12621],"loc":{"start":{"line":375,"column":15},"end":{"line":375,"column":46}},"type":"FunctionExpression","id":null,"params":[],"defaults":[],"body":{"range":[12602,12621],"loc":{"start":{"line":375,"column":27},"end":{"line":375,"column":46}},"type":"BlockStatement","body":[{"range":[12604,12619],"loc":{"start":{"line":375,"column":29},"end":{"line":375,"column":44}},"type":"ReturnStatement","argument":{"range":[12611,12618],"loc":{"start":{"line":375,"column":36},"end":{"line":375,"column":43}},"type":"Literal","value":"tuple","raw":"'tuple'"}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[12633,12650],"loc":{"start":{"line":376,"column":10},"end":{"line":376,"column":27}},"type":"Property","key":{"range":[12633,12643],"loc":{"start":{"line":376,"column":10},"end":{"line":376,"column":20}},"type":"Identifier","name":"enumerable"},"computed":false,"value":{"range":[12645,12650],"loc":{"start":{"line":376,"column":22},"end":{"line":376,"column":27}},"type":"Literal","value":false,"raw":"false"},"kind":"init","method":false,"shorthand":false}]}]}},{"range":[12671,12805],"loc":{"start":{"line":378,"column":8},"end":{"line":382,"column":11}},"type":"ExpressionStatement","expression":{"range":[12671,12804],"loc":{"start":{"line":378,"column":8},"end":{"line":382,"column":10}},"type":"CallExpression","callee":{"range":[12671,12692],"loc":{"start":{"line":378,"column":8},"end":{"line":378,"column":29}},"type":"MemberExpression","computed":false,"object":{"range":[12671,12677],"loc":{"start":{"line":378,"column":8},"end":{"line":378,"column":14}},"type":"Identifier","name":"Object"},"property":{"range":[12678,12692],"loc":{"start":{"line":378,"column":15},"end":{"line":378,"column":29}},"type":"Identifier","name":"defineProperty"}},"arguments":[{"range":[12693,12696],"loc":{"start":{"line":378,"column":30},"end":{"line":378,"column":33}},"type":"Identifier","name":"arr"},{"range":[12698,12709],"loc":{"start":{"line":378,"column":35},"end":{"line":378,"column":46}},"type":"Literal","value":"_isPython","raw":"\"_isPython\""},{"range":[12719,12803],"loc":{"start":{"line":379,"column":8},"end":{"line":382,"column":9}},"type":"ObjectExpression","properties":[{"range":[12731,12764],"loc":{"start":{"line":380,"column":10},"end":{"line":380,"column":43}},"type":"Property","key":{"range":[12731,12734],"loc":{"start":{"line":380,"column":10},"end":{"line":380,"column":13}},"type":"Identifier","name":"get"},"computed":false,"value":{"range":[12736,12764],"loc":{"start":{"line":380,"column":15},"end":{"line":380,"column":43}},"type":"FunctionExpression","id":null,"params":[],"defaults":[],"body":{"range":[12748,12764],"loc":{"start":{"line":380,"column":27},"end":{"line":380,"column":43}},"type":"BlockStatement","body":[{"range":[12750,12762],"loc":{"start":{"line":380,"column":29},"end":{"line":380,"column":41}},"type":"ReturnStatement","argument":{"range":[12757,12761],"loc":{"start":{"line":380,"column":36},"end":{"line":380,"column":40}},"type":"Literal","value":true,"raw":"true"}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[12776,12793],"loc":{"start":{"line":381,"column":10},"end":{"line":381,"column":27}},"type":"Property","key":{"range":[12776,12786],"loc":{"start":{"line":381,"column":10},"end":{"line":381,"column":20}},"type":"Identifier","name":"enumerable"},"computed":false,"value":{"range":[12788,12793],"loc":{"start":{"line":381,"column":22},"end":{"line":381,"column":27}},"type":"Literal","value":false,"raw":"false"},"kind":"init","method":false,"shorthand":false}]}]}},{"range":[12814,13077],"loc":{"start":{"line":383,"column":8},"end":{"line":392,"column":11}},"type":"ExpressionStatement","expression":{"range":[12814,13076],"loc":{"start":{"line":383,"column":8},"end":{"line":392,"column":10}},"type":"CallExpression","callee":{"range":[12814,12835],"loc":{"start":{"line":383,"column":8},"end":{"line":383,"column":29}},"type":"MemberExpression","computed":false,"object":{"range":[12814,12820],"loc":{"start":{"line":383,"column":8},"end":{"line":383,"column":14}},"type":"Identifier","name":"Object"},"property":{"range":[12821,12835],"loc":{"start":{"line":383,"column":15},"end":{"line":383,"column":29}},"type":"Identifier","name":"defineProperty"}},"arguments":[{"range":[12836,12839],"loc":{"start":{"line":383,"column":30},"end":{"line":383,"column":33}},"type":"Identifier","name":"arr"},{"range":[12841,12848],"loc":{"start":{"line":383,"column":35},"end":{"line":383,"column":42}},"type":"Literal","value":"count","raw":"\"count\""},{"range":[12858,13075],"loc":{"start":{"line":384,"column":8},"end":{"line":392,"column":9}},"type":"ObjectExpression","properties":[{"range":[12870,13036],"loc":{"start":{"line":385,"column":10},"end":{"line":390,"column":11}},"type":"Property","key":{"range":[12870,12875],"loc":{"start":{"line":385,"column":10},"end":{"line":385,"column":15}},"type":"Identifier","name":"value"},"computed":false,"value":{"range":[12877,13036],"loc":{"start":{"line":385,"column":17},"end":{"line":390,"column":11}},"type":"FunctionExpression","id":null,"params":[{"range":[12887,12888],"loc":{"start":{"line":385,"column":27},"end":{"line":385,"column":28}},"type":"Identifier","name":"x"}],"defaults":[],"body":{"range":[12890,13036],"loc":{"start":{"line":385,"column":30},"end":{"line":390,"column":11}},"type":"BlockStatement","body":[{"range":[12904,12914],"loc":{"start":{"line":386,"column":12},"end":{"line":386,"column":22}},"type":"VariableDeclaration","declarations":[{"range":[12908,12913],"loc":{"start":{"line":386,"column":16},"end":{"line":386,"column":21}},"type":"VariableDeclarator","id":{"range":[12908,12909],"loc":{"start":{"line":386,"column":16},"end":{"line":386,"column":17}},"type":"Identifier","name":"c"},"init":{"range":[12912,12913],"loc":{"start":{"line":386,"column":20},"end":{"line":386,"column":21}},"type":"Literal","value":0,"raw":"0"}}],"kind":"var"},{"range":[12927,13002],"loc":{"start":{"line":387,"column":12},"end":{"line":388,"column":37}},"type":"ForStatement","init":{"range":[12932,12941],"loc":{"start":{"line":387,"column":17},"end":{"line":387,"column":26}},"type":"VariableDeclaration","declarations":[{"range":[12936,12941],"loc":{"start":{"line":387,"column":21},"end":{"line":387,"column":26}},"type":"VariableDeclarator","id":{"range":[12936,12937],"loc":{"start":{"line":387,"column":21},"end":{"line":387,"column":22}},"type":"Identifier","name":"i"},"init":{"range":[12940,12941],"loc":{"start":{"line":387,"column":25},"end":{"line":387,"column":26}},"type":"Literal","value":0,"raw":"0"}}],"kind":"var"},"test":{"range":[12943,12958],"loc":{"start":{"line":387,"column":28},"end":{"line":387,"column":43}},"type":"BinaryExpression","operator":"<","left":{"range":[12943,12944],"loc":{"start":{"line":387,"column":28},"end":{"line":387,"column":29}},"type":"Identifier","name":"i"},"right":{"range":[12947,12958],"loc":{"start":{"line":387,"column":32},"end":{"line":387,"column":43}},"type":"MemberExpression","computed":false,"object":{"range":[12947,12951],"loc":{"start":{"line":387,"column":32},"end":{"line":387,"column":36}},"type":"ThisExpression"},"property":{"range":[12952,12958],"loc":{"start":{"line":387,"column":37},"end":{"line":387,"column":43}},"type":"Identifier","name":"length"}}},"update":{"range":[12960,12963],"loc":{"start":{"line":387,"column":45},"end":{"line":387,"column":48}},"type":"UpdateExpression","operator":"++","argument":{"range":[12960,12961],"loc":{"start":{"line":387,"column":45},"end":{"line":387,"column":46}},"type":"Identifier","name":"i"},"prefix":false},"body":{"range":[12979,13002],"loc":{"start":{"line":388,"column":14},"end":{"line":388,"column":37}},"type":"IfStatement","test":{"range":[12983,12996],"loc":{"start":{"line":388,"column":18},"end":{"line":388,"column":31}},"type":"BinaryExpression","operator":"===","left":{"range":[12983,12990],"loc":{"start":{"line":388,"column":18},"end":{"line":388,"column":25}},"type":"MemberExpression","computed":true,"object":{"range":[12983,12987],"loc":{"start":{"line":388,"column":18},"end":{"line":388,"column":22}},"type":"ThisExpression"},"property":{"range":[12988,12989],"loc":{"start":{"line":388,"column":23},"end":{"line":388,"column":24}},"type":"Identifier","name":"i"}},"right":{"range":[12995,12996],"loc":{"start":{"line":388,"column":30},"end":{"line":388,"column":31}},"type":"Identifier","name":"x"}},"consequent":{"range":[12998,13002],"loc":{"start":{"line":388,"column":33},"end":{"line":388,"column":37}},"type":"ExpressionStatement","expression":{"range":[12998,13001],"loc":{"start":{"line":388,"column":33},"end":{"line":388,"column":36}},"type":"UpdateExpression","operator":"++","argument":{"range":[12998,12999],"loc":{"start":{"line":388,"column":33},"end":{"line":388,"column":34}},"type":"Identifier","name":"c"},"prefix":false}},"alternate":null}},{"range":[13015,13024],"loc":{"start":{"line":389,"column":12},"end":{"line":389,"column":21}},"type":"ReturnStatement","argument":{"range":[13022,13023],"loc":{"start":{"line":389,"column":19},"end":{"line":389,"column":20}},"type":"Identifier","name":"c"}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[13048,13065],"loc":{"start":{"line":391,"column":10},"end":{"line":391,"column":27}},"type":"Property","key":{"range":[13048,13058],"loc":{"start":{"line":391,"column":10},"end":{"line":391,"column":20}},"type":"Identifier","name":"enumerable"},"computed":false,"value":{"range":[13060,13065],"loc":{"start":{"line":391,"column":22},"end":{"line":391,"column":27}},"type":"Literal","value":false,"raw":"false"},"kind":"init","method":false,"shorthand":false}]}]}},{"range":[13086,13630],"loc":{"start":{"line":393,"column":8},"end":{"line":409,"column":11}},"type":"ExpressionStatement","expression":{"range":[13086,13629],"loc":{"start":{"line":393,"column":8},"end":{"line":409,"column":10}},"type":"CallExpression","callee":{"range":[13086,13107],"loc":{"start":{"line":393,"column":8},"end":{"line":393,"column":29}},"type":"MemberExpression","computed":false,"object":{"range":[13086,13092],"loc":{"start":{"line":393,"column":8},"end":{"line":393,"column":14}},"type":"Identifier","name":"Object"},"property":{"range":[13093,13107],"loc":{"start":{"line":393,"column":15},"end":{"line":393,"column":29}},"type":"Identifier","name":"defineProperty"}},"arguments":[{"range":[13108,13111],"loc":{"start":{"line":393,"column":30},"end":{"line":393,"column":33}},"type":"Identifier","name":"arr"},{"range":[13113,13121],"loc":{"start":{"line":393,"column":35},"end":{"line":393,"column":43}},"type":"Literal","value":"equals","raw":"\"equals\""},{"range":[13131,13628],"loc":{"start":{"line":394,"column":8},"end":{"line":409,"column":9}},"type":"ObjectExpression","properties":[{"range":[13143,13589],"loc":{"start":{"line":395,"column":10},"end":{"line":407,"column":11}},"type":"Property","key":{"range":[13143,13148],"loc":{"start":{"line":395,"column":10},"end":{"line":395,"column":15}},"type":"Identifier","name":"value"},"computed":false,"value":{"range":[13150,13589],"loc":{"start":{"line":395,"column":17},"end":{"line":407,"column":11}},"type":"FunctionExpression","id":null,"params":[{"range":[13160,13161],"loc":{"start":{"line":395,"column":27},"end":{"line":395,"column":28}},"type":"Identifier","name":"x"}],"defaults":[],"body":{"range":[13163,13589],"loc":{"start":{"line":395,"column":30},"end":{"line":407,"column":11}},"type":"BlockStatement","body":[{"range":[13177,13551],"loc":{"start":{"line":396,"column":12},"end":{"line":405,"column":25}},"type":"TryStatement","block":{"range":[13181,13525],"loc":{"start":{"line":396,"column":16},"end":{"line":404,"column":13}},"type":"BlockStatement","body":[{"range":[13197,13240],"loc":{"start":{"line":397,"column":14},"end":{"line":397,"column":57}},"type":"IfStatement","test":{"range":[13201,13225],"loc":{"start":{"line":397,"column":18},"end":{"line":397,"column":42}},"type":"BinaryExpression","operator":"!==","left":{"range":[13201,13212],"loc":{"start":{"line":397,"column":18},"end":{"line":397,"column":29}},"type":"MemberExpression","computed":false,"object":{"range":[13201,13205],"loc":{"start":{"line":397,"column":18},"end":{"line":397,"column":22}},"type":"ThisExpression"},"property":{"range":[13206,13212],"loc":{"start":{"line":397,"column":23},"end":{"line":397,"column":29}},"type":"Identifier","name":"length"}},"right":{"range":[13217,13225],"loc":{"start":{"line":397,"column":34},"end":{"line":397,"column":42}},"type":"MemberExpression","computed":false,"object":{"range":[13217,13218],"loc":{"start":{"line":397,"column":34},"end":{"line":397,"column":35}},"type":"Identifier","name":"x"},"property":{"range":[13219,13225],"loc":{"start":{"line":397,"column":36},"end":{"line":397,"column":42}},"type":"Identifier","name":"length"}}},"consequent":{"range":[13227,13240],"loc":{"start":{"line":397,"column":44},"end":{"line":397,"column":57}},"type":"ReturnStatement","argument":{"range":[13234,13239],"loc":{"start":{"line":397,"column":51},"end":{"line":397,"column":56}},"type":"Literal","value":false,"raw":"false"}},"alternate":null},{"range":[13255,13484],"loc":{"start":{"line":398,"column":14},"end":{"line":402,"column":15}},"type":"ForStatement","init":{"range":[13260,13269],"loc":{"start":{"line":398,"column":19},"end":{"line":398,"column":28}},"type":"VariableDeclaration","declarations":[{"range":[13264,13269],"loc":{"start":{"line":398,"column":23},"end":{"line":398,"column":28}},"type":"VariableDeclarator","id":{"range":[13264,13265],"loc":{"start":{"line":398,"column":23},"end":{"line":398,"column":24}},"type":"Identifier","name":"i"},"init":{"range":[13268,13269],"loc":{"start":{"line":398,"column":27},"end":{"line":398,"column":28}},"type":"Literal","value":0,"raw":"0"}}],"kind":"var"},"test":{"range":[13271,13286],"loc":{"start":{"line":398,"column":30},"end":{"line":398,"column":45}},"type":"BinaryExpression","operator":"<","left":{"range":[13271,13272],"loc":{"start":{"line":398,"column":30},"end":{"line":398,"column":31}},"type":"Identifier","name":"i"},"right":{"range":[13275,13286],"loc":{"start":{"line":398,"column":34},"end":{"line":398,"column":45}},"type":"MemberExpression","computed":false,"object":{"range":[13275,13279],"loc":{"start":{"line":398,"column":34},"end":{"line":398,"column":38}},"type":"ThisExpression"},"property":{"range":[13280,13286],"loc":{"start":{"line":398,"column":39},"end":{"line":398,"column":45}},"type":"Identifier","name":"length"}}},"update":{"range":[13288,13291],"loc":{"start":{"line":398,"column":47},"end":{"line":398,"column":50}},"type":"UpdateExpression","operator":"++","argument":{"range":[13288,13289],"loc":{"start":{"line":398,"column":47},"end":{"line":398,"column":48}},"type":"Identifier","name":"i"},"prefix":false},"body":{"range":[13293,13484],"loc":{"start":{"line":398,"column":52},"end":{"line":402,"column":15}},"type":"BlockStatement","body":[{"range":[13311,13468],"loc":{"start":{"line":399,"column":16},"end":{"line":401,"column":58}},"type":"IfStatement","test":{"range":[13315,13347],"loc":{"start":{"line":399,"column":20},"end":{"line":399,"column":52}},"type":"CallExpression","callee":{"range":[13315,13337],"loc":{"start":{"line":399,"column":20},"end":{"line":399,"column":42}},"type":"MemberExpression","computed":false,"object":{"range":[13315,13322],"loc":{"start":{"line":399,"column":20},"end":{"line":399,"column":27}},"type":"MemberExpression","computed":true,"object":{"range":[13315,13319],"loc":{"start":{"line":399,"column":20},"end":{"line":399,"column":24}},"type":"ThisExpression"},"property":{"range":[13320,13321],"loc":{"start":{"line":399,"column":25},"end":{"line":399,"column":26}},"type":"Identifier","name":"i"}},"property":{"range":[13323,13337],"loc":{"start":{"line":399,"column":28},"end":{"line":399,"column":42}},"type":"Identifier","name":"hasOwnProperty"}},"arguments":[{"range":[13338,13346],"loc":{"start":{"line":399,"column":43},"end":{"line":399,"column":51}},"type":"Literal","value":"equals","raw":"\"equals\""}]},"consequent":{"range":[13349,13427],"loc":{"start":{"line":399,"column":54},"end":{"line":401,"column":17}},"type":"BlockStatement","body":[{"range":[13369,13409],"loc":{"start":{"line":400,"column":18},"end":{"line":400,"column":58}},"type":"IfStatement","test":{"range":[13373,13394],"loc":{"start":{"line":400,"column":22},"end":{"line":400,"column":43}},"type":"UnaryExpression","operator":"!","argument":{"range":[13374,13394],"loc":{"start":{"line":400,"column":23},"end":{"line":400,"column":43}},"type":"CallExpression","callee":{"range":[13374,13388],"loc":{"start":{"line":400,"column":23},"end":{"line":400,"column":37}},"type":"MemberExpression","computed":false,"object":{"range":[13374,13381],"loc":{"start":{"line":400,"column":23},"end":{"line":400,"column":30}},"type":"MemberExpression","computed":true,"object":{"range":[13374,13378],"loc":{"start":{"line":400,"column":23},"end":{"line":400,"column":27}},"type":"ThisExpression"},"property":{"range":[13379,13380],"loc":{"start":{"line":400,"column":28},"end":{"line":400,"column":29}},"type":"Identifier","name":"i"}},"property":{"range":[13382,13388],"loc":{"start":{"line":400,"column":31},"end":{"line":400,"column":37}},"type":"Identifier","name":"equals"}},"arguments":[{"range":[13389,13393],"loc":{"start":{"line":400,"column":38},"end":{"line":400,"column":42}},"type":"MemberExpression","computed":true,"object":{"range":[13389,13390],"loc":{"start":{"line":400,"column":38},"end":{"line":400,"column":39}},"type":"Identifier","name":"x"},"property":{"range":[13391,13392],"loc":{"start":{"line":400,"column":40},"end":{"line":400,"column":41}},"type":"Identifier","name":"i"}}]},"prefix":true},"consequent":{"range":[13396,13409],"loc":{"start":{"line":400,"column":45},"end":{"line":400,"column":58}},"type":"ReturnStatement","argument":{"range":[13403,13408],"loc":{"start":{"line":400,"column":52},"end":{"line":400,"column":57}},"type":"Literal","value":false,"raw":"false"}},"alternate":null}]},"alternate":{"range":[13433,13468],"loc":{"start":{"line":401,"column":23},"end":{"line":401,"column":58}},"type":"IfStatement","test":{"range":[13437,13453],"loc":{"start":{"line":401,"column":27},"end":{"line":401,"column":43}},"type":"BinaryExpression","operator":"!==","left":{"range":[13437,13444],"loc":{"start":{"line":401,"column":27},"end":{"line":401,"column":34}},"type":"MemberExpression","computed":true,"object":{"range":[13437,13441],"loc":{"start":{"line":401,"column":27},"end":{"line":401,"column":31}},"type":"ThisExpression"},"property":{"range":[13442,13443],"loc":{"start":{"line":401,"column":32},"end":{"line":401,"column":33}},"type":"Identifier","name":"i"}},"right":{"range":[13449,13453],"loc":{"start":{"line":401,"column":39},"end":{"line":401,"column":43}},"type":"MemberExpression","computed":true,"object":{"range":[13449,13450],"loc":{"start":{"line":401,"column":39},"end":{"line":401,"column":40}},"type":"Identifier","name":"x"},"property":{"range":[13451,13452],"loc":{"start":{"line":401,"column":41},"end":{"line":401,"column":42}},"type":"Identifier","name":"i"}}},"consequent":{"range":[13455,13468],"loc":{"start":{"line":401,"column":45},"end":{"line":401,"column":58}},"type":"ReturnStatement","argument":{"range":[13462,13467],"loc":{"start":{"line":401,"column":52},"end":{"line":401,"column":57}},"type":"Literal","value":false,"raw":"false"}},"alternate":null}}]}},{"range":[13499,13511],"loc":{"start":{"line":403,"column":14},"end":{"line":403,"column":26}},"type":"ReturnStatement","argument":{"range":[13506,13510],"loc":{"start":{"line":403,"column":21},"end":{"line":403,"column":25}},"type":"Literal","value":true,"raw":"true"}}]},"guardedHandlers":[],"handlers":[{"range":[13538,13551],"loc":{"start":{"line":405,"column":12},"end":{"line":405,"column":25}},"type":"CatchClause","param":{"range":[13545,13546],"loc":{"start":{"line":405,"column":19},"end":{"line":405,"column":20}},"type":"Identifier","name":"e"},"body":{"range":[13548,13551],"loc":{"start":{"line":405,"column":22},"end":{"line":405,"column":25}},"type":"BlockStatement","body":[]}}],"handler":{"range":[13538,13551],"loc":{"start":{"line":405,"column":12},"end":{"line":405,"column":25}},"type":"CatchClause","param":{"range":[13545,13546],"loc":{"start":{"line":405,"column":19},"end":{"line":405,"column":20}},"type":"Identifier","name":"e"},"body":{"range":[13548,13551],"loc":{"start":{"line":405,"column":22},"end":{"line":405,"column":25}},"type":"BlockStatement","body":[]}},"finalizer":null},{"range":[13564,13577],"loc":{"start":{"line":406,"column":12},"end":{"line":406,"column":25}},"type":"ReturnStatement","argument":{"range":[13571,13576],"loc":{"start":{"line":406,"column":19},"end":{"line":406,"column":24}},"type":"Literal","value":false,"raw":"false"}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[13601,13618],"loc":{"start":{"line":408,"column":10},"end":{"line":408,"column":27}},"type":"Property","key":{"range":[13601,13611],"loc":{"start":{"line":408,"column":10},"end":{"line":408,"column":20}},"type":"Identifier","name":"enumerable"},"computed":false,"value":{"range":[13613,13618],"loc":{"start":{"line":408,"column":22},"end":{"line":408,"column":27}},"type":"Literal","value":false,"raw":"false"},"kind":"init","method":false,"shorthand":false}]}]}},{"range":[13639,13805],"loc":{"start":{"line":410,"column":8},"end":{"line":416,"column":11}},"type":"ExpressionStatement","expression":{"range":[13639,13804],"loc":{"start":{"line":410,"column":8},"end":{"line":416,"column":10}},"type":"CallExpression","callee":{"range":[13639,13660],"loc":{"start":{"line":410,"column":8},"end":{"line":410,"column":29}},"type":"MemberExpression","computed":false,"object":{"range":[13639,13645],"loc":{"start":{"line":410,"column":8},"end":{"line":410,"column":14}},"type":"Identifier","name":"Object"},"property":{"range":[13646,13660],"loc":{"start":{"line":410,"column":15},"end":{"line":410,"column":29}},"type":"Identifier","name":"defineProperty"}},"arguments":[{"range":[13661,13664],"loc":{"start":{"line":410,"column":30},"end":{"line":410,"column":33}},"type":"Identifier","name":"arr"},{"range":[13666,13673],"loc":{"start":{"line":410,"column":35},"end":{"line":410,"column":42}},"type":"Literal","value":"index","raw":"\"index\""},{"range":[13683,13803],"loc":{"start":{"line":411,"column":8},"end":{"line":416,"column":9}},"type":"ObjectExpression","properties":[{"range":[13695,13764],"loc":{"start":{"line":412,"column":10},"end":{"line":414,"column":11}},"type":"Property","key":{"range":[13695,13700],"loc":{"start":{"line":412,"column":10},"end":{"line":412,"column":15}},"type":"Identifier","name":"value"},"computed":false,"value":{"range":[13702,13764],"loc":{"start":{"line":412,"column":17},"end":{"line":414,"column":11}},"type":"FunctionExpression","id":null,"params":[{"range":[13712,13713],"loc":{"start":{"line":412,"column":27},"end":{"line":412,"column":28}},"type":"Identifier","name":"x"}],"defaults":[],"body":{"range":[13715,13764],"loc":{"start":{"line":412,"column":30},"end":{"line":414,"column":11}},"type":"BlockStatement","body":[{"range":[13729,13752],"loc":{"start":{"line":413,"column":12},"end":{"line":413,"column":35}},"type":"ReturnStatement","argument":{"range":[13736,13751],"loc":{"start":{"line":413,"column":19},"end":{"line":413,"column":34}},"type":"CallExpression","callee":{"range":[13736,13748],"loc":{"start":{"line":413,"column":19},"end":{"line":413,"column":31}},"type":"MemberExpression","computed":false,"object":{"range":[13736,13740],"loc":{"start":{"line":413,"column":19},"end":{"line":413,"column":23}},"type":"ThisExpression"},"property":{"range":[13741,13748],"loc":{"start":{"line":413,"column":24},"end":{"line":413,"column":31}},"type":"Identifier","name":"indexOf"}},"arguments":[{"range":[13749,13750],"loc":{"start":{"line":413,"column":32},"end":{"line":413,"column":33}},"type":"Identifier","name":"x"}]}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[13776,13793],"loc":{"start":{"line":415,"column":10},"end":{"line":415,"column":27}},"type":"Property","key":{"range":[13776,13786],"loc":{"start":{"line":415,"column":10},"end":{"line":415,"column":20}},"type":"Identifier","name":"enumerable"},"computed":false,"value":{"range":[13788,13793],"loc":{"start":{"line":415,"column":22},"end":{"line":415,"column":27}},"type":"Literal","value":false,"raw":"false"},"kind":"init","method":false,"shorthand":false}]}]}},{"range":[13814,14291],"loc":{"start":{"line":417,"column":8},"end":{"line":431,"column":11}},"type":"ExpressionStatement","expression":{"range":[13814,14290],"loc":{"start":{"line":417,"column":8},"end":{"line":431,"column":10}},"type":"CallExpression","callee":{"range":[13814,13835],"loc":{"start":{"line":417,"column":8},"end":{"line":417,"column":29}},"type":"MemberExpression","computed":false,"object":{"range":[13814,13820],"loc":{"start":{"line":417,"column":8},"end":{"line":417,"column":14}},"type":"Identifier","name":"Object"},"property":{"range":[13821,13835],"loc":{"start":{"line":417,"column":15},"end":{"line":417,"column":29}},"type":"Identifier","name":"defineProperty"}},"arguments":[{"range":[13836,13839],"loc":{"start":{"line":417,"column":30},"end":{"line":417,"column":33}},"type":"Identifier","name":"arr"},{"range":[13841,13850],"loc":{"start":{"line":417,"column":35},"end":{"line":417,"column":44}},"type":"Literal","value":"indexOf","raw":"\"indexOf\""},{"range":[13860,14289],"loc":{"start":{"line":418,"column":8},"end":{"line":431,"column":9}},"type":"ObjectExpression","properties":[{"range":[13872,14250],"loc":{"start":{"line":419,"column":10},"end":{"line":429,"column":11}},"type":"Property","key":{"range":[13872,13877],"loc":{"start":{"line":419,"column":10},"end":{"line":419,"column":15}},"type":"Identifier","name":"value"},"computed":false,"value":{"range":[13879,14250],"loc":{"start":{"line":419,"column":17},"end":{"line":429,"column":11}},"type":"FunctionExpression","id":null,"params":[{"range":[13889,13890],"loc":{"start":{"line":419,"column":27},"end":{"line":419,"column":28}},"type":"Identifier","name":"x"},{"range":[13892,13901],"loc":{"start":{"line":419,"column":30},"end":{"line":419,"column":39}},"type":"Identifier","name":"fromIndex"}],"defaults":[],"body":{"range":[13903,14250],"loc":{"start":{"line":419,"column":41},"end":{"line":429,"column":11}},"type":"BlockStatement","body":[{"range":[13917,14215],"loc":{"start":{"line":420,"column":12},"end":{"line":427,"column":25}},"type":"TryStatement","block":{"range":[13921,14189],"loc":{"start":{"line":420,"column":16},"end":{"line":426,"column":13}},"type":"BlockStatement","body":[{"range":[13937,14175],"loc":{"start":{"line":421,"column":14},"end":{"line":425,"column":15}},"type":"ForStatement","init":{"range":[13942,13975],"loc":{"start":{"line":421,"column":19},"end":{"line":421,"column":52}},"type":"VariableDeclaration","declarations":[{"range":[13946,13975],"loc":{"start":{"line":421,"column":23},"end":{"line":421,"column":52}},"type":"VariableDeclarator","id":{"range":[13946,13947],"loc":{"start":{"line":421,"column":23},"end":{"line":421,"column":24}},"type":"Identifier","name":"i"},"init":{"range":[13950,13975],"loc":{"start":{"line":421,"column":27},"end":{"line":421,"column":52}},"type":"ConditionalExpression","test":{"range":[13950,13959],"loc":{"start":{"line":421,"column":27},"end":{"line":421,"column":36}},"type":"Identifier","name":"fromIndex"},"consequent":{"range":[13962,13971],"loc":{"start":{"line":421,"column":39},"end":{"line":421,"column":48}},"type":"Identifier","name":"fromIndex"},"alternate":{"range":[13974,13975],"loc":{"start":{"line":421,"column":51},"end":{"line":421,"column":52}},"type":"Literal","value":0,"raw":"0"}}}],"kind":"var"},"test":{"range":[13977,13992],"loc":{"start":{"line":421,"column":54},"end":{"line":421,"column":69}},"type":"BinaryExpression","operator":"<","left":{"range":[13977,13978],"loc":{"start":{"line":421,"column":54},"end":{"line":421,"column":55}},"type":"Identifier","name":"i"},"right":{"range":[13981,13992],"loc":{"start":{"line":421,"column":58},"end":{"line":421,"column":69}},"type":"MemberExpression","computed":false,"object":{"range":[13981,13985],"loc":{"start":{"line":421,"column":58},"end":{"line":421,"column":62}},"type":"ThisExpression"},"property":{"range":[13986,13992],"loc":{"start":{"line":421,"column":63},"end":{"line":421,"column":69}},"type":"Identifier","name":"length"}}},"update":{"range":[13994,13997],"loc":{"start":{"line":421,"column":71},"end":{"line":421,"column":74}},"type":"UpdateExpression","operator":"++","argument":{"range":[13994,13995],"loc":{"start":{"line":421,"column":71},"end":{"line":421,"column":72}},"type":"Identifier","name":"i"},"prefix":false},"body":{"range":[13999,14175],"loc":{"start":{"line":421,"column":76},"end":{"line":425,"column":15}},"type":"BlockStatement","body":[{"range":[14017,14159],"loc":{"start":{"line":422,"column":16},"end":{"line":424,"column":51}},"type":"IfStatement","test":{"range":[14021,14053],"loc":{"start":{"line":422,"column":20},"end":{"line":422,"column":52}},"type":"CallExpression","callee":{"range":[14021,14043],"loc":{"start":{"line":422,"column":20},"end":{"line":422,"column":42}},"type":"MemberExpression","computed":false,"object":{"range":[14021,14028],"loc":{"start":{"line":422,"column":20},"end":{"line":422,"column":27}},"type":"MemberExpression","computed":true,"object":{"range":[14021,14025],"loc":{"start":{"line":422,"column":20},"end":{"line":422,"column":24}},"type":"ThisExpression"},"property":{"range":[14026,14027],"loc":{"start":{"line":422,"column":25},"end":{"line":422,"column":26}},"type":"Identifier","name":"i"}},"property":{"range":[14029,14043],"loc":{"start":{"line":422,"column":28},"end":{"line":422,"column":42}},"type":"Identifier","name":"hasOwnProperty"}},"arguments":[{"range":[14044,14052],"loc":{"start":{"line":422,"column":43},"end":{"line":422,"column":51}},"type":"Literal","value":"equals","raw":"\"equals\""}]},"consequent":{"range":[14055,14125],"loc":{"start":{"line":422,"column":54},"end":{"line":424,"column":17}},"type":"BlockStatement","body":[{"range":[14075,14107],"loc":{"start":{"line":423,"column":18},"end":{"line":423,"column":50}},"type":"IfStatement","test":{"range":[14079,14096],"loc":{"start":{"line":423,"column":22},"end":{"line":423,"column":39}},"type":"CallExpression","callee":{"range":[14079,14093],"loc":{"start":{"line":423,"column":22},"end":{"line":423,"column":36}},"type":"MemberExpression","computed":false,"object":{"range":[14079,14086],"loc":{"start":{"line":423,"column":22},"end":{"line":423,"column":29}},"type":"MemberExpression","computed":true,"object":{"range":[14079,14083],"loc":{"start":{"line":423,"column":22},"end":{"line":423,"column":26}},"type":"ThisExpression"},"property":{"range":[14084,14085],"loc":{"start":{"line":423,"column":27},"end":{"line":423,"column":28}},"type":"Identifier","name":"i"}},"property":{"range":[14087,14093],"loc":{"start":{"line":423,"column":30},"end":{"line":423,"column":36}},"type":"Identifier","name":"equals"}},"arguments":[{"range":[14094,14095],"loc":{"start":{"line":423,"column":37},"end":{"line":423,"column":38}},"type":"Identifier","name":"x"}]},"consequent":{"range":[14098,14107],"loc":{"start":{"line":423,"column":41},"end":{"line":423,"column":50}},"type":"ReturnStatement","argument":{"range":[14105,14106],"loc":{"start":{"line":423,"column":48},"end":{"line":423,"column":49}},"type":"Identifier","name":"i"}},"alternate":null}]},"alternate":{"range":[14131,14159],"loc":{"start":{"line":424,"column":23},"end":{"line":424,"column":51}},"type":"IfStatement","test":{"range":[14135,14148],"loc":{"start":{"line":424,"column":27},"end":{"line":424,"column":40}},"type":"BinaryExpression","operator":"===","left":{"range":[14135,14142],"loc":{"start":{"line":424,"column":27},"end":{"line":424,"column":34}},"type":"MemberExpression","computed":true,"object":{"range":[14135,14139],"loc":{"start":{"line":424,"column":27},"end":{"line":424,"column":31}},"type":"ThisExpression"},"property":{"range":[14140,14141],"loc":{"start":{"line":424,"column":32},"end":{"line":424,"column":33}},"type":"Identifier","name":"i"}},"right":{"range":[14147,14148],"loc":{"start":{"line":424,"column":39},"end":{"line":424,"column":40}},"type":"Identifier","name":"x"}},"consequent":{"range":[14150,14159],"loc":{"start":{"line":424,"column":42},"end":{"line":424,"column":51}},"type":"ReturnStatement","argument":{"range":[14157,14158],"loc":{"start":{"line":424,"column":49},"end":{"line":424,"column":50}},"type":"Identifier","name":"i"}},"alternate":null}}]}}]},"guardedHandlers":[],"handlers":[{"range":[14202,14215],"loc":{"start":{"line":427,"column":12},"end":{"line":427,"column":25}},"type":"CatchClause","param":{"range":[14209,14210],"loc":{"start":{"line":427,"column":19},"end":{"line":427,"column":20}},"type":"Identifier","name":"e"},"body":{"range":[14212,14215],"loc":{"start":{"line":427,"column":22},"end":{"line":427,"column":25}},"type":"BlockStatement","body":[]}}],"handler":{"range":[14202,14215],"loc":{"start":{"line":427,"column":12},"end":{"line":427,"column":25}},"type":"CatchClause","param":{"range":[14209,14210],"loc":{"start":{"line":427,"column":19},"end":{"line":427,"column":20}},"type":"Identifier","name":"e"},"body":{"range":[14212,14215],"loc":{"start":{"line":427,"column":22},"end":{"line":427,"column":25}},"type":"BlockStatement","body":[]}},"finalizer":null},{"range":[14228,14238],"loc":{"start":{"line":428,"column":12},"end":{"line":428,"column":22}},"type":"ReturnStatement","argument":{"range":[14235,14237],"loc":{"start":{"line":428,"column":19},"end":{"line":428,"column":21}},"type":"UnaryExpression","operator":"-","argument":{"range":[14236,14237],"loc":{"start":{"line":428,"column":20},"end":{"line":428,"column":21}},"type":"Literal","value":1,"raw":"1"},"prefix":true}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[14262,14279],"loc":{"start":{"line":430,"column":10},"end":{"line":430,"column":27}},"type":"Property","key":{"range":[14262,14272],"loc":{"start":{"line":430,"column":10},"end":{"line":430,"column":20}},"type":"Identifier","name":"enumerable"},"computed":false,"value":{"range":[14274,14279],"loc":{"start":{"line":430,"column":22},"end":{"line":430,"column":27}},"type":"Literal","value":false,"raw":"false"},"kind":"init","method":false,"shorthand":false}]}]}},{"range":[14300,14524],"loc":{"start":{"line":432,"column":8},"end":{"line":438,"column":11}},"type":"ExpressionStatement","expression":{"range":[14300,14523],"loc":{"start":{"line":432,"column":8},"end":{"line":438,"column":10}},"type":"CallExpression","callee":{"range":[14300,14321],"loc":{"start":{"line":432,"column":8},"end":{"line":432,"column":29}},"type":"MemberExpression","computed":false,"object":{"range":[14300,14306],"loc":{"start":{"line":432,"column":8},"end":{"line":432,"column":14}},"type":"Identifier","name":"Object"},"property":{"range":[14307,14321],"loc":{"start":{"line":432,"column":15},"end":{"line":432,"column":29}},"type":"Identifier","name":"defineProperty"}},"arguments":[{"range":[14322,14325],"loc":{"start":{"line":432,"column":30},"end":{"line":432,"column":33}},"type":"Identifier","name":"arr"},{"range":[14327,14337],"loc":{"start":{"line":432,"column":35},"end":{"line":432,"column":45}},"type":"Literal","value":"_pySlice","raw":"\"_pySlice\""},{"range":[14347,14522],"loc":{"start":{"line":433,"column":8},"end":{"line":438,"column":9}},"type":"ObjectExpression","properties":[{"range":[14359,14481],"loc":{"start":{"line":434,"column":10},"end":{"line":436,"column":11}},"type":"Property","key":{"range":[14359,14364],"loc":{"start":{"line":434,"column":10},"end":{"line":434,"column":15}},"type":"Identifier","name":"value"},"computed":false,"value":{"range":[14366,14481],"loc":{"start":{"line":434,"column":17},"end":{"line":436,"column":11}},"type":"FunctionExpression","id":null,"params":[{"range":[14376,14381],"loc":{"start":{"line":434,"column":27},"end":{"line":434,"column":32}},"type":"Identifier","name":"start"},{"range":[14383,14386],"loc":{"start":{"line":434,"column":34},"end":{"line":434,"column":37}},"type":"Identifier","name":"end"},{"range":[14388,14392],"loc":{"start":{"line":434,"column":39},"end":{"line":434,"column":43}},"type":"Identifier","name":"step"}],"defaults":[],"body":{"range":[14394,14481],"loc":{"start":{"line":434,"column":45},"end":{"line":436,"column":11}},"type":"BlockStatement","body":[{"range":[14409,14469],"loc":{"start":{"line":435,"column":12},"end":{"line":435,"column":72}},"type":"ReturnStatement","argument":{"range":[14416,14468],"loc":{"start":{"line":435,"column":19},"end":{"line":435,"column":71}},"type":"CallExpression","callee":{"range":[14416,14444],"loc":{"start":{"line":435,"column":19},"end":{"line":435,"column":47}},"type":"MemberExpression","computed":false,"object":{"range":[14416,14438],"loc":{"start":{"line":435,"column":19},"end":{"line":435,"column":41}},"type":"MemberExpression","computed":false,"object":{"range":[14416,14429],"loc":{"start":{"line":435,"column":19},"end":{"line":435,"column":32}},"type":"Identifier","name":"pythonRuntime"},"property":{"range":[14430,14438],"loc":{"start":{"line":435,"column":33},"end":{"line":435,"column":41}},"type":"Identifier","name":"internal"}},"property":{"range":[14439,14444],"loc":{"start":{"line":435,"column":42},"end":{"line":435,"column":47}},"type":"Identifier","name":"slice"}},"arguments":[{"range":[14445,14449],"loc":{"start":{"line":435,"column":48},"end":{"line":435,"column":52}},"type":"ThisExpression"},{"range":[14451,14456],"loc":{"start":{"line":435,"column":54},"end":{"line":435,"column":59}},"type":"Identifier","name":"start"},{"range":[14458,14461],"loc":{"start":{"line":435,"column":61},"end":{"line":435,"column":64}},"type":"Identifier","name":"end"},{"range":[14463,14467],"loc":{"start":{"line":435,"column":66},"end":{"line":435,"column":70}},"type":"Identifier","name":"step"}]}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[14495,14512],"loc":{"start":{"line":437,"column":12},"end":{"line":437,"column":29}},"type":"Property","key":{"range":[14495,14505],"loc":{"start":{"line":437,"column":12},"end":{"line":437,"column":22}},"type":"Identifier","name":"enumerable"},"computed":false,"value":{"range":[14507,14512],"loc":{"start":{"line":437,"column":24},"end":{"line":437,"column":29}},"type":"Literal","value":false,"raw":"false"},"kind":"init","method":false,"shorthand":false}]}]}},{"range":[14533,14797],"loc":{"start":{"line":439,"column":8},"end":{"line":448,"column":11}},"type":"ExpressionStatement","expression":{"range":[14533,14796],"loc":{"start":{"line":439,"column":8},"end":{"line":448,"column":10}},"type":"CallExpression","callee":{"range":[14533,14554],"loc":{"start":{"line":439,"column":8},"end":{"line":439,"column":29}},"type":"MemberExpression","computed":false,"object":{"range":[14533,14539],"loc":{"start":{"line":439,"column":8},"end":{"line":439,"column":14}},"type":"Identifier","name":"Object"},"property":{"range":[14540,14554],"loc":{"start":{"line":439,"column":15},"end":{"line":439,"column":29}},"type":"Identifier","name":"defineProperty"}},"arguments":[{"range":[14555,14558],"loc":{"start":{"line":439,"column":30},"end":{"line":439,"column":33}},"type":"Identifier","name":"arr"},{"range":[14560,14570],"loc":{"start":{"line":439,"column":35},"end":{"line":439,"column":45}},"type":"Literal","value":"toString","raw":"\"toString\""},{"range":[14580,14795],"loc":{"start":{"line":440,"column":8},"end":{"line":448,"column":9}},"type":"ObjectExpression","properties":[{"range":[14592,14756],"loc":{"start":{"line":441,"column":10},"end":{"line":446,"column":11}},"type":"Property","key":{"range":[14592,14597],"loc":{"start":{"line":441,"column":10},"end":{"line":441,"column":15}},"type":"Identifier","name":"value"},"computed":false,"value":{"range":[14599,14756],"loc":{"start":{"line":441,"column":17},"end":{"line":446,"column":11}},"type":"FunctionExpression","id":null,"params":[],"defaults":[],"body":{"range":[14611,14756],"loc":{"start":{"line":441,"column":29},"end":{"line":446,"column":11}},"type":"BlockStatement","body":[{"range":[14625,14655],"loc":{"start":{"line":442,"column":12},"end":{"line":442,"column":42}},"type":"VariableDeclaration","declarations":[{"range":[14629,14654],"loc":{"start":{"line":442,"column":16},"end":{"line":442,"column":41}},"type":"VariableDeclarator","id":{"range":[14629,14630],"loc":{"start":{"line":442,"column":16},"end":{"line":442,"column":17}},"type":"Identifier","name":"s"},"init":{"range":[14633,14654],"loc":{"start":{"line":442,"column":20},"end":{"line":442,"column":41}},"type":"BinaryExpression","operator":"+","left":{"range":[14633,14636],"loc":{"start":{"line":442,"column":20},"end":{"line":442,"column":23}},"type":"Literal","value":"(","raw":"'('"},"right":{"range":[14639,14654],"loc":{"start":{"line":442,"column":26},"end":{"line":442,"column":41}},"type":"CallExpression","callee":{"range":[14639,14648],"loc":{"start":{"line":442,"column":26},"end":{"line":442,"column":35}},"type":"MemberExpression","computed":false,"object":{"range":[14639,14643],"loc":{"start":{"line":442,"column":26},"end":{"line":442,"column":30}},"type":"ThisExpression"},"property":{"range":[14644,14648],"loc":{"start":{"line":442,"column":31},"end":{"line":442,"column":35}},"type":"Identifier","name":"join"}},"arguments":[{"range":[14649,14653],"loc":{"start":{"line":442,"column":36},"end":{"line":442,"column":40}},"type":"Literal","value":", ","raw":"', '"}]}}}],"kind":"var"},{"range":[14668,14700],"loc":{"start":{"line":443,"column":12},"end":{"line":443,"column":44}},"type":"IfStatement","test":{"range":[14672,14689],"loc":{"start":{"line":443,"column":16},"end":{"line":443,"column":33}},"type":"BinaryExpression","operator":"===","left":{"range":[14672,14683],"loc":{"start":{"line":443,"column":16},"end":{"line":443,"column":27}},"type":"MemberExpression","computed":false,"object":{"range":[14672,14676],"loc":{"start":{"line":443,"column":16},"end":{"line":443,"column":20}},"type":"ThisExpression"},"property":{"range":[14677,14683],"loc":{"start":{"line":443,"column":21},"end":{"line":443,"column":27}},"type":"Identifier","name":"length"}},"right":{"range":[14688,14689],"loc":{"start":{"line":443,"column":32},"end":{"line":443,"column":33}},"type":"Literal","value":1,"raw":"1"}},"consequent":{"range":[14691,14700],"loc":{"start":{"line":443,"column":35},"end":{"line":443,"column":44}},"type":"ExpressionStatement","expression":{"range":[14691,14699],"loc":{"start":{"line":443,"column":35},"end":{"line":443,"column":43}},"type":"AssignmentExpression","operator":"+=","left":{"range":[14691,14692],"loc":{"start":{"line":443,"column":35},"end":{"line":443,"column":36}},"type":"Identifier","name":"s"},"right":{"range":[14696,14699],"loc":{"start":{"line":443,"column":40},"end":{"line":443,"column":43}},"type":"Literal","value":",","raw":"','"}}},"alternate":null},{"range":[14713,14722],"loc":{"start":{"line":444,"column":12},"end":{"line":444,"column":21}},"type":"ExpressionStatement","expression":{"range":[14713,14721],"loc":{"start":{"line":444,"column":12},"end":{"line":444,"column":20}},"type":"AssignmentExpression","operator":"+=","left":{"range":[14713,14714],"loc":{"start":{"line":444,"column":12},"end":{"line":444,"column":13}},"type":"Identifier","name":"s"},"right":{"range":[14718,14721],"loc":{"start":{"line":444,"column":17},"end":{"line":444,"column":20}},"type":"Literal","value":")","raw":"')'"}}},{"range":[14735,14744],"loc":{"start":{"line":445,"column":12},"end":{"line":445,"column":21}},"type":"ReturnStatement","argument":{"range":[14742,14743],"loc":{"start":{"line":445,"column":19},"end":{"line":445,"column":20}},"type":"Identifier","name":"s"}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[14768,14785],"loc":{"start":{"line":447,"column":10},"end":{"line":447,"column":27}},"type":"Property","key":{"range":[14768,14778],"loc":{"start":{"line":447,"column":10},"end":{"line":447,"column":20}},"type":"Identifier","name":"enumerable"},"computed":false,"value":{"range":[14780,14785],"loc":{"start":{"line":447,"column":22},"end":{"line":447,"column":27}},"type":"Literal","value":false,"raw":"false"},"kind":"init","method":false,"shorthand":false}]}]}},{"range":[14806,14817],"loc":{"start":{"line":449,"column":8},"end":{"line":449,"column":19}},"type":"ReturnStatement","argument":{"range":[14813,14816],"loc":{"start":{"line":449,"column":15},"end":{"line":449,"column":18}},"type":"Identifier","name":"arr"}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false}]},"kind":"init","method":false,"shorthand":false},{"range":[14872,22533],"loc":{"start":{"line":455,"column":4},"end":{"line":644,"column":5}},"type":"Property","key":{"range":[14872,14881],"loc":{"start":{"line":455,"column":4},"end":{"line":455,"column":13}},"type":"Identifier","name":"functions"},"computed":false,"value":{"range":[14883,22533],"loc":{"start":{"line":455,"column":15},"end":{"line":644,"column":5}},"type":"ObjectExpression","properties":[{"range":[14891,14945],"loc":{"start":{"line":456,"column":6},"end":{"line":458,"column":7}},"type":"Property","key":{"range":[14891,14894],"loc":{"start":{"line":456,"column":6},"end":{"line":456,"column":9}},"type":"Identifier","name":"abs"},"computed":false,"value":{"range":[14896,14945],"loc":{"start":{"line":456,"column":11},"end":{"line":458,"column":7}},"type":"FunctionExpression","id":null,"params":[{"range":[14905,14906],"loc":{"start":{"line":456,"column":20},"end":{"line":456,"column":21}},"type":"Identifier","name":"x"}],"defaults":[],"body":{"range":[14908,14945],"loc":{"start":{"line":456,"column":23},"end":{"line":458,"column":7}},"type":"BlockStatement","body":[{"range":[14918,14937],"loc":{"start":{"line":457,"column":8},"end":{"line":457,"column":27}},"type":"ReturnStatement","argument":{"range":[14925,14936],"loc":{"start":{"line":457,"column":15},"end":{"line":457,"column":26}},"type":"CallExpression","callee":{"range":[14925,14933],"loc":{"start":{"line":457,"column":15},"end":{"line":457,"column":23}},"type":"MemberExpression","computed":false,"object":{"range":[14925,14929],"loc":{"start":{"line":457,"column":15},"end":{"line":457,"column":19}},"type":"Identifier","name":"Math"},"property":{"range":[14930,14933],"loc":{"start":{"line":457,"column":20},"end":{"line":457,"column":23}},"type":"Identifier","name":"abs"}},"arguments":[{"range":[14934,14935],"loc":{"start":{"line":457,"column":24},"end":{"line":457,"column":25}},"type":"Identifier","name":"x"}]}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[14953,15109],"loc":{"start":{"line":459,"column":6},"end":{"line":462,"column":7}},"type":"Property","key":{"range":[14953,14956],"loc":{"start":{"line":459,"column":6},"end":{"line":459,"column":9}},"type":"Identifier","name":"all"},"computed":false,"value":{"range":[14958,15109],"loc":{"start":{"line":459,"column":11},"end":{"line":462,"column":7}},"type":"FunctionExpression","id":null,"params":[{"range":[14967,14975],"loc":{"start":{"line":459,"column":20},"end":{"line":459,"column":28}},"type":"Identifier","name":"iterable"}],"defaults":[],"body":{"range":[14977,15109],"loc":{"start":{"line":459,"column":30},"end":{"line":462,"column":7}},"type":"BlockStatement","body":[{"range":[14987,15080],"loc":{"start":{"line":460,"column":8},"end":{"line":460,"column":101}},"type":"ForInStatement","left":{"range":[14992,14997],"loc":{"start":{"line":460,"column":13},"end":{"line":460,"column":18}},"type":"VariableDeclaration","declarations":[{"range":[14996,14997],"loc":{"start":{"line":460,"column":17},"end":{"line":460,"column":18}},"type":"VariableDeclarator","id":{"range":[14996,14997],"loc":{"start":{"line":460,"column":17},"end":{"line":460,"column":18}},"type":"Identifier","name":"i"},"init":null}],"kind":"var"},"right":{"range":[15001,15009],"loc":{"start":{"line":460,"column":22},"end":{"line":460,"column":30}},"type":"Identifier","name":"iterable"},"body":{"range":[15011,15080],"loc":{"start":{"line":460,"column":32},"end":{"line":460,"column":101}},"type":"IfStatement","test":{"range":[15015,15065],"loc":{"start":{"line":460,"column":36},"end":{"line":460,"column":86}},"type":"BinaryExpression","operator":"!==","left":{"range":[15015,15056],"loc":{"start":{"line":460,"column":36},"end":{"line":460,"column":77}},"type":"CallExpression","callee":{"range":[15015,15043],"loc":{"start":{"line":460,"column":36},"end":{"line":460,"column":64}},"type":"MemberExpression","computed":false,"object":{"range":[15015,15038],"loc":{"start":{"line":460,"column":36},"end":{"line":460,"column":59}},"type":"MemberExpression","computed":false,"object":{"range":[15015,15028],"loc":{"start":{"line":460,"column":36},"end":{"line":460,"column":49}},"type":"Identifier","name":"pythonRuntime"},"property":{"range":[15029,15038],"loc":{"start":{"line":460,"column":50},"end":{"line":460,"column":59}},"type":"Identifier","name":"functions"}},"property":{"range":[15039,15043],"loc":{"start":{"line":460,"column":60},"end":{"line":460,"column":64}},"type":"Identifier","name":"bool"}},"arguments":[{"range":[15044,15055],"loc":{"start":{"line":460,"column":65},"end":{"line":460,"column":76}},"type":"MemberExpression","computed":true,"object":{"range":[15044,15052],"loc":{"start":{"line":460,"column":65},"end":{"line":460,"column":73}},"type":"Identifier","name":"iterable"},"property":{"range":[15053,15054],"loc":{"start":{"line":460,"column":74},"end":{"line":460,"column":75}},"type":"Identifier","name":"i"}}]},"right":{"range":[15061,15065],"loc":{"start":{"line":460,"column":82},"end":{"line":460,"column":86}},"type":"Literal","value":true,"raw":"true"}},"consequent":{"range":[15067,15080],"loc":{"start":{"line":460,"column":88},"end":{"line":460,"column":101}},"type":"ReturnStatement","argument":{"range":[15074,15079],"loc":{"start":{"line":460,"column":95},"end":{"line":460,"column":100}},"type":"Literal","value":false,"raw":"false"}},"alternate":null},"each":false},{"range":[15089,15101],"loc":{"start":{"line":461,"column":8},"end":{"line":461,"column":20}},"type":"ReturnStatement","argument":{"range":[15096,15100],"loc":{"start":{"line":461,"column":15},"end":{"line":461,"column":19}},"type":"Literal","value":true,"raw":"true"}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[15117,15273],"loc":{"start":{"line":463,"column":6},"end":{"line":466,"column":7}},"type":"Property","key":{"range":[15117,15120],"loc":{"start":{"line":463,"column":6},"end":{"line":463,"column":9}},"type":"Identifier","name":"any"},"computed":false,"value":{"range":[15122,15273],"loc":{"start":{"line":463,"column":11},"end":{"line":466,"column":7}},"type":"FunctionExpression","id":null,"params":[{"range":[15131,15139],"loc":{"start":{"line":463,"column":20},"end":{"line":463,"column":28}},"type":"Identifier","name":"iterable"}],"defaults":[],"body":{"range":[15141,15273],"loc":{"start":{"line":463,"column":30},"end":{"line":466,"column":7}},"type":"BlockStatement","body":[{"range":[15151,15243],"loc":{"start":{"line":464,"column":8},"end":{"line":464,"column":100}},"type":"ForInStatement","left":{"range":[15156,15161],"loc":{"start":{"line":464,"column":13},"end":{"line":464,"column":18}},"type":"VariableDeclaration","declarations":[{"range":[15160,15161],"loc":{"start":{"line":464,"column":17},"end":{"line":464,"column":18}},"type":"VariableDeclarator","id":{"range":[15160,15161],"loc":{"start":{"line":464,"column":17},"end":{"line":464,"column":18}},"type":"Identifier","name":"i"},"init":null}],"kind":"var"},"right":{"range":[15165,15173],"loc":{"start":{"line":464,"column":22},"end":{"line":464,"column":30}},"type":"Identifier","name":"iterable"},"body":{"range":[15175,15243],"loc":{"start":{"line":464,"column":32},"end":{"line":464,"column":100}},"type":"IfStatement","test":{"range":[15179,15229],"loc":{"start":{"line":464,"column":36},"end":{"line":464,"column":86}},"type":"BinaryExpression","operator":"===","left":{"range":[15179,15220],"loc":{"start":{"line":464,"column":36},"end":{"line":464,"column":77}},"type":"CallExpression","callee":{"range":[15179,15207],"loc":{"start":{"line":464,"column":36},"end":{"line":464,"column":64}},"type":"MemberExpression","computed":false,"object":{"range":[15179,15202],"loc":{"start":{"line":464,"column":36},"end":{"line":464,"column":59}},"type":"MemberExpression","computed":false,"object":{"range":[15179,15192],"loc":{"start":{"line":464,"column":36},"end":{"line":464,"column":49}},"type":"Identifier","name":"pythonRuntime"},"property":{"range":[15193,15202],"loc":{"start":{"line":464,"column":50},"end":{"line":464,"column":59}},"type":"Identifier","name":"functions"}},"property":{"range":[15203,15207],"loc":{"start":{"line":464,"column":60},"end":{"line":464,"column":64}},"type":"Identifier","name":"bool"}},"arguments":[{"range":[15208,15219],"loc":{"start":{"line":464,"column":65},"end":{"line":464,"column":76}},"type":"MemberExpression","computed":true,"object":{"range":[15208,15216],"loc":{"start":{"line":464,"column":65},"end":{"line":464,"column":73}},"type":"Identifier","name":"iterable"},"property":{"range":[15217,15218],"loc":{"start":{"line":464,"column":74},"end":{"line":464,"column":75}},"type":"Identifier","name":"i"}}]},"right":{"range":[15225,15229],"loc":{"start":{"line":464,"column":82},"end":{"line":464,"column":86}},"type":"Literal","value":true,"raw":"true"}},"consequent":{"range":[15231,15243],"loc":{"start":{"line":464,"column":88},"end":{"line":464,"column":100}},"type":"ReturnStatement","argument":{"range":[15238,15242],"loc":{"start":{"line":464,"column":95},"end":{"line":464,"column":99}},"type":"Literal","value":true,"raw":"true"}},"alternate":null},"each":false},{"range":[15252,15265],"loc":{"start":{"line":465,"column":8},"end":{"line":465,"column":21}},"type":"ReturnStatement","argument":{"range":[15259,15264],"loc":{"start":{"line":465,"column":15},"end":{"line":465,"column":20}},"type":"Literal","value":false,"raw":"false"}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[15281,16281],"loc":{"start":{"line":467,"column":6},"end":{"line":484,"column":7}},"type":"Property","key":{"range":[15281,15286],"loc":{"start":{"line":467,"column":6},"end":{"line":467,"column":11}},"type":"Identifier","name":"ascii"},"computed":false,"value":{"range":[15288,16281],"loc":{"start":{"line":467,"column":13},"end":{"line":484,"column":7}},"type":"FunctionExpression","id":null,"params":[{"range":[15297,15300],"loc":{"start":{"line":467,"column":22},"end":{"line":467,"column":25}},"type":"Identifier","name":"obj"}],"defaults":[],"body":{"range":[15302,16281],"loc":{"start":{"line":467,"column":27},"end":{"line":484,"column":7}},"type":"BlockStatement","body":[{"range":[15312,15394],"loc":{"start":{"line":468,"column":8},"end":{"line":470,"column":17}},"type":"VariableDeclaration","declarations":[{"range":[15316,15353],"loc":{"start":{"line":468,"column":12},"end":{"line":468,"column":49}},"type":"VariableDeclarator","id":{"range":[15316,15317],"loc":{"start":{"line":468,"column":12},"end":{"line":468,"column":13}},"type":"Identifier","name":"s"},"init":{"range":[15320,15353],"loc":{"start":{"line":468,"column":16},"end":{"line":468,"column":49}},"type":"CallExpression","callee":{"range":[15320,15348],"loc":{"start":{"line":468,"column":16},"end":{"line":468,"column":44}},"type":"MemberExpression","computed":false,"object":{"range":[15320,15343],"loc":{"start":{"line":468,"column":16},"end":{"line":468,"column":39}},"type":"MemberExpression","computed":false,"object":{"range":[15320,15333],"loc":{"start":{"line":468,"column":16},"end":{"line":468,"column":29}},"type":"Identifier","name":"pythonRuntime"},"property":{"range":[15334,15343],"loc":{"start":{"line":468,"column":30},"end":{"line":468,"column":39}},"type":"Identifier","name":"functions"}},"property":{"range":[15344,15348],"loc":{"start":{"line":468,"column":40},"end":{"line":468,"column":44}},"type":"Identifier","name":"repr"}},"arguments":[{"range":[15349,15352],"loc":{"start":{"line":468,"column":45},"end":{"line":468,"column":48}},"type":"Identifier","name":"obj"}]}},{"range":[15367,15375],"loc":{"start":{"line":469,"column":12},"end":{"line":469,"column":20}},"type":"VariableDeclarator","id":{"range":[15367,15370],"loc":{"start":{"line":469,"column":12},"end":{"line":469,"column":15}},"type":"Identifier","name":"asc"},"init":{"range":[15373,15375],"loc":{"start":{"line":469,"column":18},"end":{"line":469,"column":20}},"type":"Literal","value":"","raw":"\"\""}},{"range":[15389,15393],"loc":{"start":{"line":470,"column":12},"end":{"line":470,"column":16}},"type":"VariableDeclarator","id":{"range":[15389,15393],"loc":{"start":{"line":470,"column":12},"end":{"line":470,"column":16}},"type":"Identifier","name":"code"},"init":null}],"kind":"var"},{"range":[15403,16253],"loc":{"start":{"line":471,"column":8},"end":{"line":482,"column":9}},"type":"ForStatement","init":{"range":[15408,15417],"loc":{"start":{"line":471,"column":13},"end":{"line":471,"column":22}},"type":"VariableDeclaration","declarations":[{"range":[15412,15417],"loc":{"start":{"line":471,"column":17},"end":{"line":471,"column":22}},"type":"VariableDeclarator","id":{"range":[15412,15413],"loc":{"start":{"line":471,"column":17},"end":{"line":471,"column":18}},"type":"Identifier","name":"i"},"init":{"range":[15416,15417],"loc":{"start":{"line":471,"column":21},"end":{"line":471,"column":22}},"type":"Literal","value":0,"raw":"0"}}],"kind":"var"},"test":{"range":[15419,15431],"loc":{"start":{"line":471,"column":24},"end":{"line":471,"column":36}},"type":"BinaryExpression","operator":"<","left":{"range":[15419,15420],"loc":{"start":{"line":471,"column":24},"end":{"line":471,"column":25}},"type":"Identifier","name":"i"},"right":{"range":[15423,15431],"loc":{"start":{"line":471,"column":28},"end":{"line":471,"column":36}},"type":"MemberExpression","computed":false,"object":{"range":[15423,15424],"loc":{"start":{"line":471,"column":28},"end":{"line":471,"column":29}},"type":"Identifier","name":"s"},"property":{"range":[15425,15431],"loc":{"start":{"line":471,"column":30},"end":{"line":471,"column":36}},"type":"Identifier","name":"length"}}},"update":{"range":[15433,15436],"loc":{"start":{"line":471,"column":38},"end":{"line":471,"column":41}},"type":"UpdateExpression","operator":"++","argument":{"range":[15433,15434],"loc":{"start":{"line":471,"column":38},"end":{"line":471,"column":39}},"type":"Identifier","name":"i"},"prefix":false},"body":{"range":[15438,16253],"loc":{"start":{"line":471,"column":43},"end":{"line":482,"column":9}},"type":"BlockStatement","body":[{"range":[15450,15473],"loc":{"start":{"line":472,"column":10},"end":{"line":472,"column":33}},"type":"ExpressionStatement","expression":{"range":[15450,15472],"loc":{"start":{"line":472,"column":10},"end":{"line":472,"column":32}},"type":"AssignmentExpression","operator":"=","left":{"range":[15450,15454],"loc":{"start":{"line":472,"column":10},"end":{"line":472,"column":14}},"type":"Identifier","name":"code"},"right":{"range":[15457,15472],"loc":{"start":{"line":472,"column":17},"end":{"line":472,"column":32}},"type":"CallExpression","callee":{"range":[15457,15469],"loc":{"start":{"line":472,"column":17},"end":{"line":472,"column":29}},"type":"MemberExpression","computed":false,"object":{"range":[15457,15458],"loc":{"start":{"line":472,"column":17},"end":{"line":472,"column":18}},"type":"Identifier","name":"s"},"property":{"range":[15459,15469],"loc":{"start":{"line":472,"column":19},"end":{"line":472,"column":29}},"type":"Identifier","name":"charCodeAt"}},"arguments":[{"range":[15470,15471],"loc":{"start":{"line":472,"column":30},"end":{"line":472,"column":31}},"type":"Identifier","name":"i"}]}}},{"range":[15484,16107],"loc":{"start":{"line":473,"column":10},"end":{"line":481,"column":15}},"type":"IfStatement","test":{"range":[15488,15499],"loc":{"start":{"line":473,"column":14},"end":{"line":473,"column":25}},"type":"BinaryExpression","operator":"<=","left":{"range":[15488,15492],"loc":{"start":{"line":473,"column":14},"end":{"line":473,"column":18}},"type":"Identifier","name":"code"},"right":{"range":[15496,15499],"loc":{"start":{"line":473,"column":22},"end":{"line":473,"column":25}},"type":"Literal","value":127,"raw":"127"}},"consequent":{"range":[15501,15513],"loc":{"start":{"line":473,"column":27},"end":{"line":473,"column":39}},"type":"ExpressionStatement","expression":{"range":[15501,15512],"loc":{"start":{"line":473,"column":27},"end":{"line":473,"column":38}},"type":"AssignmentExpression","operator":"+=","left":{"range":[15501,15504],"loc":{"start":{"line":473,"column":27},"end":{"line":473,"column":30}},"type":"Identifier","name":"asc"},"right":{"range":[15508,15512],"loc":{"start":{"line":473,"column":34},"end":{"line":473,"column":38}},"type":"MemberExpression","computed":true,"object":{"range":[15508,15509],"loc":{"start":{"line":473,"column":34},"end":{"line":473,"column":35}},"type":"Identifier","name":"s"},"property":{"range":[15510,15511],"loc":{"start":{"line":473,"column":36},"end":{"line":473,"column":37}},"type":"Identifier","name":"i"}}}},"alternate":{"range":[15529,16107],"loc":{"start":{"line":474,"column":15},"end":{"line":481,"column":15}},"type":"IfStatement","test":{"range":[15533,15545],"loc":{"start":{"line":474,"column":19},"end":{"line":474,"column":31}},"type":"BinaryExpression","operator":"<=","left":{"range":[15533,15537],"loc":{"start":{"line":474,"column":19},"end":{"line":474,"column":23}},"type":"Identifier","name":"code"},"right":{"range":[15541,15545],"loc":{"start":{"line":474,"column":27},"end":{"line":474,"column":31}},"type":"Literal","value":255,"raw":"0xFF"}},"consequent":{"range":[15547,15580],"loc":{"start":{"line":474,"column":33},"end":{"line":474,"column":66}},"type":"ExpressionStatement","expression":{"range":[15547,15579],"loc":{"start":{"line":474,"column":33},"end":{"line":474,"column":65}},"type":"AssignmentExpression","operator":"+=","left":{"range":[15547,15550],"loc":{"start":{"line":474,"column":33},"end":{"line":474,"column":36}},"type":"Identifier","name":"asc"},"right":{"range":[15554,15579],"loc":{"start":{"line":474,"column":40},"end":{"line":474,"column":65}},"type":"BinaryExpression","operator":"+","left":{"range":[15554,15559],"loc":{"start":{"line":474,"column":40},"end":{"line":474,"column":45}},"type":"Literal","value":"\\x","raw":"\"\\\\x\""},"right":{"range":[15562,15579],"loc":{"start":{"line":474,"column":48},"end":{"line":474,"column":65}},"type":"CallExpression","callee":{"range":[15562,15575],"loc":{"start":{"line":474,"column":48},"end":{"line":474,"column":61}},"type":"MemberExpression","computed":false,"object":{"range":[15562,15566],"loc":{"start":{"line":474,"column":48},"end":{"line":474,"column":52}},"type":"Identifier","name":"code"},"property":{"range":[15567,15575],"loc":{"start":{"line":474,"column":53},"end":{"line":474,"column":61}},"type":"Identifier","name":"toString"}},"arguments":[{"range":[15576,15578],"loc":{"start":{"line":474,"column":62},"end":{"line":474,"column":64}},"type":"Literal","value":16,"raw":"16"}]}}}},"alternate":{"range":[15596,16107],"loc":{"start":{"line":475,"column":15},"end":{"line":481,"column":15}},"type":"IfStatement","test":{"range":[15600,15632],"loc":{"start":{"line":475,"column":19},"end":{"line":475,"column":51}},"type":"LogicalExpression","operator":"&&","left":{"range":[15600,15614],"loc":{"start":{"line":475,"column":19},"end":{"line":475,"column":33}},"type":"BinaryExpression","operator":"<=","left":{"range":[15600,15606],"loc":{"start":{"line":475,"column":19},"end":{"line":475,"column":25}},"type":"Literal","value":55296,"raw":"0xD800"},"right":{"range":[15610,15614],"loc":{"start":{"line":475,"column":29},"end":{"line":475,"column":33}},"type":"Identifier","name":"code"}},"right":{"range":[15618,15632],"loc":{"start":{"line":475,"column":37},"end":{"line":475,"column":51}},"type":"BinaryExpression","operator":"<=","left":{"range":[15618,15622],"loc":{"start":{"line":475,"column":37},"end":{"line":475,"column":41}},"type":"Identifier","name":"code"},"right":{"range":[15626,15632],"loc":{"start":{"line":475,"column":45},"end":{"line":475,"column":51}},"type":"Literal","value":56319,"raw":"0xDBFF"}}},"consequent":{"range":[15634,15927],"loc":{"start":{"line":475,"column":53},"end":{"line":479,"column":11}},"type":"BlockStatement","body":[{"range":[15787,15851],"loc":{"start":{"line":477,"column":12},"end":{"line":477,"column":76}},"type":"ExpressionStatement","expression":{"range":[15787,15850],"loc":{"start":{"line":477,"column":12},"end":{"line":477,"column":75}},"type":"AssignmentExpression","operator":"=","left":{"range":[15787,15791],"loc":{"start":{"line":477,"column":12},"end":{"line":477,"column":16}},"type":"Identifier","name":"code"},"right":{"range":[15794,15850],"loc":{"start":{"line":477,"column":19},"end":{"line":477,"column":75}},"type":"BinaryExpression","operator":"+","left":{"range":[15794,15842],"loc":{"start":{"line":477,"column":19},"end":{"line":477,"column":67}},"type":"BinaryExpression","operator":"+","left":{"range":[15795,15814],"loc":{"start":{"line":477,"column":20},"end":{"line":477,"column":39}},"type":"BinaryExpression","operator":"*","left":{"range":[15796,15807],"loc":{"start":{"line":477,"column":21},"end":{"line":477,"column":32}},"type":"BinaryExpression","operator":"-","left":{"range":[15796,15800],"loc":{"start":{"line":477,"column":21},"end":{"line":477,"column":25}},"type":"Identifier","name":"code"},"right":{"range":[15801,15807],"loc":{"start":{"line":477,"column":26},"end":{"line":477,"column":32}},"type":"Literal","value":55296,"raw":"0xD800"}},"right":{"range":[15809,15814],"loc":{"start":{"line":477,"column":34},"end":{"line":477,"column":39}},"type":"Literal","value":1024,"raw":"0x400"}},"right":{"range":[15817,15841],"loc":{"start":{"line":477,"column":42},"end":{"line":477,"column":66}},"type":"BinaryExpression","operator":"-","left":{"range":[15817,15834],"loc":{"start":{"line":477,"column":42},"end":{"line":477,"column":59}},"type":"CallExpression","callee":{"range":[15817,15829],"loc":{"start":{"line":477,"column":42},"end":{"line":477,"column":54}},"type":"MemberExpression","computed":false,"object":{"range":[15817,15818],"loc":{"start":{"line":477,"column":42},"end":{"line":477,"column":43}},"type":"Identifier","name":"s"},"property":{"range":[15819,15829],"loc":{"start":{"line":477,"column":44},"end":{"line":477,"column":54}},"type":"Identifier","name":"charCodeAt"}},"arguments":[{"range":[15830,15833],"loc":{"start":{"line":477,"column":55},"end":{"line":477,"column":58}},"type":"UpdateExpression","operator":"++","argument":{"range":[15832,15833],"loc":{"start":{"line":477,"column":57},"end":{"line":477,"column":58}},"type":"Identifier","name":"i"},"prefix":true}]},"right":{"range":[15835,15841],"loc":{"start":{"line":477,"column":60},"end":{"line":477,"column":66}},"type":"Literal","value":56320,"raw":"0xDC00"}}},"right":{"range":[15843,15850],"loc":{"start":{"line":477,"column":68},"end":{"line":477,"column":75}},"type":"Literal","value":65536,"raw":"0x10000"}}}},{"range":[15864,15915],"loc":{"start":{"line":478,"column":12},"end":{"line":478,"column":63}},"type":"ExpressionStatement","expression":{"range":[15864,15914],"loc":{"start":{"line":478,"column":12},"end":{"line":478,"column":62}},"type":"AssignmentExpression","operator":"+=","left":{"range":[15864,15867],"loc":{"start":{"line":478,"column":12},"end":{"line":478,"column":15}},"type":"Identifier","name":"asc"},"right":{"range":[15871,15914],"loc":{"start":{"line":478,"column":19},"end":{"line":478,"column":62}},"type":"BinaryExpression","operator":"+","left":{"range":[15871,15876],"loc":{"start":{"line":478,"column":19},"end":{"line":478,"column":24}},"type":"Literal","value":"\\U","raw":"\"\\\\U\""},"right":{"range":[15879,15914],"loc":{"start":{"line":478,"column":27},"end":{"line":478,"column":62}},"type":"CallExpression","callee":{"range":[15879,15910],"loc":{"start":{"line":478,"column":27},"end":{"line":478,"column":58}},"type":"MemberExpression","computed":false,"object":{"range":[15880,15903],"loc":{"start":{"line":478,"column":28},"end":{"line":478,"column":51}},"type":"BinaryExpression","operator":"+","left":{"range":[15880,15885],"loc":{"start":{"line":478,"column":28},"end":{"line":478,"column":33}},"type":"Literal","value":"000","raw":"\"000\""},"right":{"range":[15886,15903],"loc":{"start":{"line":478,"column":34},"end":{"line":478,"column":51}},"type":"CallExpression","callee":{"range":[15886,15899],"loc":{"start":{"line":478,"column":34},"end":{"line":478,"column":47}},"type":"MemberExpression","computed":false,"object":{"range":[15886,15890],"loc":{"start":{"line":478,"column":34},"end":{"line":478,"column":38}},"type":"Identifier","name":"code"},"property":{"range":[15891,15899],"loc":{"start":{"line":478,"column":39},"end":{"line":478,"column":47}},"type":"Identifier","name":"toString"}},"arguments":[{"range":[15900,15902],"loc":{"start":{"line":478,"column":48},"end":{"line":478,"column":50}},"type":"Literal","value":16,"raw":"16"}]}},"property":{"range":[15905,15910],"loc":{"start":{"line":478,"column":53},"end":{"line":478,"column":58}},"type":"Identifier","name":"slice"}},"arguments":[{"range":[15911,15913],"loc":{"start":{"line":478,"column":59},"end":{"line":478,"column":61}},"type":"UnaryExpression","operator":"-","argument":{"range":[15912,15913],"loc":{"start":{"line":478,"column":60},"end":{"line":478,"column":61}},"type":"Literal","value":8,"raw":"8"},"prefix":true}]}}}}]},"alternate":{"range":[15933,16107],"loc":{"start":{"line":479,"column":17},"end":{"line":481,"column":15}},"type":"IfStatement","test":{"range":[15937,15951],"loc":{"start":{"line":479,"column":21},"end":{"line":479,"column":35}},"type":"BinaryExpression","operator":"<=","left":{"range":[15937,15941],"loc":{"start":{"line":479,"column":21},"end":{"line":479,"column":25}},"type":"Identifier","name":"code"},"right":{"range":[15945,15951],"loc":{"start":{"line":479,"column":29},"end":{"line":479,"column":35}},"type":"Literal","value":65535,"raw":"0xFFFF"}},"consequent":{"range":[15953,16002],"loc":{"start":{"line":479,"column":37},"end":{"line":479,"column":86}},"type":"ExpressionStatement","expression":{"range":[15953,16001],"loc":{"start":{"line":479,"column":37},"end":{"line":479,"column":85}},"type":"AssignmentExpression","operator":"+=","left":{"range":[15953,15956],"loc":{"start":{"line":479,"column":37},"end":{"line":479,"column":40}},"type":"Identifier","name":"asc"},"right":{"range":[15960,16001],"loc":{"start":{"line":479,"column":44},"end":{"line":479,"column":85}},"type":"BinaryExpression","operator":"+","left":{"range":[15960,15965],"loc":{"start":{"line":479,"column":44},"end":{"line":479,"column":49}},"type":"Literal","value":"\\u","raw":"\"\\\\u\""},"right":{"range":[15968,16001],"loc":{"start":{"line":479,"column":52},"end":{"line":479,"column":85}},"type":"CallExpression","callee":{"range":[15968,15997],"loc":{"start":{"line":479,"column":52},"end":{"line":479,"column":81}},"type":"MemberExpression","computed":false,"object":{"range":[15969,15990],"loc":{"start":{"line":479,"column":53},"end":{"line":479,"column":74}},"type":"BinaryExpression","operator":"+","left":{"range":[15969,15972],"loc":{"start":{"line":479,"column":53},"end":{"line":479,"column":56}},"type":"Literal","value":"0","raw":"\"0\""},"right":{"range":[15973,15990],"loc":{"start":{"line":479,"column":57},"end":{"line":479,"column":74}},"type":"CallExpression","callee":{"range":[15973,15986],"loc":{"start":{"line":479,"column":57},"end":{"line":479,"column":70}},"type":"MemberExpression","computed":false,"object":{"range":[15973,15977],"loc":{"start":{"line":479,"column":57},"end":{"line":479,"column":61}},"type":"Identifier","name":"code"},"property":{"range":[15978,15986],"loc":{"start":{"line":479,"column":62},"end":{"line":479,"column":70}},"type":"Identifier","name":"toString"}},"arguments":[{"range":[15987,15989],"loc":{"start":{"line":479,"column":71},"end":{"line":479,"column":73}},"type":"Literal","value":16,"raw":"16"}]}},"property":{"range":[15992,15997],"loc":{"start":{"line":479,"column":76},"end":{"line":479,"column":81}},"type":"Identifier","name":"slice"}},"arguments":[{"range":[15998,16000],"loc":{"start":{"line":479,"column":82},"end":{"line":479,"column":84}},"type":"UnaryExpression","operator":"-","argument":{"range":[15999,16000],"loc":{"start":{"line":479,"column":83},"end":{"line":479,"column":84}},"type":"Literal","value":4,"raw":"4"},"prefix":true}]}}}},"alternate":{"range":[16018,16107],"loc":{"start":{"line":480,"column":15},"end":{"line":481,"column":15}},"type":"IfStatement","test":{"range":[16022,16038],"loc":{"start":{"line":480,"column":19},"end":{"line":480,"column":35}},"type":"BinaryExpression","operator":"<=","left":{"range":[16022,16026],"loc":{"start":{"line":480,"column":19},"end":{"line":480,"column":23}},"type":"Identifier","name":"code"},"right":{"range":[16030,16038],"loc":{"start":{"line":480,"column":27},"end":{"line":480,"column":35}},"type":"Literal","value":1114111,"raw":"0x10FFFF"}},"consequent":{"range":[16040,16091],"loc":{"start":{"line":480,"column":37},"end":{"line":480,"column":88}},"type":"ExpressionStatement","expression":{"range":[16040,16090],"loc":{"start":{"line":480,"column":37},"end":{"line":480,"column":87}},"type":"AssignmentExpression","operator":"+=","left":{"range":[16040,16043],"loc":{"start":{"line":480,"column":37},"end":{"line":480,"column":40}},"type":"Identifier","name":"asc"},"right":{"range":[16047,16090],"loc":{"start":{"line":480,"column":44},"end":{"line":480,"column":87}},"type":"BinaryExpression","operator":"+","left":{"range":[16047,16052],"loc":{"start":{"line":480,"column":44},"end":{"line":480,"column":49}},"type":"Literal","value":"\\U","raw":"\"\\\\U\""},"right":{"range":[16055,16090],"loc":{"start":{"line":480,"column":52},"end":{"line":480,"column":87}},"type":"CallExpression","callee":{"range":[16055,16086],"loc":{"start":{"line":480,"column":52},"end":{"line":480,"column":83}},"type":"MemberExpression","computed":false,"object":{"range":[16056,16079],"loc":{"start":{"line":480,"column":53},"end":{"line":480,"column":76}},"type":"BinaryExpression","operator":"+","left":{"range":[16056,16061],"loc":{"start":{"line":480,"column":53},"end":{"line":480,"column":58}},"type":"Literal","value":"000","raw":"\"000\""},"right":{"range":[16062,16079],"loc":{"start":{"line":480,"column":59},"end":{"line":480,"column":76}},"type":"CallExpression","callee":{"range":[16062,16075],"loc":{"start":{"line":480,"column":59},"end":{"line":480,"column":72}},"type":"MemberExpression","computed":false,"object":{"range":[16062,16066],"loc":{"start":{"line":480,"column":59},"end":{"line":480,"column":63}},"type":"Identifier","name":"code"},"property":{"range":[16067,16075],"loc":{"start":{"line":480,"column":64},"end":{"line":480,"column":72}},"type":"Identifier","name":"toString"}},"arguments":[{"range":[16076,16078],"loc":{"start":{"line":480,"column":73},"end":{"line":480,"column":75}},"type":"Literal","value":16,"raw":"16"}]}},"property":{"range":[16081,16086],"loc":{"start":{"line":480,"column":78},"end":{"line":480,"column":83}},"type":"Identifier","name":"slice"}},"arguments":[{"range":[16087,16089],"loc":{"start":{"line":480,"column":84},"end":{"line":480,"column":86}},"type":"UnaryExpression","operator":"-","argument":{"range":[16088,16089],"loc":{"start":{"line":480,"column":85},"end":{"line":480,"column":86}},"type":"Literal","value":8,"raw":"8"},"prefix":true}]}}}},"alternate":{"range":[16106,16107],"loc":{"start":{"line":481,"column":14},"end":{"line":481,"column":15}},"type":"EmptyStatement"}}}}}}]}},{"range":[16262,16273],"loc":{"start":{"line":483,"column":8},"end":{"line":483,"column":19}},"type":"ReturnStatement","argument":{"range":[16269,16272],"loc":{"start":{"line":483,"column":15},"end":{"line":483,"column":18}},"type":"Identifier","name":"asc"}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[16289,16864],"loc":{"start":{"line":485,"column":6},"end":{"line":494,"column":7}},"type":"Property","key":{"range":[16289,16293],"loc":{"start":{"line":485,"column":6},"end":{"line":485,"column":10}},"type":"Identifier","name":"bool"},"computed":false,"value":{"range":[16295,16864],"loc":{"start":{"line":485,"column":12},"end":{"line":494,"column":7}},"type":"FunctionExpression","id":null,"params":[{"range":[16304,16305],"loc":{"start":{"line":485,"column":21},"end":{"line":485,"column":22}},"type":"Identifier","name":"x"}],"defaults":[],"body":{"range":[16307,16864],"loc":{"start":{"line":485,"column":24},"end":{"line":494,"column":7}},"type":"BlockStatement","body":[{"range":[16317,16817],"loc":{"start":{"line":486,"column":8},"end":{"line":493,"column":92}},"type":"ReturnStatement","argument":{"range":[16324,16816],"loc":{"start":{"line":486,"column":15},"end":{"line":493,"column":91}},"type":"UnaryExpression","operator":"!","argument":{"range":[16326,16815],"loc":{"start":{"line":486,"column":17},"end":{"line":493,"column":90}},"type":"LogicalExpression","operator":"||","left":{"range":[16326,16684],"loc":{"start":{"line":486,"column":17},"end":{"line":492,"column":69}},"type":"LogicalExpression","operator":"||","left":{"range":[16326,16507],"loc":{"start":{"line":486,"column":17},"end":{"line":490,"column":31}},"type":"LogicalExpression","operator":"||","left":{"range":[16326,16464],"loc":{"start":{"line":486,"column":17},"end":{"line":489,"column":24}},"type":"LogicalExpression","operator":"||","left":{"range":[16326,16427],"loc":{"start":{"line":486,"column":17},"end":{"line":488,"column":28}},"type":"LogicalExpression","operator":"||","left":{"range":[16326,16387],"loc":{"start":{"line":486,"column":17},"end":{"line":487,"column":27}},"type":"LogicalExpression","operator":"||","left":{"range":[16326,16341],"loc":{"start":{"line":486,"column":17},"end":{"line":486,"column":32}},"type":"BinaryExpression","operator":"===","left":{"range":[16326,16327],"loc":{"start":{"line":486,"column":17},"end":{"line":486,"column":18}},"type":"Identifier","name":"x"},"right":{"range":[16332,16341],"loc":{"start":{"line":486,"column":23},"end":{"line":486,"column":32}},"type":"Identifier","name":"undefined"}},"right":{"range":[16377,16387],"loc":{"start":{"line":487,"column":17},"end":{"line":487,"column":27}},"type":"BinaryExpression","operator":"===","left":{"range":[16377,16378],"loc":{"start":{"line":487,"column":17},"end":{"line":487,"column":18}},"type":"Identifier","name":"x"},"right":{"range":[16383,16387],"loc":{"start":{"line":487,"column":23},"end":{"line":487,"column":27}},"type":"Literal","value":null,"raw":"null"}}},"right":{"range":[16416,16427],"loc":{"start":{"line":488,"column":17},"end":{"line":488,"column":28}},"type":"BinaryExpression","operator":"===","left":{"range":[16416,16417],"loc":{"start":{"line":488,"column":17},"end":{"line":488,"column":18}},"type":"Identifier","name":"x"},"right":{"range":[16422,16427],"loc":{"start":{"line":488,"column":23},"end":{"line":488,"column":28}},"type":"Literal","value":false,"raw":"false"}}},"right":{"range":[16457,16464],"loc":{"start":{"line":489,"column":17},"end":{"line":489,"column":24}},"type":"BinaryExpression","operator":"===","left":{"range":[16457,16458],"loc":{"start":{"line":489,"column":17},"end":{"line":489,"column":18}},"type":"Identifier","name":"x"},"right":{"range":[16463,16464],"loc":{"start":{"line":489,"column":23},"end":{"line":489,"column":24}},"type":"Literal","value":0,"raw":"0"}}},"right":{"range":[16493,16507],"loc":{"start":{"line":490,"column":17},"end":{"line":490,"column":31}},"type":"BinaryExpression","operator":"===","left":{"range":[16493,16501],"loc":{"start":{"line":490,"column":17},"end":{"line":490,"column":25}},"type":"MemberExpression","computed":false,"object":{"range":[16493,16494],"loc":{"start":{"line":490,"column":17},"end":{"line":490,"column":18}},"type":"Identifier","name":"x"},"property":{"range":[16495,16501],"loc":{"start":{"line":490,"column":19},"end":{"line":490,"column":25}},"type":"Identifier","name":"length"}},"right":{"range":[16506,16507],"loc":{"start":{"line":490,"column":30},"end":{"line":490,"column":31}},"type":"Literal","value":0,"raw":"0"}}},"right":{"range":[16633,16683],"loc":{"start":{"line":492,"column":18},"end":{"line":492,"column":68}},"type":"LogicalExpression","operator":"&&","left":{"range":[16633,16657],"loc":{"start":{"line":492,"column":18},"end":{"line":492,"column":42}},"type":"BinaryExpression","operator":"!==","left":{"range":[16633,16643],"loc":{"start":{"line":492,"column":18},"end":{"line":492,"column":28}},"type":"MemberExpression","computed":false,"object":{"range":[16633,16634],"loc":{"start":{"line":492,"column":18},"end":{"line":492,"column":19}},"type":"Identifier","name":"x"},"property":{"range":[16635,16643],"loc":{"start":{"line":492,"column":20},"end":{"line":492,"column":28}},"type":"Identifier","name":"__bool__"}},"right":{"range":[16648,16657],"loc":{"start":{"line":492,"column":33},"end":{"line":492,"column":42}},"type":"Identifier","name":"undefined"}},"right":{"range":[16661,16683],"loc":{"start":{"line":492,"column":46},"end":{"line":492,"column":68}},"type":"BinaryExpression","operator":"===","left":{"range":[16661,16673],"loc":{"start":{"line":492,"column":46},"end":{"line":492,"column":58}},"type":"CallExpression","callee":{"range":[16661,16671],"loc":{"start":{"line":492,"column":46},"end":{"line":492,"column":56}},"type":"MemberExpression","computed":false,"object":{"range":[16661,16662],"loc":{"start":{"line":492,"column":46},"end":{"line":492,"column":47}},"type":"Identifier","name":"x"},"property":{"range":[16663,16671],"loc":{"start":{"line":492,"column":48},"end":{"line":492,"column":56}},"type":"Identifier","name":"__bool__"}},"arguments":[]},"right":{"range":[16678,16683],"loc":{"start":{"line":492,"column":63},"end":{"line":492,"column":68}},"type":"Literal","value":false,"raw":"false"}}}},"right":{"range":[16743,16814],"loc":{"start":{"line":493,"column":18},"end":{"line":493,"column":89}},"type":"LogicalExpression","operator":"&&","left":{"range":[16743,16766],"loc":{"start":{"line":493,"column":18},"end":{"line":493,"column":41}},"type":"BinaryExpression","operator":"!==","left":{"range":[16743,16752],"loc":{"start":{"line":493,"column":18},"end":{"line":493,"column":27}},"type":"MemberExpression","computed":false,"object":{"range":[16743,16744],"loc":{"start":{"line":493,"column":18},"end":{"line":493,"column":19}},"type":"Identifier","name":"x"},"property":{"range":[16745,16752],"loc":{"start":{"line":493,"column":20},"end":{"line":493,"column":27}},"type":"Identifier","name":"__len__"}},"right":{"range":[16757,16766],"loc":{"start":{"line":493,"column":32},"end":{"line":493,"column":41}},"type":"Identifier","name":"undefined"}},"right":{"range":[16771,16813],"loc":{"start":{"line":493,"column":46},"end":{"line":493,"column":88}},"type":"LogicalExpression","operator":"||","left":{"range":[16771,16792],"loc":{"start":{"line":493,"column":46},"end":{"line":493,"column":67}},"type":"BinaryExpression","operator":"===","left":{"range":[16771,16782],"loc":{"start":{"line":493,"column":46},"end":{"line":493,"column":57}},"type":"CallExpression","callee":{"range":[16771,16780],"loc":{"start":{"line":493,"column":46},"end":{"line":493,"column":55}},"type":"MemberExpression","computed":false,"object":{"range":[16771,16772],"loc":{"start":{"line":493,"column":46},"end":{"line":493,"column":47}},"type":"Identifier","name":"x"},"property":{"range":[16773,16780],"loc":{"start":{"line":493,"column":48},"end":{"line":493,"column":55}},"type":"Identifier","name":"__len__"}},"arguments":[]},"right":{"range":[16787,16792],"loc":{"start":{"line":493,"column":62},"end":{"line":493,"column":67}},"type":"Literal","value":false,"raw":"false"}},"right":{"range":[16796,16813],"loc":{"start":{"line":493,"column":71},"end":{"line":493,"column":88}},"type":"BinaryExpression","operator":"===","left":{"range":[16796,16807],"loc":{"start":{"line":493,"column":71},"end":{"line":493,"column":82}},"type":"CallExpression","callee":{"range":[16796,16805],"loc":{"start":{"line":493,"column":71},"end":{"line":493,"column":80}},"type":"MemberExpression","computed":false,"object":{"range":[16796,16797],"loc":{"start":{"line":493,"column":71},"end":{"line":493,"column":72}},"type":"Identifier","name":"x"},"property":{"range":[16798,16805],"loc":{"start":{"line":493,"column":73},"end":{"line":493,"column":80}},"type":"Identifier","name":"__len__"}},"arguments":[]},"right":{"range":[16812,16813],"loc":{"start":{"line":493,"column":87},"end":{"line":493,"column":88}},"type":"Literal","value":0,"raw":"0"}}}}},"prefix":true}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[16872,16983],"loc":{"start":{"line":495,"column":6},"end":{"line":497,"column":7}},"type":"Property","key":{"range":[16872,16875],"loc":{"start":{"line":495,"column":6},"end":{"line":495,"column":9}},"type":"Identifier","name":"chr"},"computed":false,"value":{"range":[16877,16983],"loc":{"start":{"line":495,"column":11},"end":{"line":497,"column":7}},"type":"FunctionExpression","id":null,"params":[{"range":[16886,16887],"loc":{"start":{"line":495,"column":20},"end":{"line":495,"column":21}},"type":"Identifier","name":"i"}],"defaults":[],"body":{"range":[16889,16983],"loc":{"start":{"line":495,"column":23},"end":{"line":497,"column":7}},"type":"BlockStatement","body":[{"range":[16899,16929],"loc":{"start":{"line":496,"column":8},"end":{"line":496,"column":38}},"type":"ReturnStatement","argument":{"range":[16906,16928],"loc":{"start":{"line":496,"column":15},"end":{"line":496,"column":37}},"type":"CallExpression","callee":{"range":[16906,16925],"loc":{"start":{"line":496,"column":15},"end":{"line":496,"column":34}},"type":"MemberExpression","computed":false,"object":{"range":[16906,16912],"loc":{"start":{"line":496,"column":15},"end":{"line":496,"column":21}},"type":"Identifier","name":"String"},"property":{"range":[16913,16925],"loc":{"start":{"line":496,"column":22},"end":{"line":496,"column":34}},"type":"Identifier","name":"fromCharCode"}},"arguments":[{"range":[16926,16927],"loc":{"start":{"line":496,"column":35},"end":{"line":496,"column":36}},"type":"Identifier","name":"i"}]}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[16991,17089],"loc":{"start":{"line":498,"column":6},"end":{"line":500,"column":7}},"type":"Property","key":{"range":[16991,16997],"loc":{"start":{"line":498,"column":6},"end":{"line":498,"column":12}},"type":"Identifier","name":"divmod"},"computed":false,"value":{"range":[16999,17089],"loc":{"start":{"line":498,"column":14},"end":{"line":500,"column":7}},"type":"FunctionExpression","id":null,"params":[{"range":[17008,17009],"loc":{"start":{"line":498,"column":23},"end":{"line":498,"column":24}},"type":"Identifier","name":"a"},{"range":[17011,17012],"loc":{"start":{"line":498,"column":26},"end":{"line":498,"column":27}},"type":"Identifier","name":"b"}],"defaults":[],"body":{"range":[17014,17089],"loc":{"start":{"line":498,"column":29},"end":{"line":500,"column":7}},"type":"BlockStatement","body":[{"range":[17024,17081],"loc":{"start":{"line":499,"column":8},"end":{"line":499,"column":65}},"type":"ReturnStatement","argument":{"range":[17031,17080],"loc":{"start":{"line":499,"column":15},"end":{"line":499,"column":64}},"type":"CallExpression","callee":{"range":[17031,17058],"loc":{"start":{"line":499,"column":15},"end":{"line":499,"column":42}},"type":"MemberExpression","computed":false,"object":{"range":[17031,17052],"loc":{"start":{"line":499,"column":15},"end":{"line":499,"column":36}},"type":"MemberExpression","computed":false,"object":{"range":[17031,17044],"loc":{"start":{"line":499,"column":15},"end":{"line":499,"column":28}},"type":"Identifier","name":"pythonRuntime"},"property":{"range":[17045,17052],"loc":{"start":{"line":499,"column":29},"end":{"line":499,"column":36}},"type":"Identifier","name":"objects"}},"property":{"range":[17053,17058],"loc":{"start":{"line":499,"column":37},"end":{"line":499,"column":42}},"type":"Identifier","name":"tuple"}},"arguments":[{"range":[17059,17074],"loc":{"start":{"line":499,"column":43},"end":{"line":499,"column":58}},"type":"CallExpression","callee":{"range":[17059,17069],"loc":{"start":{"line":499,"column":43},"end":{"line":499,"column":53}},"type":"MemberExpression","computed":false,"object":{"range":[17059,17063],"loc":{"start":{"line":499,"column":43},"end":{"line":499,"column":47}},"type":"Identifier","name":"Math"},"property":{"range":[17064,17069],"loc":{"start":{"line":499,"column":48},"end":{"line":499,"column":53}},"type":"Identifier","name":"floor"}},"arguments":[{"range":[17070,17073],"loc":{"start":{"line":499,"column":54},"end":{"line":499,"column":57}},"type":"BinaryExpression","operator":"/","left":{"range":[17070,17071],"loc":{"start":{"line":499,"column":54},"end":{"line":499,"column":55}},"type":"Identifier","name":"a"},"right":{"range":[17072,17073],"loc":{"start":{"line":499,"column":56},"end":{"line":499,"column":57}},"type":"Identifier","name":"b"}}]},{"range":[17076,17079],"loc":{"start":{"line":499,"column":60},"end":{"line":499,"column":63}},"type":"BinaryExpression","operator":"%","left":{"range":[17076,17077],"loc":{"start":{"line":499,"column":60},"end":{"line":499,"column":61}},"type":"Identifier","name":"a"},"right":{"range":[17078,17079],"loc":{"start":{"line":499,"column":62},"end":{"line":499,"column":63}},"type":"Identifier","name":"b"}}]}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[17097,17340],"loc":{"start":{"line":501,"column":6},"end":{"line":506,"column":7}},"type":"Property","key":{"range":[17097,17106],"loc":{"start":{"line":501,"column":6},"end":{"line":501,"column":15}},"type":"Identifier","name":"enumerate"},"computed":false,"value":{"range":[17108,17340],"loc":{"start":{"line":501,"column":17},"end":{"line":506,"column":7}},"type":"FunctionExpression","id":null,"params":[{"range":[17117,17125],"loc":{"start":{"line":501,"column":26},"end":{"line":501,"column":34}},"type":"Identifier","name":"iterable"},{"range":[17127,17132],"loc":{"start":{"line":501,"column":36},"end":{"line":501,"column":41}},"type":"Identifier","name":"start"}],"defaults":[],"body":{"range":[17134,17340],"loc":{"start":{"line":501,"column":43},"end":{"line":506,"column":7}},"type":"BlockStatement","body":[{"range":[17144,17163],"loc":{"start":{"line":502,"column":8},"end":{"line":502,"column":27}},"type":"ExpressionStatement","expression":{"range":[17144,17162],"loc":{"start":{"line":502,"column":8},"end":{"line":502,"column":26}},"type":"AssignmentExpression","operator":"=","left":{"range":[17144,17149],"loc":{"start":{"line":502,"column":8},"end":{"line":502,"column":13}},"type":"Identifier","name":"start"},"right":{"range":[17152,17162],"loc":{"start":{"line":502,"column":16},"end":{"line":502,"column":26}},"type":"LogicalExpression","operator":"||","left":{"range":[17152,17157],"loc":{"start":{"line":502,"column":16},"end":{"line":502,"column":21}},"type":"Identifier","name":"start"},"right":{"range":[17161,17162],"loc":{"start":{"line":502,"column":25},"end":{"line":502,"column":26}},"type":"Literal","value":0,"raw":"0"}}}},{"range":[17172,17215],"loc":{"start":{"line":503,"column":8},"end":{"line":503,"column":51}},"type":"VariableDeclaration","declarations":[{"range":[17176,17214],"loc":{"start":{"line":503,"column":12},"end":{"line":503,"column":50}},"type":"VariableDeclarator","id":{"range":[17176,17179],"loc":{"start":{"line":503,"column":12},"end":{"line":503,"column":15}},"type":"Identifier","name":"ret"},"init":{"range":[17182,17214],"loc":{"start":{"line":503,"column":18},"end":{"line":503,"column":50}},"type":"NewExpression","callee":{"range":[17186,17212],"loc":{"start":{"line":503,"column":22},"end":{"line":503,"column":48}},"type":"MemberExpression","computed":false,"object":{"range":[17186,17207],"loc":{"start":{"line":503,"column":22},"end":{"line":503,"column":43}},"type":"MemberExpression","computed":false,"object":{"range":[17186,17199],"loc":{"start":{"line":503,"column":22},"end":{"line":503,"column":35}},"type":"Identifier","name":"pythonRuntime"},"property":{"range":[17200,17207],"loc":{"start":{"line":503,"column":36},"end":{"line":503,"column":43}},"type":"Identifier","name":"objects"}},"property":{"range":[17208,17212],"loc":{"start":{"line":503,"column":44},"end":{"line":503,"column":48}},"type":"Identifier","name":"list"}},"arguments":[]}}],"kind":"var"},{"range":[17224,17312],"loc":{"start":{"line":504,"column":8},"end":{"line":504,"column":96}},"type":"ForInStatement","left":{"range":[17229,17234],"loc":{"start":{"line":504,"column":13},"end":{"line":504,"column":18}},"type":"VariableDeclaration","declarations":[{"range":[17233,17234],"loc":{"start":{"line":504,"column":17},"end":{"line":504,"column":18}},"type":"VariableDeclarator","id":{"range":[17233,17234],"loc":{"start":{"line":504,"column":17},"end":{"line":504,"column":18}},"type":"Identifier","name":"i"},"init":null}],"kind":"var"},"right":{"range":[17238,17246],"loc":{"start":{"line":504,"column":22},"end":{"line":504,"column":30}},"type":"Identifier","name":"iterable"},"body":{"range":[17248,17312],"loc":{"start":{"line":504,"column":32},"end":{"line":504,"column":96}},"type":"ExpressionStatement","expression":{"range":[17248,17311],"loc":{"start":{"line":504,"column":32},"end":{"line":504,"column":95}},"type":"CallExpression","callee":{"range":[17248,17256],"loc":{"start":{"line":504,"column":32},"end":{"line":504,"column":40}},"type":"MemberExpression","computed":false,"object":{"range":[17248,17251],"loc":{"start":{"line":504,"column":32},"end":{"line":504,"column":35}},"type":"Identifier","name":"ret"},"property":{"range":[17252,17256],"loc":{"start":{"line":504,"column":36},"end":{"line":504,"column":40}},"type":"Identifier","name":"push"}},"arguments":[{"range":[17257,17310],"loc":{"start":{"line":504,"column":41},"end":{"line":504,"column":94}},"type":"NewExpression","callee":{"range":[17261,17288],"loc":{"start":{"line":504,"column":45},"end":{"line":504,"column":72}},"type":"MemberExpression","computed":false,"object":{"range":[17261,17282],"loc":{"start":{"line":504,"column":45},"end":{"line":504,"column":66}},"type":"MemberExpression","computed":false,"object":{"range":[17261,17274],"loc":{"start":{"line":504,"column":45},"end":{"line":504,"column":58}},"type":"Identifier","name":"pythonRuntime"},"property":{"range":[17275,17282],"loc":{"start":{"line":504,"column":59},"end":{"line":504,"column":66}},"type":"Identifier","name":"objects"}},"property":{"range":[17283,17288],"loc":{"start":{"line":504,"column":67},"end":{"line":504,"column":72}},"type":"Identifier","name":"tuple"}},"arguments":[{"range":[17289,17296],"loc":{"start":{"line":504,"column":73},"end":{"line":504,"column":80}},"type":"UpdateExpression","operator":"++","argument":{"range":[17289,17294],"loc":{"start":{"line":504,"column":73},"end":{"line":504,"column":78}},"type":"Identifier","name":"start"},"prefix":false},{"range":[17298,17309],"loc":{"start":{"line":504,"column":82},"end":{"line":504,"column":93}},"type":"MemberExpression","computed":true,"object":{"range":[17298,17306],"loc":{"start":{"line":504,"column":82},"end":{"line":504,"column":90}},"type":"Identifier","name":"iterable"},"property":{"range":[17307,17308],"loc":{"start":{"line":504,"column":91},"end":{"line":504,"column":92}},"type":"Identifier","name":"i"}}]}]}},"each":false},{"range":[17321,17332],"loc":{"start":{"line":505,"column":8},"end":{"line":505,"column":19}},"type":"ReturnStatement","argument":{"range":[17328,17331],"loc":{"start":{"line":505,"column":15},"end":{"line":505,"column":18}},"type":"Identifier","name":"ret"}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[17348,17585],"loc":{"start":{"line":507,"column":6},"end":{"line":512,"column":7}},"type":"Property","key":{"range":[17348,17354],"loc":{"start":{"line":507,"column":6},"end":{"line":507,"column":12}},"type":"Identifier","name":"filter"},"computed":false,"value":{"range":[17356,17585],"loc":{"start":{"line":507,"column":14},"end":{"line":512,"column":7}},"type":"FunctionExpression","id":null,"params":[{"range":[17365,17367],"loc":{"start":{"line":507,"column":23},"end":{"line":507,"column":25}},"type":"Identifier","name":"fn"},{"range":[17369,17377],"loc":{"start":{"line":507,"column":27},"end":{"line":507,"column":35}},"type":"Identifier","name":"iterable"}],"defaults":[],"body":{"range":[17379,17585],"loc":{"start":{"line":507,"column":37},"end":{"line":512,"column":7}},"type":"BlockStatement","body":[{"range":[17389,17429],"loc":{"start":{"line":508,"column":8},"end":{"line":508,"column":48}},"type":"ExpressionStatement","expression":{"range":[17389,17428],"loc":{"start":{"line":508,"column":8},"end":{"line":508,"column":47}},"type":"AssignmentExpression","operator":"=","left":{"range":[17389,17391],"loc":{"start":{"line":508,"column":8},"end":{"line":508,"column":10}},"type":"Identifier","name":"fn"},"right":{"range":[17394,17428],"loc":{"start":{"line":508,"column":13},"end":{"line":508,"column":47}},"type":"LogicalExpression","operator":"||","left":{"range":[17394,17396],"loc":{"start":{"line":508,"column":13},"end":{"line":508,"column":15}},"type":"Identifier","name":"fn"},"right":{"range":[17400,17428],"loc":{"start":{"line":508,"column":19},"end":{"line":508,"column":47}},"type":"FunctionExpression","id":null,"params":[],"defaults":[],"body":{"range":[17412,17428],"loc":{"start":{"line":508,"column":31},"end":{"line":508,"column":47}},"type":"BlockStatement","body":[{"range":[17414,17426],"loc":{"start":{"line":508,"column":33},"end":{"line":508,"column":45}},"type":"ReturnStatement","argument":{"range":[17421,17425],"loc":{"start":{"line":508,"column":40},"end":{"line":508,"column":44}},"type":"Literal","value":true,"raw":"true"}}]},"generator":false,"expression":false}}}},{"range":[17438,17481],"loc":{"start":{"line":509,"column":8},"end":{"line":509,"column":51}},"type":"VariableDeclaration","declarations":[{"range":[17442,17480],"loc":{"start":{"line":509,"column":12},"end":{"line":509,"column":50}},"type":"VariableDeclarator","id":{"range":[17442,17445],"loc":{"start":{"line":509,"column":12},"end":{"line":509,"column":15}},"type":"Identifier","name":"ret"},"init":{"range":[17448,17480],"loc":{"start":{"line":509,"column":18},"end":{"line":509,"column":50}},"type":"NewExpression","callee":{"range":[17452,17478],"loc":{"start":{"line":509,"column":22},"end":{"line":509,"column":48}},"type":"MemberExpression","computed":false,"object":{"range":[17452,17473],"loc":{"start":{"line":509,"column":22},"end":{"line":509,"column":43}},"type":"MemberExpression","computed":false,"object":{"range":[17452,17465],"loc":{"start":{"line":509,"column":22},"end":{"line":509,"column":35}},"type":"Identifier","name":"pythonRuntime"},"property":{"range":[17466,17473],"loc":{"start":{"line":509,"column":36},"end":{"line":509,"column":43}},"type":"Identifier","name":"objects"}},"property":{"range":[17474,17478],"loc":{"start":{"line":509,"column":44},"end":{"line":509,"column":48}},"type":"Identifier","name":"list"}},"arguments":[]}}],"kind":"var"},{"range":[17490,17557],"loc":{"start":{"line":510,"column":8},"end":{"line":510,"column":75}},"type":"ForInStatement","left":{"range":[17495,17500],"loc":{"start":{"line":510,"column":13},"end":{"line":510,"column":18}},"type":"VariableDeclaration","declarations":[{"range":[17499,17500],"loc":{"start":{"line":510,"column":17},"end":{"line":510,"column":18}},"type":"VariableDeclarator","id":{"range":[17499,17500],"loc":{"start":{"line":510,"column":17},"end":{"line":510,"column":18}},"type":"Identifier","name":"i"},"init":null}],"kind":"var"},"right":{"range":[17504,17512],"loc":{"start":{"line":510,"column":22},"end":{"line":510,"column":30}},"type":"Identifier","name":"iterable"},"body":{"range":[17514,17557],"loc":{"start":{"line":510,"column":32},"end":{"line":510,"column":75}},"type":"IfStatement","test":{"range":[17518,17533],"loc":{"start":{"line":510,"column":36},"end":{"line":510,"column":51}},"type":"CallExpression","callee":{"range":[17518,17520],"loc":{"start":{"line":510,"column":36},"end":{"line":510,"column":38}},"type":"Identifier","name":"fn"},"arguments":[{"range":[17521,17532],"loc":{"start":{"line":510,"column":39},"end":{"line":510,"column":50}},"type":"MemberExpression","computed":true,"object":{"range":[17521,17529],"loc":{"start":{"line":510,"column":39},"end":{"line":510,"column":47}},"type":"Identifier","name":"iterable"},"property":{"range":[17530,17531],"loc":{"start":{"line":510,"column":48},"end":{"line":510,"column":49}},"type":"Identifier","name":"i"}}]},"consequent":{"range":[17535,17557],"loc":{"start":{"line":510,"column":53},"end":{"line":510,"column":75}},"type":"ExpressionStatement","expression":{"range":[17535,17556],"loc":{"start":{"line":510,"column":53},"end":{"line":510,"column":74}},"type":"CallExpression","callee":{"range":[17535,17543],"loc":{"start":{"line":510,"column":53},"end":{"line":510,"column":61}},"type":"MemberExpression","computed":false,"object":{"range":[17535,17538],"loc":{"start":{"line":510,"column":53},"end":{"line":510,"column":56}},"type":"Identifier","name":"ret"},"property":{"range":[17539,17543],"loc":{"start":{"line":510,"column":57},"end":{"line":510,"column":61}},"type":"Identifier","name":"push"}},"arguments":[{"range":[17544,17555],"loc":{"start":{"line":510,"column":62},"end":{"line":510,"column":73}},"type":"MemberExpression","computed":true,"object":{"range":[17544,17552],"loc":{"start":{"line":510,"column":62},"end":{"line":510,"column":70}},"type":"Identifier","name":"iterable"},"property":{"range":[17553,17554],"loc":{"start":{"line":510,"column":71},"end":{"line":510,"column":72}},"type":"Identifier","name":"i"}}]}},"alternate":null},"each":false},{"range":[17566,17577],"loc":{"start":{"line":511,"column":8},"end":{"line":511,"column":19}},"type":"ReturnStatement","argument":{"range":[17573,17576],"loc":{"start":{"line":511,"column":15},"end":{"line":511,"column":18}},"type":"Identifier","name":"ret"}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[17593,18322],"loc":{"start":{"line":513,"column":6},"end":{"line":526,"column":7}},"type":"Property","key":{"range":[17593,17598],"loc":{"start":{"line":513,"column":6},"end":{"line":513,"column":11}},"type":"Identifier","name":"float"},"computed":false,"value":{"range":[17600,18322],"loc":{"start":{"line":513,"column":13},"end":{"line":526,"column":7}},"type":"FunctionExpression","id":null,"params":[{"range":[17609,17610],"loc":{"start":{"line":513,"column":22},"end":{"line":513,"column":23}},"type":"Identifier","name":"x"}],"defaults":[],"body":{"range":[17612,18322],"loc":{"start":{"line":513,"column":25},"end":{"line":526,"column":7}},"type":"BlockStatement","body":[{"range":[17622,18314],"loc":{"start":{"line":514,"column":8},"end":{"line":525,"column":9}},"type":"IfStatement","test":{"range":[17626,17641],"loc":{"start":{"line":514,"column":12},"end":{"line":514,"column":27}},"type":"BinaryExpression","operator":"===","left":{"range":[17626,17627],"loc":{"start":{"line":514,"column":12},"end":{"line":514,"column":13}},"type":"Identifier","name":"x"},"right":{"range":[17632,17641],"loc":{"start":{"line":514,"column":18},"end":{"line":514,"column":27}},"type":"Identifier","name":"undefined"}},"consequent":{"range":[17643,17654],"loc":{"start":{"line":514,"column":29},"end":{"line":514,"column":40}},"type":"ReturnStatement","argument":{"range":[17650,17653],"loc":{"start":{"line":514,"column":36},"end":{"line":514,"column":39}},"type":"Literal","value":0,"raw":"0.0"}},"alternate":{"range":[17668,18314],"loc":{"start":{"line":515,"column":13},"end":{"line":525,"column":9}},"type":"IfStatement","test":{"range":[17672,17692],"loc":{"start":{"line":515,"column":17},"end":{"line":515,"column":37}},"type":"BinaryExpression","operator":"==","left":{"range":[17672,17680],"loc":{"start":{"line":515,"column":17},"end":{"line":515,"column":25}},"type":"UnaryExpression","operator":"typeof","argument":{"range":[17679,17680],"loc":{"start":{"line":515,"column":24},"end":{"line":515,"column":25}},"type":"Identifier","name":"x"},"prefix":true},"right":{"range":[17684,17692],"loc":{"start":{"line":515,"column":29},"end":{"line":515,"column":37}},"type":"Literal","value":"string","raw":"\"string\""}},"consequent":{"range":[17694,17955],"loc":{"start":{"line":515,"column":39},"end":{"line":520,"column":9}},"type":"BlockStatement","body":[{"range":[17730,17757],"loc":{"start":{"line":516,"column":10},"end":{"line":516,"column":37}},"type":"ExpressionStatement","expression":{"range":[17730,17756],"loc":{"start":{"line":516,"column":10},"end":{"line":516,"column":36}},"type":"AssignmentExpression","operator":"=","left":{"range":[17730,17731],"loc":{"start":{"line":516,"column":10},"end":{"line":516,"column":11}},"type":"Identifier","name":"x"},"right":{"range":[17734,17756],"loc":{"start":{"line":516,"column":14},"end":{"line":516,"column":36}},"type":"CallExpression","callee":{"range":[17734,17754],"loc":{"start":{"line":516,"column":14},"end":{"line":516,"column":34}},"type":"MemberExpression","computed":false,"object":{"range":[17734,17742],"loc":{"start":{"line":516,"column":14},"end":{"line":516,"column":22}},"type":"CallExpression","callee":{"range":[17734,17740],"loc":{"start":{"line":516,"column":14},"end":{"line":516,"column":20}},"type":"MemberExpression","computed":false,"object":{"range":[17734,17735],"loc":{"start":{"line":516,"column":14},"end":{"line":516,"column":15}},"type":"Identifier","name":"x"},"property":{"range":[17736,17740],"loc":{"start":{"line":516,"column":16},"end":{"line":516,"column":20}},"type":"Identifier","name":"trim"}},"arguments":[]},"property":{"range":[17743,17754],"loc":{"start":{"line":516,"column":23},"end":{"line":516,"column":34}},"type":"Identifier","name":"toLowerCase"}},"arguments":[]}}},{"range":[17768,17945],"loc":{"start":{"line":517,"column":10},"end":{"line":519,"column":36}},"type":"IfStatement","test":{"range":[17772,17812],"loc":{"start":{"line":517,"column":14},"end":{"line":517,"column":54}},"type":"BinaryExpression","operator":"!==","left":{"range":[17772,17803],"loc":{"start":{"line":517,"column":14},"end":{"line":517,"column":45}},"type":"CallExpression","callee":{"range":[17772,17800],"loc":{"start":{"line":517,"column":14},"end":{"line":517,"column":42}},"type":"MemberExpression","computed":false,"object":{"range":[17773,17794],"loc":{"start":{"line":517,"column":15},"end":{"line":517,"column":36}},"type":"Literal","value":"/^[+-]?inf(inity)?$/i","raw":"/^[+-]?inf(inity)?$/i","regex":{"pattern":"^[+-]?inf(inity)?$","flags":"i"}},"property":{"range":[17796,17800],"loc":{"start":{"line":517,"column":38},"end":{"line":517,"column":42}},"type":"Identifier","name":"exec"}},"arguments":[{"range":[17801,17802],"loc":{"start":{"line":517,"column":43},"end":{"line":517,"column":44}},"type":"Identifier","name":"x"}]},"right":{"range":[17808,17812],"loc":{"start":{"line":517,"column":50},"end":{"line":517,"column":54}},"type":"Literal","value":null,"raw":"null"}},"consequent":{"range":[17814,17848],"loc":{"start":{"line":517,"column":56},"end":{"line":517,"column":90}},"type":"ReturnStatement","argument":{"range":[17821,17847],"loc":{"start":{"line":517,"column":63},"end":{"line":517,"column":89}},"type":"BinaryExpression","operator":"*","left":{"range":[17821,17829],"loc":{"start":{"line":517,"column":63},"end":{"line":517,"column":71}},"type":"Identifier","name":"Infinity"},"right":{"range":[17831,17846],"loc":{"start":{"line":517,"column":73},"end":{"line":517,"column":88}},"type":"ConditionalExpression","test":{"range":[17831,17841],"loc":{"start":{"line":517,"column":73},"end":{"line":517,"column":83}},"type":"BinaryExpression","operator":"===","left":{"range":[17831,17835],"loc":{"start":{"line":517,"column":73},"end":{"line":517,"column":77}},"type":"MemberExpression","computed":true,"object":{"range":[17831,17832],"loc":{"start":{"line":517,"column":73},"end":{"line":517,"column":74}},"type":"Identifier","name":"x"},"property":{"range":[17833,17834],"loc":{"start":{"line":517,"column":75},"end":{"line":517,"column":76}},"type":"Literal","value":0,"raw":"0"}},"right":{"range":[17838,17841],"loc":{"start":{"line":517,"column":80},"end":{"line":517,"column":83}},"type":"Literal","value":"-","raw":"\"-\""}},"consequent":{"range":[17842,17844],"loc":{"start":{"line":517,"column":84},"end":{"line":517,"column":86}},"type":"UnaryExpression","operator":"-","argument":{"range":[17843,17844],"loc":{"start":{"line":517,"column":85},"end":{"line":517,"column":86}},"type":"Literal","value":1,"raw":"1"},"prefix":true},"alternate":{"range":[17845,17846],"loc":{"start":{"line":517,"column":87},"end":{"line":517,"column":88}},"type":"Literal","value":1,"raw":"1"}}}},"alternate":{"range":[17864,17945],"loc":{"start":{"line":518,"column":15},"end":{"line":519,"column":36}},"type":"IfStatement","test":{"range":[17868,17895],"loc":{"start":{"line":518,"column":19},"end":{"line":518,"column":46}},"type":"BinaryExpression","operator":"!==","left":{"range":[17868,17886],"loc":{"start":{"line":518,"column":19},"end":{"line":518,"column":37}},"type":"CallExpression","callee":{"range":[17868,17883],"loc":{"start":{"line":518,"column":19},"end":{"line":518,"column":34}},"type":"MemberExpression","computed":false,"object":{"range":[17869,17877],"loc":{"start":{"line":518,"column":20},"end":{"line":518,"column":28}},"type":"Literal","value":"/^nan$/i","raw":"/^nan$/i","regex":{"pattern":"^nan$","flags":"i"}},"property":{"range":[17879,17883],"loc":{"start":{"line":518,"column":30},"end":{"line":518,"column":34}},"type":"Identifier","name":"exec"}},"arguments":[{"range":[17884,17885],"loc":{"start":{"line":518,"column":35},"end":{"line":518,"column":36}},"type":"Identifier","name":"x"}]},"right":{"range":[17891,17895],"loc":{"start":{"line":518,"column":42},"end":{"line":518,"column":46}},"type":"Literal","value":null,"raw":"null"}},"consequent":{"range":[17897,17908],"loc":{"start":{"line":518,"column":48},"end":{"line":518,"column":59}},"type":"ReturnStatement","argument":{"range":[17904,17907],"loc":{"start":{"line":518,"column":55},"end":{"line":518,"column":58}},"type":"Identifier","name":"NaN"}},"alternate":{"range":[17924,17945],"loc":{"start":{"line":519,"column":15},"end":{"line":519,"column":36}},"type":"ReturnStatement","argument":{"range":[17931,17944],"loc":{"start":{"line":519,"column":22},"end":{"line":519,"column":35}},"type":"CallExpression","callee":{"range":[17931,17941],"loc":{"start":{"line":519,"column":22},"end":{"line":519,"column":32}},"type":"Identifier","name":"parseFloat"},"arguments":[{"range":[17942,17943],"loc":{"start":{"line":519,"column":33},"end":{"line":519,"column":34}},"type":"Identifier","name":"x"}]}}}}]},"alternate":{"range":[17961,18314],"loc":{"start":{"line":520,"column":15},"end":{"line":525,"column":9}},"type":"IfStatement","test":{"range":[17965,17985],"loc":{"start":{"line":520,"column":19},"end":{"line":520,"column":39}},"type":"BinaryExpression","operator":"==","left":{"range":[17965,17973],"loc":{"start":{"line":520,"column":19},"end":{"line":520,"column":27}},"type":"UnaryExpression","operator":"typeof","argument":{"range":[17972,17973],"loc":{"start":{"line":520,"column":26},"end":{"line":520,"column":27}},"type":"Identifier","name":"x"},"prefix":true},"right":{"range":[17977,17985],"loc":{"start":{"line":520,"column":31},"end":{"line":520,"column":39}},"type":"Literal","value":"number","raw":"\"number\""}},"consequent":{"range":[17987,18115],"loc":{"start":{"line":520,"column":41},"end":{"line":522,"column":9}},"type":"BlockStatement","body":[{"range":[18023,18032],"loc":{"start":{"line":521,"column":10},"end":{"line":521,"column":19}},"type":"ReturnStatement","argument":{"range":[18030,18031],"loc":{"start":{"line":521,"column":17},"end":{"line":521,"column":18}},"type":"Identifier","name":"x"}}]},"alternate":{"range":[18121,18314],"loc":{"start":{"line":522,"column":15},"end":{"line":525,"column":9}},"type":"BlockStatement","body":[{"range":[18133,18213],"loc":{"start":{"line":523,"column":10},"end":{"line":524,"column":27}},"type":"IfStatement","test":{"range":[18137,18162],"loc":{"start":{"line":523,"column":14},"end":{"line":523,"column":39}},"type":"BinaryExpression","operator":"!==","left":{"range":[18137,18148],"loc":{"start":{"line":523,"column":14},"end":{"line":523,"column":25}},"type":"MemberExpression","computed":false,"object":{"range":[18137,18138],"loc":{"start":{"line":523,"column":14},"end":{"line":523,"column":15}},"type":"Identifier","name":"x"},"property":{"range":[18139,18148],"loc":{"start":{"line":523,"column":16},"end":{"line":523,"column":25}},"type":"Identifier","name":"__float__"}},"right":{"range":[18153,18162],"loc":{"start":{"line":523,"column":30},"end":{"line":523,"column":39}},"type":"Identifier","name":"undefined"}},"consequent":{"range":[18164,18185],"loc":{"start":{"line":523,"column":41},"end":{"line":523,"column":62}},"type":"ReturnStatement","argument":{"range":[18171,18184],"loc":{"start":{"line":523,"column":48},"end":{"line":523,"column":61}},"type":"CallExpression","callee":{"range":[18171,18182],"loc":{"start":{"line":523,"column":48},"end":{"line":523,"column":59}},"type":"MemberExpression","computed":false,"object":{"range":[18171,18172],"loc":{"start":{"line":523,"column":48},"end":{"line":523,"column":49}},"type":"Identifier","name":"x"},"property":{"range":[18173,18182],"loc":{"start":{"line":523,"column":50},"end":{"line":523,"column":59}},"type":"Identifier","name":"__float__"}},"arguments":[]}},"alternate":{"range":[18201,18213],"loc":{"start":{"line":524,"column":15},"end":{"line":524,"column":27}},"type":"ReturnStatement","argument":{"range":[18208,18212],"loc":{"start":{"line":524,"column":22},"end":{"line":524,"column":26}},"type":"Literal","value":null,"raw":"null"}}}]}}}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[18330,18387],"loc":{"start":{"line":527,"column":6},"end":{"line":529,"column":7}},"type":"Property","key":{"range":[18330,18333],"loc":{"start":{"line":527,"column":6},"end":{"line":527,"column":9}},"type":"Identifier","name":"hex"},"computed":false,"value":{"range":[18335,18387],"loc":{"start":{"line":527,"column":11},"end":{"line":529,"column":7}},"type":"FunctionExpression","id":null,"params":[{"range":[18344,18345],"loc":{"start":{"line":527,"column":20},"end":{"line":527,"column":21}},"type":"Identifier","name":"x"}],"defaults":[],"body":{"range":[18347,18387],"loc":{"start":{"line":527,"column":23},"end":{"line":529,"column":7}},"type":"BlockStatement","body":[{"range":[18357,18379],"loc":{"start":{"line":528,"column":8},"end":{"line":528,"column":30}},"type":"ReturnStatement","argument":{"range":[18364,18378],"loc":{"start":{"line":528,"column":15},"end":{"line":528,"column":29}},"type":"CallExpression","callee":{"range":[18364,18374],"loc":{"start":{"line":528,"column":15},"end":{"line":528,"column":25}},"type":"MemberExpression","computed":false,"object":{"range":[18364,18365],"loc":{"start":{"line":528,"column":15},"end":{"line":528,"column":16}},"type":"Identifier","name":"x"},"property":{"range":[18366,18374],"loc":{"start":{"line":528,"column":17},"end":{"line":528,"column":25}},"type":"Identifier","name":"toString"}},"arguments":[{"range":[18375,18377],"loc":{"start":{"line":528,"column":26},"end":{"line":528,"column":28}},"type":"Literal","value":16,"raw":"16"}]}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[18395,18450],"loc":{"start":{"line":530,"column":6},"end":{"line":532,"column":7}},"type":"Property","key":{"range":[18395,18398],"loc":{"start":{"line":530,"column":6},"end":{"line":530,"column":9}},"type":"Identifier","name":"int"},"computed":false,"value":{"range":[18400,18450],"loc":{"start":{"line":530,"column":11},"end":{"line":532,"column":7}},"type":"FunctionExpression","id":null,"params":[{"range":[18410,18411],"loc":{"start":{"line":530,"column":21},"end":{"line":530,"column":22}},"type":"Identifier","name":"s"}],"defaults":[],"body":{"range":[18413,18450],"loc":{"start":{"line":530,"column":24},"end":{"line":532,"column":7}},"type":"BlockStatement","body":[{"range":[18423,18442],"loc":{"start":{"line":531,"column":8},"end":{"line":531,"column":27}},"type":"ReturnStatement","argument":{"range":[18430,18441],"loc":{"start":{"line":531,"column":15},"end":{"line":531,"column":26}},"type":"CallExpression","callee":{"range":[18430,18438],"loc":{"start":{"line":531,"column":15},"end":{"line":531,"column":23}},"type":"Identifier","name":"parseInt"},"arguments":[{"range":[18439,18440],"loc":{"start":{"line":531,"column":24},"end":{"line":531,"column":25}},"type":"Identifier","name":"s"}]}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[18458,18510],"loc":{"start":{"line":533,"column":6},"end":{"line":535,"column":7}},"type":"Property","key":{"range":[18458,18461],"loc":{"start":{"line":533,"column":6},"end":{"line":533,"column":9}},"type":"Identifier","name":"len"},"computed":false,"value":{"range":[18463,18510],"loc":{"start":{"line":533,"column":11},"end":{"line":535,"column":7}},"type":"FunctionExpression","id":null,"params":[{"range":[18473,18474],"loc":{"start":{"line":533,"column":21},"end":{"line":533,"column":22}},"type":"Identifier","name":"o"}],"defaults":[],"body":{"range":[18476,18510],"loc":{"start":{"line":533,"column":24},"end":{"line":535,"column":7}},"type":"BlockStatement","body":[{"range":[18486,18502],"loc":{"start":{"line":534,"column":8},"end":{"line":534,"column":24}},"type":"ReturnStatement","argument":{"range":[18493,18501],"loc":{"start":{"line":534,"column":15},"end":{"line":534,"column":23}},"type":"MemberExpression","computed":false,"object":{"range":[18493,18494],"loc":{"start":{"line":534,"column":15},"end":{"line":534,"column":16}},"type":"Identifier","name":"o"},"property":{"range":[18495,18501],"loc":{"start":{"line":534,"column":17},"end":{"line":534,"column":23}},"type":"Identifier","name":"length"}}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[18518,18935],"loc":{"start":{"line":536,"column":6},"end":{"line":543,"column":7}},"type":"Property","key":{"range":[18518,18522],"loc":{"start":{"line":536,"column":6},"end":{"line":536,"column":10}},"type":"Identifier","name":"list"},"computed":false,"value":{"range":[18524,18935],"loc":{"start":{"line":536,"column":12},"end":{"line":543,"column":7}},"type":"FunctionExpression","id":null,"params":[{"range":[18534,18542],"loc":{"start":{"line":536,"column":22},"end":{"line":536,"column":30}},"type":"Identifier","name":"iterable"}],"defaults":[],"body":{"range":[18544,18935],"loc":{"start":{"line":536,"column":32},"end":{"line":543,"column":7}},"type":"BlockStatement","body":[{"range":[18554,18597],"loc":{"start":{"line":537,"column":8},"end":{"line":537,"column":51}},"type":"VariableDeclaration","declarations":[{"range":[18558,18596],"loc":{"start":{"line":537,"column":12},"end":{"line":537,"column":50}},"type":"VariableDeclarator","id":{"range":[18558,18561],"loc":{"start":{"line":537,"column":12},"end":{"line":537,"column":15}},"type":"Identifier","name":"ret"},"init":{"range":[18564,18596],"loc":{"start":{"line":537,"column":18},"end":{"line":537,"column":50}},"type":"NewExpression","callee":{"range":[18568,18594],"loc":{"start":{"line":537,"column":22},"end":{"line":537,"column":48}},"type":"MemberExpression","computed":false,"object":{"range":[18568,18589],"loc":{"start":{"line":537,"column":22},"end":{"line":537,"column":43}},"type":"MemberExpression","computed":false,"object":{"range":[18568,18581],"loc":{"start":{"line":537,"column":22},"end":{"line":537,"column":35}},"type":"Identifier","name":"pythonRuntime"},"property":{"range":[18582,18589],"loc":{"start":{"line":537,"column":36},"end":{"line":537,"column":43}},"type":"Identifier","name":"objects"}},"property":{"range":[18590,18594],"loc":{"start":{"line":537,"column":44},"end":{"line":537,"column":48}},"type":"Identifier","name":"list"}},"arguments":[]}}],"kind":"var"},{"range":[18606,18646],"loc":{"start":{"line":538,"column":8},"end":{"line":538,"column":48}},"type":"IfStatement","test":{"range":[18611,18632],"loc":{"start":{"line":538,"column":13},"end":{"line":538,"column":34}},"type":"BinaryExpression","operator":"==","left":{"range":[18611,18627],"loc":{"start":{"line":538,"column":13},"end":{"line":538,"column":29}},"type":"MemberExpression","computed":false,"object":{"range":[18611,18620],"loc":{"start":{"line":538,"column":13},"end":{"line":538,"column":22}},"type":"Identifier","name":"arguments"},"property":{"range":[18621,18627],"loc":{"start":{"line":538,"column":23},"end":{"line":538,"column":29}},"type":"Identifier","name":"length"}},"right":{"range":[18631,18632],"loc":{"start":{"line":538,"column":33},"end":{"line":538,"column":34}},"type":"Literal","value":0,"raw":"0"}},"consequent":{"range":[18635,18646],"loc":{"start":{"line":538,"column":37},"end":{"line":538,"column":48}},"type":"ReturnStatement","argument":{"range":[18642,18645],"loc":{"start":{"line":538,"column":44},"end":{"line":538,"column":47}},"type":"Identifier","name":"ret"}},"alternate":null},{"range":[18655,18771],"loc":{"start":{"line":539,"column":8},"end":{"line":539,"column":124}},"type":"IfStatement","test":{"range":[18660,18680],"loc":{"start":{"line":539,"column":13},"end":{"line":539,"column":33}},"type":"BinaryExpression","operator":">","left":{"range":[18660,18676],"loc":{"start":{"line":539,"column":13},"end":{"line":539,"column":29}},"type":"MemberExpression","computed":false,"object":{"range":[18660,18669],"loc":{"start":{"line":539,"column":13},"end":{"line":539,"column":22}},"type":"Identifier","name":"arguments"},"property":{"range":[18670,18676],"loc":{"start":{"line":539,"column":23},"end":{"line":539,"column":29}},"type":"Identifier","name":"length"}},"right":{"range":[18679,18680],"loc":{"start":{"line":539,"column":32},"end":{"line":539,"column":33}},"type":"Literal","value":1,"raw":"1"}},"consequent":{"range":[18683,18771],"loc":{"start":{"line":539,"column":36},"end":{"line":539,"column":124}},"type":"ThrowStatement","argument":{"range":[18689,18770],"loc":{"start":{"line":539,"column":42},"end":{"line":539,"column":123}},"type":"NewExpression","callee":{"range":[18693,18702],"loc":{"start":{"line":539,"column":46},"end":{"line":539,"column":55}},"type":"Identifier","name":"TypeError"},"arguments":[{"range":[18703,18769],"loc":{"start":{"line":539,"column":56},"end":{"line":539,"column":122}},"type":"BinaryExpression","operator":"+","left":{"range":[18703,18757],"loc":{"start":{"line":539,"column":56},"end":{"line":539,"column":110}},"type":"BinaryExpression","operator":"+","left":{"range":[18703,18738],"loc":{"start":{"line":539,"column":56},"end":{"line":539,"column":91}},"type":"Literal","value":"list() takes at most 1 argument (","raw":"'list() takes at most 1 argument ('"},"right":{"range":[18741,18757],"loc":{"start":{"line":539,"column":94},"end":{"line":539,"column":110}},"type":"MemberExpression","computed":false,"object":{"range":[18741,18750],"loc":{"start":{"line":539,"column":94},"end":{"line":539,"column":103}},"type":"Identifier","name":"arguments"},"property":{"range":[18751,18757],"loc":{"start":{"line":539,"column":104},"end":{"line":539,"column":110}},"type":"Identifier","name":"length"}}},"right":{"range":[18760,18769],"loc":{"start":{"line":539,"column":113},"end":{"line":539,"column":122}},"type":"Literal","value":" given)","raw":"' given)'"}}]}},"alternate":null},{"range":[18780,18907],"loc":{"start":{"line":540,"column":8},"end":{"line":541,"column":49}},"type":"IfStatement","test":{"range":[18784,18809],"loc":{"start":{"line":540,"column":12},"end":{"line":540,"column":37}},"type":"BinaryExpression","operator":"instanceof","left":{"range":[18784,18792],"loc":{"start":{"line":540,"column":12},"end":{"line":540,"column":20}},"type":"Identifier","name":"iterable"},"right":{"range":[18804,18809],"loc":{"start":{"line":540,"column":32},"end":{"line":540,"column":37}},"type":"Identifier","name":"Array"}},"consequent":{"range":[18811,18857],"loc":{"start":{"line":540,"column":39},"end":{"line":540,"column":85}},"type":"ForInStatement","left":{"range":[18816,18821],"loc":{"start":{"line":540,"column":44},"end":{"line":540,"column":49}},"type":"VariableDeclaration","declarations":[{"range":[18820,18821],"loc":{"start":{"line":540,"column":48},"end":{"line":540,"column":49}},"type":"VariableDeclarator","id":{"range":[18820,18821],"loc":{"start":{"line":540,"column":48},"end":{"line":540,"column":49}},"type":"Identifier","name":"i"},"init":null}],"kind":"var"},"right":{"range":[18825,18833],"loc":{"start":{"line":540,"column":53},"end":{"line":540,"column":61}},"type":"Identifier","name":"iterable"},"body":{"range":[18835,18857],"loc":{"start":{"line":540,"column":63},"end":{"line":540,"column":85}},"type":"ExpressionStatement","expression":{"range":[18835,18856],"loc":{"start":{"line":540,"column":63},"end":{"line":540,"column":84}},"type":"CallExpression","callee":{"range":[18835,18843],"loc":{"start":{"line":540,"column":63},"end":{"line":540,"column":71}},"type":"MemberExpression","computed":false,"object":{"range":[18835,18838],"loc":{"start":{"line":540,"column":63},"end":{"line":540,"column":66}},"type":"Identifier","name":"ret"},"property":{"range":[18839,18843],"loc":{"start":{"line":540,"column":67},"end":{"line":540,"column":71}},"type":"Identifier","name":"push"}},"arguments":[{"range":[18844,18855],"loc":{"start":{"line":540,"column":72},"end":{"line":540,"column":83}},"type":"MemberExpression","computed":true,"object":{"range":[18844,18852],"loc":{"start":{"line":540,"column":72},"end":{"line":540,"column":80}},"type":"Identifier","name":"iterable"},"property":{"range":[18853,18854],"loc":{"start":{"line":540,"column":81},"end":{"line":540,"column":82}},"type":"Identifier","name":"i"}}]}},"each":false},"alternate":{"range":[18871,18907],"loc":{"start":{"line":541,"column":13},"end":{"line":541,"column":49}},"type":"ForInStatement","left":{"range":[18876,18881],"loc":{"start":{"line":541,"column":18},"end":{"line":541,"column":23}},"type":"VariableDeclaration","declarations":[{"range":[18880,18881],"loc":{"start":{"line":541,"column":22},"end":{"line":541,"column":23}},"type":"VariableDeclarator","id":{"range":[18880,18881],"loc":{"start":{"line":541,"column":22},"end":{"line":541,"column":23}},"type":"Identifier","name":"i"},"init":null}],"kind":"var"},"right":{"range":[18885,18893],"loc":{"start":{"line":541,"column":27},"end":{"line":541,"column":35}},"type":"Identifier","name":"iterable"},"body":{"range":[18895,18907],"loc":{"start":{"line":541,"column":37},"end":{"line":541,"column":49}},"type":"ExpressionStatement","expression":{"range":[18895,18906],"loc":{"start":{"line":541,"column":37},"end":{"line":541,"column":48}},"type":"CallExpression","callee":{"range":[18895,18903],"loc":{"start":{"line":541,"column":37},"end":{"line":541,"column":45}},"type":"MemberExpression","computed":false,"object":{"range":[18895,18898],"loc":{"start":{"line":541,"column":37},"end":{"line":541,"column":40}},"type":"Identifier","name":"ret"},"property":{"range":[18899,18903],"loc":{"start":{"line":541,"column":41},"end":{"line":541,"column":45}},"type":"Identifier","name":"push"}},"arguments":[{"range":[18904,18905],"loc":{"start":{"line":541,"column":46},"end":{"line":541,"column":47}},"type":"Identifier","name":"i"}]}},"each":false}},{"range":[18916,18927],"loc":{"start":{"line":542,"column":8},"end":{"line":542,"column":19}},"type":"ReturnStatement","argument":{"range":[18923,18926],"loc":{"start":{"line":542,"column":15},"end":{"line":542,"column":18}},"type":"Identifier","name":"ret"}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[18943,19164],"loc":{"start":{"line":544,"column":6},"end":{"line":549,"column":7}},"type":"Property","key":{"range":[18943,18946],"loc":{"start":{"line":544,"column":6},"end":{"line":544,"column":9}},"type":"Identifier","name":"map"},"computed":false,"value":{"range":[18948,19164],"loc":{"start":{"line":544,"column":11},"end":{"line":549,"column":7}},"type":"FunctionExpression","id":null,"params":[{"range":[18957,18959],"loc":{"start":{"line":544,"column":20},"end":{"line":544,"column":22}},"type":"Identifier","name":"fn"},{"range":[18961,18969],"loc":{"start":{"line":544,"column":24},"end":{"line":544,"column":32}},"type":"Identifier","name":"iterable"}],"defaults":[],"body":{"range":[18971,19164],"loc":{"start":{"line":544,"column":34},"end":{"line":549,"column":7}},"type":"BlockStatement","body":[{"range":[19034,19077],"loc":{"start":{"line":546,"column":8},"end":{"line":546,"column":51}},"type":"VariableDeclaration","declarations":[{"range":[19038,19076],"loc":{"start":{"line":546,"column":12},"end":{"line":546,"column":50}},"type":"VariableDeclarator","id":{"range":[19038,19041],"loc":{"start":{"line":546,"column":12},"end":{"line":546,"column":15}},"type":"Identifier","name":"ret"},"init":{"range":[19044,19076],"loc":{"start":{"line":546,"column":18},"end":{"line":546,"column":50}},"type":"NewExpression","callee":{"range":[19048,19074],"loc":{"start":{"line":546,"column":22},"end":{"line":546,"column":48}},"type":"MemberExpression","computed":false,"object":{"range":[19048,19069],"loc":{"start":{"line":546,"column":22},"end":{"line":546,"column":43}},"type":"MemberExpression","computed":false,"object":{"range":[19048,19061],"loc":{"start":{"line":546,"column":22},"end":{"line":546,"column":35}},"type":"Identifier","name":"pythonRuntime"},"property":{"range":[19062,19069],"loc":{"start":{"line":546,"column":36},"end":{"line":546,"column":43}},"type":"Identifier","name":"objects"}},"property":{"range":[19070,19074],"loc":{"start":{"line":546,"column":44},"end":{"line":546,"column":48}},"type":"Identifier","name":"list"}},"arguments":[]}}],"kind":"var"},{"range":[19086,19136],"loc":{"start":{"line":547,"column":8},"end":{"line":547,"column":58}},"type":"ForInStatement","left":{"range":[19091,19096],"loc":{"start":{"line":547,"column":13},"end":{"line":547,"column":18}},"type":"VariableDeclaration","declarations":[{"range":[19095,19096],"loc":{"start":{"line":547,"column":17},"end":{"line":547,"column":18}},"type":"VariableDeclarator","id":{"range":[19095,19096],"loc":{"start":{"line":547,"column":17},"end":{"line":547,"column":18}},"type":"Identifier","name":"i"},"init":null}],"kind":"var"},"right":{"range":[19100,19108],"loc":{"start":{"line":547,"column":22},"end":{"line":547,"column":30}},"type":"Identifier","name":"iterable"},"body":{"range":[19110,19136],"loc":{"start":{"line":547,"column":32},"end":{"line":547,"column":58}},"type":"ExpressionStatement","expression":{"range":[19110,19135],"loc":{"start":{"line":547,"column":32},"end":{"line":547,"column":57}},"type":"CallExpression","callee":{"range":[19110,19118],"loc":{"start":{"line":547,"column":32},"end":{"line":547,"column":40}},"type":"MemberExpression","computed":false,"object":{"range":[19110,19113],"loc":{"start":{"line":547,"column":32},"end":{"line":547,"column":35}},"type":"Identifier","name":"ret"},"property":{"range":[19114,19118],"loc":{"start":{"line":547,"column":36},"end":{"line":547,"column":40}},"type":"Identifier","name":"push"}},"arguments":[{"range":[19119,19134],"loc":{"start":{"line":547,"column":41},"end":{"line":547,"column":56}},"type":"CallExpression","callee":{"range":[19119,19121],"loc":{"start":{"line":547,"column":41},"end":{"line":547,"column":43}},"type":"Identifier","name":"fn"},"arguments":[{"range":[19122,19133],"loc":{"start":{"line":547,"column":44},"end":{"line":547,"column":55}},"type":"MemberExpression","computed":true,"object":{"range":[19122,19130],"loc":{"start":{"line":547,"column":44},"end":{"line":547,"column":52}},"type":"Identifier","name":"iterable"},"property":{"range":[19131,19132],"loc":{"start":{"line":547,"column":53},"end":{"line":547,"column":54}},"type":"Identifier","name":"i"}}]}]}},"each":false},{"range":[19145,19156],"loc":{"start":{"line":548,"column":8},"end":{"line":548,"column":19}},"type":"ReturnStatement","argument":{"range":[19152,19155],"loc":{"start":{"line":548,"column":15},"end":{"line":548,"column":18}},"type":"Identifier","name":"ret"}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[19172,19532],"loc":{"start":{"line":550,"column":6},"end":{"line":558,"column":7}},"type":"Property","key":{"range":[19172,19175],"loc":{"start":{"line":550,"column":6},"end":{"line":550,"column":9}},"type":"Identifier","name":"max"},"computed":false,"value":{"range":[19177,19532],"loc":{"start":{"line":550,"column":11},"end":{"line":558,"column":7}},"type":"FunctionExpression","id":null,"params":[{"range":[19186,19190],"loc":{"start":{"line":550,"column":20},"end":{"line":550,"column":24}},"type":"Identifier","name":"arg1"},{"range":[19192,19196],"loc":{"start":{"line":550,"column":26},"end":{"line":550,"column":30}},"type":"Identifier","name":"arg2"}],"defaults":[],"body":{"range":[19198,19532],"loc":{"start":{"line":550,"column":32},"end":{"line":558,"column":7}},"type":"BlockStatement","body":[{"range":[19322,19524],"loc":{"start":{"line":553,"column":8},"end":{"line":557,"column":49}},"type":"IfStatement","test":{"range":[19326,19331],"loc":{"start":{"line":553,"column":12},"end":{"line":553,"column":17}},"type":"UnaryExpression","operator":"!","argument":{"range":[19327,19331],"loc":{"start":{"line":553,"column":13},"end":{"line":553,"column":17}},"type":"Identifier","name":"arg2"},"prefix":true},"consequent":{"range":[19333,19484],"loc":{"start":{"line":553,"column":19},"end":{"line":557,"column":9}},"type":"BlockStatement","body":[{"range":[19357,19372],"loc":{"start":{"line":554,"column":10},"end":{"line":554,"column":25}},"type":"VariableDeclaration","declarations":[{"range":[19361,19371],"loc":{"start":{"line":554,"column":14},"end":{"line":554,"column":24}},"type":"VariableDeclarator","id":{"range":[19361,19364],"loc":{"start":{"line":554,"column":14},"end":{"line":554,"column":17}},"type":"Identifier","name":"max"},"init":{"range":[19367,19371],"loc":{"start":{"line":554,"column":20},"end":{"line":554,"column":24}},"type":"Literal","value":null,"raw":"null"}}],"kind":"var"},{"range":[19383,19452],"loc":{"start":{"line":555,"column":10},"end":{"line":555,"column":79}},"type":"ForInStatement","left":{"range":[19388,19393],"loc":{"start":{"line":555,"column":15},"end":{"line":555,"column":20}},"type":"VariableDeclaration","declarations":[{"range":[19392,19393],"loc":{"start":{"line":555,"column":19},"end":{"line":555,"column":20}},"type":"VariableDeclarator","id":{"range":[19392,19393],"loc":{"start":{"line":555,"column":19},"end":{"line":555,"column":20}},"type":"Identifier","name":"i"},"init":null}],"kind":"var"},"right":{"range":[19397,19401],"loc":{"start":{"line":555,"column":24},"end":{"line":555,"column":28}},"type":"Identifier","name":"arg1"},"body":{"range":[19403,19452],"loc":{"start":{"line":555,"column":30},"end":{"line":555,"column":79}},"type":"IfStatement","test":{"range":[19407,19436],"loc":{"start":{"line":555,"column":34},"end":{"line":555,"column":63}},"type":"LogicalExpression","operator":"||","left":{"range":[19407,19419],"loc":{"start":{"line":555,"column":34},"end":{"line":555,"column":46}},"type":"BinaryExpression","operator":"===","left":{"range":[19407,19410],"loc":{"start":{"line":555,"column":34},"end":{"line":555,"column":37}},"type":"Identifier","name":"max"},"right":{"range":[19415,19419],"loc":{"start":{"line":555,"column":42},"end":{"line":555,"column":46}},"type":"Literal","value":null,"raw":"null"}},"right":{"range":[19423,19436],"loc":{"start":{"line":555,"column":50},"end":{"line":555,"column":63}},"type":"BinaryExpression","operator":">","left":{"range":[19423,19430],"loc":{"start":{"line":555,"column":50},"end":{"line":555,"column":57}},"type":"MemberExpression","computed":true,"object":{"range":[19423,19427],"loc":{"start":{"line":555,"column":50},"end":{"line":555,"column":54}},"type":"Identifier","name":"arg1"},"property":{"range":[19428,19429],"loc":{"start":{"line":555,"column":55},"end":{"line":555,"column":56}},"type":"Identifier","name":"i"}},"right":{"range":[19433,19436],"loc":{"start":{"line":555,"column":60},"end":{"line":555,"column":63}},"type":"Identifier","name":"max"}}},"consequent":{"range":[19438,19452],"loc":{"start":{"line":555,"column":65},"end":{"line":555,"column":79}},"type":"ExpressionStatement","expression":{"range":[19438,19451],"loc":{"start":{"line":555,"column":65},"end":{"line":555,"column":78}},"type":"AssignmentExpression","operator":"=","left":{"range":[19438,19441],"loc":{"start":{"line":555,"column":65},"end":{"line":555,"column":68}},"type":"Identifier","name":"max"},"right":{"range":[19444,19451],"loc":{"start":{"line":555,"column":71},"end":{"line":555,"column":78}},"type":"MemberExpression","computed":true,"object":{"range":[19444,19448],"loc":{"start":{"line":555,"column":71},"end":{"line":555,"column":75}},"type":"Identifier","name":"arg1"},"property":{"range":[19449,19450],"loc":{"start":{"line":555,"column":76},"end":{"line":555,"column":77}},"type":"Identifier","name":"i"}}}},"alternate":null},"each":false},{"range":[19463,19474],"loc":{"start":{"line":556,"column":10},"end":{"line":556,"column":21}},"type":"ReturnStatement","argument":{"range":[19470,19473],"loc":{"start":{"line":556,"column":17},"end":{"line":556,"column":20}},"type":"Identifier","name":"max"}}]},"alternate":{"range":[19490,19524],"loc":{"start":{"line":557,"column":15},"end":{"line":557,"column":49}},"type":"ReturnStatement","argument":{"range":[19497,19523],"loc":{"start":{"line":557,"column":22},"end":{"line":557,"column":48}},"type":"ConditionalExpression","test":{"range":[19497,19509],"loc":{"start":{"line":557,"column":22},"end":{"line":557,"column":34}},"type":"BinaryExpression","operator":">=","left":{"range":[19497,19501],"loc":{"start":{"line":557,"column":22},"end":{"line":557,"column":26}},"type":"Identifier","name":"arg1"},"right":{"range":[19505,19509],"loc":{"start":{"line":557,"column":30},"end":{"line":557,"column":34}},"type":"Identifier","name":"arg2"}},"consequent":{"range":[19512,19516],"loc":{"start":{"line":557,"column":37},"end":{"line":557,"column":41}},"type":"Identifier","name":"arg1"},"alternate":{"range":[19519,19523],"loc":{"start":{"line":557,"column":44},"end":{"line":557,"column":48}},"type":"Identifier","name":"arg2"}}}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[19540,19900],"loc":{"start":{"line":559,"column":6},"end":{"line":567,"column":7}},"type":"Property","key":{"range":[19540,19543],"loc":{"start":{"line":559,"column":6},"end":{"line":559,"column":9}},"type":"Identifier","name":"min"},"computed":false,"value":{"range":[19545,19900],"loc":{"start":{"line":559,"column":11},"end":{"line":567,"column":7}},"type":"FunctionExpression","id":null,"params":[{"range":[19554,19558],"loc":{"start":{"line":559,"column":20},"end":{"line":559,"column":24}},"type":"Identifier","name":"arg1"},{"range":[19560,19564],"loc":{"start":{"line":559,"column":26},"end":{"line":559,"column":30}},"type":"Identifier","name":"arg2"}],"defaults":[],"body":{"range":[19566,19900],"loc":{"start":{"line":559,"column":32},"end":{"line":567,"column":7}},"type":"BlockStatement","body":[{"range":[19690,19892],"loc":{"start":{"line":562,"column":8},"end":{"line":566,"column":49}},"type":"IfStatement","test":{"range":[19694,19699],"loc":{"start":{"line":562,"column":12},"end":{"line":562,"column":17}},"type":"UnaryExpression","operator":"!","argument":{"range":[19695,19699],"loc":{"start":{"line":562,"column":13},"end":{"line":562,"column":17}},"type":"Identifier","name":"arg2"},"prefix":true},"consequent":{"range":[19701,19852],"loc":{"start":{"line":562,"column":19},"end":{"line":566,"column":9}},"type":"BlockStatement","body":[{"range":[19725,19740],"loc":{"start":{"line":563,"column":10},"end":{"line":563,"column":25}},"type":"VariableDeclaration","declarations":[{"range":[19729,19739],"loc":{"start":{"line":563,"column":14},"end":{"line":563,"column":24}},"type":"VariableDeclarator","id":{"range":[19729,19732],"loc":{"start":{"line":563,"column":14},"end":{"line":563,"column":17}},"type":"Identifier","name":"max"},"init":{"range":[19735,19739],"loc":{"start":{"line":563,"column":20},"end":{"line":563,"column":24}},"type":"Literal","value":null,"raw":"null"}}],"kind":"var"},{"range":[19751,19820],"loc":{"start":{"line":564,"column":10},"end":{"line":564,"column":79}},"type":"ForInStatement","left":{"range":[19756,19761],"loc":{"start":{"line":564,"column":15},"end":{"line":564,"column":20}},"type":"VariableDeclaration","declarations":[{"range":[19760,19761],"loc":{"start":{"line":564,"column":19},"end":{"line":564,"column":20}},"type":"VariableDeclarator","id":{"range":[19760,19761],"loc":{"start":{"line":564,"column":19},"end":{"line":564,"column":20}},"type":"Identifier","name":"i"},"init":null}],"kind":"var"},"right":{"range":[19765,19769],"loc":{"start":{"line":564,"column":24},"end":{"line":564,"column":28}},"type":"Identifier","name":"arg1"},"body":{"range":[19771,19820],"loc":{"start":{"line":564,"column":30},"end":{"line":564,"column":79}},"type":"IfStatement","test":{"range":[19775,19804],"loc":{"start":{"line":564,"column":34},"end":{"line":564,"column":63}},"type":"LogicalExpression","operator":"||","left":{"range":[19775,19787],"loc":{"start":{"line":564,"column":34},"end":{"line":564,"column":46}},"type":"BinaryExpression","operator":"===","left":{"range":[19775,19778],"loc":{"start":{"line":564,"column":34},"end":{"line":564,"column":37}},"type":"Identifier","name":"max"},"right":{"range":[19783,19787],"loc":{"start":{"line":564,"column":42},"end":{"line":564,"column":46}},"type":"Literal","value":null,"raw":"null"}},"right":{"range":[19791,19804],"loc":{"start":{"line":564,"column":50},"end":{"line":564,"column":63}},"type":"BinaryExpression","operator":"<","left":{"range":[19791,19798],"loc":{"start":{"line":564,"column":50},"end":{"line":564,"column":57}},"type":"MemberExpression","computed":true,"object":{"range":[19791,19795],"loc":{"start":{"line":564,"column":50},"end":{"line":564,"column":54}},"type":"Identifier","name":"arg1"},"property":{"range":[19796,19797],"loc":{"start":{"line":564,"column":55},"end":{"line":564,"column":56}},"type":"Identifier","name":"i"}},"right":{"range":[19801,19804],"loc":{"start":{"line":564,"column":60},"end":{"line":564,"column":63}},"type":"Identifier","name":"max"}}},"consequent":{"range":[19806,19820],"loc":{"start":{"line":564,"column":65},"end":{"line":564,"column":79}},"type":"ExpressionStatement","expression":{"range":[19806,19819],"loc":{"start":{"line":564,"column":65},"end":{"line":564,"column":78}},"type":"AssignmentExpression","operator":"=","left":{"range":[19806,19809],"loc":{"start":{"line":564,"column":65},"end":{"line":564,"column":68}},"type":"Identifier","name":"max"},"right":{"range":[19812,19819],"loc":{"start":{"line":564,"column":71},"end":{"line":564,"column":78}},"type":"MemberExpression","computed":true,"object":{"range":[19812,19816],"loc":{"start":{"line":564,"column":71},"end":{"line":564,"column":75}},"type":"Identifier","name":"arg1"},"property":{"range":[19817,19818],"loc":{"start":{"line":564,"column":76},"end":{"line":564,"column":77}},"type":"Identifier","name":"i"}}}},"alternate":null},"each":false},{"range":[19831,19842],"loc":{"start":{"line":565,"column":10},"end":{"line":565,"column":21}},"type":"ReturnStatement","argument":{"range":[19838,19841],"loc":{"start":{"line":565,"column":17},"end":{"line":565,"column":20}},"type":"Identifier","name":"max"}}]},"alternate":{"range":[19858,19892],"loc":{"start":{"line":566,"column":15},"end":{"line":566,"column":49}},"type":"ReturnStatement","argument":{"range":[19865,19891],"loc":{"start":{"line":566,"column":22},"end":{"line":566,"column":48}},"type":"ConditionalExpression","test":{"range":[19865,19877],"loc":{"start":{"line":566,"column":22},"end":{"line":566,"column":34}},"type":"BinaryExpression","operator":"<=","left":{"range":[19865,19869],"loc":{"start":{"line":566,"column":22},"end":{"line":566,"column":26}},"type":"Identifier","name":"arg1"},"right":{"range":[19873,19877],"loc":{"start":{"line":566,"column":30},"end":{"line":566,"column":34}},"type":"Identifier","name":"arg2"}},"consequent":{"range":[19880,19884],"loc":{"start":{"line":566,"column":37},"end":{"line":566,"column":41}},"type":"Identifier","name":"arg1"},"alternate":{"range":[19887,19891],"loc":{"start":{"line":566,"column":44},"end":{"line":566,"column":48}},"type":"Identifier","name":"arg2"}}}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[19908,19964],"loc":{"start":{"line":568,"column":6},"end":{"line":570,"column":7}},"type":"Property","key":{"range":[19908,19911],"loc":{"start":{"line":568,"column":6},"end":{"line":568,"column":9}},"type":"Identifier","name":"oct"},"computed":false,"value":{"range":[19913,19964],"loc":{"start":{"line":568,"column":11},"end":{"line":570,"column":7}},"type":"FunctionExpression","id":null,"params":[{"range":[19922,19923],"loc":{"start":{"line":568,"column":20},"end":{"line":568,"column":21}},"type":"Identifier","name":"x"}],"defaults":[],"body":{"range":[19925,19964],"loc":{"start":{"line":568,"column":23},"end":{"line":570,"column":7}},"type":"BlockStatement","body":[{"range":[19935,19956],"loc":{"start":{"line":569,"column":8},"end":{"line":569,"column":29}},"type":"ReturnStatement","argument":{"range":[19942,19955],"loc":{"start":{"line":569,"column":15},"end":{"line":569,"column":28}},"type":"CallExpression","callee":{"range":[19942,19952],"loc":{"start":{"line":569,"column":15},"end":{"line":569,"column":25}},"type":"MemberExpression","computed":false,"object":{"range":[19942,19943],"loc":{"start":{"line":569,"column":15},"end":{"line":569,"column":16}},"type":"Identifier","name":"x"},"property":{"range":[19944,19952],"loc":{"start":{"line":569,"column":17},"end":{"line":569,"column":25}},"type":"Identifier","name":"toString"}},"arguments":[{"range":[19953,19954],"loc":{"start":{"line":569,"column":26},"end":{"line":569,"column":27}},"type":"Literal","value":8,"raw":"8"}]}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[19972,20030],"loc":{"start":{"line":571,"column":6},"end":{"line":573,"column":7}},"type":"Property","key":{"range":[19972,19975],"loc":{"start":{"line":571,"column":6},"end":{"line":571,"column":9}},"type":"Identifier","name":"ord"},"computed":false,"value":{"range":[19977,20030],"loc":{"start":{"line":571,"column":11},"end":{"line":573,"column":7}},"type":"FunctionExpression","id":null,"params":[{"range":[19986,19987],"loc":{"start":{"line":571,"column":20},"end":{"line":571,"column":21}},"type":"Identifier","name":"c"}],"defaults":[],"body":{"range":[19989,20030],"loc":{"start":{"line":571,"column":23},"end":{"line":573,"column":7}},"type":"BlockStatement","body":[{"range":[19999,20022],"loc":{"start":{"line":572,"column":8},"end":{"line":572,"column":31}},"type":"ReturnStatement","argument":{"range":[20006,20021],"loc":{"start":{"line":572,"column":15},"end":{"line":572,"column":30}},"type":"CallExpression","callee":{"range":[20006,20018],"loc":{"start":{"line":572,"column":15},"end":{"line":572,"column":27}},"type":"MemberExpression","computed":false,"object":{"range":[20006,20007],"loc":{"start":{"line":572,"column":15},"end":{"line":572,"column":16}},"type":"Identifier","name":"c"},"property":{"range":[20008,20018],"loc":{"start":{"line":572,"column":17},"end":{"line":572,"column":27}},"type":"Identifier","name":"charCodeAt"}},"arguments":[{"range":[20019,20020],"loc":{"start":{"line":572,"column":28},"end":{"line":572,"column":29}},"type":"Literal","value":0,"raw":"0"}]}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[20038,20126],"loc":{"start":{"line":574,"column":6},"end":{"line":576,"column":7}},"type":"Property","key":{"range":[20038,20041],"loc":{"start":{"line":574,"column":6},"end":{"line":574,"column":9}},"type":"Identifier","name":"pow"},"computed":false,"value":{"range":[20043,20126],"loc":{"start":{"line":574,"column":11},"end":{"line":576,"column":7}},"type":"FunctionExpression","id":null,"params":[{"range":[20052,20053],"loc":{"start":{"line":574,"column":20},"end":{"line":574,"column":21}},"type":"Identifier","name":"x"},{"range":[20055,20056],"loc":{"start":{"line":574,"column":23},"end":{"line":574,"column":24}},"type":"Identifier","name":"y"},{"range":[20058,20059],"loc":{"start":{"line":574,"column":26},"end":{"line":574,"column":27}},"type":"Identifier","name":"z"}],"defaults":[],"body":{"range":[20061,20126],"loc":{"start":{"line":574,"column":29},"end":{"line":576,"column":7}},"type":"BlockStatement","body":[{"range":[20071,20118],"loc":{"start":{"line":575,"column":8},"end":{"line":575,"column":55}},"type":"ReturnStatement","argument":{"range":[20078,20117],"loc":{"start":{"line":575,"column":15},"end":{"line":575,"column":54}},"type":"ConditionalExpression","test":{"range":[20078,20079],"loc":{"start":{"line":575,"column":15},"end":{"line":575,"column":16}},"type":"Identifier","name":"z"},"consequent":{"range":[20082,20100],"loc":{"start":{"line":575,"column":19},"end":{"line":575,"column":37}},"type":"BinaryExpression","operator":"%","left":{"range":[20082,20096],"loc":{"start":{"line":575,"column":19},"end":{"line":575,"column":33}},"type":"CallExpression","callee":{"range":[20082,20090],"loc":{"start":{"line":575,"column":19},"end":{"line":575,"column":27}},"type":"MemberExpression","computed":false,"object":{"range":[20082,20086],"loc":{"start":{"line":575,"column":19},"end":{"line":575,"column":23}},"type":"Identifier","name":"Math"},"property":{"range":[20087,20090],"loc":{"start":{"line":575,"column":24},"end":{"line":575,"column":27}},"type":"Identifier","name":"pow"}},"arguments":[{"range":[20091,20092],"loc":{"start":{"line":575,"column":28},"end":{"line":575,"column":29}},"type":"Identifier","name":"x"},{"range":[20094,20095],"loc":{"start":{"line":575,"column":31},"end":{"line":575,"column":32}},"type":"Identifier","name":"y"}]},"right":{"range":[20099,20100],"loc":{"start":{"line":575,"column":36},"end":{"line":575,"column":37}},"type":"Identifier","name":"z"}},"alternate":{"range":[20103,20117],"loc":{"start":{"line":575,"column":40},"end":{"line":575,"column":54}},"type":"CallExpression","callee":{"range":[20103,20111],"loc":{"start":{"line":575,"column":40},"end":{"line":575,"column":48}},"type":"MemberExpression","computed":false,"object":{"range":[20103,20107],"loc":{"start":{"line":575,"column":40},"end":{"line":575,"column":44}},"type":"Identifier","name":"Math"},"property":{"range":[20108,20111],"loc":{"start":{"line":575,"column":45},"end":{"line":575,"column":48}},"type":"Identifier","name":"pow"}},"arguments":[{"range":[20112,20113],"loc":{"start":{"line":575,"column":49},"end":{"line":575,"column":50}},"type":"Identifier","name":"x"},{"range":[20115,20116],"loc":{"start":{"line":575,"column":52},"end":{"line":575,"column":53}},"type":"Identifier","name":"y"}]}}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[20134,20317],"loc":{"start":{"line":577,"column":6},"end":{"line":582,"column":7}},"type":"Property","key":{"range":[20134,20139],"loc":{"start":{"line":577,"column":6},"end":{"line":577,"column":11}},"type":"Identifier","name":"print"},"computed":false,"value":{"range":[20141,20317],"loc":{"start":{"line":577,"column":13},"end":{"line":582,"column":7}},"type":"FunctionExpression","id":null,"params":[],"defaults":[],"body":{"range":[20153,20317],"loc":{"start":{"line":577,"column":25},"end":{"line":582,"column":7}},"type":"BlockStatement","body":[{"range":[20163,20174],"loc":{"start":{"line":578,"column":8},"end":{"line":578,"column":19}},"type":"VariableDeclaration","declarations":[{"range":[20167,20173],"loc":{"start":{"line":578,"column":12},"end":{"line":578,"column":18}},"type":"VariableDeclarator","id":{"range":[20167,20168],"loc":{"start":{"line":578,"column":12},"end":{"line":578,"column":13}},"type":"Identifier","name":"s"},"init":{"range":[20171,20173],"loc":{"start":{"line":578,"column":16},"end":{"line":578,"column":18}},"type":"Literal","value":"","raw":"\"\""}}],"kind":"var"},{"range":[20183,20285],"loc":{"start":{"line":579,"column":8},"end":{"line":580,"column":59}},"type":"ForStatement","init":{"range":[20188,20197],"loc":{"start":{"line":579,"column":13},"end":{"line":579,"column":22}},"type":"VariableDeclaration","declarations":[{"range":[20192,20197],"loc":{"start":{"line":579,"column":17},"end":{"line":579,"column":22}},"type":"VariableDeclarator","id":{"range":[20192,20193],"loc":{"start":{"line":579,"column":17},"end":{"line":579,"column":18}},"type":"Identifier","name":"i"},"init":{"range":[20196,20197],"loc":{"start":{"line":579,"column":21},"end":{"line":579,"column":22}},"type":"Literal","value":0,"raw":"0"}}],"kind":"var"},"test":{"range":[20199,20219],"loc":{"start":{"line":579,"column":24},"end":{"line":579,"column":44}},"type":"BinaryExpression","operator":"<","left":{"range":[20199,20200],"loc":{"start":{"line":579,"column":24},"end":{"line":579,"column":25}},"type":"Identifier","name":"i"},"right":{"range":[20203,20219],"loc":{"start":{"line":579,"column":28},"end":{"line":579,"column":44}},"type":"MemberExpression","computed":false,"object":{"range":[20203,20212],"loc":{"start":{"line":579,"column":28},"end":{"line":579,"column":37}},"type":"Identifier","name":"arguments"},"property":{"range":[20213,20219],"loc":{"start":{"line":579,"column":38},"end":{"line":579,"column":44}},"type":"Identifier","name":"length"}}},"update":{"range":[20221,20224],"loc":{"start":{"line":579,"column":46},"end":{"line":579,"column":49}},"type":"UpdateExpression","operator":"++","argument":{"range":[20221,20222],"loc":{"start":{"line":579,"column":46},"end":{"line":579,"column":47}},"type":"Identifier","name":"i"},"prefix":false},"body":{"range":[20236,20285],"loc":{"start":{"line":580,"column":10},"end":{"line":580,"column":59}},"type":"ExpressionStatement","expression":{"range":[20236,20284],"loc":{"start":{"line":580,"column":10},"end":{"line":580,"column":58}},"type":"AssignmentExpression","operator":"+=","left":{"range":[20236,20237],"loc":{"start":{"line":580,"column":10},"end":{"line":580,"column":11}},"type":"Identifier","name":"s"},"right":{"range":[20241,20284],"loc":{"start":{"line":580,"column":15},"end":{"line":580,"column":58}},"type":"ConditionalExpression","test":{"range":[20241,20248],"loc":{"start":{"line":580,"column":15},"end":{"line":580,"column":22}},"type":"BinaryExpression","operator":"===","left":{"range":[20241,20242],"loc":{"start":{"line":580,"column":15},"end":{"line":580,"column":16}},"type":"Identifier","name":"i"},"right":{"range":[20247,20248],"loc":{"start":{"line":580,"column":21},"end":{"line":580,"column":22}},"type":"Literal","value":0,"raw":"0"}},"consequent":{"range":[20251,20263],"loc":{"start":{"line":580,"column":25},"end":{"line":580,"column":37}},"type":"MemberExpression","computed":true,"object":{"range":[20251,20260],"loc":{"start":{"line":580,"column":25},"end":{"line":580,"column":34}},"type":"Identifier","name":"arguments"},"property":{"range":[20261,20262],"loc":{"start":{"line":580,"column":35},"end":{"line":580,"column":36}},"type":"Identifier","name":"i"}},"alternate":{"range":[20266,20284],"loc":{"start":{"line":580,"column":40},"end":{"line":580,"column":58}},"type":"BinaryExpression","operator":"+","left":{"range":[20266,20269],"loc":{"start":{"line":580,"column":40},"end":{"line":580,"column":43}},"type":"Literal","value":" ","raw":"\" \""},"right":{"range":[20272,20284],"loc":{"start":{"line":580,"column":46},"end":{"line":580,"column":58}},"type":"MemberExpression","computed":true,"object":{"range":[20272,20281],"loc":{"start":{"line":580,"column":46},"end":{"line":580,"column":55}},"type":"Identifier","name":"arguments"},"property":{"range":[20282,20283],"loc":{"start":{"line":580,"column":56},"end":{"line":580,"column":57}},"type":"Identifier","name":"i"}}}}}}},{"range":[20294,20309],"loc":{"start":{"line":581,"column":8},"end":{"line":581,"column":23}},"type":"ExpressionStatement","expression":{"range":[20294,20308],"loc":{"start":{"line":581,"column":8},"end":{"line":581,"column":22}},"type":"CallExpression","callee":{"range":[20294,20305],"loc":{"start":{"line":581,"column":8},"end":{"line":581,"column":19}},"type":"MemberExpression","computed":false,"object":{"range":[20294,20301],"loc":{"start":{"line":581,"column":8},"end":{"line":581,"column":15}},"type":"Identifier","name":"console"},"property":{"range":[20302,20305],"loc":{"start":{"line":581,"column":16},"end":{"line":581,"column":19}},"type":"Identifier","name":"log"}},"arguments":[{"range":[20306,20307],"loc":{"start":{"line":581,"column":20},"end":{"line":581,"column":21}},"type":"Identifier","name":"s"}]}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[20325,20929],"loc":{"start":{"line":583,"column":6},"end":{"line":603,"column":7}},"type":"Property","key":{"range":[20325,20330],"loc":{"start":{"line":583,"column":6},"end":{"line":583,"column":11}},"type":"Identifier","name":"range"},"computed":false,"value":{"range":[20332,20929],"loc":{"start":{"line":583,"column":13},"end":{"line":603,"column":7}},"type":"FunctionExpression","id":null,"params":[{"range":[20342,20347],"loc":{"start":{"line":583,"column":23},"end":{"line":583,"column":28}},"type":"Identifier","name":"start"},{"range":[20349,20353],"loc":{"start":{"line":583,"column":30},"end":{"line":583,"column":34}},"type":"Identifier","name":"stop"},{"range":[20355,20359],"loc":{"start":{"line":583,"column":36},"end":{"line":583,"column":40}},"type":"Identifier","name":"step"}],"defaults":[],"body":{"range":[20361,20929],"loc":{"start":{"line":583,"column":42},"end":{"line":603,"column":7}},"type":"BlockStatement","body":[{"range":[20371,20518],"loc":{"start":{"line":584,"column":8},"end":{"line":589,"column":46}},"type":"IfStatement","test":{"range":[20375,20393],"loc":{"start":{"line":584,"column":12},"end":{"line":584,"column":30}},"type":"BinaryExpression","operator":"===","left":{"range":[20375,20379],"loc":{"start":{"line":584,"column":12},"end":{"line":584,"column":16}},"type":"Identifier","name":"stop"},"right":{"range":[20384,20393],"loc":{"start":{"line":584,"column":21},"end":{"line":584,"column":30}},"type":"Identifier","name":"undefined"}},"consequent":{"range":[20395,20471],"loc":{"start":{"line":584,"column":32},"end":{"line":588,"column":9}},"type":"BlockStatement","body":[{"range":[20407,20420],"loc":{"start":{"line":585,"column":10},"end":{"line":585,"column":23}},"type":"ExpressionStatement","expression":{"range":[20407,20419],"loc":{"start":{"line":585,"column":10},"end":{"line":585,"column":22}},"type":"AssignmentExpression","operator":"=","left":{"range":[20407,20411],"loc":{"start":{"line":585,"column":10},"end":{"line":585,"column":14}},"type":"Identifier","name":"stop"},"right":{"range":[20414,20419],"loc":{"start":{"line":585,"column":17},"end":{"line":585,"column":22}},"type":"Identifier","name":"start"}}},{"range":[20431,20441],"loc":{"start":{"line":586,"column":10},"end":{"line":586,"column":20}},"type":"ExpressionStatement","expression":{"range":[20431,20440],"loc":{"start":{"line":586,"column":10},"end":{"line":586,"column":19}},"type":"AssignmentExpression","operator":"=","left":{"range":[20431,20436],"loc":{"start":{"line":586,"column":10},"end":{"line":586,"column":15}},"type":"Identifier","name":"start"},"right":{"range":[20439,20440],"loc":{"start":{"line":586,"column":18},"end":{"line":586,"column":19}},"type":"Literal","value":0,"raw":"0"}}},{"range":[20452,20461],"loc":{"start":{"line":587,"column":10},"end":{"line":587,"column":19}},"type":"ExpressionStatement","expression":{"range":[20452,20460],"loc":{"start":{"line":587,"column":10},"end":{"line":587,"column":18}},"type":"AssignmentExpression","operator":"=","left":{"range":[20452,20456],"loc":{"start":{"line":587,"column":10},"end":{"line":587,"column":14}},"type":"Identifier","name":"step"},"right":{"range":[20459,20460],"loc":{"start":{"line":587,"column":17},"end":{"line":587,"column":18}},"type":"Literal","value":1,"raw":"1"}}}]},"alternate":{"range":[20485,20518],"loc":{"start":{"line":589,"column":13},"end":{"line":589,"column":46}},"type":"IfStatement","test":{"range":[20489,20507],"loc":{"start":{"line":589,"column":17},"end":{"line":589,"column":35}},"type":"BinaryExpression","operator":"===","left":{"range":[20489,20493],"loc":{"start":{"line":589,"column":17},"end":{"line":589,"column":21}},"type":"Identifier","name":"step"},"right":{"range":[20498,20507],"loc":{"start":{"line":589,"column":26},"end":{"line":589,"column":35}},"type":"Identifier","name":"undefined"}},"consequent":{"range":[20509,20518],"loc":{"start":{"line":589,"column":37},"end":{"line":589,"column":46}},"type":"ExpressionStatement","expression":{"range":[20509,20517],"loc":{"start":{"line":589,"column":37},"end":{"line":589,"column":45}},"type":"AssignmentExpression","operator":"=","left":{"range":[20509,20513],"loc":{"start":{"line":589,"column":37},"end":{"line":589,"column":41}},"type":"Identifier","name":"step"},"right":{"range":[20516,20517],"loc":{"start":{"line":589,"column":44},"end":{"line":589,"column":45}},"type":"Literal","value":1,"raw":"1"}}},"alternate":null}},{"range":[20527,20563],"loc":{"start":{"line":590,"column":8},"end":{"line":590,"column":44}},"type":"VariableDeclaration","declarations":[{"range":[20531,20562],"loc":{"start":{"line":590,"column":12},"end":{"line":590,"column":43}},"type":"VariableDeclarator","id":{"range":[20531,20534],"loc":{"start":{"line":590,"column":12},"end":{"line":590,"column":15}},"type":"Identifier","name":"len"},"init":{"range":[20537,20562],"loc":{"start":{"line":590,"column":18},"end":{"line":590,"column":43}},"type":"UnaryExpression","operator":"~","argument":{"range":[20538,20562],"loc":{"start":{"line":590,"column":19},"end":{"line":590,"column":43}},"type":"UnaryExpression","operator":"~","argument":{"range":[20540,20561],"loc":{"start":{"line":590,"column":21},"end":{"line":590,"column":42}},"type":"BinaryExpression","operator":"/","left":{"range":[20541,20553],"loc":{"start":{"line":590,"column":22},"end":{"line":590,"column":34}},"type":"BinaryExpression","operator":"-","left":{"range":[20541,20545],"loc":{"start":{"line":590,"column":22},"end":{"line":590,"column":26}},"type":"Identifier","name":"stop"},"right":{"range":[20548,20553],"loc":{"start":{"line":590,"column":29},"end":{"line":590,"column":34}},"type":"Identifier","name":"start"}},"right":{"range":[20557,20561],"loc":{"start":{"line":590,"column":38},"end":{"line":590,"column":42}},"type":"Identifier","name":"step"}},"prefix":true},"prefix":true}}],"kind":"var"},{"range":[20593,20653],"loc":{"start":{"line":591,"column":8},"end":{"line":591,"column":68}},"type":"IfStatement","test":{"range":[20598,20605],"loc":{"start":{"line":591,"column":13},"end":{"line":591,"column":20}},"type":"BinaryExpression","operator":"<","left":{"range":[20598,20601],"loc":{"start":{"line":591,"column":13},"end":{"line":591,"column":16}},"type":"Identifier","name":"len"},"right":{"range":[20604,20605],"loc":{"start":{"line":591,"column":19},"end":{"line":591,"column":20}},"type":"Literal","value":0,"raw":"0"}},"consequent":{"range":[20608,20653],"loc":{"start":{"line":591,"column":23},"end":{"line":591,"column":68}},"type":"ReturnStatement","argument":{"range":[20615,20652],"loc":{"start":{"line":591,"column":30},"end":{"line":591,"column":67}},"type":"CallExpression","callee":{"range":[20615,20648],"loc":{"start":{"line":591,"column":30},"end":{"line":591,"column":63}},"type":"MemberExpression","computed":false,"object":{"range":[20615,20634],"loc":{"start":{"line":591,"column":30},"end":{"line":591,"column":49}},"type":"MemberExpression","computed":false,"object":{"range":[20615,20628],"loc":{"start":{"line":591,"column":30},"end":{"line":591,"column":43}},"type":"Identifier","name":"pythonRuntime"},"property":{"range":[20629,20634],"loc":{"start":{"line":591,"column":44},"end":{"line":591,"column":49}},"type":"Identifier","name":"utils"}},"property":{"range":[20635,20648],"loc":{"start":{"line":591,"column":50},"end":{"line":591,"column":63}},"type":"Identifier","name":"convertToList"}},"arguments":[{"range":[20649,20651],"loc":{"start":{"line":591,"column":64},"end":{"line":591,"column":66}},"type":"ArrayExpression","elements":[]}]}},"alternate":null},{"range":[20662,20685],"loc":{"start":{"line":592,"column":8},"end":{"line":592,"column":31}},"type":"VariableDeclaration","declarations":[{"range":[20666,20684],"loc":{"start":{"line":592,"column":12},"end":{"line":592,"column":30}},"type":"VariableDeclarator","id":{"range":[20666,20667],"loc":{"start":{"line":592,"column":12},"end":{"line":592,"column":13}},"type":"Identifier","name":"r"},"init":{"range":[20670,20684],"loc":{"start":{"line":592,"column":16},"end":{"line":592,"column":30}},"type":"NewExpression","callee":{"range":[20674,20679],"loc":{"start":{"line":592,"column":20},"end":{"line":592,"column":25}},"type":"Identifier","name":"Array"},"arguments":[{"range":[20680,20683],"loc":{"start":{"line":592,"column":26},"end":{"line":592,"column":29}},"type":"Identifier","name":"len"}]}}],"kind":"var"},{"range":[20694,20710],"loc":{"start":{"line":593,"column":8},"end":{"line":593,"column":24}},"type":"VariableDeclaration","declarations":[{"range":[20698,20709],"loc":{"start":{"line":593,"column":12},"end":{"line":593,"column":23}},"type":"VariableDeclarator","id":{"range":[20698,20705],"loc":{"start":{"line":593,"column":12},"end":{"line":593,"column":19}},"type":"Identifier","name":"element"},"init":{"range":[20708,20709],"loc":{"start":{"line":593,"column":22},"end":{"line":593,"column":23}},"type":"Literal","value":0,"raw":"0"}}],"kind":"var"},{"range":[20720,20734],"loc":{"start":{"line":595,"column":8},"end":{"line":595,"column":22}},"type":"VariableDeclaration","declarations":[{"range":[20724,20733],"loc":{"start":{"line":595,"column":12},"end":{"line":595,"column":21}},"type":"VariableDeclarator","id":{"range":[20724,20725],"loc":{"start":{"line":595,"column":12},"end":{"line":595,"column":13}},"type":"Identifier","name":"i"},"init":{"range":[20728,20733],"loc":{"start":{"line":595,"column":16},"end":{"line":595,"column":21}},"type":"Identifier","name":"start"}}],"kind":"var"},{"range":[20743,20856],"loc":{"start":{"line":596,"column":8},"end":{"line":599,"column":9}},"type":"WhileStatement","test":{"range":[20750,20794],"loc":{"start":{"line":596,"column":15},"end":{"line":596,"column":59}},"type":"LogicalExpression","operator":"||","left":{"range":[20750,20770],"loc":{"start":{"line":596,"column":15},"end":{"line":596,"column":35}},"type":"LogicalExpression","operator":"&&","left":{"range":[20750,20758],"loc":{"start":{"line":596,"column":15},"end":{"line":596,"column":23}},"type":"BinaryExpression","operator":"<","left":{"range":[20750,20751],"loc":{"start":{"line":596,"column":15},"end":{"line":596,"column":16}},"type":"Identifier","name":"i"},"right":{"range":[20754,20758],"loc":{"start":{"line":596,"column":19},"end":{"line":596,"column":23}},"type":"Identifier","name":"stop"}},"right":{"range":[20762,20770],"loc":{"start":{"line":596,"column":27},"end":{"line":596,"column":35}},"type":"BinaryExpression","operator":">","left":{"range":[20762,20766],"loc":{"start":{"line":596,"column":27},"end":{"line":596,"column":31}},"type":"Identifier","name":"step"},"right":{"range":[20769,20770],"loc":{"start":{"line":596,"column":34},"end":{"line":596,"column":35}},"type":"Literal","value":0,"raw":"0"}}},"right":{"range":[20774,20794],"loc":{"start":{"line":596,"column":39},"end":{"line":596,"column":59}},"type":"LogicalExpression","operator":"&&","left":{"range":[20774,20782],"loc":{"start":{"line":596,"column":39},"end":{"line":596,"column":47}},"type":"BinaryExpression","operator":">","left":{"range":[20774,20775],"loc":{"start":{"line":596,"column":39},"end":{"line":596,"column":40}},"type":"Identifier","name":"i"},"right":{"range":[20778,20782],"loc":{"start":{"line":596,"column":43},"end":{"line":596,"column":47}},"type":"Identifier","name":"stop"}},"right":{"range":[20786,20794],"loc":{"start":{"line":596,"column":51},"end":{"line":596,"column":59}},"type":"BinaryExpression","operator":"<","left":{"range":[20786,20790],"loc":{"start":{"line":596,"column":51},"end":{"line":596,"column":55}},"type":"Identifier","name":"step"},"right":{"range":[20793,20794],"loc":{"start":{"line":596,"column":58},"end":{"line":596,"column":59}},"type":"Literal","value":0,"raw":"0"}}}},"body":{"range":[20796,20856],"loc":{"start":{"line":596,"column":61},"end":{"line":599,"column":9}},"type":"BlockStatement","body":[{"range":[20808,20825],"loc":{"start":{"line":597,"column":10},"end":{"line":597,"column":27}},"type":"ExpressionStatement","expression":{"range":[20808,20824],"loc":{"start":{"line":597,"column":10},"end":{"line":597,"column":26}},"type":"AssignmentExpression","operator":"=","left":{"range":[20808,20820],"loc":{"start":{"line":597,"column":10},"end":{"line":597,"column":22}},"type":"MemberExpression","computed":true,"object":{"range":[20808,20809],"loc":{"start":{"line":597,"column":10},"end":{"line":597,"column":11}},"type":"Identifier","name":"r"},"property":{"range":[20810,20819],"loc":{"start":{"line":597,"column":12},"end":{"line":597,"column":21}},"type":"UpdateExpression","operator":"++","argument":{"range":[20810,20817],"loc":{"start":{"line":597,"column":12},"end":{"line":597,"column":19}},"type":"Identifier","name":"element"},"prefix":false}},"right":{"range":[20823,20824],"loc":{"start":{"line":597,"column":25},"end":{"line":597,"column":26}},"type":"Identifier","name":"i"}}},{"range":[20836,20846],"loc":{"start":{"line":598,"column":10},"end":{"line":598,"column":20}},"type":"ExpressionStatement","expression":{"range":[20836,20845],"loc":{"start":{"line":598,"column":10},"end":{"line":598,"column":19}},"type":"AssignmentExpression","operator":"+=","left":{"range":[20836,20837],"loc":{"start":{"line":598,"column":10},"end":{"line":598,"column":11}},"type":"Identifier","name":"i"},"right":{"range":[20841,20845],"loc":{"start":{"line":598,"column":15},"end":{"line":598,"column":19}},"type":"Identifier","name":"step"}}}]}},{"range":[20866,20903],"loc":{"start":{"line":601,"column":8},"end":{"line":601,"column":45}},"type":"ExpressionStatement","expression":{"range":[20866,20902],"loc":{"start":{"line":601,"column":8},"end":{"line":601,"column":44}},"type":"CallExpression","callee":{"range":[20866,20899],"loc":{"start":{"line":601,"column":8},"end":{"line":601,"column":41}},"type":"MemberExpression","computed":false,"object":{"range":[20866,20885],"loc":{"start":{"line":601,"column":8},"end":{"line":601,"column":27}},"type":"MemberExpression","computed":false,"object":{"range":[20866,20879],"loc":{"start":{"line":601,"column":8},"end":{"line":601,"column":21}},"type":"Identifier","name":"pythonRuntime"},"property":{"range":[20880,20885],"loc":{"start":{"line":601,"column":22},"end":{"line":601,"column":27}},"type":"Identifier","name":"utils"}},"property":{"range":[20886,20899],"loc":{"start":{"line":601,"column":28},"end":{"line":601,"column":41}},"type":"Identifier","name":"convertToList"}},"arguments":[{"range":[20900,20901],"loc":{"start":{"line":601,"column":42},"end":{"line":601,"column":43}},"type":"Identifier","name":"r"}]}},{"range":[20912,20921],"loc":{"start":{"line":602,"column":8},"end":{"line":602,"column":17}},"type":"ReturnStatement","argument":{"range":[20919,20920],"loc":{"start":{"line":602,"column":15},"end":{"line":602,"column":16}},"type":"Identifier","name":"r"}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[20937,21448],"loc":{"start":{"line":604,"column":6},"end":{"line":610,"column":7}},"type":"Property","key":{"range":[20937,20941],"loc":{"start":{"line":604,"column":6},"end":{"line":604,"column":10}},"type":"Identifier","name":"repr"},"computed":false,"value":{"range":[20943,21448],"loc":{"start":{"line":604,"column":12},"end":{"line":610,"column":7}},"type":"FunctionExpression","id":null,"params":[{"range":[20953,20956],"loc":{"start":{"line":604,"column":22},"end":{"line":604,"column":25}},"type":"Identifier","name":"obj"}],"defaults":[],"body":{"range":[20958,21448],"loc":{"start":{"line":604,"column":27},"end":{"line":610,"column":7}},"type":"BlockStatement","body":[{"range":[20968,21020],"loc":{"start":{"line":605,"column":8},"end":{"line":605,"column":60}},"type":"IfStatement","test":{"range":[20972,20995],"loc":{"start":{"line":605,"column":12},"end":{"line":605,"column":35}},"type":"BinaryExpression","operator":"===","left":{"range":[20972,20982],"loc":{"start":{"line":605,"column":12},"end":{"line":605,"column":22}},"type":"UnaryExpression","operator":"typeof","argument":{"range":[20979,20982],"loc":{"start":{"line":605,"column":19},"end":{"line":605,"column":22}},"type":"Identifier","name":"obj"},"prefix":true},"right":{"range":[20987,20995],"loc":{"start":{"line":605,"column":27},"end":{"line":605,"column":35}},"type":"Literal","value":"string","raw":"'string'"}},"consequent":{"range":[20997,21020],"loc":{"start":{"line":605,"column":37},"end":{"line":605,"column":60}},"type":"ReturnStatement","argument":{"range":[21004,21019],"loc":{"start":{"line":605,"column":44},"end":{"line":605,"column":59}},"type":"BinaryExpression","operator":"+","left":{"range":[21004,21013],"loc":{"start":{"line":605,"column":44},"end":{"line":605,"column":53}},"type":"BinaryExpression","operator":"+","left":{"range":[21004,21007],"loc":{"start":{"line":605,"column":44},"end":{"line":605,"column":47}},"type":"Literal","value":"'","raw":"\"'\""},"right":{"range":[21010,21013],"loc":{"start":{"line":605,"column":50},"end":{"line":605,"column":53}},"type":"Identifier","name":"obj"}},"right":{"range":[21016,21019],"loc":{"start":{"line":605,"column":56},"end":{"line":605,"column":59}},"type":"Literal","value":"'","raw":"\"'\""}}},"alternate":null},{"range":[21071,21360],"loc":{"start":{"line":606,"column":8},"end":{"line":609,"column":37}},"type":"IfStatement","test":{"range":[21075,21101],"loc":{"start":{"line":606,"column":12},"end":{"line":606,"column":38}},"type":"BinaryExpression","operator":"!==","left":{"range":[21075,21087],"loc":{"start":{"line":606,"column":12},"end":{"line":606,"column":24}},"type":"MemberExpression","computed":false,"object":{"range":[21075,21078],"loc":{"start":{"line":606,"column":12},"end":{"line":606,"column":15}},"type":"Identifier","name":"obj"},"property":{"range":[21079,21087],"loc":{"start":{"line":606,"column":16},"end":{"line":606,"column":24}},"type":"Identifier","name":"__repr__"}},"right":{"range":[21092,21101],"loc":{"start":{"line":606,"column":29},"end":{"line":606,"column":38}},"type":"Identifier","name":"undefined"}},"consequent":{"range":[21103,21125],"loc":{"start":{"line":606,"column":40},"end":{"line":606,"column":62}},"type":"ReturnStatement","argument":{"range":[21110,21124],"loc":{"start":{"line":606,"column":47},"end":{"line":606,"column":61}},"type":"CallExpression","callee":{"range":[21110,21122],"loc":{"start":{"line":606,"column":47},"end":{"line":606,"column":59}},"type":"MemberExpression","computed":false,"object":{"range":[21110,21113],"loc":{"start":{"line":606,"column":47},"end":{"line":606,"column":50}},"type":"Identifier","name":"obj"},"property":{"range":[21114,21122],"loc":{"start":{"line":606,"column":51},"end":{"line":606,"column":59}},"type":"Identifier","name":"__repr__"}},"arguments":[]}},"alternate":{"range":[21139,21360],"loc":{"start":{"line":607,"column":13},"end":{"line":609,"column":37}},"type":"IfStatement","test":{"range":[21143,21234],"loc":{"start":{"line":607,"column":17},"end":{"line":607,"column":108}},"type":"LogicalExpression","operator":"&&","left":{"range":[21143,21208],"loc":{"start":{"line":607,"column":17},"end":{"line":607,"column":82}},"type":"LogicalExpression","operator":"&&","left":{"range":[21143,21170],"loc":{"start":{"line":607,"column":17},"end":{"line":607,"column":44}},"type":"BinaryExpression","operator":"!==","left":{"range":[21143,21156],"loc":{"start":{"line":607,"column":17},"end":{"line":607,"column":30}},"type":"MemberExpression","computed":false,"object":{"range":[21143,21146],"loc":{"start":{"line":607,"column":17},"end":{"line":607,"column":20}},"type":"Identifier","name":"obj"},"property":{"range":[21147,21156],"loc":{"start":{"line":607,"column":21},"end":{"line":607,"column":30}},"type":"Identifier","name":"__class__"}},"right":{"range":[21161,21170],"loc":{"start":{"line":607,"column":35},"end":{"line":607,"column":44}},"type":"Identifier","name":"undefined"}},"right":{"range":[21174,21208],"loc":{"start":{"line":607,"column":48},"end":{"line":607,"column":82}},"type":"BinaryExpression","operator":"!==","left":{"range":[21174,21194],"loc":{"start":{"line":607,"column":48},"end":{"line":607,"column":68}},"type":"MemberExpression","computed":false,"object":{"range":[21174,21187],"loc":{"start":{"line":607,"column":48},"end":{"line":607,"column":61}},"type":"MemberExpression","computed":false,"object":{"range":[21174,21177],"loc":{"start":{"line":607,"column":48},"end":{"line":607,"column":51}},"type":"Identifier","name":"obj"},"property":{"range":[21178,21187],"loc":{"start":{"line":607,"column":52},"end":{"line":607,"column":61}},"type":"Identifier","name":"__class__"}},"property":{"range":[21188,21194],"loc":{"start":{"line":607,"column":62},"end":{"line":607,"column":68}},"type":"Identifier","name":"module"}},"right":{"range":[21199,21208],"loc":{"start":{"line":607,"column":73},"end":{"line":607,"column":82}},"type":"Identifier","name":"undefined"}}},"right":{"range":[21212,21234],"loc":{"start":{"line":607,"column":86},"end":{"line":607,"column":108}},"type":"MemberExpression","computed":false,"object":{"range":[21212,21225],"loc":{"start":{"line":607,"column":86},"end":{"line":607,"column":99}},"type":"MemberExpression","computed":false,"object":{"range":[21212,21215],"loc":{"start":{"line":607,"column":86},"end":{"line":607,"column":89}},"type":"Identifier","name":"obj"},"property":{"range":[21216,21225],"loc":{"start":{"line":607,"column":90},"end":{"line":607,"column":99}},"type":"Identifier","name":"__class__"}},"property":{"range":[21226,21234],"loc":{"start":{"line":607,"column":100},"end":{"line":607,"column":108}},"type":"Identifier","name":"__name__"}}},"consequent":{"range":[21236,21332],"loc":{"start":{"line":607,"column":110},"end":{"line":609,"column":9}},"type":"BlockStatement","body":[{"range":[21248,21322],"loc":{"start":{"line":608,"column":10},"end":{"line":608,"column":84}},"type":"ReturnStatement","argument":{"range":[21255,21321],"loc":{"start":{"line":608,"column":17},"end":{"line":608,"column":83}},"type":"BinaryExpression","operator":"+","left":{"range":[21255,21310],"loc":{"start":{"line":608,"column":17},"end":{"line":608,"column":72}},"type":"BinaryExpression","operator":"+","left":{"range":[21255,21287],"loc":{"start":{"line":608,"column":17},"end":{"line":608,"column":49}},"type":"BinaryExpression","operator":"+","left":{"range":[21255,21283],"loc":{"start":{"line":608,"column":17},"end":{"line":608,"column":45}},"type":"BinaryExpression","operator":"+","left":{"range":[21255,21258],"loc":{"start":{"line":608,"column":17},"end":{"line":608,"column":20}},"type":"Literal","value":"<","raw":"'<'"},"right":{"range":[21259,21283],"loc":{"start":{"line":608,"column":21},"end":{"line":608,"column":45}},"type":"MemberExpression","computed":false,"object":{"range":[21259,21272],"loc":{"start":{"line":608,"column":21},"end":{"line":608,"column":34}},"type":"MemberExpression","computed":false,"object":{"range":[21259,21262],"loc":{"start":{"line":608,"column":21},"end":{"line":608,"column":24}},"type":"Identifier","name":"obj"},"property":{"range":[21263,21272],"loc":{"start":{"line":608,"column":25},"end":{"line":608,"column":34}},"type":"Identifier","name":"__class__"}},"property":{"range":[21273,21283],"loc":{"start":{"line":608,"column":35},"end":{"line":608,"column":45}},"type":"Identifier","name":"__module__"}}},"right":{"range":[21284,21287],"loc":{"start":{"line":608,"column":46},"end":{"line":608,"column":49}},"type":"Literal","value":".","raw":"'.'"}},"right":{"range":[21288,21310],"loc":{"start":{"line":608,"column":50},"end":{"line":608,"column":72}},"type":"MemberExpression","computed":false,"object":{"range":[21288,21301],"loc":{"start":{"line":608,"column":50},"end":{"line":608,"column":63}},"type":"MemberExpression","computed":false,"object":{"range":[21288,21291],"loc":{"start":{"line":608,"column":50},"end":{"line":608,"column":53}},"type":"Identifier","name":"obj"},"property":{"range":[21292,21301],"loc":{"start":{"line":608,"column":54},"end":{"line":608,"column":63}},"type":"Identifier","name":"__class__"}},"property":{"range":[21302,21310],"loc":{"start":{"line":608,"column":64},"end":{"line":608,"column":72}},"type":"Identifier","name":"__name__"}}},"right":{"range":[21311,21321],"loc":{"start":{"line":608,"column":73},"end":{"line":608,"column":83}},"type":"Literal","value":" object>","raw":"' object>'"}}}]},"alternate":{"range":[21338,21360],"loc":{"start":{"line":609,"column":15},"end":{"line":609,"column":37}},"type":"ReturnStatement","argument":{"range":[21345,21359],"loc":{"start":{"line":609,"column":22},"end":{"line":609,"column":36}},"type":"CallExpression","callee":{"range":[21345,21357],"loc":{"start":{"line":609,"column":22},"end":{"line":609,"column":34}},"type":"MemberExpression","computed":false,"object":{"range":[21345,21348],"loc":{"start":{"line":609,"column":22},"end":{"line":609,"column":25}},"type":"Identifier","name":"obj"},"property":{"range":[21349,21357],"loc":{"start":{"line":609,"column":26},"end":{"line":609,"column":34}},"type":"Identifier","name":"toString"}},"arguments":[]}}}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[21456,21617],"loc":{"start":{"line":611,"column":6},"end":{"line":615,"column":7}},"type":"Property","key":{"range":[21456,21464],"loc":{"start":{"line":611,"column":6},"end":{"line":611,"column":14}},"type":"Identifier","name":"reversed"},"computed":false,"value":{"range":[21466,21617],"loc":{"start":{"line":611,"column":16},"end":{"line":615,"column":7}},"type":"FunctionExpression","id":null,"params":[{"range":[21476,21479],"loc":{"start":{"line":611,"column":26},"end":{"line":611,"column":29}},"type":"Identifier","name":"seq"}],"defaults":[],"body":{"range":[21481,21617],"loc":{"start":{"line":611,"column":31},"end":{"line":615,"column":7}},"type":"BlockStatement","body":[{"range":[21491,21534],"loc":{"start":{"line":612,"column":8},"end":{"line":612,"column":51}},"type":"VariableDeclaration","declarations":[{"range":[21495,21533],"loc":{"start":{"line":612,"column":12},"end":{"line":612,"column":50}},"type":"VariableDeclarator","id":{"range":[21495,21498],"loc":{"start":{"line":612,"column":12},"end":{"line":612,"column":15}},"type":"Identifier","name":"ret"},"init":{"range":[21501,21533],"loc":{"start":{"line":612,"column":18},"end":{"line":612,"column":50}},"type":"NewExpression","callee":{"range":[21505,21531],"loc":{"start":{"line":612,"column":22},"end":{"line":612,"column":48}},"type":"MemberExpression","computed":false,"object":{"range":[21505,21526],"loc":{"start":{"line":612,"column":22},"end":{"line":612,"column":43}},"type":"MemberExpression","computed":false,"object":{"range":[21505,21518],"loc":{"start":{"line":612,"column":22},"end":{"line":612,"column":35}},"type":"Identifier","name":"pythonRuntime"},"property":{"range":[21519,21526],"loc":{"start":{"line":612,"column":36},"end":{"line":612,"column":43}},"type":"Identifier","name":"objects"}},"property":{"range":[21527,21531],"loc":{"start":{"line":612,"column":44},"end":{"line":612,"column":48}},"type":"Identifier","name":"list"}},"arguments":[]}}],"kind":"var"},{"range":[21543,21579],"loc":{"start":{"line":613,"column":8},"end":{"line":613,"column":44}},"type":"ForInStatement","left":{"range":[21548,21553],"loc":{"start":{"line":613,"column":13},"end":{"line":613,"column":18}},"type":"VariableDeclaration","declarations":[{"range":[21552,21553],"loc":{"start":{"line":613,"column":17},"end":{"line":613,"column":18}},"type":"VariableDeclarator","id":{"range":[21552,21553],"loc":{"start":{"line":613,"column":17},"end":{"line":613,"column":18}},"type":"Identifier","name":"i"},"init":null}],"kind":"var"},"right":{"range":[21557,21560],"loc":{"start":{"line":613,"column":22},"end":{"line":613,"column":25}},"type":"Identifier","name":"seq"},"body":{"range":[21562,21579],"loc":{"start":{"line":613,"column":27},"end":{"line":613,"column":44}},"type":"ExpressionStatement","expression":{"range":[21562,21578],"loc":{"start":{"line":613,"column":27},"end":{"line":613,"column":43}},"type":"CallExpression","callee":{"range":[21562,21570],"loc":{"start":{"line":613,"column":27},"end":{"line":613,"column":35}},"type":"MemberExpression","computed":false,"object":{"range":[21562,21565],"loc":{"start":{"line":613,"column":27},"end":{"line":613,"column":30}},"type":"Identifier","name":"ret"},"property":{"range":[21566,21570],"loc":{"start":{"line":613,"column":31},"end":{"line":613,"column":35}},"type":"Identifier","name":"push"}},"arguments":[{"range":[21571,21577],"loc":{"start":{"line":613,"column":36},"end":{"line":613,"column":42}},"type":"MemberExpression","computed":true,"object":{"range":[21571,21574],"loc":{"start":{"line":613,"column":36},"end":{"line":613,"column":39}},"type":"Identifier","name":"seq"},"property":{"range":[21575,21576],"loc":{"start":{"line":613,"column":40},"end":{"line":613,"column":41}},"type":"Identifier","name":"i"}}]}},"each":false},{"range":[21588,21609],"loc":{"start":{"line":614,"column":8},"end":{"line":614,"column":29}},"type":"ReturnStatement","argument":{"range":[21595,21608],"loc":{"start":{"line":614,"column":15},"end":{"line":614,"column":28}},"type":"CallExpression","callee":{"range":[21595,21606],"loc":{"start":{"line":614,"column":15},"end":{"line":614,"column":26}},"type":"MemberExpression","computed":false,"object":{"range":[21595,21598],"loc":{"start":{"line":614,"column":15},"end":{"line":614,"column":18}},"type":"Identifier","name":"ret"},"property":{"range":[21599,21606],"loc":{"start":{"line":614,"column":19},"end":{"line":614,"column":26}},"type":"Identifier","name":"reverse"}},"arguments":[]}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[21625,21825],"loc":{"start":{"line":616,"column":6},"end":{"line":622,"column":7}},"type":"Property","key":{"range":[21625,21630],"loc":{"start":{"line":616,"column":6},"end":{"line":616,"column":11}},"type":"Identifier","name":"round"},"computed":false,"value":{"range":[21632,21825],"loc":{"start":{"line":616,"column":13},"end":{"line":622,"column":7}},"type":"FunctionExpression","id":null,"params":[{"range":[21642,21645],"loc":{"start":{"line":616,"column":23},"end":{"line":616,"column":26}},"type":"Identifier","name":"num"},{"range":[21647,21654],"loc":{"start":{"line":616,"column":28},"end":{"line":616,"column":35}},"type":"Identifier","name":"ndigits"}],"defaults":[],"body":{"range":[21656,21825],"loc":{"start":{"line":616,"column":37},"end":{"line":622,"column":7}},"type":"BlockStatement","body":[{"range":[21666,21785],"loc":{"start":{"line":617,"column":8},"end":{"line":620,"column":9}},"type":"IfStatement","test":{"range":[21670,21677],"loc":{"start":{"line":617,"column":12},"end":{"line":617,"column":19}},"type":"Identifier","name":"ndigits"},"consequent":{"range":[21679,21785],"loc":{"start":{"line":617,"column":21},"end":{"line":620,"column":9}},"type":"BlockStatement","body":[{"range":[21691,21725],"loc":{"start":{"line":618,"column":10},"end":{"line":618,"column":44}},"type":"VariableDeclaration","declarations":[{"range":[21695,21724],"loc":{"start":{"line":618,"column":14},"end":{"line":618,"column":43}},"type":"VariableDeclarator","id":{"range":[21695,21700],"loc":{"start":{"line":618,"column":14},"end":{"line":618,"column":19}},"type":"Identifier","name":"scale"},"init":{"range":[21703,21724],"loc":{"start":{"line":618,"column":22},"end":{"line":618,"column":43}},"type":"CallExpression","callee":{"range":[21703,21711],"loc":{"start":{"line":618,"column":22},"end":{"line":618,"column":30}},"type":"MemberExpression","computed":false,"object":{"range":[21703,21707],"loc":{"start":{"line":618,"column":22},"end":{"line":618,"column":26}},"type":"Identifier","name":"Math"},"property":{"range":[21708,21711],"loc":{"start":{"line":618,"column":27},"end":{"line":618,"column":30}},"type":"Identifier","name":"pow"}},"arguments":[{"range":[21712,21714],"loc":{"start":{"line":618,"column":31},"end":{"line":618,"column":33}},"type":"Literal","value":10,"raw":"10"},{"range":[21716,21723],"loc":{"start":{"line":618,"column":35},"end":{"line":618,"column":42}},"type":"Identifier","name":"ndigits"}]}}],"kind":"var"},{"range":[21736,21775],"loc":{"start":{"line":619,"column":10},"end":{"line":619,"column":49}},"type":"ReturnStatement","argument":{"range":[21743,21774],"loc":{"start":{"line":619,"column":17},"end":{"line":619,"column":48}},"type":"BinaryExpression","operator":"/","left":{"range":[21743,21766],"loc":{"start":{"line":619,"column":17},"end":{"line":619,"column":40}},"type":"CallExpression","callee":{"range":[21743,21753],"loc":{"start":{"line":619,"column":17},"end":{"line":619,"column":27}},"type":"MemberExpression","computed":false,"object":{"range":[21743,21747],"loc":{"start":{"line":619,"column":17},"end":{"line":619,"column":21}},"type":"Identifier","name":"Math"},"property":{"range":[21748,21753],"loc":{"start":{"line":619,"column":22},"end":{"line":619,"column":27}},"type":"Identifier","name":"round"}},"arguments":[{"range":[21754,21765],"loc":{"start":{"line":619,"column":28},"end":{"line":619,"column":39}},"type":"BinaryExpression","operator":"*","left":{"range":[21754,21757],"loc":{"start":{"line":619,"column":28},"end":{"line":619,"column":31}},"type":"Identifier","name":"num"},"right":{"range":[21760,21765],"loc":{"start":{"line":619,"column":34},"end":{"line":619,"column":39}},"type":"Identifier","name":"scale"}}]},"right":{"range":[21769,21774],"loc":{"start":{"line":619,"column":43},"end":{"line":619,"column":48}},"type":"Identifier","name":"scale"}}}]},"alternate":null},{"range":[21794,21817],"loc":{"start":{"line":621,"column":8},"end":{"line":621,"column":31}},"type":"ReturnStatement","argument":{"range":[21801,21816],"loc":{"start":{"line":621,"column":15},"end":{"line":621,"column":30}},"type":"CallExpression","callee":{"range":[21801,21811],"loc":{"start":{"line":621,"column":15},"end":{"line":621,"column":25}},"type":"MemberExpression","computed":false,"object":{"range":[21801,21805],"loc":{"start":{"line":621,"column":15},"end":{"line":621,"column":19}},"type":"Identifier","name":"Math"},"property":{"range":[21806,21811],"loc":{"start":{"line":621,"column":20},"end":{"line":621,"column":25}},"type":"Identifier","name":"round"}},"arguments":[{"range":[21812,21815],"loc":{"start":{"line":621,"column":26},"end":{"line":621,"column":29}},"type":"Identifier","name":"num"}]}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[21833,22095],"loc":{"start":{"line":623,"column":6},"end":{"line":629,"column":7}},"type":"Property","key":{"range":[21833,21839],"loc":{"start":{"line":623,"column":6},"end":{"line":623,"column":12}},"type":"Identifier","name":"sorted"},"computed":false,"value":{"range":[21841,22095],"loc":{"start":{"line":623,"column":14},"end":{"line":629,"column":7}},"type":"FunctionExpression","id":null,"params":[{"range":[21851,21859],"loc":{"start":{"line":623,"column":24},"end":{"line":623,"column":32}},"type":"Identifier","name":"iterable"},{"range":[21861,21864],"loc":{"start":{"line":623,"column":34},"end":{"line":623,"column":37}},"type":"Identifier","name":"key"},{"range":[21866,21873],"loc":{"start":{"line":623,"column":39},"end":{"line":623,"column":46}},"type":"Identifier","name":"reverse"}],"defaults":[],"body":{"range":[21875,22095],"loc":{"start":{"line":623,"column":48},"end":{"line":629,"column":7}},"type":"BlockStatement","body":[{"range":[21885,21928],"loc":{"start":{"line":624,"column":8},"end":{"line":624,"column":51}},"type":"VariableDeclaration","declarations":[{"range":[21889,21927],"loc":{"start":{"line":624,"column":12},"end":{"line":624,"column":50}},"type":"VariableDeclarator","id":{"range":[21889,21892],"loc":{"start":{"line":624,"column":12},"end":{"line":624,"column":15}},"type":"Identifier","name":"ret"},"init":{"range":[21895,21927],"loc":{"start":{"line":624,"column":18},"end":{"line":624,"column":50}},"type":"NewExpression","callee":{"range":[21899,21925],"loc":{"start":{"line":624,"column":22},"end":{"line":624,"column":48}},"type":"MemberExpression","computed":false,"object":{"range":[21899,21920],"loc":{"start":{"line":624,"column":22},"end":{"line":624,"column":43}},"type":"MemberExpression","computed":false,"object":{"range":[21899,21912],"loc":{"start":{"line":624,"column":22},"end":{"line":624,"column":35}},"type":"Identifier","name":"pythonRuntime"},"property":{"range":[21913,21920],"loc":{"start":{"line":624,"column":36},"end":{"line":624,"column":43}},"type":"Identifier","name":"objects"}},"property":{"range":[21921,21925],"loc":{"start":{"line":624,"column":44},"end":{"line":624,"column":48}},"type":"Identifier","name":"list"}},"arguments":[]}}],"kind":"var"},{"range":[21937,21983],"loc":{"start":{"line":625,"column":8},"end":{"line":625,"column":54}},"type":"ForInStatement","left":{"range":[21942,21947],"loc":{"start":{"line":625,"column":13},"end":{"line":625,"column":18}},"type":"VariableDeclaration","declarations":[{"range":[21946,21947],"loc":{"start":{"line":625,"column":17},"end":{"line":625,"column":18}},"type":"VariableDeclarator","id":{"range":[21946,21947],"loc":{"start":{"line":625,"column":17},"end":{"line":625,"column":18}},"type":"Identifier","name":"i"},"init":null}],"kind":"var"},"right":{"range":[21951,21959],"loc":{"start":{"line":625,"column":22},"end":{"line":625,"column":30}},"type":"Identifier","name":"iterable"},"body":{"range":[21961,21983],"loc":{"start":{"line":625,"column":32},"end":{"line":625,"column":54}},"type":"ExpressionStatement","expression":{"range":[21961,21982],"loc":{"start":{"line":625,"column":32},"end":{"line":625,"column":53}},"type":"CallExpression","callee":{"range":[21961,21969],"loc":{"start":{"line":625,"column":32},"end":{"line":625,"column":40}},"type":"MemberExpression","computed":false,"object":{"range":[21961,21964],"loc":{"start":{"line":625,"column":32},"end":{"line":625,"column":35}},"type":"Identifier","name":"ret"},"property":{"range":[21965,21969],"loc":{"start":{"line":625,"column":36},"end":{"line":625,"column":40}},"type":"Identifier","name":"push"}},"arguments":[{"range":[21970,21981],"loc":{"start":{"line":625,"column":41},"end":{"line":625,"column":52}},"type":"MemberExpression","computed":true,"object":{"range":[21970,21978],"loc":{"start":{"line":625,"column":41},"end":{"line":625,"column":49}},"type":"Identifier","name":"iterable"},"property":{"range":[21979,21980],"loc":{"start":{"line":625,"column":50},"end":{"line":625,"column":51}},"type":"Identifier","name":"i"}}]}},"each":false},{"range":[21992,22031],"loc":{"start":{"line":626,"column":8},"end":{"line":626,"column":47}},"type":"IfStatement","test":{"range":[21995,21998],"loc":{"start":{"line":626,"column":11},"end":{"line":626,"column":14}},"type":"Identifier","name":"key"},"consequent":{"range":[22000,22014],"loc":{"start":{"line":626,"column":16},"end":{"line":626,"column":30}},"type":"ExpressionStatement","expression":{"range":[22000,22013],"loc":{"start":{"line":626,"column":16},"end":{"line":626,"column":29}},"type":"CallExpression","callee":{"range":[22000,22008],"loc":{"start":{"line":626,"column":16},"end":{"line":626,"column":24}},"type":"MemberExpression","computed":false,"object":{"range":[22000,22003],"loc":{"start":{"line":626,"column":16},"end":{"line":626,"column":19}},"type":"Identifier","name":"ret"},"property":{"range":[22004,22008],"loc":{"start":{"line":626,"column":20},"end":{"line":626,"column":24}},"type":"Identifier","name":"sort"}},"arguments":[{"range":[22009,22012],"loc":{"start":{"line":626,"column":25},"end":{"line":626,"column":28}},"type":"Identifier","name":"key"}]}},"alternate":{"range":[22020,22031],"loc":{"start":{"line":626,"column":36},"end":{"line":626,"column":47}},"type":"ExpressionStatement","expression":{"range":[22020,22030],"loc":{"start":{"line":626,"column":36},"end":{"line":626,"column":46}},"type":"CallExpression","callee":{"range":[22020,22028],"loc":{"start":{"line":626,"column":36},"end":{"line":626,"column":44}},"type":"MemberExpression","computed":false,"object":{"range":[22020,22023],"loc":{"start":{"line":626,"column":36},"end":{"line":626,"column":39}},"type":"Identifier","name":"ret"},"property":{"range":[22024,22028],"loc":{"start":{"line":626,"column":40},"end":{"line":626,"column":44}},"type":"Identifier","name":"sort"}},"arguments":[]}}},{"range":[22040,22067],"loc":{"start":{"line":627,"column":8},"end":{"line":627,"column":35}},"type":"IfStatement","test":{"range":[22044,22051],"loc":{"start":{"line":627,"column":12},"end":{"line":627,"column":19}},"type":"Identifier","name":"reverse"},"consequent":{"range":[22053,22067],"loc":{"start":{"line":627,"column":21},"end":{"line":627,"column":35}},"type":"ExpressionStatement","expression":{"range":[22053,22066],"loc":{"start":{"line":627,"column":21},"end":{"line":627,"column":34}},"type":"CallExpression","callee":{"range":[22053,22064],"loc":{"start":{"line":627,"column":21},"end":{"line":627,"column":32}},"type":"MemberExpression","computed":false,"object":{"range":[22053,22056],"loc":{"start":{"line":627,"column":21},"end":{"line":627,"column":24}},"type":"Identifier","name":"ret"},"property":{"range":[22057,22064],"loc":{"start":{"line":627,"column":25},"end":{"line":627,"column":32}},"type":"Identifier","name":"reverse"}},"arguments":[]}},"alternate":null},{"range":[22076,22087],"loc":{"start":{"line":628,"column":8},"end":{"line":628,"column":19}},"type":"ReturnStatement","argument":{"range":[22083,22086],"loc":{"start":{"line":628,"column":15},"end":{"line":628,"column":18}},"type":"Identifier","name":"ret"}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[22103,22163],"loc":{"start":{"line":630,"column":6},"end":{"line":632,"column":7}},"type":"Property","key":{"range":[22103,22106],"loc":{"start":{"line":630,"column":6},"end":{"line":630,"column":9}},"type":"Identifier","name":"str"},"computed":false,"value":{"range":[22108,22163],"loc":{"start":{"line":630,"column":11},"end":{"line":632,"column":7}},"type":"FunctionExpression","id":null,"params":[{"range":[22118,22121],"loc":{"start":{"line":630,"column":21},"end":{"line":630,"column":24}},"type":"Identifier","name":"obj"}],"defaults":[],"body":{"range":[22123,22163],"loc":{"start":{"line":630,"column":26},"end":{"line":632,"column":7}},"type":"BlockStatement","body":[{"range":[22133,22155],"loc":{"start":{"line":631,"column":8},"end":{"line":631,"column":30}},"type":"ReturnStatement","argument":{"range":[22140,22154],"loc":{"start":{"line":631,"column":15},"end":{"line":631,"column":29}},"type":"CallExpression","callee":{"range":[22140,22152],"loc":{"start":{"line":631,"column":15},"end":{"line":631,"column":27}},"type":"MemberExpression","computed":false,"object":{"range":[22140,22143],"loc":{"start":{"line":631,"column":15},"end":{"line":631,"column":18}},"type":"Identifier","name":"obj"},"property":{"range":[22144,22152],"loc":{"start":{"line":631,"column":19},"end":{"line":631,"column":27}},"type":"Identifier","name":"toString"}},"arguments":[]}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[22171,22355],"loc":{"start":{"line":633,"column":6},"end":{"line":638,"column":7}},"type":"Property","key":{"range":[22171,22174],"loc":{"start":{"line":633,"column":6},"end":{"line":633,"column":9}},"type":"Identifier","name":"sum"},"computed":false,"value":{"range":[22176,22355],"loc":{"start":{"line":633,"column":11},"end":{"line":638,"column":7}},"type":"FunctionExpression","id":null,"params":[{"range":[22186,22194],"loc":{"start":{"line":633,"column":21},"end":{"line":633,"column":29}},"type":"Identifier","name":"iterable"},{"range":[22196,22201],"loc":{"start":{"line":633,"column":31},"end":{"line":633,"column":36}},"type":"Identifier","name":"start"}],"defaults":[],"body":{"range":[22203,22355],"loc":{"start":{"line":633,"column":38},"end":{"line":638,"column":7}},"type":"BlockStatement","body":[{"range":[22254,22275],"loc":{"start":{"line":635,"column":8},"end":{"line":635,"column":29}},"type":"VariableDeclaration","declarations":[{"range":[22258,22274],"loc":{"start":{"line":635,"column":12},"end":{"line":635,"column":28}},"type":"VariableDeclarator","id":{"range":[22258,22261],"loc":{"start":{"line":635,"column":12},"end":{"line":635,"column":15}},"type":"Identifier","name":"ret"},"init":{"range":[22264,22274],"loc":{"start":{"line":635,"column":18},"end":{"line":635,"column":28}},"type":"LogicalExpression","operator":"||","left":{"range":[22264,22269],"loc":{"start":{"line":635,"column":18},"end":{"line":635,"column":23}},"type":"Identifier","name":"start"},"right":{"range":[22273,22274],"loc":{"start":{"line":635,"column":27},"end":{"line":635,"column":28}},"type":"Literal","value":0,"raw":"0"}}}],"kind":"var"},{"range":[22284,22327],"loc":{"start":{"line":636,"column":8},"end":{"line":636,"column":51}},"type":"ForInStatement","left":{"range":[22289,22294],"loc":{"start":{"line":636,"column":13},"end":{"line":636,"column":18}},"type":"VariableDeclaration","declarations":[{"range":[22293,22294],"loc":{"start":{"line":636,"column":17},"end":{"line":636,"column":18}},"type":"VariableDeclarator","id":{"range":[22293,22294],"loc":{"start":{"line":636,"column":17},"end":{"line":636,"column":18}},"type":"Identifier","name":"i"},"init":null}],"kind":"var"},"right":{"range":[22298,22306],"loc":{"start":{"line":636,"column":22},"end":{"line":636,"column":30}},"type":"Identifier","name":"iterable"},"body":{"range":[22308,22327],"loc":{"start":{"line":636,"column":32},"end":{"line":636,"column":51}},"type":"ExpressionStatement","expression":{"range":[22308,22326],"loc":{"start":{"line":636,"column":32},"end":{"line":636,"column":50}},"type":"AssignmentExpression","operator":"+=","left":{"range":[22308,22311],"loc":{"start":{"line":636,"column":32},"end":{"line":636,"column":35}},"type":"Identifier","name":"ret"},"right":{"range":[22315,22326],"loc":{"start":{"line":636,"column":39},"end":{"line":636,"column":50}},"type":"MemberExpression","computed":true,"object":{"range":[22315,22323],"loc":{"start":{"line":636,"column":39},"end":{"line":636,"column":47}},"type":"Identifier","name":"iterable"},"property":{"range":[22324,22325],"loc":{"start":{"line":636,"column":48},"end":{"line":636,"column":49}},"type":"Identifier","name":"i"}}}},"each":false},{"range":[22336,22347],"loc":{"start":{"line":637,"column":8},"end":{"line":637,"column":19}},"type":"ReturnStatement","argument":{"range":[22343,22346],"loc":{"start":{"line":637,"column":15},"end":{"line":637,"column":18}},"type":"Identifier","name":"ret"}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false},{"range":[22363,22527],"loc":{"start":{"line":639,"column":6},"end":{"line":643,"column":7}},"type":"Property","key":{"range":[22363,22368],"loc":{"start":{"line":639,"column":6},"end":{"line":639,"column":11}},"type":"Identifier","name":"tuple"},"computed":false,"value":{"range":[22370,22527],"loc":{"start":{"line":639,"column":13},"end":{"line":643,"column":7}},"type":"FunctionExpression","id":null,"params":[{"range":[22380,22388],"loc":{"start":{"line":639,"column":23},"end":{"line":639,"column":31}},"type":"Identifier","name":"iterable"}],"defaults":[],"body":{"range":[22390,22527],"loc":{"start":{"line":639,"column":33},"end":{"line":643,"column":7}},"type":"BlockStatement","body":[{"range":[22400,22444],"loc":{"start":{"line":640,"column":8},"end":{"line":640,"column":52}},"type":"VariableDeclaration","declarations":[{"range":[22404,22443],"loc":{"start":{"line":640,"column":12},"end":{"line":640,"column":51}},"type":"VariableDeclarator","id":{"range":[22404,22407],"loc":{"start":{"line":640,"column":12},"end":{"line":640,"column":15}},"type":"Identifier","name":"ret"},"init":{"range":[22410,22443],"loc":{"start":{"line":640,"column":18},"end":{"line":640,"column":51}},"type":"NewExpression","callee":{"range":[22414,22441],"loc":{"start":{"line":640,"column":22},"end":{"line":640,"column":49}},"type":"MemberExpression","computed":false,"object":{"range":[22414,22435],"loc":{"start":{"line":640,"column":22},"end":{"line":640,"column":43}},"type":"MemberExpression","computed":false,"object":{"range":[22414,22427],"loc":{"start":{"line":640,"column":22},"end":{"line":640,"column":35}},"type":"Identifier","name":"pythonRuntime"},"property":{"range":[22428,22435],"loc":{"start":{"line":640,"column":36},"end":{"line":640,"column":43}},"type":"Identifier","name":"objects"}},"property":{"range":[22436,22441],"loc":{"start":{"line":640,"column":44},"end":{"line":640,"column":49}},"type":"Identifier","name":"tuple"}},"arguments":[]}}],"kind":"var"},{"range":[22453,22499],"loc":{"start":{"line":641,"column":8},"end":{"line":641,"column":54}},"type":"ForInStatement","left":{"range":[22458,22463],"loc":{"start":{"line":641,"column":13},"end":{"line":641,"column":18}},"type":"VariableDeclaration","declarations":[{"range":[22462,22463],"loc":{"start":{"line":641,"column":17},"end":{"line":641,"column":18}},"type":"VariableDeclarator","id":{"range":[22462,22463],"loc":{"start":{"line":641,"column":17},"end":{"line":641,"column":18}},"type":"Identifier","name":"i"},"init":null}],"kind":"var"},"right":{"range":[22467,22475],"loc":{"start":{"line":641,"column":22},"end":{"line":641,"column":30}},"type":"Identifier","name":"iterable"},"body":{"range":[22477,22499],"loc":{"start":{"line":641,"column":32},"end":{"line":641,"column":54}},"type":"ExpressionStatement","expression":{"range":[22477,22498],"loc":{"start":{"line":641,"column":32},"end":{"line":641,"column":53}},"type":"CallExpression","callee":{"range":[22477,22485],"loc":{"start":{"line":641,"column":32},"end":{"line":641,"column":40}},"type":"MemberExpression","computed":false,"object":{"range":[22477,22480],"loc":{"start":{"line":641,"column":32},"end":{"line":641,"column":35}},"type":"Identifier","name":"ret"},"property":{"range":[22481,22485],"loc":{"start":{"line":641,"column":36},"end":{"line":641,"column":40}},"type":"Identifier","name":"push"}},"arguments":[{"range":[22486,22497],"loc":{"start":{"line":641,"column":41},"end":{"line":641,"column":52}},"type":"MemberExpression","computed":true,"object":{"range":[22486,22494],"loc":{"start":{"line":641,"column":41},"end":{"line":641,"column":49}},"type":"Identifier","name":"iterable"},"property":{"range":[22495,22496],"loc":{"start":{"line":641,"column":50},"end":{"line":641,"column":51}},"type":"Identifier","name":"i"}}]}},"each":false},{"range":[22508,22519],"loc":{"start":{"line":642,"column":8},"end":{"line":642,"column":19}},"type":"ReturnStatement","argument":{"range":[22515,22518],"loc":{"start":{"line":642,"column":15},"end":{"line":642,"column":18}},"type":"Identifier","name":"ret"}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false}]},"kind":"init","method":false,"shorthand":false},{"range":[22595,22689],"loc":{"start":{"line":649,"column":4},"end":{"line":653,"column":5}},"type":"Property","key":{"range":[22595,22602],"loc":{"start":{"line":649,"column":4},"end":{"line":649,"column":11}},"type":"Identifier","name":"imports"},"computed":false,"value":{"range":[22604,22689],"loc":{"start":{"line":649,"column":13},"end":{"line":653,"column":5}},"type":"ObjectExpression","properties":[{"range":[22612,22683],"loc":{"start":{"line":650,"column":6},"end":{"line":652,"column":7}},"type":"Property","key":{"range":[22612,22618],"loc":{"start":{"line":650,"column":6},"end":{"line":650,"column":12}},"type":"Identifier","name":"random"},"computed":false,"value":{"range":[22620,22683],"loc":{"start":{"line":650,"column":14},"end":{"line":652,"column":7}},"type":"ObjectExpression","properties":[{"range":[22630,22675],"loc":{"start":{"line":651,"column":8},"end":{"line":651,"column":53}},"type":"Property","key":{"range":[22630,22636],"loc":{"start":{"line":651,"column":8},"end":{"line":651,"column":14}},"type":"Identifier","name":"random"},"computed":false,"value":{"range":[22638,22675],"loc":{"start":{"line":651,"column":16},"end":{"line":651,"column":53}},"type":"FunctionExpression","id":null,"params":[],"defaults":[],"body":{"range":[22650,22675],"loc":{"start":{"line":651,"column":28},"end":{"line":651,"column":53}},"type":"BlockStatement","body":[{"range":[22652,22673],"loc":{"start":{"line":651,"column":30},"end":{"line":651,"column":51}},"type":"ReturnStatement","argument":{"range":[22659,22672],"loc":{"start":{"line":651,"column":37},"end":{"line":651,"column":50}},"type":"CallExpression","callee":{"range":[22659,22670],"loc":{"start":{"line":651,"column":37},"end":{"line":651,"column":48}},"type":"MemberExpression","computed":false,"object":{"range":[22659,22663],"loc":{"start":{"line":651,"column":37},"end":{"line":651,"column":41}},"type":"Identifier","name":"Math"},"property":{"range":[22664,22670],"loc":{"start":{"line":651,"column":42},"end":{"line":651,"column":48}},"type":"Identifier","name":"random"}},"arguments":[]}}]},"generator":false,"expression":false},"kind":"init","method":false,"shorthand":false}]},"kind":"init","method":false,"shorthand":false}]},"kind":"init","method":false,"shorthand":false}]}}],"kind":"var"},{"range":[22698,22726],"loc":{"start":{"line":656,"column":2},"end":{"line":658,"column":3}},"type":"FunctionDeclaration","id":{"range":[22707,22717],"loc":{"start":{"line":656,"column":11},"end":{"line":656,"column":21}},"type":"Identifier","name":"PythonDict"},"params":[],"defaults":[],"body":{"range":[22720,22726],"loc":{"start":{"line":656,"column":24},"end":{"line":658,"column":3}},"type":"BlockStatement","body":[]},"generator":false,"expression":false},{"range":[22730,22820],"loc":{"start":{"line":660,"column":2},"end":{"line":660,"column":92}},"type":"ExpressionStatement","expression":{"range":[22730,22819],"loc":{"start":{"line":660,"column":2},"end":{"line":660,"column":91}},"type":"CallExpression","callee":{"range":[22730,22753],"loc":{"start":{"line":660,"column":2},"end":{"line":660,"column":25}},"type":"MemberExpression","computed":false,"object":{"range":[22730,22736],"loc":{"start":{"line":660,"column":2},"end":{"line":660,"column":8}},"type":"Identifier","name":"Object"},"property":{"range":[22737,22753],"loc":{"start":{"line":660,"column":9},"end":{"line":660,"column":25}},"type":"Identifier","name":"defineProperties"}},"arguments":[{"range":[22754,22774],"loc":{"start":{"line":660,"column":26},"end":{"line":660,"column":46}},"type":"MemberExpression","computed":false,"object":{"range":[22754,22764],"loc":{"start":{"line":660,"column":26},"end":{"line":660,"column":36}},"type":"Identifier","name":"PythonDict"},"property":{"range":[22765,22774],"loc":{"start":{"line":660,"column":37},"end":{"line":660,"column":46}},"type":"Identifier","name":"prototype"}},{"range":[22776,22818],"loc":{"start":{"line":660,"column":48},"end":{"line":660,"column":90}},"type":"MemberExpression","computed":false,"object":{"range":[22776,22795],"loc":{"start":{"line":660,"column":48},"end":{"line":660,"column":67}},"type":"MemberExpression","computed":false,"object":{"range":[22776,22789],"loc":{"start":{"line":660,"column":48},"end":{"line":660,"column":61}},"type":"Identifier","name":"pythonRuntime"},"property":{"range":[22790,22795],"loc":{"start":{"line":660,"column":62},"end":{"line":660,"column":67}},"type":"Identifier","name":"utils"}},"property":{"range":[22796,22818],"loc":{"start":{"line":660,"column":68},"end":{"line":660,"column":90}},"type":"Identifier","name":"dictPropertyDescriptor"}}]}},{"range":[22823,22844],"loc":{"start":{"line":661,"column":2},"end":{"line":661,"column":23}},"type":"ReturnStatement","argument":{"range":[22830,22843],"loc":{"start":{"line":661,"column":9},"end":{"line":661,"column":22}},"type":"Identifier","name":"pythonRuntime"}}]},"generator":false,"expression":false}]}}],"sourceType":"script"}
 
 },{}],23:[function(require,module,exports){
+(function (process,__filename){
+/** vim: et:ts=4:sw=4:sts=4
+ * @license amdefine 1.0.0 Copyright (c) 2011-2015, The Dojo Foundation All Rights Reserved.
+ * Available via the MIT or new BSD license.
+ * see: http://github.com/jrburke/amdefine for details
+ */
+
+/*jslint node: true */
+/*global module, process */
+'use strict';
+
+/**
+ * Creates a define for node.
+ * @param {Object} module the "module" object that is defined by Node for the
+ * current module.
+ * @param {Function} [requireFn]. Node's require function for the current module.
+ * It only needs to be passed in Node versions before 0.5, when module.require
+ * did not exist.
+ * @returns {Function} a define function that is usable for the current node
+ * module.
+ */
+function amdefine(module, requireFn) {
+    'use strict';
+    var defineCache = {},
+        loaderCache = {},
+        alreadyCalled = false,
+        path = require('path'),
+        makeRequire, stringRequire;
+
+    /**
+     * Trims the . and .. from an array of path segments.
+     * It will keep a leading path segment if a .. will become
+     * the first path segment, to help with module name lookups,
+     * which act like paths, but can be remapped. But the end result,
+     * all paths that use this function should look normalized.
+     * NOTE: this method MODIFIES the input array.
+     * @param {Array} ary the array of path segments.
+     */
+    function trimDots(ary) {
+        var i, part;
+        for (i = 0; ary[i]; i+= 1) {
+            part = ary[i];
+            if (part === '.') {
+                ary.splice(i, 1);
+                i -= 1;
+            } else if (part === '..') {
+                if (i === 1 && (ary[2] === '..' || ary[0] === '..')) {
+                    //End of the line. Keep at least one non-dot
+                    //path segment at the front so it can be mapped
+                    //correctly to disk. Otherwise, there is likely
+                    //no path mapping for a path starting with '..'.
+                    //This can still fail, but catches the most reasonable
+                    //uses of ..
+                    break;
+                } else if (i > 0) {
+                    ary.splice(i - 1, 2);
+                    i -= 2;
+                }
+            }
+        }
+    }
+
+    function normalize(name, baseName) {
+        var baseParts;
+
+        //Adjust any relative paths.
+        if (name && name.charAt(0) === '.') {
+            //If have a base name, try to normalize against it,
+            //otherwise, assume it is a top-level require that will
+            //be relative to baseUrl in the end.
+            if (baseName) {
+                baseParts = baseName.split('/');
+                baseParts = baseParts.slice(0, baseParts.length - 1);
+                baseParts = baseParts.concat(name.split('/'));
+                trimDots(baseParts);
+                name = baseParts.join('/');
+            }
+        }
+
+        return name;
+    }
+
+    /**
+     * Create the normalize() function passed to a loader plugin's
+     * normalize method.
+     */
+    function makeNormalize(relName) {
+        return function (name) {
+            return normalize(name, relName);
+        };
+    }
+
+    function makeLoad(id) {
+        function load(value) {
+            loaderCache[id] = value;
+        }
+
+        load.fromText = function (id, text) {
+            //This one is difficult because the text can/probably uses
+            //define, and any relative paths and requires should be relative
+            //to that id was it would be found on disk. But this would require
+            //bootstrapping a module/require fairly deeply from node core.
+            //Not sure how best to go about that yet.
+            throw new Error('amdefine does not implement load.fromText');
+        };
+
+        return load;
+    }
+
+    makeRequire = function (systemRequire, exports, module, relId) {
+        function amdRequire(deps, callback) {
+            if (typeof deps === 'string') {
+                //Synchronous, single module require('')
+                return stringRequire(systemRequire, exports, module, deps, relId);
+            } else {
+                //Array of dependencies with a callback.
+
+                //Convert the dependencies to modules.
+                deps = deps.map(function (depName) {
+                    return stringRequire(systemRequire, exports, module, depName, relId);
+                });
+
+                //Wait for next tick to call back the require call.
+                if (callback) {
+                    process.nextTick(function () {
+                        callback.apply(null, deps);
+                    });
+                }
+            }
+        }
+
+        amdRequire.toUrl = function (filePath) {
+            if (filePath.indexOf('.') === 0) {
+                return normalize(filePath, path.dirname(module.filename));
+            } else {
+                return filePath;
+            }
+        };
+
+        return amdRequire;
+    };
+
+    //Favor explicit value, passed in if the module wants to support Node 0.4.
+    requireFn = requireFn || function req() {
+        return module.require.apply(module, arguments);
+    };
+
+    function runFactory(id, deps, factory) {
+        var r, e, m, result;
+
+        if (id) {
+            e = loaderCache[id] = {};
+            m = {
+                id: id,
+                uri: __filename,
+                exports: e
+            };
+            r = makeRequire(requireFn, e, m, id);
+        } else {
+            //Only support one define call per file
+            if (alreadyCalled) {
+                throw new Error('amdefine with no module ID cannot be called more than once per file.');
+            }
+            alreadyCalled = true;
+
+            //Use the real variables from node
+            //Use module.exports for exports, since
+            //the exports in here is amdefine exports.
+            e = module.exports;
+            m = module;
+            r = makeRequire(requireFn, e, m, module.id);
+        }
+
+        //If there are dependencies, they are strings, so need
+        //to convert them to dependency values.
+        if (deps) {
+            deps = deps.map(function (depName) {
+                return r(depName);
+            });
+        }
+
+        //Call the factory with the right dependencies.
+        if (typeof factory === 'function') {
+            result = factory.apply(m.exports, deps);
+        } else {
+            result = factory;
+        }
+
+        if (result !== undefined) {
+            m.exports = result;
+            if (id) {
+                loaderCache[id] = m.exports;
+            }
+        }
+    }
+
+    stringRequire = function (systemRequire, exports, module, id, relId) {
+        //Split the ID by a ! so that
+        var index = id.indexOf('!'),
+            originalId = id,
+            prefix, plugin;
+
+        if (index === -1) {
+            id = normalize(id, relId);
+
+            //Straight module lookup. If it is one of the special dependencies,
+            //deal with it, otherwise, delegate to node.
+            if (id === 'require') {
+                return makeRequire(systemRequire, exports, module, relId);
+            } else if (id === 'exports') {
+                return exports;
+            } else if (id === 'module') {
+                return module;
+            } else if (loaderCache.hasOwnProperty(id)) {
+                return loaderCache[id];
+            } else if (defineCache[id]) {
+                runFactory.apply(null, defineCache[id]);
+                return loaderCache[id];
+            } else {
+                if(systemRequire) {
+                    return systemRequire(originalId);
+                } else {
+                    throw new Error('No module with ID: ' + id);
+                }
+            }
+        } else {
+            //There is a plugin in play.
+            prefix = id.substring(0, index);
+            id = id.substring(index + 1, id.length);
+
+            plugin = stringRequire(systemRequire, exports, module, prefix, relId);
+
+            if (plugin.normalize) {
+                id = plugin.normalize(id, makeNormalize(relId));
+            } else {
+                //Normalize the ID normally.
+                id = normalize(id, relId);
+            }
+
+            if (loaderCache[id]) {
+                return loaderCache[id];
+            } else {
+                plugin.load(id, makeRequire(systemRequire, exports, module, relId), makeLoad(id), {});
+
+                return loaderCache[id];
+            }
+        }
+    };
+
+    //Create a define function specific to the module asking for amdefine.
+    function define(id, deps, factory) {
+        if (Array.isArray(id)) {
+            factory = deps;
+            deps = id;
+            id = undefined;
+        } else if (typeof id !== 'string') {
+            factory = id;
+            id = deps = undefined;
+        }
+
+        if (deps && !Array.isArray(deps)) {
+            factory = deps;
+            deps = undefined;
+        }
+
+        if (!deps) {
+            deps = ['require', 'exports', 'module'];
+        }
+
+        //Set up properties for this module. If an ID, then use
+        //internal cache. If no ID, then use the external variables
+        //for this node module.
+        if (id) {
+            //Put the module in deep freeze until there is a
+            //require call for it.
+            defineCache[id] = [id, deps, factory];
+        } else {
+            runFactory(id, deps, factory);
+        }
+    }
+
+    //define.require, which has access to all the values in the
+    //cache. Useful for AMD modules that all have IDs in the file,
+    //but need to finally export a value to node based on one of those
+    //IDs.
+    define.require = function (id) {
+        if (loaderCache[id]) {
+            return loaderCache[id];
+        }
+
+        if (defineCache[id]) {
+            runFactory.apply(null, defineCache[id]);
+            return loaderCache[id];
+        }
+    };
+
+    define.amd = {};
+
+    return define;
+}
+
+module.exports = amdefine;
+
+}).call(this,require("g5I+bs"),"/../node_modules/amdefine/amdefine.js")
+},{"g5I+bs":33,"path":32}],24:[function(require,module,exports){
+
+},{}],25:[function(require,module,exports){
 (function (global){
 /*
   Copyright (C) 2012-2013 Yusuke Suzuki <utatane.tea@gmail.com>
@@ -8211,2820 +8411,111 @@ module.exports={"range":[0,22849],"loc":{"start":{"line":1,"column":0},"end":{"l
 /* vim: set sw=4 ts=4 et tw=80 : */
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./package.json":38,"estraverse":40,"esutils":26,"source-map":27}],24:[function(require,module,exports){
-/*
-  Copyright (C) 2013 Yusuke Suzuki <utatane.tea@gmail.com>
-
-  Redistribution and use in source and binary forms, with or without
-  modification, are permitted provided that the following conditions are met:
-
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in the
-      documentation and/or other materials provided with the distribution.
-
-  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-  ARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
-  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
-  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
-
-(function () {
-    'use strict';
-
-    var Regex;
-
-    // See also tools/generate-unicode-regex.py.
-    Regex = {
-        NonAsciiIdentifierStart: new RegExp('[\xAA\xB5\xBA\xC0-\xD6\xD8-\xF6\xF8-\u02C1\u02C6-\u02D1\u02E0-\u02E4\u02EC\u02EE\u0370-\u0374\u0376\u0377\u037A-\u037D\u0386\u0388-\u038A\u038C\u038E-\u03A1\u03A3-\u03F5\u03F7-\u0481\u048A-\u0527\u0531-\u0556\u0559\u0561-\u0587\u05D0-\u05EA\u05F0-\u05F2\u0620-\u064A\u066E\u066F\u0671-\u06D3\u06D5\u06E5\u06E6\u06EE\u06EF\u06FA-\u06FC\u06FF\u0710\u0712-\u072F\u074D-\u07A5\u07B1\u07CA-\u07EA\u07F4\u07F5\u07FA\u0800-\u0815\u081A\u0824\u0828\u0840-\u0858\u08A0\u08A2-\u08AC\u0904-\u0939\u093D\u0950\u0958-\u0961\u0971-\u0977\u0979-\u097F\u0985-\u098C\u098F\u0990\u0993-\u09A8\u09AA-\u09B0\u09B2\u09B6-\u09B9\u09BD\u09CE\u09DC\u09DD\u09DF-\u09E1\u09F0\u09F1\u0A05-\u0A0A\u0A0F\u0A10\u0A13-\u0A28\u0A2A-\u0A30\u0A32\u0A33\u0A35\u0A36\u0A38\u0A39\u0A59-\u0A5C\u0A5E\u0A72-\u0A74\u0A85-\u0A8D\u0A8F-\u0A91\u0A93-\u0AA8\u0AAA-\u0AB0\u0AB2\u0AB3\u0AB5-\u0AB9\u0ABD\u0AD0\u0AE0\u0AE1\u0B05-\u0B0C\u0B0F\u0B10\u0B13-\u0B28\u0B2A-\u0B30\u0B32\u0B33\u0B35-\u0B39\u0B3D\u0B5C\u0B5D\u0B5F-\u0B61\u0B71\u0B83\u0B85-\u0B8A\u0B8E-\u0B90\u0B92-\u0B95\u0B99\u0B9A\u0B9C\u0B9E\u0B9F\u0BA3\u0BA4\u0BA8-\u0BAA\u0BAE-\u0BB9\u0BD0\u0C05-\u0C0C\u0C0E-\u0C10\u0C12-\u0C28\u0C2A-\u0C33\u0C35-\u0C39\u0C3D\u0C58\u0C59\u0C60\u0C61\u0C85-\u0C8C\u0C8E-\u0C90\u0C92-\u0CA8\u0CAA-\u0CB3\u0CB5-\u0CB9\u0CBD\u0CDE\u0CE0\u0CE1\u0CF1\u0CF2\u0D05-\u0D0C\u0D0E-\u0D10\u0D12-\u0D3A\u0D3D\u0D4E\u0D60\u0D61\u0D7A-\u0D7F\u0D85-\u0D96\u0D9A-\u0DB1\u0DB3-\u0DBB\u0DBD\u0DC0-\u0DC6\u0E01-\u0E30\u0E32\u0E33\u0E40-\u0E46\u0E81\u0E82\u0E84\u0E87\u0E88\u0E8A\u0E8D\u0E94-\u0E97\u0E99-\u0E9F\u0EA1-\u0EA3\u0EA5\u0EA7\u0EAA\u0EAB\u0EAD-\u0EB0\u0EB2\u0EB3\u0EBD\u0EC0-\u0EC4\u0EC6\u0EDC-\u0EDF\u0F00\u0F40-\u0F47\u0F49-\u0F6C\u0F88-\u0F8C\u1000-\u102A\u103F\u1050-\u1055\u105A-\u105D\u1061\u1065\u1066\u106E-\u1070\u1075-\u1081\u108E\u10A0-\u10C5\u10C7\u10CD\u10D0-\u10FA\u10FC-\u1248\u124A-\u124D\u1250-\u1256\u1258\u125A-\u125D\u1260-\u1288\u128A-\u128D\u1290-\u12B0\u12B2-\u12B5\u12B8-\u12BE\u12C0\u12C2-\u12C5\u12C8-\u12D6\u12D8-\u1310\u1312-\u1315\u1318-\u135A\u1380-\u138F\u13A0-\u13F4\u1401-\u166C\u166F-\u167F\u1681-\u169A\u16A0-\u16EA\u16EE-\u16F0\u1700-\u170C\u170E-\u1711\u1720-\u1731\u1740-\u1751\u1760-\u176C\u176E-\u1770\u1780-\u17B3\u17D7\u17DC\u1820-\u1877\u1880-\u18A8\u18AA\u18B0-\u18F5\u1900-\u191C\u1950-\u196D\u1970-\u1974\u1980-\u19AB\u19C1-\u19C7\u1A00-\u1A16\u1A20-\u1A54\u1AA7\u1B05-\u1B33\u1B45-\u1B4B\u1B83-\u1BA0\u1BAE\u1BAF\u1BBA-\u1BE5\u1C00-\u1C23\u1C4D-\u1C4F\u1C5A-\u1C7D\u1CE9-\u1CEC\u1CEE-\u1CF1\u1CF5\u1CF6\u1D00-\u1DBF\u1E00-\u1F15\u1F18-\u1F1D\u1F20-\u1F45\u1F48-\u1F4D\u1F50-\u1F57\u1F59\u1F5B\u1F5D\u1F5F-\u1F7D\u1F80-\u1FB4\u1FB6-\u1FBC\u1FBE\u1FC2-\u1FC4\u1FC6-\u1FCC\u1FD0-\u1FD3\u1FD6-\u1FDB\u1FE0-\u1FEC\u1FF2-\u1FF4\u1FF6-\u1FFC\u2071\u207F\u2090-\u209C\u2102\u2107\u210A-\u2113\u2115\u2119-\u211D\u2124\u2126\u2128\u212A-\u212D\u212F-\u2139\u213C-\u213F\u2145-\u2149\u214E\u2160-\u2188\u2C00-\u2C2E\u2C30-\u2C5E\u2C60-\u2CE4\u2CEB-\u2CEE\u2CF2\u2CF3\u2D00-\u2D25\u2D27\u2D2D\u2D30-\u2D67\u2D6F\u2D80-\u2D96\u2DA0-\u2DA6\u2DA8-\u2DAE\u2DB0-\u2DB6\u2DB8-\u2DBE\u2DC0-\u2DC6\u2DC8-\u2DCE\u2DD0-\u2DD6\u2DD8-\u2DDE\u2E2F\u3005-\u3007\u3021-\u3029\u3031-\u3035\u3038-\u303C\u3041-\u3096\u309D-\u309F\u30A1-\u30FA\u30FC-\u30FF\u3105-\u312D\u3131-\u318E\u31A0-\u31BA\u31F0-\u31FF\u3400-\u4DB5\u4E00-\u9FCC\uA000-\uA48C\uA4D0-\uA4FD\uA500-\uA60C\uA610-\uA61F\uA62A\uA62B\uA640-\uA66E\uA67F-\uA697\uA6A0-\uA6EF\uA717-\uA71F\uA722-\uA788\uA78B-\uA78E\uA790-\uA793\uA7A0-\uA7AA\uA7F8-\uA801\uA803-\uA805\uA807-\uA80A\uA80C-\uA822\uA840-\uA873\uA882-\uA8B3\uA8F2-\uA8F7\uA8FB\uA90A-\uA925\uA930-\uA946\uA960-\uA97C\uA984-\uA9B2\uA9CF\uAA00-\uAA28\uAA40-\uAA42\uAA44-\uAA4B\uAA60-\uAA76\uAA7A\uAA80-\uAAAF\uAAB1\uAAB5\uAAB6\uAAB9-\uAABD\uAAC0\uAAC2\uAADB-\uAADD\uAAE0-\uAAEA\uAAF2-\uAAF4\uAB01-\uAB06\uAB09-\uAB0E\uAB11-\uAB16\uAB20-\uAB26\uAB28-\uAB2E\uABC0-\uABE2\uAC00-\uD7A3\uD7B0-\uD7C6\uD7CB-\uD7FB\uF900-\uFA6D\uFA70-\uFAD9\uFB00-\uFB06\uFB13-\uFB17\uFB1D\uFB1F-\uFB28\uFB2A-\uFB36\uFB38-\uFB3C\uFB3E\uFB40\uFB41\uFB43\uFB44\uFB46-\uFBB1\uFBD3-\uFD3D\uFD50-\uFD8F\uFD92-\uFDC7\uFDF0-\uFDFB\uFE70-\uFE74\uFE76-\uFEFC\uFF21-\uFF3A\uFF41-\uFF5A\uFF66-\uFFBE\uFFC2-\uFFC7\uFFCA-\uFFCF\uFFD2-\uFFD7\uFFDA-\uFFDC]'),
-        NonAsciiIdentifierPart: new RegExp('[\xAA\xB5\xBA\xC0-\xD6\xD8-\xF6\xF8-\u02C1\u02C6-\u02D1\u02E0-\u02E4\u02EC\u02EE\u0300-\u0374\u0376\u0377\u037A-\u037D\u0386\u0388-\u038A\u038C\u038E-\u03A1\u03A3-\u03F5\u03F7-\u0481\u0483-\u0487\u048A-\u0527\u0531-\u0556\u0559\u0561-\u0587\u0591-\u05BD\u05BF\u05C1\u05C2\u05C4\u05C5\u05C7\u05D0-\u05EA\u05F0-\u05F2\u0610-\u061A\u0620-\u0669\u066E-\u06D3\u06D5-\u06DC\u06DF-\u06E8\u06EA-\u06FC\u06FF\u0710-\u074A\u074D-\u07B1\u07C0-\u07F5\u07FA\u0800-\u082D\u0840-\u085B\u08A0\u08A2-\u08AC\u08E4-\u08FE\u0900-\u0963\u0966-\u096F\u0971-\u0977\u0979-\u097F\u0981-\u0983\u0985-\u098C\u098F\u0990\u0993-\u09A8\u09AA-\u09B0\u09B2\u09B6-\u09B9\u09BC-\u09C4\u09C7\u09C8\u09CB-\u09CE\u09D7\u09DC\u09DD\u09DF-\u09E3\u09E6-\u09F1\u0A01-\u0A03\u0A05-\u0A0A\u0A0F\u0A10\u0A13-\u0A28\u0A2A-\u0A30\u0A32\u0A33\u0A35\u0A36\u0A38\u0A39\u0A3C\u0A3E-\u0A42\u0A47\u0A48\u0A4B-\u0A4D\u0A51\u0A59-\u0A5C\u0A5E\u0A66-\u0A75\u0A81-\u0A83\u0A85-\u0A8D\u0A8F-\u0A91\u0A93-\u0AA8\u0AAA-\u0AB0\u0AB2\u0AB3\u0AB5-\u0AB9\u0ABC-\u0AC5\u0AC7-\u0AC9\u0ACB-\u0ACD\u0AD0\u0AE0-\u0AE3\u0AE6-\u0AEF\u0B01-\u0B03\u0B05-\u0B0C\u0B0F\u0B10\u0B13-\u0B28\u0B2A-\u0B30\u0B32\u0B33\u0B35-\u0B39\u0B3C-\u0B44\u0B47\u0B48\u0B4B-\u0B4D\u0B56\u0B57\u0B5C\u0B5D\u0B5F-\u0B63\u0B66-\u0B6F\u0B71\u0B82\u0B83\u0B85-\u0B8A\u0B8E-\u0B90\u0B92-\u0B95\u0B99\u0B9A\u0B9C\u0B9E\u0B9F\u0BA3\u0BA4\u0BA8-\u0BAA\u0BAE-\u0BB9\u0BBE-\u0BC2\u0BC6-\u0BC8\u0BCA-\u0BCD\u0BD0\u0BD7\u0BE6-\u0BEF\u0C01-\u0C03\u0C05-\u0C0C\u0C0E-\u0C10\u0C12-\u0C28\u0C2A-\u0C33\u0C35-\u0C39\u0C3D-\u0C44\u0C46-\u0C48\u0C4A-\u0C4D\u0C55\u0C56\u0C58\u0C59\u0C60-\u0C63\u0C66-\u0C6F\u0C82\u0C83\u0C85-\u0C8C\u0C8E-\u0C90\u0C92-\u0CA8\u0CAA-\u0CB3\u0CB5-\u0CB9\u0CBC-\u0CC4\u0CC6-\u0CC8\u0CCA-\u0CCD\u0CD5\u0CD6\u0CDE\u0CE0-\u0CE3\u0CE6-\u0CEF\u0CF1\u0CF2\u0D02\u0D03\u0D05-\u0D0C\u0D0E-\u0D10\u0D12-\u0D3A\u0D3D-\u0D44\u0D46-\u0D48\u0D4A-\u0D4E\u0D57\u0D60-\u0D63\u0D66-\u0D6F\u0D7A-\u0D7F\u0D82\u0D83\u0D85-\u0D96\u0D9A-\u0DB1\u0DB3-\u0DBB\u0DBD\u0DC0-\u0DC6\u0DCA\u0DCF-\u0DD4\u0DD6\u0DD8-\u0DDF\u0DF2\u0DF3\u0E01-\u0E3A\u0E40-\u0E4E\u0E50-\u0E59\u0E81\u0E82\u0E84\u0E87\u0E88\u0E8A\u0E8D\u0E94-\u0E97\u0E99-\u0E9F\u0EA1-\u0EA3\u0EA5\u0EA7\u0EAA\u0EAB\u0EAD-\u0EB9\u0EBB-\u0EBD\u0EC0-\u0EC4\u0EC6\u0EC8-\u0ECD\u0ED0-\u0ED9\u0EDC-\u0EDF\u0F00\u0F18\u0F19\u0F20-\u0F29\u0F35\u0F37\u0F39\u0F3E-\u0F47\u0F49-\u0F6C\u0F71-\u0F84\u0F86-\u0F97\u0F99-\u0FBC\u0FC6\u1000-\u1049\u1050-\u109D\u10A0-\u10C5\u10C7\u10CD\u10D0-\u10FA\u10FC-\u1248\u124A-\u124D\u1250-\u1256\u1258\u125A-\u125D\u1260-\u1288\u128A-\u128D\u1290-\u12B0\u12B2-\u12B5\u12B8-\u12BE\u12C0\u12C2-\u12C5\u12C8-\u12D6\u12D8-\u1310\u1312-\u1315\u1318-\u135A\u135D-\u135F\u1380-\u138F\u13A0-\u13F4\u1401-\u166C\u166F-\u167F\u1681-\u169A\u16A0-\u16EA\u16EE-\u16F0\u1700-\u170C\u170E-\u1714\u1720-\u1734\u1740-\u1753\u1760-\u176C\u176E-\u1770\u1772\u1773\u1780-\u17D3\u17D7\u17DC\u17DD\u17E0-\u17E9\u180B-\u180D\u1810-\u1819\u1820-\u1877\u1880-\u18AA\u18B0-\u18F5\u1900-\u191C\u1920-\u192B\u1930-\u193B\u1946-\u196D\u1970-\u1974\u1980-\u19AB\u19B0-\u19C9\u19D0-\u19D9\u1A00-\u1A1B\u1A20-\u1A5E\u1A60-\u1A7C\u1A7F-\u1A89\u1A90-\u1A99\u1AA7\u1B00-\u1B4B\u1B50-\u1B59\u1B6B-\u1B73\u1B80-\u1BF3\u1C00-\u1C37\u1C40-\u1C49\u1C4D-\u1C7D\u1CD0-\u1CD2\u1CD4-\u1CF6\u1D00-\u1DE6\u1DFC-\u1F15\u1F18-\u1F1D\u1F20-\u1F45\u1F48-\u1F4D\u1F50-\u1F57\u1F59\u1F5B\u1F5D\u1F5F-\u1F7D\u1F80-\u1FB4\u1FB6-\u1FBC\u1FBE\u1FC2-\u1FC4\u1FC6-\u1FCC\u1FD0-\u1FD3\u1FD6-\u1FDB\u1FE0-\u1FEC\u1FF2-\u1FF4\u1FF6-\u1FFC\u200C\u200D\u203F\u2040\u2054\u2071\u207F\u2090-\u209C\u20D0-\u20DC\u20E1\u20E5-\u20F0\u2102\u2107\u210A-\u2113\u2115\u2119-\u211D\u2124\u2126\u2128\u212A-\u212D\u212F-\u2139\u213C-\u213F\u2145-\u2149\u214E\u2160-\u2188\u2C00-\u2C2E\u2C30-\u2C5E\u2C60-\u2CE4\u2CEB-\u2CF3\u2D00-\u2D25\u2D27\u2D2D\u2D30-\u2D67\u2D6F\u2D7F-\u2D96\u2DA0-\u2DA6\u2DA8-\u2DAE\u2DB0-\u2DB6\u2DB8-\u2DBE\u2DC0-\u2DC6\u2DC8-\u2DCE\u2DD0-\u2DD6\u2DD8-\u2DDE\u2DE0-\u2DFF\u2E2F\u3005-\u3007\u3021-\u302F\u3031-\u3035\u3038-\u303C\u3041-\u3096\u3099\u309A\u309D-\u309F\u30A1-\u30FA\u30FC-\u30FF\u3105-\u312D\u3131-\u318E\u31A0-\u31BA\u31F0-\u31FF\u3400-\u4DB5\u4E00-\u9FCC\uA000-\uA48C\uA4D0-\uA4FD\uA500-\uA60C\uA610-\uA62B\uA640-\uA66F\uA674-\uA67D\uA67F-\uA697\uA69F-\uA6F1\uA717-\uA71F\uA722-\uA788\uA78B-\uA78E\uA790-\uA793\uA7A0-\uA7AA\uA7F8-\uA827\uA840-\uA873\uA880-\uA8C4\uA8D0-\uA8D9\uA8E0-\uA8F7\uA8FB\uA900-\uA92D\uA930-\uA953\uA960-\uA97C\uA980-\uA9C0\uA9CF-\uA9D9\uAA00-\uAA36\uAA40-\uAA4D\uAA50-\uAA59\uAA60-\uAA76\uAA7A\uAA7B\uAA80-\uAAC2\uAADB-\uAADD\uAAE0-\uAAEF\uAAF2-\uAAF6\uAB01-\uAB06\uAB09-\uAB0E\uAB11-\uAB16\uAB20-\uAB26\uAB28-\uAB2E\uABC0-\uABEA\uABEC\uABED\uABF0-\uABF9\uAC00-\uD7A3\uD7B0-\uD7C6\uD7CB-\uD7FB\uF900-\uFA6D\uFA70-\uFAD9\uFB00-\uFB06\uFB13-\uFB17\uFB1D-\uFB28\uFB2A-\uFB36\uFB38-\uFB3C\uFB3E\uFB40\uFB41\uFB43\uFB44\uFB46-\uFBB1\uFBD3-\uFD3D\uFD50-\uFD8F\uFD92-\uFDC7\uFDF0-\uFDFB\uFE00-\uFE0F\uFE20-\uFE26\uFE33\uFE34\uFE4D-\uFE4F\uFE70-\uFE74\uFE76-\uFEFC\uFF10-\uFF19\uFF21-\uFF3A\uFF3F\uFF41-\uFF5A\uFF66-\uFFBE\uFFC2-\uFFC7\uFFCA-\uFFCF\uFFD2-\uFFD7\uFFDA-\uFFDC]')
-    };
-
-    function isDecimalDigit(ch) {
-        return (ch >= 48 && ch <= 57);   // 0..9
-    }
-
-    function isHexDigit(ch) {
-        return isDecimalDigit(ch) || (97 <= ch && ch <= 102) || (65 <= ch && ch <= 70);
-    }
-
-    function isOctalDigit(ch) {
-        return (ch >= 48 && ch <= 55);   // 0..7
-    }
-
-    // 7.2 White Space
-
-    function isWhiteSpace(ch) {
-        return (ch === 0x20) || (ch === 0x09) || (ch === 0x0B) || (ch === 0x0C) || (ch === 0xA0) ||
-            (ch >= 0x1680 && [0x1680, 0x180E, 0x2000, 0x2001, 0x2002, 0x2003, 0x2004, 0x2005, 0x2006, 0x2007, 0x2008, 0x2009, 0x200A, 0x202F, 0x205F, 0x3000, 0xFEFF].indexOf(ch) >= 0);
-    }
-
-    // 7.3 Line Terminators
-
-    function isLineTerminator(ch) {
-        return (ch === 0x0A) || (ch === 0x0D) || (ch === 0x2028) || (ch === 0x2029);
-    }
-
-    // 7.6 Identifier Names and Identifiers
-
-    function isIdentifierStart(ch) {
-        return (ch === 36) || (ch === 95) ||  // $ (dollar) and _ (underscore)
-            (ch >= 65 && ch <= 90) ||         // A..Z
-            (ch >= 97 && ch <= 122) ||        // a..z
-            (ch === 92) ||                    // \ (backslash)
-            ((ch >= 0x80) && Regex.NonAsciiIdentifierStart.test(String.fromCharCode(ch)));
-    }
-
-    function isIdentifierPart(ch) {
-        return (ch === 36) || (ch === 95) ||  // $ (dollar) and _ (underscore)
-            (ch >= 65 && ch <= 90) ||         // A..Z
-            (ch >= 97 && ch <= 122) ||        // a..z
-            (ch >= 48 && ch <= 57) ||         // 0..9
-            (ch === 92) ||                    // \ (backslash)
-            ((ch >= 0x80) && Regex.NonAsciiIdentifierPart.test(String.fromCharCode(ch)));
-    }
-
-    module.exports = {
-        isDecimalDigit: isDecimalDigit,
-        isHexDigit: isHexDigit,
-        isOctalDigit: isOctalDigit,
-        isWhiteSpace: isWhiteSpace,
-        isLineTerminator: isLineTerminator,
-        isIdentifierStart: isIdentifierStart,
-        isIdentifierPart: isIdentifierPart
-    };
-}());
-/* vim: set sw=4 ts=4 et tw=80 : */
-
-},{}],25:[function(require,module,exports){
-/*
-  Copyright (C) 2013 Yusuke Suzuki <utatane.tea@gmail.com>
-
-  Redistribution and use in source and binary forms, with or without
-  modification, are permitted provided that the following conditions are met:
-
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in the
-      documentation and/or other materials provided with the distribution.
-
-  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-  ARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
-  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
-  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
-
-(function () {
-    'use strict';
-
-    var code = require('./code');
-
-    function isStrictModeReservedWordES6(id) {
-        switch (id) {
-        case 'implements':
-        case 'interface':
-        case 'package':
-        case 'private':
-        case 'protected':
-        case 'public':
-        case 'static':
-        case 'let':
-            return true;
-        default:
-            return false;
-        }
-    }
-
-    function isKeywordES5(id, strict) {
-        // yield should not be treated as keyword under non-strict mode.
-        if (!strict && id === 'yield') {
-            return false;
-        }
-        return isKeywordES6(id, strict);
-    }
-
-    function isKeywordES6(id, strict) {
-        if (strict && isStrictModeReservedWordES6(id)) {
-            return true;
-        }
-
-        switch (id.length) {
-        case 2:
-            return (id === 'if') || (id === 'in') || (id === 'do');
-        case 3:
-            return (id === 'var') || (id === 'for') || (id === 'new') || (id === 'try');
-        case 4:
-            return (id === 'this') || (id === 'else') || (id === 'case') ||
-                (id === 'void') || (id === 'with') || (id === 'enum');
-        case 5:
-            return (id === 'while') || (id === 'break') || (id === 'catch') ||
-                (id === 'throw') || (id === 'const') || (id === 'yield') ||
-                (id === 'class') || (id === 'super');
-        case 6:
-            return (id === 'return') || (id === 'typeof') || (id === 'delete') ||
-                (id === 'switch') || (id === 'export') || (id === 'import');
-        case 7:
-            return (id === 'default') || (id === 'finally') || (id === 'extends');
-        case 8:
-            return (id === 'function') || (id === 'continue') || (id === 'debugger');
-        case 10:
-            return (id === 'instanceof');
-        default:
-            return false;
-        }
-    }
-
-    function isRestrictedWord(id) {
-        return id === 'eval' || id === 'arguments';
-    }
-
-    function isIdentifierName(id) {
-        var i, iz, ch;
-
-        if (id.length === 0) {
-            return false;
-        }
-
-        ch = id.charCodeAt(0);
-        if (!code.isIdentifierStart(ch) || ch === 92) {  // \ (backslash)
-            return false;
-        }
-
-        for (i = 1, iz = id.length; i < iz; ++i) {
-            ch = id.charCodeAt(i);
-            if (!code.isIdentifierPart(ch) || ch === 92) {  // \ (backslash)
-                return false;
-            }
-        }
-        return true;
-    }
-
-    module.exports = {
-        isKeywordES5: isKeywordES5,
-        isKeywordES6: isKeywordES6,
-        isRestrictedWord: isRestrictedWord,
-        isIdentifierName: isIdentifierName
-    };
-}());
-/* vim: set sw=4 ts=4 et tw=80 : */
-
-},{"./code":24}],26:[function(require,module,exports){
-/*
-  Copyright (C) 2013 Yusuke Suzuki <utatane.tea@gmail.com>
-
-  Redistribution and use in source and binary forms, with or without
-  modification, are permitted provided that the following conditions are met:
-
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in the
-      documentation and/or other materials provided with the distribution.
-
-  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-  ARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
-  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
-  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
-
-
-(function () {
-    'use strict';
-
-    exports.code = require('./code');
-    exports.keyword = require('./keyword');
-}());
-/* vim: set sw=4 ts=4 et tw=80 : */
-
-},{"./code":24,"./keyword":25}],27:[function(require,module,exports){
-/*
- * Copyright 2009-2011 Mozilla Foundation and contributors
- * Licensed under the New BSD license. See LICENSE.txt or:
- * http://opensource.org/licenses/BSD-3-Clause
- */
-exports.SourceMapGenerator = require('./source-map/source-map-generator').SourceMapGenerator;
-exports.SourceMapConsumer = require('./source-map/source-map-consumer').SourceMapConsumer;
-exports.SourceNode = require('./source-map/source-node').SourceNode;
-
-},{"./source-map/source-map-consumer":33,"./source-map/source-map-generator":34,"./source-map/source-node":35}],28:[function(require,module,exports){
-/* -*- Mode: js; js-indent-level: 2; -*- */
-/*
- * Copyright 2011 Mozilla Foundation and contributors
- * Licensed under the New BSD license. See LICENSE or:
- * http://opensource.org/licenses/BSD-3-Clause
- */
-if (typeof define !== 'function') {
-    var define = require('amdefine')(module, require);
-}
-define(function (require, exports, module) {
-
-  var util = require('./util');
-
-  /**
-   * A data structure which is a combination of an array and a set. Adding a new
-   * member is O(1), testing for membership is O(1), and finding the index of an
-   * element is O(1). Removing elements from the set is not supported. Only
-   * strings are supported for membership.
-   */
-  function ArraySet() {
-    this._array = [];
-    this._set = {};
-  }
-
-  /**
-   * Static method for creating ArraySet instances from an existing array.
-   */
-  ArraySet.fromArray = function ArraySet_fromArray(aArray, aAllowDuplicates) {
-    var set = new ArraySet();
-    for (var i = 0, len = aArray.length; i < len; i++) {
-      set.add(aArray[i], aAllowDuplicates);
-    }
-    return set;
-  };
-
-  /**
-   * Add the given string to this set.
-   *
-   * @param String aStr
-   */
-  ArraySet.prototype.add = function ArraySet_add(aStr, aAllowDuplicates) {
-    var isDuplicate = this.has(aStr);
-    var idx = this._array.length;
-    if (!isDuplicate || aAllowDuplicates) {
-      this._array.push(aStr);
-    }
-    if (!isDuplicate) {
-      this._set[util.toSetString(aStr)] = idx;
-    }
-  };
-
-  /**
-   * Is the given string a member of this set?
-   *
-   * @param String aStr
-   */
-  ArraySet.prototype.has = function ArraySet_has(aStr) {
-    return Object.prototype.hasOwnProperty.call(this._set,
-                                                util.toSetString(aStr));
-  };
-
-  /**
-   * What is the index of the given string in the array?
-   *
-   * @param String aStr
-   */
-  ArraySet.prototype.indexOf = function ArraySet_indexOf(aStr) {
-    if (this.has(aStr)) {
-      return this._set[util.toSetString(aStr)];
-    }
-    throw new Error('"' + aStr + '" is not in the set.');
-  };
-
-  /**
-   * What is the element at the given index?
-   *
-   * @param Number aIdx
-   */
-  ArraySet.prototype.at = function ArraySet_at(aIdx) {
-    if (aIdx >= 0 && aIdx < this._array.length) {
-      return this._array[aIdx];
-    }
-    throw new Error('No element indexed by ' + aIdx);
-  };
-
-  /**
-   * Returns the array representation of this set (which has the proper indices
-   * indicated by indexOf). Note that this is a copy of the internal array used
-   * for storing the members so that no one can mess with internal state.
-   */
-  ArraySet.prototype.toArray = function ArraySet_toArray() {
-    return this._array.slice();
-  };
-
-  exports.ArraySet = ArraySet;
-
-});
-
-},{"./util":36,"amdefine":37}],29:[function(require,module,exports){
-/* -*- Mode: js; js-indent-level: 2; -*- */
-/*
- * Copyright 2011 Mozilla Foundation and contributors
- * Licensed under the New BSD license. See LICENSE or:
- * http://opensource.org/licenses/BSD-3-Clause
- *
- * Based on the Base 64 VLQ implementation in Closure Compiler:
- * https://code.google.com/p/closure-compiler/source/browse/trunk/src/com/google/debugging/sourcemap/Base64VLQ.java
- *
- * Copyright 2011 The Closure Compiler Authors. All rights reserved.
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
- * met:
- *
- *  * Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *  * Redistributions in binary form must reproduce the above
- *    copyright notice, this list of conditions and the following
- *    disclaimer in the documentation and/or other materials provided
- *    with the distribution.
- *  * Neither the name of Google Inc. nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
- * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-if (typeof define !== 'function') {
-    var define = require('amdefine')(module, require);
-}
-define(function (require, exports, module) {
-
-  var base64 = require('./base64');
-
-  // A single base 64 digit can contain 6 bits of data. For the base 64 variable
-  // length quantities we use in the source map spec, the first bit is the sign,
-  // the next four bits are the actual value, and the 6th bit is the
-  // continuation bit. The continuation bit tells us whether there are more
-  // digits in this value following this digit.
-  //
-  //   Continuation
-  //   |    Sign
-  //   |    |
-  //   V    V
-  //   101011
-
-  var VLQ_BASE_SHIFT = 5;
-
-  // binary: 100000
-  var VLQ_BASE = 1 << VLQ_BASE_SHIFT;
-
-  // binary: 011111
-  var VLQ_BASE_MASK = VLQ_BASE - 1;
-
-  // binary: 100000
-  var VLQ_CONTINUATION_BIT = VLQ_BASE;
-
-  /**
-   * Converts from a two-complement value to a value where the sign bit is
-   * placed in the least significant bit.  For example, as decimals:
-   *   1 becomes 2 (10 binary), -1 becomes 3 (11 binary)
-   *   2 becomes 4 (100 binary), -2 becomes 5 (101 binary)
-   */
-  function toVLQSigned(aValue) {
-    return aValue < 0
-      ? ((-aValue) << 1) + 1
-      : (aValue << 1) + 0;
-  }
-
-  /**
-   * Converts to a two-complement value from a value where the sign bit is
-   * placed in the least significant bit.  For example, as decimals:
-   *   2 (10 binary) becomes 1, 3 (11 binary) becomes -1
-   *   4 (100 binary) becomes 2, 5 (101 binary) becomes -2
-   */
-  function fromVLQSigned(aValue) {
-    var isNegative = (aValue & 1) === 1;
-    var shifted = aValue >> 1;
-    return isNegative
-      ? -shifted
-      : shifted;
-  }
-
-  /**
-   * Returns the base 64 VLQ encoded value.
-   */
-  exports.encode = function base64VLQ_encode(aValue) {
-    var encoded = "";
-    var digit;
-
-    var vlq = toVLQSigned(aValue);
-
-    do {
-      digit = vlq & VLQ_BASE_MASK;
-      vlq >>>= VLQ_BASE_SHIFT;
-      if (vlq > 0) {
-        // There are still more digits in this value, so we must make sure the
-        // continuation bit is marked.
-        digit |= VLQ_CONTINUATION_BIT;
-      }
-      encoded += base64.encode(digit);
-    } while (vlq > 0);
-
-    return encoded;
-  };
-
-  /**
-   * Decodes the next base 64 VLQ value from the given string and returns the
-   * value and the rest of the string via the out parameter.
-   */
-  exports.decode = function base64VLQ_decode(aStr, aOutParam) {
-    var i = 0;
-    var strLen = aStr.length;
-    var result = 0;
-    var shift = 0;
-    var continuation, digit;
-
-    do {
-      if (i >= strLen) {
-        throw new Error("Expected more digits in base 64 VLQ value.");
-      }
-      digit = base64.decode(aStr.charAt(i++));
-      continuation = !!(digit & VLQ_CONTINUATION_BIT);
-      digit &= VLQ_BASE_MASK;
-      result = result + (digit << shift);
-      shift += VLQ_BASE_SHIFT;
-    } while (continuation);
-
-    aOutParam.value = fromVLQSigned(result);
-    aOutParam.rest = aStr.slice(i);
-  };
-
-});
-
-},{"./base64":30,"amdefine":37}],30:[function(require,module,exports){
-/* -*- Mode: js; js-indent-level: 2; -*- */
-/*
- * Copyright 2011 Mozilla Foundation and contributors
- * Licensed under the New BSD license. See LICENSE or:
- * http://opensource.org/licenses/BSD-3-Clause
- */
-if (typeof define !== 'function') {
-    var define = require('amdefine')(module, require);
-}
-define(function (require, exports, module) {
-
-  var charToIntMap = {};
-  var intToCharMap = {};
-
-  'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
-    .split('')
-    .forEach(function (ch, index) {
-      charToIntMap[ch] = index;
-      intToCharMap[index] = ch;
-    });
-
-  /**
-   * Encode an integer in the range of 0 to 63 to a single base 64 digit.
-   */
-  exports.encode = function base64_encode(aNumber) {
-    if (aNumber in intToCharMap) {
-      return intToCharMap[aNumber];
-    }
-    throw new TypeError("Must be between 0 and 63: " + aNumber);
-  };
-
-  /**
-   * Decode a single base 64 digit to an integer.
-   */
-  exports.decode = function base64_decode(aChar) {
-    if (aChar in charToIntMap) {
-      return charToIntMap[aChar];
-    }
-    throw new TypeError("Not a valid base 64 digit: " + aChar);
-  };
-
-});
-
-},{"amdefine":37}],31:[function(require,module,exports){
-/* -*- Mode: js; js-indent-level: 2; -*- */
-/*
- * Copyright 2011 Mozilla Foundation and contributors
- * Licensed under the New BSD license. See LICENSE or:
- * http://opensource.org/licenses/BSD-3-Clause
- */
-if (typeof define !== 'function') {
-    var define = require('amdefine')(module, require);
-}
-define(function (require, exports, module) {
-
-  /**
-   * Recursive implementation of binary search.
-   *
-   * @param aLow Indices here and lower do not contain the needle.
-   * @param aHigh Indices here and higher do not contain the needle.
-   * @param aNeedle The element being searched for.
-   * @param aHaystack The non-empty array being searched.
-   * @param aCompare Function which takes two elements and returns -1, 0, or 1.
-   */
-  function recursiveSearch(aLow, aHigh, aNeedle, aHaystack, aCompare) {
-    // This function terminates when one of the following is true:
-    //
-    //   1. We find the exact element we are looking for.
-    //
-    //   2. We did not find the exact element, but we can return the index of
-    //      the next closest element that is less than that element.
-    //
-    //   3. We did not find the exact element, and there is no next-closest
-    //      element which is less than the one we are searching for, so we
-    //      return -1.
-    var mid = Math.floor((aHigh - aLow) / 2) + aLow;
-    var cmp = aCompare(aNeedle, aHaystack[mid], true);
-    if (cmp === 0) {
-      // Found the element we are looking for.
-      return mid;
-    }
-    else if (cmp > 0) {
-      // aHaystack[mid] is greater than our needle.
-      if (aHigh - mid > 1) {
-        // The element is in the upper half.
-        return recursiveSearch(mid, aHigh, aNeedle, aHaystack, aCompare);
-      }
-      // We did not find an exact match, return the next closest one
-      // (termination case 2).
-      return mid;
-    }
-    else {
-      // aHaystack[mid] is less than our needle.
-      if (mid - aLow > 1) {
-        // The element is in the lower half.
-        return recursiveSearch(aLow, mid, aNeedle, aHaystack, aCompare);
-      }
-      // The exact needle element was not found in this haystack. Determine if
-      // we are in termination case (2) or (3) and return the appropriate thing.
-      return aLow < 0 ? -1 : aLow;
-    }
-  }
-
-  /**
-   * This is an implementation of binary search which will always try and return
-   * the index of next lowest value checked if there is no exact hit. This is
-   * because mappings between original and generated line/col pairs are single
-   * points, and there is an implicit region between each of them, so a miss
-   * just means that you aren't on the very start of a region.
-   *
-   * @param aNeedle The element you are looking for.
-   * @param aHaystack The array that is being searched.
-   * @param aCompare A function which takes the needle and an element in the
-   *     array and returns -1, 0, or 1 depending on whether the needle is less
-   *     than, equal to, or greater than the element, respectively.
-   */
-  exports.search = function search(aNeedle, aHaystack, aCompare) {
-    if (aHaystack.length === 0) {
-      return -1;
-    }
-    return recursiveSearch(-1, aHaystack.length, aNeedle, aHaystack, aCompare)
-  };
-
-});
-
-},{"amdefine":37}],32:[function(require,module,exports){
-/* -*- Mode: js; js-indent-level: 2; -*- */
-/*
- * Copyright 2014 Mozilla Foundation and contributors
- * Licensed under the New BSD license. See LICENSE or:
- * http://opensource.org/licenses/BSD-3-Clause
- */
-if (typeof define !== 'function') {
-    var define = require('amdefine')(module, require);
-}
-define(function (require, exports, module) {
-
-  var util = require('./util');
-
-  /**
-   * Determine whether mappingB is after mappingA with respect to generated
-   * position.
-   */
-  function generatedPositionAfter(mappingA, mappingB) {
-    // Optimized for most common case
-    var lineA = mappingA.generatedLine;
-    var lineB = mappingB.generatedLine;
-    var columnA = mappingA.generatedColumn;
-    var columnB = mappingB.generatedColumn;
-    return lineB > lineA || lineB == lineA && columnB >= columnA ||
-           util.compareByGeneratedPositions(mappingA, mappingB) <= 0;
-  }
-
-  /**
-   * A data structure to provide a sorted view of accumulated mappings in a
-   * performance conscious manner. It trades a neglibable overhead in general
-   * case for a large speedup in case of mappings being added in order.
-   */
-  function MappingList() {
-    this._array = [];
-    this._sorted = true;
-    // Serves as infimum
-    this._last = {generatedLine: -1, generatedColumn: 0};
-  }
-
-  /**
-   * Iterate through internal items. This method takes the same arguments that
-   * `Array.prototype.forEach` takes.
-   *
-   * NOTE: The order of the mappings is NOT guaranteed.
-   */
-  MappingList.prototype.unsortedForEach =
-    function MappingList_forEach(aCallback, aThisArg) {
-      this._array.forEach(aCallback, aThisArg);
-    };
-
-  /**
-   * Add the given source mapping.
-   *
-   * @param Object aMapping
-   */
-  MappingList.prototype.add = function MappingList_add(aMapping) {
-    var mapping;
-    if (generatedPositionAfter(this._last, aMapping)) {
-      this._last = aMapping;
-      this._array.push(aMapping);
-    } else {
-      this._sorted = false;
-      this._array.push(aMapping);
-    }
-  };
-
-  /**
-   * Returns the flat, sorted array of mappings. The mappings are sorted by
-   * generated position.
-   *
-   * WARNING: This method returns internal data without copying, for
-   * performance. The return value must NOT be mutated, and should be treated as
-   * an immutable borrow. If you want to take ownership, you must make your own
-   * copy.
-   */
-  MappingList.prototype.toArray = function MappingList_toArray() {
-    if (!this._sorted) {
-      this._array.sort(util.compareByGeneratedPositions);
-      this._sorted = true;
-    }
-    return this._array;
-  };
-
-  exports.MappingList = MappingList;
-
-});
-
-},{"./util":36,"amdefine":37}],33:[function(require,module,exports){
-/* -*- Mode: js; js-indent-level: 2; -*- */
-/*
- * Copyright 2011 Mozilla Foundation and contributors
- * Licensed under the New BSD license. See LICENSE or:
- * http://opensource.org/licenses/BSD-3-Clause
- */
-if (typeof define !== 'function') {
-    var define = require('amdefine')(module, require);
-}
-define(function (require, exports, module) {
-
-  var util = require('./util');
-  var binarySearch = require('./binary-search');
-  var ArraySet = require('./array-set').ArraySet;
-  var base64VLQ = require('./base64-vlq');
-
-  /**
-   * A SourceMapConsumer instance represents a parsed source map which we can
-   * query for information about the original file positions by giving it a file
-   * position in the generated source.
-   *
-   * The only parameter is the raw source map (either as a JSON string, or
-   * already parsed to an object). According to the spec, source maps have the
-   * following attributes:
-   *
-   *   - version: Which version of the source map spec this map is following.
-   *   - sources: An array of URLs to the original source files.
-   *   - names: An array of identifiers which can be referrenced by individual mappings.
-   *   - sourceRoot: Optional. The URL root from which all sources are relative.
-   *   - sourcesContent: Optional. An array of contents of the original source files.
-   *   - mappings: A string of base64 VLQs which contain the actual mappings.
-   *   - file: Optional. The generated file this source map is associated with.
-   *
-   * Here is an example source map, taken from the source map spec[0]:
-   *
-   *     {
-   *       version : 3,
-   *       file: "out.js",
-   *       sourceRoot : "",
-   *       sources: ["foo.js", "bar.js"],
-   *       names: ["src", "maps", "are", "fun"],
-   *       mappings: "AA,AB;;ABCDE;"
-   *     }
-   *
-   * [0]: https://docs.google.com/document/d/1U1RGAehQwRypUTovF1KRlpiOFze0b-_2gc6fAH0KY0k/edit?pli=1#
-   */
-  function SourceMapConsumer(aSourceMap) {
-    var sourceMap = aSourceMap;
-    if (typeof aSourceMap === 'string') {
-      sourceMap = JSON.parse(aSourceMap.replace(/^\)\]\}'/, ''));
-    }
-
-    var version = util.getArg(sourceMap, 'version');
-    var sources = util.getArg(sourceMap, 'sources');
-    // Sass 3.3 leaves out the 'names' array, so we deviate from the spec (which
-    // requires the array) to play nice here.
-    var names = util.getArg(sourceMap, 'names', []);
-    var sourceRoot = util.getArg(sourceMap, 'sourceRoot', null);
-    var sourcesContent = util.getArg(sourceMap, 'sourcesContent', null);
-    var mappings = util.getArg(sourceMap, 'mappings');
-    var file = util.getArg(sourceMap, 'file', null);
-
-    // Once again, Sass deviates from the spec and supplies the version as a
-    // string rather than a number, so we use loose equality checking here.
-    if (version != this._version) {
-      throw new Error('Unsupported version: ' + version);
-    }
-
-    // Some source maps produce relative source paths like "./foo.js" instead of
-    // "foo.js".  Normalize these first so that future comparisons will succeed.
-    // See bugzil.la/1090768.
-    sources = sources.map(util.normalize);
-
-    // Pass `true` below to allow duplicate names and sources. While source maps
-    // are intended to be compressed and deduplicated, the TypeScript compiler
-    // sometimes generates source maps with duplicates in them. See Github issue
-    // #72 and bugzil.la/889492.
-    this._names = ArraySet.fromArray(names, true);
-    this._sources = ArraySet.fromArray(sources, true);
-
-    this.sourceRoot = sourceRoot;
-    this.sourcesContent = sourcesContent;
-    this._mappings = mappings;
-    this.file = file;
-  }
-
-  /**
-   * Create a SourceMapConsumer from a SourceMapGenerator.
-   *
-   * @param SourceMapGenerator aSourceMap
-   *        The source map that will be consumed.
-   * @returns SourceMapConsumer
-   */
-  SourceMapConsumer.fromSourceMap =
-    function SourceMapConsumer_fromSourceMap(aSourceMap) {
-      var smc = Object.create(SourceMapConsumer.prototype);
-
-      smc._names = ArraySet.fromArray(aSourceMap._names.toArray(), true);
-      smc._sources = ArraySet.fromArray(aSourceMap._sources.toArray(), true);
-      smc.sourceRoot = aSourceMap._sourceRoot;
-      smc.sourcesContent = aSourceMap._generateSourcesContent(smc._sources.toArray(),
-                                                              smc.sourceRoot);
-      smc.file = aSourceMap._file;
-
-      smc.__generatedMappings = aSourceMap._mappings.toArray().slice();
-      smc.__originalMappings = aSourceMap._mappings.toArray().slice()
-        .sort(util.compareByOriginalPositions);
-
-      return smc;
-    };
-
-  /**
-   * The version of the source mapping spec that we are consuming.
-   */
-  SourceMapConsumer.prototype._version = 3;
-
-  /**
-   * The list of original sources.
-   */
-  Object.defineProperty(SourceMapConsumer.prototype, 'sources', {
-    get: function () {
-      return this._sources.toArray().map(function (s) {
-        return this.sourceRoot != null ? util.join(this.sourceRoot, s) : s;
-      }, this);
-    }
-  });
-
-  // `__generatedMappings` and `__originalMappings` are arrays that hold the
-  // parsed mapping coordinates from the source map's "mappings" attribute. They
-  // are lazily instantiated, accessed via the `_generatedMappings` and
-  // `_originalMappings` getters respectively, and we only parse the mappings
-  // and create these arrays once queried for a source location. We jump through
-  // these hoops because there can be many thousands of mappings, and parsing
-  // them is expensive, so we only want to do it if we must.
-  //
-  // Each object in the arrays is of the form:
-  //
-  //     {
-  //       generatedLine: The line number in the generated code,
-  //       generatedColumn: The column number in the generated code,
-  //       source: The path to the original source file that generated this
-  //               chunk of code,
-  //       originalLine: The line number in the original source that
-  //                     corresponds to this chunk of generated code,
-  //       originalColumn: The column number in the original source that
-  //                       corresponds to this chunk of generated code,
-  //       name: The name of the original symbol which generated this chunk of
-  //             code.
-  //     }
-  //
-  // All properties except for `generatedLine` and `generatedColumn` can be
-  // `null`.
-  //
-  // `_generatedMappings` is ordered by the generated positions.
-  //
-  // `_originalMappings` is ordered by the original positions.
-
-  SourceMapConsumer.prototype.__generatedMappings = null;
-  Object.defineProperty(SourceMapConsumer.prototype, '_generatedMappings', {
-    get: function () {
-      if (!this.__generatedMappings) {
-        this.__generatedMappings = [];
-        this.__originalMappings = [];
-        this._parseMappings(this._mappings, this.sourceRoot);
-      }
-
-      return this.__generatedMappings;
-    }
-  });
-
-  SourceMapConsumer.prototype.__originalMappings = null;
-  Object.defineProperty(SourceMapConsumer.prototype, '_originalMappings', {
-    get: function () {
-      if (!this.__originalMappings) {
-        this.__generatedMappings = [];
-        this.__originalMappings = [];
-        this._parseMappings(this._mappings, this.sourceRoot);
-      }
-
-      return this.__originalMappings;
-    }
-  });
-
-  SourceMapConsumer.prototype._nextCharIsMappingSeparator =
-    function SourceMapConsumer_nextCharIsMappingSeparator(aStr) {
-      var c = aStr.charAt(0);
-      return c === ";" || c === ",";
-    };
-
-  /**
-   * Parse the mappings in a string in to a data structure which we can easily
-   * query (the ordered arrays in the `this.__generatedMappings` and
-   * `this.__originalMappings` properties).
-   */
-  SourceMapConsumer.prototype._parseMappings =
-    function SourceMapConsumer_parseMappings(aStr, aSourceRoot) {
-      var generatedLine = 1;
-      var previousGeneratedColumn = 0;
-      var previousOriginalLine = 0;
-      var previousOriginalColumn = 0;
-      var previousSource = 0;
-      var previousName = 0;
-      var str = aStr;
-      var temp = {};
-      var mapping;
-
-      while (str.length > 0) {
-        if (str.charAt(0) === ';') {
-          generatedLine++;
-          str = str.slice(1);
-          previousGeneratedColumn = 0;
-        }
-        else if (str.charAt(0) === ',') {
-          str = str.slice(1);
-        }
-        else {
-          mapping = {};
-          mapping.generatedLine = generatedLine;
-
-          // Generated column.
-          base64VLQ.decode(str, temp);
-          mapping.generatedColumn = previousGeneratedColumn + temp.value;
-          previousGeneratedColumn = mapping.generatedColumn;
-          str = temp.rest;
-
-          if (str.length > 0 && !this._nextCharIsMappingSeparator(str)) {
-            // Original source.
-            base64VLQ.decode(str, temp);
-            mapping.source = this._sources.at(previousSource + temp.value);
-            previousSource += temp.value;
-            str = temp.rest;
-            if (str.length === 0 || this._nextCharIsMappingSeparator(str)) {
-              throw new Error('Found a source, but no line and column');
-            }
-
-            // Original line.
-            base64VLQ.decode(str, temp);
-            mapping.originalLine = previousOriginalLine + temp.value;
-            previousOriginalLine = mapping.originalLine;
-            // Lines are stored 0-based
-            mapping.originalLine += 1;
-            str = temp.rest;
-            if (str.length === 0 || this._nextCharIsMappingSeparator(str)) {
-              throw new Error('Found a source and line, but no column');
-            }
-
-            // Original column.
-            base64VLQ.decode(str, temp);
-            mapping.originalColumn = previousOriginalColumn + temp.value;
-            previousOriginalColumn = mapping.originalColumn;
-            str = temp.rest;
-
-            if (str.length > 0 && !this._nextCharIsMappingSeparator(str)) {
-              // Original name.
-              base64VLQ.decode(str, temp);
-              mapping.name = this._names.at(previousName + temp.value);
-              previousName += temp.value;
-              str = temp.rest;
-            }
-          }
-
-          this.__generatedMappings.push(mapping);
-          if (typeof mapping.originalLine === 'number') {
-            this.__originalMappings.push(mapping);
-          }
-        }
-      }
-
-      this.__generatedMappings.sort(util.compareByGeneratedPositions);
-      this.__originalMappings.sort(util.compareByOriginalPositions);
-    };
-
-  /**
-   * Find the mapping that best matches the hypothetical "needle" mapping that
-   * we are searching for in the given "haystack" of mappings.
-   */
-  SourceMapConsumer.prototype._findMapping =
-    function SourceMapConsumer_findMapping(aNeedle, aMappings, aLineName,
-                                           aColumnName, aComparator) {
-      // To return the position we are searching for, we must first find the
-      // mapping for the given position and then return the opposite position it
-      // points to. Because the mappings are sorted, we can use binary search to
-      // find the best mapping.
-
-      if (aNeedle[aLineName] <= 0) {
-        throw new TypeError('Line must be greater than or equal to 1, got '
-                            + aNeedle[aLineName]);
-      }
-      if (aNeedle[aColumnName] < 0) {
-        throw new TypeError('Column must be greater than or equal to 0, got '
-                            + aNeedle[aColumnName]);
-      }
-
-      return binarySearch.search(aNeedle, aMappings, aComparator);
-    };
-
-  /**
-   * Compute the last column for each generated mapping. The last column is
-   * inclusive.
-   */
-  SourceMapConsumer.prototype.computeColumnSpans =
-    function SourceMapConsumer_computeColumnSpans() {
-      for (var index = 0; index < this._generatedMappings.length; ++index) {
-        var mapping = this._generatedMappings[index];
-
-        // Mappings do not contain a field for the last generated columnt. We
-        // can come up with an optimistic estimate, however, by assuming that
-        // mappings are contiguous (i.e. given two consecutive mappings, the
-        // first mapping ends where the second one starts).
-        if (index + 1 < this._generatedMappings.length) {
-          var nextMapping = this._generatedMappings[index + 1];
-
-          if (mapping.generatedLine === nextMapping.generatedLine) {
-            mapping.lastGeneratedColumn = nextMapping.generatedColumn - 1;
-            continue;
-          }
-        }
-
-        // The last mapping for each line spans the entire line.
-        mapping.lastGeneratedColumn = Infinity;
-      }
-    };
-
-  /**
-   * Returns the original source, line, and column information for the generated
-   * source's line and column positions provided. The only argument is an object
-   * with the following properties:
-   *
-   *   - line: The line number in the generated source.
-   *   - column: The column number in the generated source.
-   *
-   * and an object is returned with the following properties:
-   *
-   *   - source: The original source file, or null.
-   *   - line: The line number in the original source, or null.
-   *   - column: The column number in the original source, or null.
-   *   - name: The original identifier, or null.
-   */
-  SourceMapConsumer.prototype.originalPositionFor =
-    function SourceMapConsumer_originalPositionFor(aArgs) {
-      var needle = {
-        generatedLine: util.getArg(aArgs, 'line'),
-        generatedColumn: util.getArg(aArgs, 'column')
-      };
-
-      var index = this._findMapping(needle,
-                                    this._generatedMappings,
-                                    "generatedLine",
-                                    "generatedColumn",
-                                    util.compareByGeneratedPositions);
-
-      if (index >= 0) {
-        var mapping = this._generatedMappings[index];
-
-        if (mapping.generatedLine === needle.generatedLine) {
-          var source = util.getArg(mapping, 'source', null);
-          if (source != null && this.sourceRoot != null) {
-            source = util.join(this.sourceRoot, source);
-          }
-          return {
-            source: source,
-            line: util.getArg(mapping, 'originalLine', null),
-            column: util.getArg(mapping, 'originalColumn', null),
-            name: util.getArg(mapping, 'name', null)
-          };
-        }
-      }
-
-      return {
-        source: null,
-        line: null,
-        column: null,
-        name: null
-      };
-    };
-
-  /**
-   * Returns the original source content. The only argument is the url of the
-   * original source file. Returns null if no original source content is
-   * availible.
-   */
-  SourceMapConsumer.prototype.sourceContentFor =
-    function SourceMapConsumer_sourceContentFor(aSource) {
-      if (!this.sourcesContent) {
-        return null;
-      }
-
-      if (this.sourceRoot != null) {
-        aSource = util.relative(this.sourceRoot, aSource);
-      }
-
-      if (this._sources.has(aSource)) {
-        return this.sourcesContent[this._sources.indexOf(aSource)];
-      }
-
-      var url;
-      if (this.sourceRoot != null
-          && (url = util.urlParse(this.sourceRoot))) {
-        // XXX: file:// URIs and absolute paths lead to unexpected behavior for
-        // many users. We can help them out when they expect file:// URIs to
-        // behave like it would if they were running a local HTTP server. See
-        // https://bugzilla.mozilla.org/show_bug.cgi?id=885597.
-        var fileUriAbsPath = aSource.replace(/^file:\/\//, "");
-        if (url.scheme == "file"
-            && this._sources.has(fileUriAbsPath)) {
-          return this.sourcesContent[this._sources.indexOf(fileUriAbsPath)]
-        }
-
-        if ((!url.path || url.path == "/")
-            && this._sources.has("/" + aSource)) {
-          return this.sourcesContent[this._sources.indexOf("/" + aSource)];
-        }
-      }
-
-      throw new Error('"' + aSource + '" is not in the SourceMap.');
-    };
-
-  /**
-   * Returns the generated line and column information for the original source,
-   * line, and column positions provided. The only argument is an object with
-   * the following properties:
-   *
-   *   - source: The filename of the original source.
-   *   - line: The line number in the original source.
-   *   - column: The column number in the original source.
-   *
-   * and an object is returned with the following properties:
-   *
-   *   - line: The line number in the generated source, or null.
-   *   - column: The column number in the generated source, or null.
-   */
-  SourceMapConsumer.prototype.generatedPositionFor =
-    function SourceMapConsumer_generatedPositionFor(aArgs) {
-      var needle = {
-        source: util.getArg(aArgs, 'source'),
-        originalLine: util.getArg(aArgs, 'line'),
-        originalColumn: util.getArg(aArgs, 'column')
-      };
-
-      if (this.sourceRoot != null) {
-        needle.source = util.relative(this.sourceRoot, needle.source);
-      }
-
-      var index = this._findMapping(needle,
-                                    this._originalMappings,
-                                    "originalLine",
-                                    "originalColumn",
-                                    util.compareByOriginalPositions);
-
-      if (index >= 0) {
-        var mapping = this._originalMappings[index];
-
-        return {
-          line: util.getArg(mapping, 'generatedLine', null),
-          column: util.getArg(mapping, 'generatedColumn', null),
-          lastColumn: util.getArg(mapping, 'lastGeneratedColumn', null)
-        };
-      }
-
-      return {
-        line: null,
-        column: null,
-        lastColumn: null
-      };
-    };
-
-  /**
-   * Returns all generated line and column information for the original source
-   * and line provided. The only argument is an object with the following
-   * properties:
-   *
-   *   - source: The filename of the original source.
-   *   - line: The line number in the original source.
-   *
-   * and an array of objects is returned, each with the following properties:
-   *
-   *   - line: The line number in the generated source, or null.
-   *   - column: The column number in the generated source, or null.
-   */
-  SourceMapConsumer.prototype.allGeneratedPositionsFor =
-    function SourceMapConsumer_allGeneratedPositionsFor(aArgs) {
-      // When there is no exact match, SourceMapConsumer.prototype._findMapping
-      // returns the index of the closest mapping less than the needle. By
-      // setting needle.originalColumn to Infinity, we thus find the last
-      // mapping for the given line, provided such a mapping exists.
-      var needle = {
-        source: util.getArg(aArgs, 'source'),
-        originalLine: util.getArg(aArgs, 'line'),
-        originalColumn: Infinity
-      };
-
-      if (this.sourceRoot != null) {
-        needle.source = util.relative(this.sourceRoot, needle.source);
-      }
-
-      var mappings = [];
-
-      var index = this._findMapping(needle,
-                                    this._originalMappings,
-                                    "originalLine",
-                                    "originalColumn",
-                                    util.compareByOriginalPositions);
-      if (index >= 0) {
-        var mapping = this._originalMappings[index];
-
-        while (mapping && mapping.originalLine === needle.originalLine) {
-          mappings.push({
-            line: util.getArg(mapping, 'generatedLine', null),
-            column: util.getArg(mapping, 'generatedColumn', null),
-            lastColumn: util.getArg(mapping, 'lastGeneratedColumn', null)
-          });
-
-          mapping = this._originalMappings[--index];
-        }
-      }
-
-      return mappings.reverse();
-    };
-
-  SourceMapConsumer.GENERATED_ORDER = 1;
-  SourceMapConsumer.ORIGINAL_ORDER = 2;
-
-  /**
-   * Iterate over each mapping between an original source/line/column and a
-   * generated line/column in this source map.
-   *
-   * @param Function aCallback
-   *        The function that is called with each mapping.
-   * @param Object aContext
-   *        Optional. If specified, this object will be the value of `this` every
-   *        time that `aCallback` is called.
-   * @param aOrder
-   *        Either `SourceMapConsumer.GENERATED_ORDER` or
-   *        `SourceMapConsumer.ORIGINAL_ORDER`. Specifies whether you want to
-   *        iterate over the mappings sorted by the generated file's line/column
-   *        order or the original's source/line/column order, respectively. Defaults to
-   *        `SourceMapConsumer.GENERATED_ORDER`.
-   */
-  SourceMapConsumer.prototype.eachMapping =
-    function SourceMapConsumer_eachMapping(aCallback, aContext, aOrder) {
-      var context = aContext || null;
-      var order = aOrder || SourceMapConsumer.GENERATED_ORDER;
-
-      var mappings;
-      switch (order) {
-      case SourceMapConsumer.GENERATED_ORDER:
-        mappings = this._generatedMappings;
-        break;
-      case SourceMapConsumer.ORIGINAL_ORDER:
-        mappings = this._originalMappings;
-        break;
-      default:
-        throw new Error("Unknown order of iteration.");
-      }
-
-      var sourceRoot = this.sourceRoot;
-      mappings.map(function (mapping) {
-        var source = mapping.source;
-        if (source != null && sourceRoot != null) {
-          source = util.join(sourceRoot, source);
-        }
-        return {
-          source: source,
-          generatedLine: mapping.generatedLine,
-          generatedColumn: mapping.generatedColumn,
-          originalLine: mapping.originalLine,
-          originalColumn: mapping.originalColumn,
-          name: mapping.name
-        };
-      }).forEach(aCallback, context);
-    };
-
-  exports.SourceMapConsumer = SourceMapConsumer;
-
-});
-
-},{"./array-set":28,"./base64-vlq":29,"./binary-search":31,"./util":36,"amdefine":37}],34:[function(require,module,exports){
-/* -*- Mode: js; js-indent-level: 2; -*- */
-/*
- * Copyright 2011 Mozilla Foundation and contributors
- * Licensed under the New BSD license. See LICENSE or:
- * http://opensource.org/licenses/BSD-3-Clause
- */
-if (typeof define !== 'function') {
-    var define = require('amdefine')(module, require);
-}
-define(function (require, exports, module) {
-
-  var base64VLQ = require('./base64-vlq');
-  var util = require('./util');
-  var ArraySet = require('./array-set').ArraySet;
-  var MappingList = require('./mapping-list').MappingList;
-
-  /**
-   * An instance of the SourceMapGenerator represents a source map which is
-   * being built incrementally. You may pass an object with the following
-   * properties:
-   *
-   *   - file: The filename of the generated source.
-   *   - sourceRoot: A root for all relative URLs in this source map.
-   */
-  function SourceMapGenerator(aArgs) {
-    if (!aArgs) {
-      aArgs = {};
-    }
-    this._file = util.getArg(aArgs, 'file', null);
-    this._sourceRoot = util.getArg(aArgs, 'sourceRoot', null);
-    this._skipValidation = util.getArg(aArgs, 'skipValidation', false);
-    this._sources = new ArraySet();
-    this._names = new ArraySet();
-    this._mappings = new MappingList();
-    this._sourcesContents = null;
-  }
-
-  SourceMapGenerator.prototype._version = 3;
-
-  /**
-   * Creates a new SourceMapGenerator based on a SourceMapConsumer
-   *
-   * @param aSourceMapConsumer The SourceMap.
-   */
-  SourceMapGenerator.fromSourceMap =
-    function SourceMapGenerator_fromSourceMap(aSourceMapConsumer) {
-      var sourceRoot = aSourceMapConsumer.sourceRoot;
-      var generator = new SourceMapGenerator({
-        file: aSourceMapConsumer.file,
-        sourceRoot: sourceRoot
-      });
-      aSourceMapConsumer.eachMapping(function (mapping) {
-        var newMapping = {
-          generated: {
-            line: mapping.generatedLine,
-            column: mapping.generatedColumn
-          }
-        };
-
-        if (mapping.source != null) {
-          newMapping.source = mapping.source;
-          if (sourceRoot != null) {
-            newMapping.source = util.relative(sourceRoot, newMapping.source);
-          }
-
-          newMapping.original = {
-            line: mapping.originalLine,
-            column: mapping.originalColumn
-          };
-
-          if (mapping.name != null) {
-            newMapping.name = mapping.name;
-          }
-        }
-
-        generator.addMapping(newMapping);
-      });
-      aSourceMapConsumer.sources.forEach(function (sourceFile) {
-        var content = aSourceMapConsumer.sourceContentFor(sourceFile);
-        if (content != null) {
-          generator.setSourceContent(sourceFile, content);
-        }
-      });
-      return generator;
-    };
-
-  /**
-   * Add a single mapping from original source line and column to the generated
-   * source's line and column for this source map being created. The mapping
-   * object should have the following properties:
-   *
-   *   - generated: An object with the generated line and column positions.
-   *   - original: An object with the original line and column positions.
-   *   - source: The original source file (relative to the sourceRoot).
-   *   - name: An optional original token name for this mapping.
-   */
-  SourceMapGenerator.prototype.addMapping =
-    function SourceMapGenerator_addMapping(aArgs) {
-      var generated = util.getArg(aArgs, 'generated');
-      var original = util.getArg(aArgs, 'original', null);
-      var source = util.getArg(aArgs, 'source', null);
-      var name = util.getArg(aArgs, 'name', null);
-
-      if (!this._skipValidation) {
-        this._validateMapping(generated, original, source, name);
-      }
-
-      if (source != null && !this._sources.has(source)) {
-        this._sources.add(source);
-      }
-
-      if (name != null && !this._names.has(name)) {
-        this._names.add(name);
-      }
-
-      this._mappings.add({
-        generatedLine: generated.line,
-        generatedColumn: generated.column,
-        originalLine: original != null && original.line,
-        originalColumn: original != null && original.column,
-        source: source,
-        name: name
-      });
-    };
-
-  /**
-   * Set the source content for a source file.
-   */
-  SourceMapGenerator.prototype.setSourceContent =
-    function SourceMapGenerator_setSourceContent(aSourceFile, aSourceContent) {
-      var source = aSourceFile;
-      if (this._sourceRoot != null) {
-        source = util.relative(this._sourceRoot, source);
-      }
-
-      if (aSourceContent != null) {
-        // Add the source content to the _sourcesContents map.
-        // Create a new _sourcesContents map if the property is null.
-        if (!this._sourcesContents) {
-          this._sourcesContents = {};
-        }
-        this._sourcesContents[util.toSetString(source)] = aSourceContent;
-      } else if (this._sourcesContents) {
-        // Remove the source file from the _sourcesContents map.
-        // If the _sourcesContents map is empty, set the property to null.
-        delete this._sourcesContents[util.toSetString(source)];
-        if (Object.keys(this._sourcesContents).length === 0) {
-          this._sourcesContents = null;
-        }
-      }
-    };
-
-  /**
-   * Applies the mappings of a sub-source-map for a specific source file to the
-   * source map being generated. Each mapping to the supplied source file is
-   * rewritten using the supplied source map. Note: The resolution for the
-   * resulting mappings is the minimium of this map and the supplied map.
-   *
-   * @param aSourceMapConsumer The source map to be applied.
-   * @param aSourceFile Optional. The filename of the source file.
-   *        If omitted, SourceMapConsumer's file property will be used.
-   * @param aSourceMapPath Optional. The dirname of the path to the source map
-   *        to be applied. If relative, it is relative to the SourceMapConsumer.
-   *        This parameter is needed when the two source maps aren't in the same
-   *        directory, and the source map to be applied contains relative source
-   *        paths. If so, those relative source paths need to be rewritten
-   *        relative to the SourceMapGenerator.
-   */
-  SourceMapGenerator.prototype.applySourceMap =
-    function SourceMapGenerator_applySourceMap(aSourceMapConsumer, aSourceFile, aSourceMapPath) {
-      var sourceFile = aSourceFile;
-      // If aSourceFile is omitted, we will use the file property of the SourceMap
-      if (aSourceFile == null) {
-        if (aSourceMapConsumer.file == null) {
-          throw new Error(
-            'SourceMapGenerator.prototype.applySourceMap requires either an explicit source file, ' +
-            'or the source map\'s "file" property. Both were omitted.'
-          );
-        }
-        sourceFile = aSourceMapConsumer.file;
-      }
-      var sourceRoot = this._sourceRoot;
-      // Make "sourceFile" relative if an absolute Url is passed.
-      if (sourceRoot != null) {
-        sourceFile = util.relative(sourceRoot, sourceFile);
-      }
-      // Applying the SourceMap can add and remove items from the sources and
-      // the names array.
-      var newSources = new ArraySet();
-      var newNames = new ArraySet();
-
-      // Find mappings for the "sourceFile"
-      this._mappings.unsortedForEach(function (mapping) {
-        if (mapping.source === sourceFile && mapping.originalLine != null) {
-          // Check if it can be mapped by the source map, then update the mapping.
-          var original = aSourceMapConsumer.originalPositionFor({
-            line: mapping.originalLine,
-            column: mapping.originalColumn
-          });
-          if (original.source != null) {
-            // Copy mapping
-            mapping.source = original.source;
-            if (aSourceMapPath != null) {
-              mapping.source = util.join(aSourceMapPath, mapping.source)
-            }
-            if (sourceRoot != null) {
-              mapping.source = util.relative(sourceRoot, mapping.source);
-            }
-            mapping.originalLine = original.line;
-            mapping.originalColumn = original.column;
-            if (original.name != null) {
-              mapping.name = original.name;
-            }
-          }
-        }
-
-        var source = mapping.source;
-        if (source != null && !newSources.has(source)) {
-          newSources.add(source);
-        }
-
-        var name = mapping.name;
-        if (name != null && !newNames.has(name)) {
-          newNames.add(name);
-        }
-
-      }, this);
-      this._sources = newSources;
-      this._names = newNames;
-
-      // Copy sourcesContents of applied map.
-      aSourceMapConsumer.sources.forEach(function (sourceFile) {
-        var content = aSourceMapConsumer.sourceContentFor(sourceFile);
-        if (content != null) {
-          if (aSourceMapPath != null) {
-            sourceFile = util.join(aSourceMapPath, sourceFile);
-          }
-          if (sourceRoot != null) {
-            sourceFile = util.relative(sourceRoot, sourceFile);
-          }
-          this.setSourceContent(sourceFile, content);
-        }
-      }, this);
-    };
-
-  /**
-   * A mapping can have one of the three levels of data:
-   *
-   *   1. Just the generated position.
-   *   2. The Generated position, original position, and original source.
-   *   3. Generated and original position, original source, as well as a name
-   *      token.
-   *
-   * To maintain consistency, we validate that any new mapping being added falls
-   * in to one of these categories.
-   */
-  SourceMapGenerator.prototype._validateMapping =
-    function SourceMapGenerator_validateMapping(aGenerated, aOriginal, aSource,
-                                                aName) {
-      if (aGenerated && 'line' in aGenerated && 'column' in aGenerated
-          && aGenerated.line > 0 && aGenerated.column >= 0
-          && !aOriginal && !aSource && !aName) {
-        // Case 1.
-        return;
-      }
-      else if (aGenerated && 'line' in aGenerated && 'column' in aGenerated
-               && aOriginal && 'line' in aOriginal && 'column' in aOriginal
-               && aGenerated.line > 0 && aGenerated.column >= 0
-               && aOriginal.line > 0 && aOriginal.column >= 0
-               && aSource) {
-        // Cases 2 and 3.
-        return;
-      }
-      else {
-        throw new Error('Invalid mapping: ' + JSON.stringify({
-          generated: aGenerated,
-          source: aSource,
-          original: aOriginal,
-          name: aName
-        }));
-      }
-    };
-
-  /**
-   * Serialize the accumulated mappings in to the stream of base 64 VLQs
-   * specified by the source map format.
-   */
-  SourceMapGenerator.prototype._serializeMappings =
-    function SourceMapGenerator_serializeMappings() {
-      var previousGeneratedColumn = 0;
-      var previousGeneratedLine = 1;
-      var previousOriginalColumn = 0;
-      var previousOriginalLine = 0;
-      var previousName = 0;
-      var previousSource = 0;
-      var result = '';
-      var mapping;
-
-      var mappings = this._mappings.toArray();
-
-      for (var i = 0, len = mappings.length; i < len; i++) {
-        mapping = mappings[i];
-
-        if (mapping.generatedLine !== previousGeneratedLine) {
-          previousGeneratedColumn = 0;
-          while (mapping.generatedLine !== previousGeneratedLine) {
-            result += ';';
-            previousGeneratedLine++;
-          }
-        }
-        else {
-          if (i > 0) {
-            if (!util.compareByGeneratedPositions(mapping, mappings[i - 1])) {
-              continue;
-            }
-            result += ',';
-          }
-        }
-
-        result += base64VLQ.encode(mapping.generatedColumn
-                                   - previousGeneratedColumn);
-        previousGeneratedColumn = mapping.generatedColumn;
-
-        if (mapping.source != null) {
-          result += base64VLQ.encode(this._sources.indexOf(mapping.source)
-                                     - previousSource);
-          previousSource = this._sources.indexOf(mapping.source);
-
-          // lines are stored 0-based in SourceMap spec version 3
-          result += base64VLQ.encode(mapping.originalLine - 1
-                                     - previousOriginalLine);
-          previousOriginalLine = mapping.originalLine - 1;
-
-          result += base64VLQ.encode(mapping.originalColumn
-                                     - previousOriginalColumn);
-          previousOriginalColumn = mapping.originalColumn;
-
-          if (mapping.name != null) {
-            result += base64VLQ.encode(this._names.indexOf(mapping.name)
-                                       - previousName);
-            previousName = this._names.indexOf(mapping.name);
-          }
-        }
-      }
-
-      return result;
-    };
-
-  SourceMapGenerator.prototype._generateSourcesContent =
-    function SourceMapGenerator_generateSourcesContent(aSources, aSourceRoot) {
-      return aSources.map(function (source) {
-        if (!this._sourcesContents) {
-          return null;
-        }
-        if (aSourceRoot != null) {
-          source = util.relative(aSourceRoot, source);
-        }
-        var key = util.toSetString(source);
-        return Object.prototype.hasOwnProperty.call(this._sourcesContents,
-                                                    key)
-          ? this._sourcesContents[key]
-          : null;
-      }, this);
-    };
-
-  /**
-   * Externalize the source map.
-   */
-  SourceMapGenerator.prototype.toJSON =
-    function SourceMapGenerator_toJSON() {
-      var map = {
-        version: this._version,
-        sources: this._sources.toArray(),
-        names: this._names.toArray(),
-        mappings: this._serializeMappings()
-      };
-      if (this._file != null) {
-        map.file = this._file;
-      }
-      if (this._sourceRoot != null) {
-        map.sourceRoot = this._sourceRoot;
-      }
-      if (this._sourcesContents) {
-        map.sourcesContent = this._generateSourcesContent(map.sources, map.sourceRoot);
-      }
-
-      return map;
-    };
-
-  /**
-   * Render the source map being generated to a string.
-   */
-  SourceMapGenerator.prototype.toString =
-    function SourceMapGenerator_toString() {
-      return JSON.stringify(this);
-    };
-
-  exports.SourceMapGenerator = SourceMapGenerator;
-
-});
-
-},{"./array-set":28,"./base64-vlq":29,"./mapping-list":32,"./util":36,"amdefine":37}],35:[function(require,module,exports){
-/* -*- Mode: js; js-indent-level: 2; -*- */
-/*
- * Copyright 2011 Mozilla Foundation and contributors
- * Licensed under the New BSD license. See LICENSE or:
- * http://opensource.org/licenses/BSD-3-Clause
- */
-if (typeof define !== 'function') {
-    var define = require('amdefine')(module, require);
-}
-define(function (require, exports, module) {
-
-  var SourceMapGenerator = require('./source-map-generator').SourceMapGenerator;
-  var util = require('./util');
-
-  // Matches a Windows-style `\r\n` newline or a `\n` newline used by all other
-  // operating systems these days (capturing the result).
-  var REGEX_NEWLINE = /(\r?\n)/;
-
-  // Newline character code for charCodeAt() comparisons
-  var NEWLINE_CODE = 10;
-
-  // Private symbol for identifying `SourceNode`s when multiple versions of
-  // the source-map library are loaded. This MUST NOT CHANGE across
-  // versions!
-  var isSourceNode = "$$$isSourceNode$$$";
-
-  /**
-   * SourceNodes provide a way to abstract over interpolating/concatenating
-   * snippets of generated JavaScript source code while maintaining the line and
-   * column information associated with the original source code.
-   *
-   * @param aLine The original line number.
-   * @param aColumn The original column number.
-   * @param aSource The original source's filename.
-   * @param aChunks Optional. An array of strings which are snippets of
-   *        generated JS, or other SourceNodes.
-   * @param aName The original identifier.
-   */
-  function SourceNode(aLine, aColumn, aSource, aChunks, aName) {
-    this.children = [];
-    this.sourceContents = {};
-    this.line = aLine == null ? null : aLine;
-    this.column = aColumn == null ? null : aColumn;
-    this.source = aSource == null ? null : aSource;
-    this.name = aName == null ? null : aName;
-    this[isSourceNode] = true;
-    if (aChunks != null) this.add(aChunks);
-  }
-
-  /**
-   * Creates a SourceNode from generated code and a SourceMapConsumer.
-   *
-   * @param aGeneratedCode The generated code
-   * @param aSourceMapConsumer The SourceMap for the generated code
-   * @param aRelativePath Optional. The path that relative sources in the
-   *        SourceMapConsumer should be relative to.
-   */
-  SourceNode.fromStringWithSourceMap =
-    function SourceNode_fromStringWithSourceMap(aGeneratedCode, aSourceMapConsumer, aRelativePath) {
-      // The SourceNode we want to fill with the generated code
-      // and the SourceMap
-      var node = new SourceNode();
-
-      // All even indices of this array are one line of the generated code,
-      // while all odd indices are the newlines between two adjacent lines
-      // (since `REGEX_NEWLINE` captures its match).
-      // Processed fragments are removed from this array, by calling `shiftNextLine`.
-      var remainingLines = aGeneratedCode.split(REGEX_NEWLINE);
-      var shiftNextLine = function() {
-        var lineContents = remainingLines.shift();
-        // The last line of a file might not have a newline.
-        var newLine = remainingLines.shift() || "";
-        return lineContents + newLine;
-      };
-
-      // We need to remember the position of "remainingLines"
-      var lastGeneratedLine = 1, lastGeneratedColumn = 0;
-
-      // The generate SourceNodes we need a code range.
-      // To extract it current and last mapping is used.
-      // Here we store the last mapping.
-      var lastMapping = null;
-
-      aSourceMapConsumer.eachMapping(function (mapping) {
-        if (lastMapping !== null) {
-          // We add the code from "lastMapping" to "mapping":
-          // First check if there is a new line in between.
-          if (lastGeneratedLine < mapping.generatedLine) {
-            var code = "";
-            // Associate first line with "lastMapping"
-            addMappingWithCode(lastMapping, shiftNextLine());
-            lastGeneratedLine++;
-            lastGeneratedColumn = 0;
-            // The remaining code is added without mapping
-          } else {
-            // There is no new line in between.
-            // Associate the code between "lastGeneratedColumn" and
-            // "mapping.generatedColumn" with "lastMapping"
-            var nextLine = remainingLines[0];
-            var code = nextLine.substr(0, mapping.generatedColumn -
-                                          lastGeneratedColumn);
-            remainingLines[0] = nextLine.substr(mapping.generatedColumn -
-                                                lastGeneratedColumn);
-            lastGeneratedColumn = mapping.generatedColumn;
-            addMappingWithCode(lastMapping, code);
-            // No more remaining code, continue
-            lastMapping = mapping;
-            return;
-          }
-        }
-        // We add the generated code until the first mapping
-        // to the SourceNode without any mapping.
-        // Each line is added as separate string.
-        while (lastGeneratedLine < mapping.generatedLine) {
-          node.add(shiftNextLine());
-          lastGeneratedLine++;
-        }
-        if (lastGeneratedColumn < mapping.generatedColumn) {
-          var nextLine = remainingLines[0];
-          node.add(nextLine.substr(0, mapping.generatedColumn));
-          remainingLines[0] = nextLine.substr(mapping.generatedColumn);
-          lastGeneratedColumn = mapping.generatedColumn;
-        }
-        lastMapping = mapping;
-      }, this);
-      // We have processed all mappings.
-      if (remainingLines.length > 0) {
-        if (lastMapping) {
-          // Associate the remaining code in the current line with "lastMapping"
-          addMappingWithCode(lastMapping, shiftNextLine());
-        }
-        // and add the remaining lines without any mapping
-        node.add(remainingLines.join(""));
-      }
-
-      // Copy sourcesContent into SourceNode
-      aSourceMapConsumer.sources.forEach(function (sourceFile) {
-        var content = aSourceMapConsumer.sourceContentFor(sourceFile);
-        if (content != null) {
-          if (aRelativePath != null) {
-            sourceFile = util.join(aRelativePath, sourceFile);
-          }
-          node.setSourceContent(sourceFile, content);
-        }
-      });
-
-      return node;
-
-      function addMappingWithCode(mapping, code) {
-        if (mapping === null || mapping.source === undefined) {
-          node.add(code);
-        } else {
-          var source = aRelativePath
-            ? util.join(aRelativePath, mapping.source)
-            : mapping.source;
-          node.add(new SourceNode(mapping.originalLine,
-                                  mapping.originalColumn,
-                                  source,
-                                  code,
-                                  mapping.name));
-        }
-      }
-    };
-
-  /**
-   * Add a chunk of generated JS to this source node.
-   *
-   * @param aChunk A string snippet of generated JS code, another instance of
-   *        SourceNode, or an array where each member is one of those things.
-   */
-  SourceNode.prototype.add = function SourceNode_add(aChunk) {
-    if (Array.isArray(aChunk)) {
-      aChunk.forEach(function (chunk) {
-        this.add(chunk);
-      }, this);
-    }
-    else if (aChunk[isSourceNode] || typeof aChunk === "string") {
-      if (aChunk) {
-        this.children.push(aChunk);
-      }
-    }
-    else {
-      throw new TypeError(
-        "Expected a SourceNode, string, or an array of SourceNodes and strings. Got " + aChunk
-      );
-    }
-    return this;
-  };
-
-  /**
-   * Add a chunk of generated JS to the beginning of this source node.
-   *
-   * @param aChunk A string snippet of generated JS code, another instance of
-   *        SourceNode, or an array where each member is one of those things.
-   */
-  SourceNode.prototype.prepend = function SourceNode_prepend(aChunk) {
-    if (Array.isArray(aChunk)) {
-      for (var i = aChunk.length-1; i >= 0; i--) {
-        this.prepend(aChunk[i]);
-      }
-    }
-    else if (aChunk[isSourceNode] || typeof aChunk === "string") {
-      this.children.unshift(aChunk);
-    }
-    else {
-      throw new TypeError(
-        "Expected a SourceNode, string, or an array of SourceNodes and strings. Got " + aChunk
-      );
-    }
-    return this;
-  };
-
-  /**
-   * Walk over the tree of JS snippets in this node and its children. The
-   * walking function is called once for each snippet of JS and is passed that
-   * snippet and the its original associated source's line/column location.
-   *
-   * @param aFn The traversal function.
-   */
-  SourceNode.prototype.walk = function SourceNode_walk(aFn) {
-    var chunk;
-    for (var i = 0, len = this.children.length; i < len; i++) {
-      chunk = this.children[i];
-      if (chunk[isSourceNode]) {
-        chunk.walk(aFn);
-      }
-      else {
-        if (chunk !== '') {
-          aFn(chunk, { source: this.source,
-                       line: this.line,
-                       column: this.column,
-                       name: this.name });
-        }
-      }
-    }
-  };
-
-  /**
-   * Like `String.prototype.join` except for SourceNodes. Inserts `aStr` between
-   * each of `this.children`.
-   *
-   * @param aSep The separator.
-   */
-  SourceNode.prototype.join = function SourceNode_join(aSep) {
-    var newChildren;
-    var i;
-    var len = this.children.length;
-    if (len > 0) {
-      newChildren = [];
-      for (i = 0; i < len-1; i++) {
-        newChildren.push(this.children[i]);
-        newChildren.push(aSep);
-      }
-      newChildren.push(this.children[i]);
-      this.children = newChildren;
-    }
-    return this;
-  };
-
-  /**
-   * Call String.prototype.replace on the very right-most source snippet. Useful
-   * for trimming whitespace from the end of a source node, etc.
-   *
-   * @param aPattern The pattern to replace.
-   * @param aReplacement The thing to replace the pattern with.
-   */
-  SourceNode.prototype.replaceRight = function SourceNode_replaceRight(aPattern, aReplacement) {
-    var lastChild = this.children[this.children.length - 1];
-    if (lastChild[isSourceNode]) {
-      lastChild.replaceRight(aPattern, aReplacement);
-    }
-    else if (typeof lastChild === 'string') {
-      this.children[this.children.length - 1] = lastChild.replace(aPattern, aReplacement);
-    }
-    else {
-      this.children.push(''.replace(aPattern, aReplacement));
-    }
-    return this;
-  };
-
-  /**
-   * Set the source content for a source file. This will be added to the SourceMapGenerator
-   * in the sourcesContent field.
-   *
-   * @param aSourceFile The filename of the source file
-   * @param aSourceContent The content of the source file
-   */
-  SourceNode.prototype.setSourceContent =
-    function SourceNode_setSourceContent(aSourceFile, aSourceContent) {
-      this.sourceContents[util.toSetString(aSourceFile)] = aSourceContent;
-    };
-
-  /**
-   * Walk over the tree of SourceNodes. The walking function is called for each
-   * source file content and is passed the filename and source content.
-   *
-   * @param aFn The traversal function.
-   */
-  SourceNode.prototype.walkSourceContents =
-    function SourceNode_walkSourceContents(aFn) {
-      for (var i = 0, len = this.children.length; i < len; i++) {
-        if (this.children[i][isSourceNode]) {
-          this.children[i].walkSourceContents(aFn);
-        }
-      }
-
-      var sources = Object.keys(this.sourceContents);
-      for (var i = 0, len = sources.length; i < len; i++) {
-        aFn(util.fromSetString(sources[i]), this.sourceContents[sources[i]]);
-      }
-    };
-
-  /**
-   * Return the string representation of this source node. Walks over the tree
-   * and concatenates all the various snippets together to one string.
-   */
-  SourceNode.prototype.toString = function SourceNode_toString() {
-    var str = "";
-    this.walk(function (chunk) {
-      str += chunk;
-    });
-    return str;
-  };
-
-  /**
-   * Returns the string representation of this source node along with a source
-   * map.
-   */
-  SourceNode.prototype.toStringWithSourceMap = function SourceNode_toStringWithSourceMap(aArgs) {
-    var generated = {
-      code: "",
-      line: 1,
-      column: 0
-    };
-    var map = new SourceMapGenerator(aArgs);
-    var sourceMappingActive = false;
-    var lastOriginalSource = null;
-    var lastOriginalLine = null;
-    var lastOriginalColumn = null;
-    var lastOriginalName = null;
-    this.walk(function (chunk, original) {
-      generated.code += chunk;
-      if (original.source !== null
-          && original.line !== null
-          && original.column !== null) {
-        if(lastOriginalSource !== original.source
-           || lastOriginalLine !== original.line
-           || lastOriginalColumn !== original.column
-           || lastOriginalName !== original.name) {
-          map.addMapping({
-            source: original.source,
-            original: {
-              line: original.line,
-              column: original.column
-            },
-            generated: {
-              line: generated.line,
-              column: generated.column
-            },
-            name: original.name
-          });
-        }
-        lastOriginalSource = original.source;
-        lastOriginalLine = original.line;
-        lastOriginalColumn = original.column;
-        lastOriginalName = original.name;
-        sourceMappingActive = true;
-      } else if (sourceMappingActive) {
-        map.addMapping({
-          generated: {
-            line: generated.line,
-            column: generated.column
-          }
-        });
-        lastOriginalSource = null;
-        sourceMappingActive = false;
-      }
-      for (var idx = 0, length = chunk.length; idx < length; idx++) {
-        if (chunk.charCodeAt(idx) === NEWLINE_CODE) {
-          generated.line++;
-          generated.column = 0;
-          // Mappings end at eol
-          if (idx + 1 === length) {
-            lastOriginalSource = null;
-            sourceMappingActive = false;
-          } else if (sourceMappingActive) {
-            map.addMapping({
-              source: original.source,
-              original: {
-                line: original.line,
-                column: original.column
-              },
-              generated: {
-                line: generated.line,
-                column: generated.column
-              },
-              name: original.name
-            });
-          }
-        } else {
-          generated.column++;
-        }
-      }
-    });
-    this.walkSourceContents(function (sourceFile, sourceContent) {
-      map.setSourceContent(sourceFile, sourceContent);
-    });
-
-    return { code: generated.code, map: map };
-  };
-
-  exports.SourceNode = SourceNode;
-
-});
-
-},{"./source-map-generator":34,"./util":36,"amdefine":37}],36:[function(require,module,exports){
-/* -*- Mode: js; js-indent-level: 2; -*- */
-/*
- * Copyright 2011 Mozilla Foundation and contributors
- * Licensed under the New BSD license. See LICENSE or:
- * http://opensource.org/licenses/BSD-3-Clause
- */
-if (typeof define !== 'function') {
-    var define = require('amdefine')(module, require);
-}
-define(function (require, exports, module) {
-
-  /**
-   * This is a helper function for getting values from parameter/options
-   * objects.
-   *
-   * @param args The object we are extracting values from
-   * @param name The name of the property we are getting.
-   * @param defaultValue An optional value to return if the property is missing
-   * from the object. If this is not specified and the property is missing, an
-   * error will be thrown.
-   */
-  function getArg(aArgs, aName, aDefaultValue) {
-    if (aName in aArgs) {
-      return aArgs[aName];
-    } else if (arguments.length === 3) {
-      return aDefaultValue;
-    } else {
-      throw new Error('"' + aName + '" is a required argument.');
-    }
-  }
-  exports.getArg = getArg;
-
-  var urlRegexp = /^(?:([\w+\-.]+):)?\/\/(?:(\w+:\w+)@)?([\w.]*)(?::(\d+))?(\S*)$/;
-  var dataUrlRegexp = /^data:.+\,.+$/;
-
-  function urlParse(aUrl) {
-    var match = aUrl.match(urlRegexp);
-    if (!match) {
-      return null;
-    }
-    return {
-      scheme: match[1],
-      auth: match[2],
-      host: match[3],
-      port: match[4],
-      path: match[5]
-    };
-  }
-  exports.urlParse = urlParse;
-
-  function urlGenerate(aParsedUrl) {
-    var url = '';
-    if (aParsedUrl.scheme) {
-      url += aParsedUrl.scheme + ':';
-    }
-    url += '//';
-    if (aParsedUrl.auth) {
-      url += aParsedUrl.auth + '@';
-    }
-    if (aParsedUrl.host) {
-      url += aParsedUrl.host;
-    }
-    if (aParsedUrl.port) {
-      url += ":" + aParsedUrl.port
-    }
-    if (aParsedUrl.path) {
-      url += aParsedUrl.path;
-    }
-    return url;
-  }
-  exports.urlGenerate = urlGenerate;
-
-  /**
-   * Normalizes a path, or the path portion of a URL:
-   *
-   * - Replaces consequtive slashes with one slash.
-   * - Removes unnecessary '.' parts.
-   * - Removes unnecessary '<dir>/..' parts.
-   *
-   * Based on code in the Node.js 'path' core module.
-   *
-   * @param aPath The path or url to normalize.
-   */
-  function normalize(aPath) {
-    var path = aPath;
-    var url = urlParse(aPath);
-    if (url) {
-      if (!url.path) {
-        return aPath;
-      }
-      path = url.path;
-    }
-    var isAbsolute = (path.charAt(0) === '/');
-
-    var parts = path.split(/\/+/);
-    for (var part, up = 0, i = parts.length - 1; i >= 0; i--) {
-      part = parts[i];
-      if (part === '.') {
-        parts.splice(i, 1);
-      } else if (part === '..') {
-        up++;
-      } else if (up > 0) {
-        if (part === '') {
-          // The first part is blank if the path is absolute. Trying to go
-          // above the root is a no-op. Therefore we can remove all '..' parts
-          // directly after the root.
-          parts.splice(i + 1, up);
-          up = 0;
-        } else {
-          parts.splice(i, 2);
-          up--;
-        }
-      }
-    }
-    path = parts.join('/');
-
-    if (path === '') {
-      path = isAbsolute ? '/' : '.';
-    }
-
-    if (url) {
-      url.path = path;
-      return urlGenerate(url);
-    }
-    return path;
-  }
-  exports.normalize = normalize;
-
-  /**
-   * Joins two paths/URLs.
-   *
-   * @param aRoot The root path or URL.
-   * @param aPath The path or URL to be joined with the root.
-   *
-   * - If aPath is a URL or a data URI, aPath is returned, unless aPath is a
-   *   scheme-relative URL: Then the scheme of aRoot, if any, is prepended
-   *   first.
-   * - Otherwise aPath is a path. If aRoot is a URL, then its path portion
-   *   is updated with the result and aRoot is returned. Otherwise the result
-   *   is returned.
-   *   - If aPath is absolute, the result is aPath.
-   *   - Otherwise the two paths are joined with a slash.
-   * - Joining for example 'http://' and 'www.example.com' is also supported.
-   */
-  function join(aRoot, aPath) {
-    if (aRoot === "") {
-      aRoot = ".";
-    }
-    if (aPath === "") {
-      aPath = ".";
-    }
-    var aPathUrl = urlParse(aPath);
-    var aRootUrl = urlParse(aRoot);
-    if (aRootUrl) {
-      aRoot = aRootUrl.path || '/';
-    }
-
-    // `join(foo, '//www.example.org')`
-    if (aPathUrl && !aPathUrl.scheme) {
-      if (aRootUrl) {
-        aPathUrl.scheme = aRootUrl.scheme;
-      }
-      return urlGenerate(aPathUrl);
-    }
-
-    if (aPathUrl || aPath.match(dataUrlRegexp)) {
-      return aPath;
-    }
-
-    // `join('http://', 'www.example.com')`
-    if (aRootUrl && !aRootUrl.host && !aRootUrl.path) {
-      aRootUrl.host = aPath;
-      return urlGenerate(aRootUrl);
-    }
-
-    var joined = aPath.charAt(0) === '/'
-      ? aPath
-      : normalize(aRoot.replace(/\/+$/, '') + '/' + aPath);
-
-    if (aRootUrl) {
-      aRootUrl.path = joined;
-      return urlGenerate(aRootUrl);
-    }
-    return joined;
-  }
-  exports.join = join;
-
-  /**
-   * Make a path relative to a URL or another path.
-   *
-   * @param aRoot The root path or URL.
-   * @param aPath The path or URL to be made relative to aRoot.
-   */
-  function relative(aRoot, aPath) {
-    if (aRoot === "") {
-      aRoot = ".";
-    }
-
-    aRoot = aRoot.replace(/\/$/, '');
-
-    // XXX: It is possible to remove this block, and the tests still pass!
-    var url = urlParse(aRoot);
-    if (aPath.charAt(0) == "/" && url && url.path == "/") {
-      return aPath.slice(1);
-    }
-
-    return aPath.indexOf(aRoot + '/') === 0
-      ? aPath.substr(aRoot.length + 1)
-      : aPath;
-  }
-  exports.relative = relative;
-
-  /**
-   * Because behavior goes wacky when you set `__proto__` on objects, we
-   * have to prefix all the strings in our set with an arbitrary character.
-   *
-   * See https://github.com/mozilla/source-map/pull/31 and
-   * https://github.com/mozilla/source-map/issues/30
-   *
-   * @param String aStr
-   */
-  function toSetString(aStr) {
-    return '$' + aStr;
-  }
-  exports.toSetString = toSetString;
-
-  function fromSetString(aStr) {
-    return aStr.substr(1);
-  }
-  exports.fromSetString = fromSetString;
-
-  function strcmp(aStr1, aStr2) {
-    var s1 = aStr1 || "";
-    var s2 = aStr2 || "";
-    return (s1 > s2) - (s1 < s2);
-  }
-
-  /**
-   * Comparator between two mappings where the original positions are compared.
-   *
-   * Optionally pass in `true` as `onlyCompareGenerated` to consider two
-   * mappings with the same original source/line/column, but different generated
-   * line and column the same. Useful when searching for a mapping with a
-   * stubbed out mapping.
-   */
-  function compareByOriginalPositions(mappingA, mappingB, onlyCompareOriginal) {
-    var cmp;
-
-    cmp = strcmp(mappingA.source, mappingB.source);
-    if (cmp) {
-      return cmp;
-    }
-
-    cmp = mappingA.originalLine - mappingB.originalLine;
-    if (cmp) {
-      return cmp;
-    }
-
-    cmp = mappingA.originalColumn - mappingB.originalColumn;
-    if (cmp || onlyCompareOriginal) {
-      return cmp;
-    }
-
-    cmp = strcmp(mappingA.name, mappingB.name);
-    if (cmp) {
-      return cmp;
-    }
-
-    cmp = mappingA.generatedLine - mappingB.generatedLine;
-    if (cmp) {
-      return cmp;
-    }
-
-    return mappingA.generatedColumn - mappingB.generatedColumn;
-  };
-  exports.compareByOriginalPositions = compareByOriginalPositions;
-
-  /**
-   * Comparator between two mappings where the generated positions are
-   * compared.
-   *
-   * Optionally pass in `true` as `onlyCompareGenerated` to consider two
-   * mappings with the same generated line and column, but different
-   * source/name/original line and column the same. Useful when searching for a
-   * mapping with a stubbed out mapping.
-   */
-  function compareByGeneratedPositions(mappingA, mappingB, onlyCompareGenerated) {
-    var cmp;
-
-    cmp = mappingA.generatedLine - mappingB.generatedLine;
-    if (cmp) {
-      return cmp;
-    }
-
-    cmp = mappingA.generatedColumn - mappingB.generatedColumn;
-    if (cmp || onlyCompareGenerated) {
-      return cmp;
-    }
-
-    cmp = strcmp(mappingA.source, mappingB.source);
-    if (cmp) {
-      return cmp;
-    }
-
-    cmp = mappingA.originalLine - mappingB.originalLine;
-    if (cmp) {
-      return cmp;
-    }
-
-    cmp = mappingA.originalColumn - mappingB.originalColumn;
-    if (cmp) {
-      return cmp;
-    }
-
-    return strcmp(mappingA.name, mappingB.name);
-  };
-  exports.compareByGeneratedPositions = compareByGeneratedPositions;
-
-});
-
-},{"amdefine":37}],37:[function(require,module,exports){
-(function (process,__filename){
-/** vim: et:ts=4:sw=4:sts=4
- * @license amdefine 1.0.1 Copyright (c) 2011-2016, The Dojo Foundation All Rights Reserved.
- * Available via the MIT or new BSD license.
- * see: http://github.com/jrburke/amdefine for details
- */
-
-/*jslint node: true */
-/*global module, process */
-'use strict';
-
-/**
- * Creates a define for node.
- * @param {Object} module the "module" object that is defined by Node for the
- * current module.
- * @param {Function} [requireFn]. Node's require function for the current module.
- * It only needs to be passed in Node versions before 0.5, when module.require
- * did not exist.
- * @returns {Function} a define function that is usable for the current node
- * module.
- */
-function amdefine(module, requireFn) {
-    'use strict';
-    var defineCache = {},
-        loaderCache = {},
-        alreadyCalled = false,
-        path = require('path'),
-        makeRequire, stringRequire;
-
-    /**
-     * Trims the . and .. from an array of path segments.
-     * It will keep a leading path segment if a .. will become
-     * the first path segment, to help with module name lookups,
-     * which act like paths, but can be remapped. But the end result,
-     * all paths that use this function should look normalized.
-     * NOTE: this method MODIFIES the input array.
-     * @param {Array} ary the array of path segments.
-     */
-    function trimDots(ary) {
-        var i, part;
-        for (i = 0; ary[i]; i+= 1) {
-            part = ary[i];
-            if (part === '.') {
-                ary.splice(i, 1);
-                i -= 1;
-            } else if (part === '..') {
-                if (i === 1 && (ary[2] === '..' || ary[0] === '..')) {
-                    //End of the line. Keep at least one non-dot
-                    //path segment at the front so it can be mapped
-                    //correctly to disk. Otherwise, there is likely
-                    //no path mapping for a path starting with '..'.
-                    //This can still fail, but catches the most reasonable
-                    //uses of ..
-                    break;
-                } else if (i > 0) {
-                    ary.splice(i - 1, 2);
-                    i -= 2;
-                }
-            }
-        }
-    }
-
-    function normalize(name, baseName) {
-        var baseParts;
-
-        //Adjust any relative paths.
-        if (name && name.charAt(0) === '.') {
-            //If have a base name, try to normalize against it,
-            //otherwise, assume it is a top-level require that will
-            //be relative to baseUrl in the end.
-            if (baseName) {
-                baseParts = baseName.split('/');
-                baseParts = baseParts.slice(0, baseParts.length - 1);
-                baseParts = baseParts.concat(name.split('/'));
-                trimDots(baseParts);
-                name = baseParts.join('/');
-            }
-        }
-
-        return name;
-    }
-
-    /**
-     * Create the normalize() function passed to a loader plugin's
-     * normalize method.
-     */
-    function makeNormalize(relName) {
-        return function (name) {
-            return normalize(name, relName);
-        };
-    }
-
-    function makeLoad(id) {
-        function load(value) {
-            loaderCache[id] = value;
-        }
-
-        load.fromText = function (id, text) {
-            //This one is difficult because the text can/probably uses
-            //define, and any relative paths and requires should be relative
-            //to that id was it would be found on disk. But this would require
-            //bootstrapping a module/require fairly deeply from node core.
-            //Not sure how best to go about that yet.
-            throw new Error('amdefine does not implement load.fromText');
-        };
-
-        return load;
-    }
-
-    makeRequire = function (systemRequire, exports, module, relId) {
-        function amdRequire(deps, callback) {
-            if (typeof deps === 'string') {
-                //Synchronous, single module require('')
-                return stringRequire(systemRequire, exports, module, deps, relId);
-            } else {
-                //Array of dependencies with a callback.
-
-                //Convert the dependencies to modules.
-                deps = deps.map(function (depName) {
-                    return stringRequire(systemRequire, exports, module, depName, relId);
-                });
-
-                //Wait for next tick to call back the require call.
-                if (callback) {
-                    process.nextTick(function () {
-                        callback.apply(null, deps);
-                    });
-                }
-            }
-        }
-
-        amdRequire.toUrl = function (filePath) {
-            if (filePath.indexOf('.') === 0) {
-                return normalize(filePath, path.dirname(module.filename));
-            } else {
-                return filePath;
-            }
-        };
-
-        return amdRequire;
-    };
-
-    //Favor explicit value, passed in if the module wants to support Node 0.4.
-    requireFn = requireFn || function req() {
-        return module.require.apply(module, arguments);
-    };
-
-    function runFactory(id, deps, factory) {
-        var r, e, m, result;
-
-        if (id) {
-            e = loaderCache[id] = {};
-            m = {
-                id: id,
-                uri: __filename,
-                exports: e
-            };
-            r = makeRequire(requireFn, e, m, id);
-        } else {
-            //Only support one define call per file
-            if (alreadyCalled) {
-                throw new Error('amdefine with no module ID cannot be called more than once per file.');
-            }
-            alreadyCalled = true;
-
-            //Use the real variables from node
-            //Use module.exports for exports, since
-            //the exports in here is amdefine exports.
-            e = module.exports;
-            m = module;
-            r = makeRequire(requireFn, e, m, module.id);
-        }
-
-        //If there are dependencies, they are strings, so need
-        //to convert them to dependency values.
-        if (deps) {
-            deps = deps.map(function (depName) {
-                return r(depName);
-            });
-        }
-
-        //Call the factory with the right dependencies.
-        if (typeof factory === 'function') {
-            result = factory.apply(m.exports, deps);
-        } else {
-            result = factory;
-        }
-
-        if (result !== undefined) {
-            m.exports = result;
-            if (id) {
-                loaderCache[id] = m.exports;
-            }
-        }
-    }
-
-    stringRequire = function (systemRequire, exports, module, id, relId) {
-        //Split the ID by a ! so that
-        var index = id.indexOf('!'),
-            originalId = id,
-            prefix, plugin;
-
-        if (index === -1) {
-            id = normalize(id, relId);
-
-            //Straight module lookup. If it is one of the special dependencies,
-            //deal with it, otherwise, delegate to node.
-            if (id === 'require') {
-                return makeRequire(systemRequire, exports, module, relId);
-            } else if (id === 'exports') {
-                return exports;
-            } else if (id === 'module') {
-                return module;
-            } else if (loaderCache.hasOwnProperty(id)) {
-                return loaderCache[id];
-            } else if (defineCache[id]) {
-                runFactory.apply(null, defineCache[id]);
-                return loaderCache[id];
-            } else {
-                if(systemRequire) {
-                    return systemRequire(originalId);
-                } else {
-                    throw new Error('No module with ID: ' + id);
-                }
-            }
-        } else {
-            //There is a plugin in play.
-            prefix = id.substring(0, index);
-            id = id.substring(index + 1, id.length);
-
-            plugin = stringRequire(systemRequire, exports, module, prefix, relId);
-
-            if (plugin.normalize) {
-                id = plugin.normalize(id, makeNormalize(relId));
-            } else {
-                //Normalize the ID normally.
-                id = normalize(id, relId);
-            }
-
-            if (loaderCache[id]) {
-                return loaderCache[id];
-            } else {
-                plugin.load(id, makeRequire(systemRequire, exports, module, relId), makeLoad(id), {});
-
-                return loaderCache[id];
-            }
-        }
-    };
-
-    //Create a define function specific to the module asking for amdefine.
-    function define(id, deps, factory) {
-        if (Array.isArray(id)) {
-            factory = deps;
-            deps = id;
-            id = undefined;
-        } else if (typeof id !== 'string') {
-            factory = id;
-            id = deps = undefined;
-        }
-
-        if (deps && !Array.isArray(deps)) {
-            factory = deps;
-            deps = undefined;
-        }
-
-        if (!deps) {
-            deps = ['require', 'exports', 'module'];
-        }
-
-        //Set up properties for this module. If an ID, then use
-        //internal cache. If no ID, then use the external variables
-        //for this node module.
-        if (id) {
-            //Put the module in deep freeze until there is a
-            //require call for it.
-            defineCache[id] = [id, deps, factory];
-        } else {
-            runFactory(id, deps, factory);
-        }
-    }
-
-    //define.require, which has access to all the values in the
-    //cache. Useful for AMD modules that all have IDs in the file,
-    //but need to finally export a value to node based on one of those
-    //IDs.
-    define.require = function (id) {
-        if (loaderCache[id]) {
-            return loaderCache[id];
-        }
-
-        if (defineCache[id]) {
-            runFactory.apply(null, defineCache[id]);
-            return loaderCache[id];
-        }
-    };
-
-    define.amd = {};
-
-    return define;
-}
-
-module.exports = amdefine;
-
-}).call(this,require("JkpR2F"),"/../node_modules/escodegen/node_modules/source-map/node_modules/amdefine/amdefine.js")
-},{"JkpR2F":43,"path":42}],38:[function(require,module,exports){
+},{"./package.json":26,"estraverse":28,"esutils":31,"source-map":35}],26:[function(require,module,exports){
 module.exports={
-  "name": "escodegen",
-  "description": "ECMAScript code generator",
-  "homepage": "http://github.com/Constellation/escodegen",
-  "main": "escodegen.js",
-  "bin": {
-    "esgenerate": "./bin/esgenerate.js",
-    "escodegen": "./bin/escodegen.js"
+  "_args": [
+    [
+      "escodegen@~1.3.0",
+      "/Users/winter/Desktop/aether"
+    ]
+  ],
+  "_from": "escodegen@>=1.3.0 <1.4.0",
+  "_id": "escodegen@1.3.3",
+  "_inCache": true,
+  "_installable": true,
+  "_location": "/escodegen",
+  "_npmUser": {
+    "email": "utatane.tea@gmail.com",
+    "name": "constellation"
   },
-  "version": "1.3.3",
+  "_npmVersion": "1.4.3",
+  "_phantomChildren": {},
+  "_requested": {
+    "name": "escodegen",
+    "raw": "escodegen@~1.3.0",
+    "rawSpec": "~1.3.0",
+    "scope": null,
+    "spec": ">=1.3.0 <1.4.0",
+    "type": "range"
+  },
+  "_requiredBy": [
+    "/"
+  ],
+  "_resolved": "https://registry.npmjs.org/escodegen/-/escodegen-1.3.3.tgz",
+  "_shasum": "f024016f5a88e046fd12005055e939802e6c5f23",
+  "_shrinkwrap": null,
+  "_spec": "escodegen@~1.3.0",
+  "_where": "/Users/winter/Desktop/aether",
+  "bin": {
+    "escodegen": "./bin/escodegen.js",
+    "esgenerate": "./bin/esgenerate.js"
+  },
+  "bugs": {
+    "url": "https://github.com/Constellation/escodegen/issues"
+  },
+  "dependencies": {
+    "esprima": "~1.1.1",
+    "estraverse": "~1.5.0",
+    "esutils": "~1.0.0",
+    "source-map": "~0.1.33"
+  },
+  "description": "ECMAScript code generator",
+  "devDependencies": {
+    "bluebird": "~1.2.0",
+    "bower-registry-client": "~0.2.0",
+    "chai": "~1.7.2",
+    "commonjs-everywhere": "~0.9.6",
+    "esprima-moz": "*",
+    "gulp": "~3.5.0",
+    "gulp-eslint": "~0.1.2",
+    "gulp-jshint": "~1.4.0",
+    "gulp-mocha": "~0.4.1",
+    "jshint-stylish": "~0.1.5",
+    "semver": "*"
+  },
+  "directories": {},
+  "dist": {
+    "shasum": "f024016f5a88e046fd12005055e939802e6c5f23",
+    "tarball": "http://registry.npmjs.org/escodegen/-/escodegen-1.3.3.tgz"
+  },
   "engines": {
     "node": ">=0.10.0"
   },
-  "maintainers": [
-    {
-      "name": "constellation",
-      "email": "utatane.tea@gmail.com"
-    }
-  ],
-  "repository": {
-    "type": "git",
-    "url": "git+ssh://git@github.com/Constellation/escodegen.git"
-  },
-  "dependencies": {
-    "esutils": "~1.0.0",
-    "estraverse": "~1.5.0",
-    "esprima": "~1.1.1",
-    "source-map": "~0.1.33"
-  },
-  "optionalDependencies": {
-    "source-map": "~0.1.33"
-  },
-  "devDependencies": {
-    "esprima-moz": "*",
-    "semver": "*",
-    "chai": "~1.7.2",
-    "gulp": "~3.5.0",
-    "gulp-mocha": "~0.4.1",
-    "gulp-eslint": "~0.1.2",
-    "jshint-stylish": "~0.1.5",
-    "gulp-jshint": "~1.4.0",
-    "commonjs-everywhere": "~0.9.6",
-    "bluebird": "~1.2.0",
-    "bower-registry-client": "~0.2.0"
-  },
+  "homepage": "http://github.com/Constellation/escodegen",
   "licenses": [
     {
       "type": "BSD",
       "url": "http://github.com/Constellation/escodegen/raw/master/LICENSE.BSD"
     }
   ],
+  "main": "escodegen.js",
+  "maintainers": [
+    {
+      "name": "constellation",
+      "email": "utatane.tea@gmail.com"
+    }
+  ],
+  "name": "escodegen",
+  "optionalDependencies": {
+    "source-map": "~0.1.33"
+  },
+  "readme": "ERROR: No README data found!",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/Constellation/escodegen.git"
+  },
   "scripts": {
-    "test": "gulp travis",
-    "unit-test": "gulp test",
+    "build": "cjsify -a path: tools/entry-point.js > escodegen.browser.js",
+    "build-min": "cjsify -ma path: tools/entry-point.js > escodegen.browser.min.js",
     "lint": "gulp lint",
     "release": "node tools/release.js",
-    "build-min": "cjsify -ma path: tools/entry-point.js > escodegen.browser.min.js",
-    "build": "cjsify -a path: tools/entry-point.js > escodegen.browser.js"
+    "test": "gulp travis",
+    "unit-test": "gulp test"
   },
-  "bugs": {
-    "url": "https://github.com/Constellation/escodegen/issues"
-  },
-  "_id": "escodegen@1.3.3",
-  "dist": {
-    "shasum": "f024016f5a88e046fd12005055e939802e6c5f23",
-    "tarball": "http://registry.npmjs.org/escodegen/-/escodegen-1.3.3.tgz"
-  },
-  "_from": "escodegen@>=1.3.0 <1.4.0",
-  "_npmVersion": "1.4.3",
-  "_npmUser": {
-    "name": "constellation",
-    "email": "utatane.tea@gmail.com"
-  },
-  "directories": {},
-  "_shasum": "f024016f5a88e046fd12005055e939802e6c5f23",
-  "_resolved": "https://registry.npmjs.org/escodegen/-/escodegen-1.3.3.tgz",
-  "readme": "ERROR: No README data found!"
+  "version": "1.3.3"
 }
 
-},{}],39:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 /*
   Copyright (c) jQuery Foundation, Inc. and Contributors, All Rights Reserved.
 
@@ -16766,7 +14257,7 @@ module.exports={
 }));
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{}],40:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 /*
   Copyright (C) 2012-2013 Yusuke Suzuki <utatane.tea@gmail.com>
   Copyright (C) 2012 Ariya Hidayat <ariya.hidayat@gmail.com>
@@ -17457,9 +14948,252 @@ module.exports={
 }));
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{}],41:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
+/*
+  Copyright (C) 2013 Yusuke Suzuki <utatane.tea@gmail.com>
 
-},{}],42:[function(require,module,exports){
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+(function () {
+    'use strict';
+
+    var Regex;
+
+    // See also tools/generate-unicode-regex.py.
+    Regex = {
+        NonAsciiIdentifierStart: new RegExp('[\xAA\xB5\xBA\xC0-\xD6\xD8-\xF6\xF8-\u02C1\u02C6-\u02D1\u02E0-\u02E4\u02EC\u02EE\u0370-\u0374\u0376\u0377\u037A-\u037D\u0386\u0388-\u038A\u038C\u038E-\u03A1\u03A3-\u03F5\u03F7-\u0481\u048A-\u0527\u0531-\u0556\u0559\u0561-\u0587\u05D0-\u05EA\u05F0-\u05F2\u0620-\u064A\u066E\u066F\u0671-\u06D3\u06D5\u06E5\u06E6\u06EE\u06EF\u06FA-\u06FC\u06FF\u0710\u0712-\u072F\u074D-\u07A5\u07B1\u07CA-\u07EA\u07F4\u07F5\u07FA\u0800-\u0815\u081A\u0824\u0828\u0840-\u0858\u08A0\u08A2-\u08AC\u0904-\u0939\u093D\u0950\u0958-\u0961\u0971-\u0977\u0979-\u097F\u0985-\u098C\u098F\u0990\u0993-\u09A8\u09AA-\u09B0\u09B2\u09B6-\u09B9\u09BD\u09CE\u09DC\u09DD\u09DF-\u09E1\u09F0\u09F1\u0A05-\u0A0A\u0A0F\u0A10\u0A13-\u0A28\u0A2A-\u0A30\u0A32\u0A33\u0A35\u0A36\u0A38\u0A39\u0A59-\u0A5C\u0A5E\u0A72-\u0A74\u0A85-\u0A8D\u0A8F-\u0A91\u0A93-\u0AA8\u0AAA-\u0AB0\u0AB2\u0AB3\u0AB5-\u0AB9\u0ABD\u0AD0\u0AE0\u0AE1\u0B05-\u0B0C\u0B0F\u0B10\u0B13-\u0B28\u0B2A-\u0B30\u0B32\u0B33\u0B35-\u0B39\u0B3D\u0B5C\u0B5D\u0B5F-\u0B61\u0B71\u0B83\u0B85-\u0B8A\u0B8E-\u0B90\u0B92-\u0B95\u0B99\u0B9A\u0B9C\u0B9E\u0B9F\u0BA3\u0BA4\u0BA8-\u0BAA\u0BAE-\u0BB9\u0BD0\u0C05-\u0C0C\u0C0E-\u0C10\u0C12-\u0C28\u0C2A-\u0C33\u0C35-\u0C39\u0C3D\u0C58\u0C59\u0C60\u0C61\u0C85-\u0C8C\u0C8E-\u0C90\u0C92-\u0CA8\u0CAA-\u0CB3\u0CB5-\u0CB9\u0CBD\u0CDE\u0CE0\u0CE1\u0CF1\u0CF2\u0D05-\u0D0C\u0D0E-\u0D10\u0D12-\u0D3A\u0D3D\u0D4E\u0D60\u0D61\u0D7A-\u0D7F\u0D85-\u0D96\u0D9A-\u0DB1\u0DB3-\u0DBB\u0DBD\u0DC0-\u0DC6\u0E01-\u0E30\u0E32\u0E33\u0E40-\u0E46\u0E81\u0E82\u0E84\u0E87\u0E88\u0E8A\u0E8D\u0E94-\u0E97\u0E99-\u0E9F\u0EA1-\u0EA3\u0EA5\u0EA7\u0EAA\u0EAB\u0EAD-\u0EB0\u0EB2\u0EB3\u0EBD\u0EC0-\u0EC4\u0EC6\u0EDC-\u0EDF\u0F00\u0F40-\u0F47\u0F49-\u0F6C\u0F88-\u0F8C\u1000-\u102A\u103F\u1050-\u1055\u105A-\u105D\u1061\u1065\u1066\u106E-\u1070\u1075-\u1081\u108E\u10A0-\u10C5\u10C7\u10CD\u10D0-\u10FA\u10FC-\u1248\u124A-\u124D\u1250-\u1256\u1258\u125A-\u125D\u1260-\u1288\u128A-\u128D\u1290-\u12B0\u12B2-\u12B5\u12B8-\u12BE\u12C0\u12C2-\u12C5\u12C8-\u12D6\u12D8-\u1310\u1312-\u1315\u1318-\u135A\u1380-\u138F\u13A0-\u13F4\u1401-\u166C\u166F-\u167F\u1681-\u169A\u16A0-\u16EA\u16EE-\u16F0\u1700-\u170C\u170E-\u1711\u1720-\u1731\u1740-\u1751\u1760-\u176C\u176E-\u1770\u1780-\u17B3\u17D7\u17DC\u1820-\u1877\u1880-\u18A8\u18AA\u18B0-\u18F5\u1900-\u191C\u1950-\u196D\u1970-\u1974\u1980-\u19AB\u19C1-\u19C7\u1A00-\u1A16\u1A20-\u1A54\u1AA7\u1B05-\u1B33\u1B45-\u1B4B\u1B83-\u1BA0\u1BAE\u1BAF\u1BBA-\u1BE5\u1C00-\u1C23\u1C4D-\u1C4F\u1C5A-\u1C7D\u1CE9-\u1CEC\u1CEE-\u1CF1\u1CF5\u1CF6\u1D00-\u1DBF\u1E00-\u1F15\u1F18-\u1F1D\u1F20-\u1F45\u1F48-\u1F4D\u1F50-\u1F57\u1F59\u1F5B\u1F5D\u1F5F-\u1F7D\u1F80-\u1FB4\u1FB6-\u1FBC\u1FBE\u1FC2-\u1FC4\u1FC6-\u1FCC\u1FD0-\u1FD3\u1FD6-\u1FDB\u1FE0-\u1FEC\u1FF2-\u1FF4\u1FF6-\u1FFC\u2071\u207F\u2090-\u209C\u2102\u2107\u210A-\u2113\u2115\u2119-\u211D\u2124\u2126\u2128\u212A-\u212D\u212F-\u2139\u213C-\u213F\u2145-\u2149\u214E\u2160-\u2188\u2C00-\u2C2E\u2C30-\u2C5E\u2C60-\u2CE4\u2CEB-\u2CEE\u2CF2\u2CF3\u2D00-\u2D25\u2D27\u2D2D\u2D30-\u2D67\u2D6F\u2D80-\u2D96\u2DA0-\u2DA6\u2DA8-\u2DAE\u2DB0-\u2DB6\u2DB8-\u2DBE\u2DC0-\u2DC6\u2DC8-\u2DCE\u2DD0-\u2DD6\u2DD8-\u2DDE\u2E2F\u3005-\u3007\u3021-\u3029\u3031-\u3035\u3038-\u303C\u3041-\u3096\u309D-\u309F\u30A1-\u30FA\u30FC-\u30FF\u3105-\u312D\u3131-\u318E\u31A0-\u31BA\u31F0-\u31FF\u3400-\u4DB5\u4E00-\u9FCC\uA000-\uA48C\uA4D0-\uA4FD\uA500-\uA60C\uA610-\uA61F\uA62A\uA62B\uA640-\uA66E\uA67F-\uA697\uA6A0-\uA6EF\uA717-\uA71F\uA722-\uA788\uA78B-\uA78E\uA790-\uA793\uA7A0-\uA7AA\uA7F8-\uA801\uA803-\uA805\uA807-\uA80A\uA80C-\uA822\uA840-\uA873\uA882-\uA8B3\uA8F2-\uA8F7\uA8FB\uA90A-\uA925\uA930-\uA946\uA960-\uA97C\uA984-\uA9B2\uA9CF\uAA00-\uAA28\uAA40-\uAA42\uAA44-\uAA4B\uAA60-\uAA76\uAA7A\uAA80-\uAAAF\uAAB1\uAAB5\uAAB6\uAAB9-\uAABD\uAAC0\uAAC2\uAADB-\uAADD\uAAE0-\uAAEA\uAAF2-\uAAF4\uAB01-\uAB06\uAB09-\uAB0E\uAB11-\uAB16\uAB20-\uAB26\uAB28-\uAB2E\uABC0-\uABE2\uAC00-\uD7A3\uD7B0-\uD7C6\uD7CB-\uD7FB\uF900-\uFA6D\uFA70-\uFAD9\uFB00-\uFB06\uFB13-\uFB17\uFB1D\uFB1F-\uFB28\uFB2A-\uFB36\uFB38-\uFB3C\uFB3E\uFB40\uFB41\uFB43\uFB44\uFB46-\uFBB1\uFBD3-\uFD3D\uFD50-\uFD8F\uFD92-\uFDC7\uFDF0-\uFDFB\uFE70-\uFE74\uFE76-\uFEFC\uFF21-\uFF3A\uFF41-\uFF5A\uFF66-\uFFBE\uFFC2-\uFFC7\uFFCA-\uFFCF\uFFD2-\uFFD7\uFFDA-\uFFDC]'),
+        NonAsciiIdentifierPart: new RegExp('[\xAA\xB5\xBA\xC0-\xD6\xD8-\xF6\xF8-\u02C1\u02C6-\u02D1\u02E0-\u02E4\u02EC\u02EE\u0300-\u0374\u0376\u0377\u037A-\u037D\u0386\u0388-\u038A\u038C\u038E-\u03A1\u03A3-\u03F5\u03F7-\u0481\u0483-\u0487\u048A-\u0527\u0531-\u0556\u0559\u0561-\u0587\u0591-\u05BD\u05BF\u05C1\u05C2\u05C4\u05C5\u05C7\u05D0-\u05EA\u05F0-\u05F2\u0610-\u061A\u0620-\u0669\u066E-\u06D3\u06D5-\u06DC\u06DF-\u06E8\u06EA-\u06FC\u06FF\u0710-\u074A\u074D-\u07B1\u07C0-\u07F5\u07FA\u0800-\u082D\u0840-\u085B\u08A0\u08A2-\u08AC\u08E4-\u08FE\u0900-\u0963\u0966-\u096F\u0971-\u0977\u0979-\u097F\u0981-\u0983\u0985-\u098C\u098F\u0990\u0993-\u09A8\u09AA-\u09B0\u09B2\u09B6-\u09B9\u09BC-\u09C4\u09C7\u09C8\u09CB-\u09CE\u09D7\u09DC\u09DD\u09DF-\u09E3\u09E6-\u09F1\u0A01-\u0A03\u0A05-\u0A0A\u0A0F\u0A10\u0A13-\u0A28\u0A2A-\u0A30\u0A32\u0A33\u0A35\u0A36\u0A38\u0A39\u0A3C\u0A3E-\u0A42\u0A47\u0A48\u0A4B-\u0A4D\u0A51\u0A59-\u0A5C\u0A5E\u0A66-\u0A75\u0A81-\u0A83\u0A85-\u0A8D\u0A8F-\u0A91\u0A93-\u0AA8\u0AAA-\u0AB0\u0AB2\u0AB3\u0AB5-\u0AB9\u0ABC-\u0AC5\u0AC7-\u0AC9\u0ACB-\u0ACD\u0AD0\u0AE0-\u0AE3\u0AE6-\u0AEF\u0B01-\u0B03\u0B05-\u0B0C\u0B0F\u0B10\u0B13-\u0B28\u0B2A-\u0B30\u0B32\u0B33\u0B35-\u0B39\u0B3C-\u0B44\u0B47\u0B48\u0B4B-\u0B4D\u0B56\u0B57\u0B5C\u0B5D\u0B5F-\u0B63\u0B66-\u0B6F\u0B71\u0B82\u0B83\u0B85-\u0B8A\u0B8E-\u0B90\u0B92-\u0B95\u0B99\u0B9A\u0B9C\u0B9E\u0B9F\u0BA3\u0BA4\u0BA8-\u0BAA\u0BAE-\u0BB9\u0BBE-\u0BC2\u0BC6-\u0BC8\u0BCA-\u0BCD\u0BD0\u0BD7\u0BE6-\u0BEF\u0C01-\u0C03\u0C05-\u0C0C\u0C0E-\u0C10\u0C12-\u0C28\u0C2A-\u0C33\u0C35-\u0C39\u0C3D-\u0C44\u0C46-\u0C48\u0C4A-\u0C4D\u0C55\u0C56\u0C58\u0C59\u0C60-\u0C63\u0C66-\u0C6F\u0C82\u0C83\u0C85-\u0C8C\u0C8E-\u0C90\u0C92-\u0CA8\u0CAA-\u0CB3\u0CB5-\u0CB9\u0CBC-\u0CC4\u0CC6-\u0CC8\u0CCA-\u0CCD\u0CD5\u0CD6\u0CDE\u0CE0-\u0CE3\u0CE6-\u0CEF\u0CF1\u0CF2\u0D02\u0D03\u0D05-\u0D0C\u0D0E-\u0D10\u0D12-\u0D3A\u0D3D-\u0D44\u0D46-\u0D48\u0D4A-\u0D4E\u0D57\u0D60-\u0D63\u0D66-\u0D6F\u0D7A-\u0D7F\u0D82\u0D83\u0D85-\u0D96\u0D9A-\u0DB1\u0DB3-\u0DBB\u0DBD\u0DC0-\u0DC6\u0DCA\u0DCF-\u0DD4\u0DD6\u0DD8-\u0DDF\u0DF2\u0DF3\u0E01-\u0E3A\u0E40-\u0E4E\u0E50-\u0E59\u0E81\u0E82\u0E84\u0E87\u0E88\u0E8A\u0E8D\u0E94-\u0E97\u0E99-\u0E9F\u0EA1-\u0EA3\u0EA5\u0EA7\u0EAA\u0EAB\u0EAD-\u0EB9\u0EBB-\u0EBD\u0EC0-\u0EC4\u0EC6\u0EC8-\u0ECD\u0ED0-\u0ED9\u0EDC-\u0EDF\u0F00\u0F18\u0F19\u0F20-\u0F29\u0F35\u0F37\u0F39\u0F3E-\u0F47\u0F49-\u0F6C\u0F71-\u0F84\u0F86-\u0F97\u0F99-\u0FBC\u0FC6\u1000-\u1049\u1050-\u109D\u10A0-\u10C5\u10C7\u10CD\u10D0-\u10FA\u10FC-\u1248\u124A-\u124D\u1250-\u1256\u1258\u125A-\u125D\u1260-\u1288\u128A-\u128D\u1290-\u12B0\u12B2-\u12B5\u12B8-\u12BE\u12C0\u12C2-\u12C5\u12C8-\u12D6\u12D8-\u1310\u1312-\u1315\u1318-\u135A\u135D-\u135F\u1380-\u138F\u13A0-\u13F4\u1401-\u166C\u166F-\u167F\u1681-\u169A\u16A0-\u16EA\u16EE-\u16F0\u1700-\u170C\u170E-\u1714\u1720-\u1734\u1740-\u1753\u1760-\u176C\u176E-\u1770\u1772\u1773\u1780-\u17D3\u17D7\u17DC\u17DD\u17E0-\u17E9\u180B-\u180D\u1810-\u1819\u1820-\u1877\u1880-\u18AA\u18B0-\u18F5\u1900-\u191C\u1920-\u192B\u1930-\u193B\u1946-\u196D\u1970-\u1974\u1980-\u19AB\u19B0-\u19C9\u19D0-\u19D9\u1A00-\u1A1B\u1A20-\u1A5E\u1A60-\u1A7C\u1A7F-\u1A89\u1A90-\u1A99\u1AA7\u1B00-\u1B4B\u1B50-\u1B59\u1B6B-\u1B73\u1B80-\u1BF3\u1C00-\u1C37\u1C40-\u1C49\u1C4D-\u1C7D\u1CD0-\u1CD2\u1CD4-\u1CF6\u1D00-\u1DE6\u1DFC-\u1F15\u1F18-\u1F1D\u1F20-\u1F45\u1F48-\u1F4D\u1F50-\u1F57\u1F59\u1F5B\u1F5D\u1F5F-\u1F7D\u1F80-\u1FB4\u1FB6-\u1FBC\u1FBE\u1FC2-\u1FC4\u1FC6-\u1FCC\u1FD0-\u1FD3\u1FD6-\u1FDB\u1FE0-\u1FEC\u1FF2-\u1FF4\u1FF6-\u1FFC\u200C\u200D\u203F\u2040\u2054\u2071\u207F\u2090-\u209C\u20D0-\u20DC\u20E1\u20E5-\u20F0\u2102\u2107\u210A-\u2113\u2115\u2119-\u211D\u2124\u2126\u2128\u212A-\u212D\u212F-\u2139\u213C-\u213F\u2145-\u2149\u214E\u2160-\u2188\u2C00-\u2C2E\u2C30-\u2C5E\u2C60-\u2CE4\u2CEB-\u2CF3\u2D00-\u2D25\u2D27\u2D2D\u2D30-\u2D67\u2D6F\u2D7F-\u2D96\u2DA0-\u2DA6\u2DA8-\u2DAE\u2DB0-\u2DB6\u2DB8-\u2DBE\u2DC0-\u2DC6\u2DC8-\u2DCE\u2DD0-\u2DD6\u2DD8-\u2DDE\u2DE0-\u2DFF\u2E2F\u3005-\u3007\u3021-\u302F\u3031-\u3035\u3038-\u303C\u3041-\u3096\u3099\u309A\u309D-\u309F\u30A1-\u30FA\u30FC-\u30FF\u3105-\u312D\u3131-\u318E\u31A0-\u31BA\u31F0-\u31FF\u3400-\u4DB5\u4E00-\u9FCC\uA000-\uA48C\uA4D0-\uA4FD\uA500-\uA60C\uA610-\uA62B\uA640-\uA66F\uA674-\uA67D\uA67F-\uA697\uA69F-\uA6F1\uA717-\uA71F\uA722-\uA788\uA78B-\uA78E\uA790-\uA793\uA7A0-\uA7AA\uA7F8-\uA827\uA840-\uA873\uA880-\uA8C4\uA8D0-\uA8D9\uA8E0-\uA8F7\uA8FB\uA900-\uA92D\uA930-\uA953\uA960-\uA97C\uA980-\uA9C0\uA9CF-\uA9D9\uAA00-\uAA36\uAA40-\uAA4D\uAA50-\uAA59\uAA60-\uAA76\uAA7A\uAA7B\uAA80-\uAAC2\uAADB-\uAADD\uAAE0-\uAAEF\uAAF2-\uAAF6\uAB01-\uAB06\uAB09-\uAB0E\uAB11-\uAB16\uAB20-\uAB26\uAB28-\uAB2E\uABC0-\uABEA\uABEC\uABED\uABF0-\uABF9\uAC00-\uD7A3\uD7B0-\uD7C6\uD7CB-\uD7FB\uF900-\uFA6D\uFA70-\uFAD9\uFB00-\uFB06\uFB13-\uFB17\uFB1D-\uFB28\uFB2A-\uFB36\uFB38-\uFB3C\uFB3E\uFB40\uFB41\uFB43\uFB44\uFB46-\uFBB1\uFBD3-\uFD3D\uFD50-\uFD8F\uFD92-\uFDC7\uFDF0-\uFDFB\uFE00-\uFE0F\uFE20-\uFE26\uFE33\uFE34\uFE4D-\uFE4F\uFE70-\uFE74\uFE76-\uFEFC\uFF10-\uFF19\uFF21-\uFF3A\uFF3F\uFF41-\uFF5A\uFF66-\uFFBE\uFFC2-\uFFC7\uFFCA-\uFFCF\uFFD2-\uFFD7\uFFDA-\uFFDC]')
+    };
+
+    function isDecimalDigit(ch) {
+        return (ch >= 48 && ch <= 57);   // 0..9
+    }
+
+    function isHexDigit(ch) {
+        return isDecimalDigit(ch) || (97 <= ch && ch <= 102) || (65 <= ch && ch <= 70);
+    }
+
+    function isOctalDigit(ch) {
+        return (ch >= 48 && ch <= 55);   // 0..7
+    }
+
+    // 7.2 White Space
+
+    function isWhiteSpace(ch) {
+        return (ch === 0x20) || (ch === 0x09) || (ch === 0x0B) || (ch === 0x0C) || (ch === 0xA0) ||
+            (ch >= 0x1680 && [0x1680, 0x180E, 0x2000, 0x2001, 0x2002, 0x2003, 0x2004, 0x2005, 0x2006, 0x2007, 0x2008, 0x2009, 0x200A, 0x202F, 0x205F, 0x3000, 0xFEFF].indexOf(ch) >= 0);
+    }
+
+    // 7.3 Line Terminators
+
+    function isLineTerminator(ch) {
+        return (ch === 0x0A) || (ch === 0x0D) || (ch === 0x2028) || (ch === 0x2029);
+    }
+
+    // 7.6 Identifier Names and Identifiers
+
+    function isIdentifierStart(ch) {
+        return (ch === 36) || (ch === 95) ||  // $ (dollar) and _ (underscore)
+            (ch >= 65 && ch <= 90) ||         // A..Z
+            (ch >= 97 && ch <= 122) ||        // a..z
+            (ch === 92) ||                    // \ (backslash)
+            ((ch >= 0x80) && Regex.NonAsciiIdentifierStart.test(String.fromCharCode(ch)));
+    }
+
+    function isIdentifierPart(ch) {
+        return (ch === 36) || (ch === 95) ||  // $ (dollar) and _ (underscore)
+            (ch >= 65 && ch <= 90) ||         // A..Z
+            (ch >= 97 && ch <= 122) ||        // a..z
+            (ch >= 48 && ch <= 57) ||         // 0..9
+            (ch === 92) ||                    // \ (backslash)
+            ((ch >= 0x80) && Regex.NonAsciiIdentifierPart.test(String.fromCharCode(ch)));
+    }
+
+    module.exports = {
+        isDecimalDigit: isDecimalDigit,
+        isHexDigit: isHexDigit,
+        isOctalDigit: isOctalDigit,
+        isWhiteSpace: isWhiteSpace,
+        isLineTerminator: isLineTerminator,
+        isIdentifierStart: isIdentifierStart,
+        isIdentifierPart: isIdentifierPart
+    };
+}());
+/* vim: set sw=4 ts=4 et tw=80 : */
+
+},{}],30:[function(require,module,exports){
+/*
+  Copyright (C) 2013 Yusuke Suzuki <utatane.tea@gmail.com>
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+(function () {
+    'use strict';
+
+    var code = require('./code');
+
+    function isStrictModeReservedWordES6(id) {
+        switch (id) {
+        case 'implements':
+        case 'interface':
+        case 'package':
+        case 'private':
+        case 'protected':
+        case 'public':
+        case 'static':
+        case 'let':
+            return true;
+        default:
+            return false;
+        }
+    }
+
+    function isKeywordES5(id, strict) {
+        // yield should not be treated as keyword under non-strict mode.
+        if (!strict && id === 'yield') {
+            return false;
+        }
+        return isKeywordES6(id, strict);
+    }
+
+    function isKeywordES6(id, strict) {
+        if (strict && isStrictModeReservedWordES6(id)) {
+            return true;
+        }
+
+        switch (id.length) {
+        case 2:
+            return (id === 'if') || (id === 'in') || (id === 'do');
+        case 3:
+            return (id === 'var') || (id === 'for') || (id === 'new') || (id === 'try');
+        case 4:
+            return (id === 'this') || (id === 'else') || (id === 'case') ||
+                (id === 'void') || (id === 'with') || (id === 'enum');
+        case 5:
+            return (id === 'while') || (id === 'break') || (id === 'catch') ||
+                (id === 'throw') || (id === 'const') || (id === 'yield') ||
+                (id === 'class') || (id === 'super');
+        case 6:
+            return (id === 'return') || (id === 'typeof') || (id === 'delete') ||
+                (id === 'switch') || (id === 'export') || (id === 'import');
+        case 7:
+            return (id === 'default') || (id === 'finally') || (id === 'extends');
+        case 8:
+            return (id === 'function') || (id === 'continue') || (id === 'debugger');
+        case 10:
+            return (id === 'instanceof');
+        default:
+            return false;
+        }
+    }
+
+    function isRestrictedWord(id) {
+        return id === 'eval' || id === 'arguments';
+    }
+
+    function isIdentifierName(id) {
+        var i, iz, ch;
+
+        if (id.length === 0) {
+            return false;
+        }
+
+        ch = id.charCodeAt(0);
+        if (!code.isIdentifierStart(ch) || ch === 92) {  // \ (backslash)
+            return false;
+        }
+
+        for (i = 1, iz = id.length; i < iz; ++i) {
+            ch = id.charCodeAt(i);
+            if (!code.isIdentifierPart(ch) || ch === 92) {  // \ (backslash)
+                return false;
+            }
+        }
+        return true;
+    }
+
+    module.exports = {
+        isKeywordES5: isKeywordES5,
+        isKeywordES6: isKeywordES6,
+        isRestrictedWord: isRestrictedWord,
+        isIdentifierName: isIdentifierName
+    };
+}());
+/* vim: set sw=4 ts=4 et tw=80 : */
+
+},{"./code":29}],31:[function(require,module,exports){
+/*
+  Copyright (C) 2013 Yusuke Suzuki <utatane.tea@gmail.com>
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+
+(function () {
+    'use strict';
+
+    exports.code = require('./code');
+    exports.keyword = require('./keyword');
+}());
+/* vim: set sw=4 ts=4 et tw=80 : */
+
+},{"./code":29,"./keyword":30}],32:[function(require,module,exports){
 (function (process){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -17686,8 +15420,8 @@ var substr = 'ab'.substr(-1) === 'b'
     }
 ;
 
-}).call(this,require("JkpR2F"))
-},{"JkpR2F":43}],43:[function(require,module,exports){
+}).call(this,require("g5I+bs"))
+},{"g5I+bs":33}],33:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -17752,7 +15486,7 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
-},{}],44:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -17807,7 +15541,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /************************************************************************/
 /******/ ([
 /* 0 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -17836,7 +15570,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function locToRange(line, col, offsets) {
 		var loff = 0;
-		if ( line > 2 && (line-2) < offsets.length ) loff = offsets[line-2];
+		if ( line >= 2 && (line-2) < offsets.length ) loff = offsets[line-2];
 		return loff + col;
 	}
 
@@ -17910,9 +15644,9 @@ return /******/ (function(modules) { // webpackBootstrap
 		defaultOptions: {runtimeParamName: '__pythonRuntime'}
 	};
 
-/***/ },
+/***/ }),
 /* 1 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {
 	/* ---- /Users/rob/skulpty/lib/preamble.js ---- */ 
@@ -18021,7 +15755,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    "__pow__": "nb$power",
 	    "__rpow__": "nb$reflected_power",
 	    "__contains__": "sq$contains",
-	    "__len__": ["sq$length", 0]
+	    "__len__": ["sq$length", 1],
+	    "__get__": ["tp$descr_get", 3],
+	    "__set__": ["tp$descr_set", 3]
 	};
 
 	/**
@@ -18074,25 +15810,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	        // dict is the result of running the classes code object
 	        // (basically the dict of functions). those become the prototype
 	        // object of the class).
+
 	        /**
+	        * The constructor is a stub, that gets called from object.__new__
 	        * @constructor
 	        */
-	        klass = function (kwdict, varargseq, kws, args, canSuspend) {
-	            var init;
-	            var self = this;
-	            var s;
+	        klass = function (args, kws) {
 	            var args_copy;
-	            if (!(this instanceof klass)) {
-	                return new klass(kwdict, varargseq, kws, args, canSuspend);
-	            }
 
-	            args = args || [];
-	            self["$d"] = new Sk.builtin.dict([]);
-	            self["$d"].mp$ass_subscript(new Sk.builtin.str("__dict__"), self["$d"]);
-
+	            // Call up through the chain in case there's a built-in object
+	            // whose constructor we need to initialise
 	            if (klass.prototype.tp$base !== undefined) {
 	                if (klass.prototype.tp$base.sk$klass) {
-	                    klass.prototype.tp$base.call(this, kwdict, varargseq, kws, args.slice(), canSuspend);
+	                    klass.prototype.tp$base.call(this, args, kws);
 	                } else {
 	                    // Call super constructor if subclass of a builtin
 	                    args_copy = args.slice();
@@ -18101,38 +15831,58 @@ return /******/ (function(modules) { // webpackBootstrap
 	                }
 	            }
 
-	            init = Sk.builtin.type.typeLookup(self.ob$type, "__init__");
-	            if (init !== undefined) {
-	                // return should be None or throw a TypeError otherwise
-	                args.unshift(self);
-	                s = Sk.misceval.applyOrSuspend(init, kwdict, varargseq, kws, args);
-
-	                return (function doSusp(s) {
-	                    if (s instanceof Sk.misceval.Suspension) {
-	                        // TODO I (Meredydd) don't know whether we are ever called
-	                        // from anywhere except Sk.misceval.applyOrSuspend().
-	                        // If we're not, we don't need a canSuspend parameter at all.
-	                        if (canSuspend) {
-	                            return new Sk.misceval.Suspension(doSusp, s);
-	                        } else {
-	                            return Sk.misceval.retryOptionalSuspensionOrThrow(s);
-	                        }
-	                    } else {
-	                        return self;
-	                    }
-	                })(s);
-	            }
-
-	            return self;
+	            this["$d"] = new Sk.builtin.dict([]);
+	            this["$d"].mp$ass_subscript(new Sk.builtin.str("__dict__"), this["$d"]);
 	        };
+
 
 	        var _name = Sk.ffi.remapToJs(name); // unwrap name string to js for latter use
 
-	        var inheritsFromObject = false, inheritsBuiltin = false;
+	        var inheritsBuiltin = false;
+
+	        // Invoking the class object calls __new__() to generate a new instance,
+	        // then __init__() to initialise it
+	        klass.tp$call = function(args, kws) {
+	            var newf = Sk.builtin.type.typeLookup(klass, "__new__"), newargs;
+	            var self;
+
+	            args = args || [];
+	            kws = kws || [];
+
+	            if (newf === undefined || newf === Sk.builtin.object.prototype["__new__"]) {
+	                // No override -> just call the constructor
+	                self = new klass(args, kws);
+	                newf = undefined;
+	            } else {
+	                newargs = args.slice();
+	                newargs.unshift(klass);
+	                self = Sk.misceval.applyOrSuspend(newf, undefined, undefined, kws, newargs);
+	            }
+
+	            return Sk.misceval.chain(self, function(s) {
+	                var init = Sk.builtin.type.typeLookup(s.ob$type, "__init__");
+
+	                self = s; // in case __new__ suspended
+
+	                if (init !== undefined) {
+	                    args.unshift(self);
+	                    return Sk.misceval.applyOrSuspend(init, undefined, undefined, kws, args);
+	                } else if (newf === undefined && (args.length !== 0 || kws.length !== 0) && !inheritsBuiltin) {
+	                    // We complain about spurious constructor arguments if neither __new__
+	                    // nor __init__ were overridden
+	                    throw new Sk.builtin.TypeError("__init__() got unexpected argument(s)");
+	                }
+	            }, function(r) {
+	                if (r !== Sk.builtin.none.none$ && r !== undefined) {
+	                    throw new Sk.builtin.TypeError("__init__() should return None, not " + Sk.abstr.typeName(r));
+	                } else {
+	                    return self;
+	                }
+	            });
+	        };
 
 	        if (bases.v.length === 0 && Sk.python3) {
 	            // new style class, inherits from object by default
-	            inheritsFromObject = true;
 	            Sk.abstr.setUpInheritance(_name, klass, Sk.builtin.object);
 	        }
 
@@ -18142,18 +15892,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (firstAncestor === undefined) {
 	                firstAncestor = parent;
 	            }
-	            if (parent.prototype instanceof Sk.builtin.object || parent === Sk.builtin.object) {
 
-	                while (parent.sk$klass && parent.prototype.tp$base) {
-	                    parent = parent.prototype.tp$base;
-	                }
+	            while (parent.sk$klass && parent.prototype.tp$base) {
+	                parent = parent.prototype.tp$base;
+	            }
 
-	                if (!parent.sk$klass && builtin_bases.indexOf(parent) < 0) {
-	                    builtin_bases.push(parent);
-	                }
-
-	                // This class inherits from Sk.builtin.object at some level
-	                inheritsFromObject = true;
+	            if (!parent.sk$klass && builtin_bases.indexOf(parent) < 0) {
+	                builtin_bases.push(parent);
+	                inheritsBuiltin = true;
 	            }
 	        }
 
@@ -18173,12 +15919,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        klass.prototype.tp$name = _name;
 	        klass.prototype.ob$type = Sk.builtin.type.makeIntoTypeObj(_name, klass);
-
-	        if (!inheritsFromObject) {
-	            // old style class, does not inherit from object
-	            klass.prototype.tp$getattr = Sk.builtin.object.prototype.GenericGetAttr;
-	            klass.prototype.tp$setattr = Sk.builtin.object.prototype.GenericSetAttr;
-	        }
 
 	        // set __module__ if not present (required by direct type(name, bases, dict) calls)
 	        var module_lk = new Sk.builtin.str("__module__");
@@ -18201,13 +15941,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        klass["__class__"] = klass;
 	        klass["__name__"] = name;
 	        klass.sk$klass = true;
-	        klass.prototype.tp$descr_get = function () {
-	            goog.asserts.fail("in type tp$descr_get");
-	        };
 	        klass.prototype["$r"] = function () {
 	            var cname;
 	            var mod;
-	            // TODO use Sk.abstr.gattr() here so __repr__ can be dynamically provided (eg by __getattr__())
 	            var reprf = this.tp$getattr("__repr__");
 	            if (reprf !== undefined && reprf.im_func !== Sk.builtin.object.prototype["__repr__"]) {
 	                return Sk.misceval.apply(reprf, undefined, undefined, undefined, []);
@@ -18228,8 +15964,51 @@ return /******/ (function(modules) { // webpackBootstrap
 	                return new Sk.builtin.str("<" + cname + _name + " object>");
 	            }
 	        };
+
+	        klass.prototype.tp$setattr = function(name, data, canSuspend) {
+	            var r, /** @type {(Object|undefined)} */ setf = Sk.builtin.object.prototype.GenericGetAttr.call(this, "__setattr__");
+	            if (setf !== undefined) {
+	                r = Sk.misceval.callsimOrSuspend(/** @type {Object} */ (setf), new Sk.builtin.str(name), data);
+	                return canSuspend ? r : Sk.misceval.retryOptionalSuspensionOrThrow(r);
+	            }
+
+	            return Sk.builtin.object.prototype.GenericSetAttr.call(this, name, data);
+	        };
+
+	        klass.prototype.tp$getattr = function(name, canSuspend) {
+	            var r, /** @type {(Object|undefined)} */ getf;
+	            // Convert AttributeErrors back into 'undefined' returns to match the tp$getattr
+	            // convention
+	            var callCatchUndefined = function() {
+	                return Sk.misceval.tryCatch(function() {
+	                    return Sk.misceval.callsimOrSuspend(/** @type {Object} */ (getf), new Sk.builtin.str(name));
+	                }, function (e) {
+	                    if (e instanceof Sk.builtin.AttributeError) {
+	                        return undefined;
+	                    } else {
+	                        throw e;
+	                    }
+	                });
+	            };
+
+	            getf = Sk.builtin.object.prototype.GenericGetAttr.call(this, "__getattribute__");
+
+	            if (getf !== undefined) {
+	                r = callCatchUndefined();
+	            } else {
+	                r = Sk.builtin.object.prototype.GenericGetAttr.call(this, name);
+	                if (r === undefined) {
+	                    getf = Sk.builtin.object.prototype.GenericGetAttr.call(this, "__getattr__");
+	                    if (getf !== undefined) {
+	                        r = callCatchUndefined();
+	                    }
+	                }
+	            }
+	            
+	            return canSuspend ? r : Sk.misceval.retryOptionalSuspensionOrThrow(r);
+	        };
+
 	        klass.prototype.tp$str = function () {
-	            // TODO use Sk.abstr.gattr() here so __str__ can be dynamically provided (eg by __getattr__())
 	            var strf = this.tp$getattr("__str__");
 	            if (strf !== undefined && strf.im_func !== Sk.builtin.object.prototype["__str__"]) {
 	                return Sk.misceval.apply(strf, undefined, undefined, undefined, []);
@@ -18249,27 +16028,27 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return canSuspend ? r : Sk.misceval.retryOptionalSuspensionOrThrow(r);
 	        };
 	        klass.prototype.tp$call = function (args, kw) {
-	            return Sk.misceval.chain(Sk.abstr.gattr(this, "__call__", true), function(callf) {
+	            return Sk.misceval.chain(this.tp$getattr("__call__", true), function(callf) {
+	                if (callf === undefined) {
+	                    throw new Sk.builtin.TypeError("'" + Sk.abstr.typeName(this) + "' object is not callable");
+	                }
 	                return Sk.misceval.applyOrSuspend(callf, undefined, undefined, kw, args);
 	            });
 	        };
 	        klass.prototype.tp$iter = function () {
-	            var iterf = Sk.abstr.gattr(this, "__iter__", false);
+	            var iterf = this.tp$getattr("__iter__");
+	            if (iterf === undefined) {
+	                throw new Sk.builtin.TypeError("'" + Sk.abstr.typeName(this) + "' object is not iterable");
+	            }
 	            return Sk.misceval.callsim(iterf);
 	        };
 	        klass.prototype.tp$iternext = function (canSuspend) {
 	            var self = this;
-	            var r = Sk.misceval.chain(
-	                Sk.misceval.tryCatch(function() {
-	                    return Sk.abstr.gattr(self, "next", canSuspend);
-	                }, function(e) {
-	                    if (e instanceof Sk.builtin.AttributeError) {
-	                        throw new Sk.builtin.TypeError("'" + Sk.abstr.typeName(self) + "' object is not iterable");
-	                    } else {
-	                        throw e;
-	                    }
-	                }),
-	            function(/** {Object} */ iternextf) {
+	            var r = Sk.misceval.chain(self.tp$getattr("next", canSuspend), function(/** {Object} */ iternextf) {
+	                if (iternextf === undefined) {
+	                    throw new Sk.builtin.TypeError("'" + Sk.abstr.typeName(self) + "' object is not iterable");
+	                }
+
 	                return Sk.misceval.tryCatch(function() {
 	                    return Sk.misceval.callsimOrSuspend(iternextf);
 	                }, function(e) {
@@ -18285,7 +16064,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        };
 
 	        klass.prototype.tp$getitem = function (key, canSuspend) {
-	            var getf = Sk.abstr.gattr(this, "__getitem__", canSuspend), r;
+	            var getf = this.tp$getattr("__getitem__", canSuspend), r;
 	            if (getf !== undefined) {
 	                r = Sk.misceval.applyOrSuspend(getf, undefined, undefined, undefined, [key]);
 	                return canSuspend ? r : Sk.misceval.retryOptionalSuspensionOrThrow(r);
@@ -18293,7 +16072,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            throw new Sk.builtin.TypeError("'" + Sk.abstr.typeName(this) + "' object does not support indexing");
 	        };
 	        klass.prototype.tp$setitem = function (key, value, canSuspend) {
-	            var setf = Sk.abstr.gattr(this, "__setitem__", canSuspend), r;
+	            var setf = this.tp$getattr("__setitem__", canSuspend), r;
 	            if (setf !== undefined) {
 	                r = Sk.misceval.applyOrSuspend(setf, undefined, undefined, undefined, [key, value]);
 	                return canSuspend ? r : Sk.misceval.retryOptionalSuspensionOrThrow(r);
@@ -18321,9 +16100,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	                var args = Array.prototype.slice.call(arguments), canSuspend;
 	                args.unshift(magic_func, this);
 
-	                if (canSuspendIdx) {
+	                if (canSuspendIdx !== null) {
 	                    canSuspend = args[canSuspendIdx+1];
 	                    args.splice(canSuspendIdx+1, 1);
+
 	                    if (canSuspend) {
 	                        return Sk.misceval.callsimOrSuspend.apply(undefined, args);
 	                    }
@@ -18333,9 +16113,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        };
 
 	        // Register skulpt shortcuts to magic methods defined by this class.
-	        // TODO: This is somewhat problematic, as it means that dynamically defined
-	        // methods (eg those returned by __getattr__()) cannot be used by these magic
-	        // functions.
+	        // Dynamically deflined methods (eg those returned by __getattr__())
+	        // cannot be used by these magic functions; this is consistent with
+	        // how CPython handles "new-style" classes:
+	        // https://docs.python.org/2/reference/datamodel.html#special-method-lookup-for-old-style-classes
 	        var dunder, skulpt_name, canSuspendIdx;
 	        for (dunder in Sk.dunderToSkulpt) {
 	            skulpt_name = Sk.dunderToSkulpt[dunder];
@@ -18407,7 +16188,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	//Sk.builtin.type.prototype.tp$name = "type";
 
 	// basically the same as GenericGetAttr except looks in the proto instead
-	Sk.builtin.type.prototype.tp$getattr = function (name) {
+	Sk.builtin.type.prototype.tp$getattr = function (name, canSuspend) {
 	    var res;
 	    var tp = this;
 	    var descr;
@@ -18424,14 +16205,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    //print("type.tpgetattr descr", descr, descr.tp$name, descr.func_code, name);
 	    if (descr !== undefined && descr !== null && descr.ob$type !== undefined) {
-	        f = descr.ob$type.tp$descr_get;
+	        f = descr.tp$descr_get;
 	        // todo;if (f && descr.tp$descr_set) // is a data descriptor if it has a set
 	        // return f.call(descr, this, this.ob$type);
 	    }
 
 	    if (f) {
 	        // non-data descriptor
-	        return f.call(descr, null, tp);
+	        return f.call(descr, Sk.builtin.none.none$, tp, canSuspend);
 	    }
 
 	    if (descr !== undefined) {
@@ -18839,24 +16620,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (vop.call) {
 	            ret = vop.call(v, w);
 	        } else {  // assume that vop is an __xxx__ type method
-	            ret = Sk.misceval.callsim(vop, v, w); //  added to be like not-in-place... is this okay?
+	            ret = Sk.misceval.callsim(vop, v, w);
 	        }
 	        if (ret !== undefined && ret !== Sk.builtin.NotImplemented.NotImplemented$) {
 	            return ret;
 	        }
 	    }
-	    wop = Sk.abstr.iboNameToSlotFunc_(w, opname);
-	    if (wop !== undefined) {
-	        if (wop.call) {
-	            ret = wop.call(w, v);
-	        } else { // assume that wop is an __xxx__ type method
-	            ret = Sk.misceval.callsim(wop, w, v); //  added to be like not-in-place... is this okay?
-	        }
-	        if (ret !== undefined && ret !== Sk.builtin.NotImplemented.NotImplemented$) {
-	            return ret;
-	        }
-	    }
-	    Sk.abstr.binop_type_error(v, w, opname);
+	    // If there wasn't an in-place operation, fall back to the binop
+	    return Sk.abstr.binary_op_(v, w, opname);
 	};
 	Sk.abstr.unary_op_ = function (v, opname) {
 	    var ret;
@@ -19434,31 +17205,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	        throw new Sk.builtin.AttributeError("'" + objname + "' object has no attribute '" + nameJS + "'");
 	    }
 
-
 	    if (obj.tp$getattr !== undefined) {
-	        f = obj.tp$getattr("__getattribute__");
+	        ret = obj.tp$getattr(nameJS, canSuspend);
 	    }
 
-	    if (f !== undefined) {
-	        ret = Sk.misceval.callsimOrSuspend(f, new Sk.builtin.str(nameJS));
-	    }
-
-	    ret = Sk.misceval.chain(ret, function(ret) {
-	        var f;
-
-	        if (ret === undefined && obj.tp$getattr !== undefined) {
-	            ret = obj.tp$getattr(nameJS);
-
-	            if (ret === undefined) {
-	                f = obj.tp$getattr("__getattr__");
-
-	                if (f !== undefined) {
-	                    ret = Sk.misceval.callsimOrSuspend(f, new Sk.builtin.str(nameJS));
-	                }
-	            }
-	        }
-	        return ret;
-	    }, function(r) {
+	    ret = Sk.misceval.chain(ret, function(r) {
 	        if (r === undefined) {
 	            throw new Sk.builtin.AttributeError("'" + objname + "' object has no attribute '" + nameJS + "'");
 	        }
@@ -19469,6 +17220,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 	goog.exportSymbol("Sk.abstr.gattr", Sk.abstr.gattr);
 
+
 	Sk.abstr.sattr = function (obj, nameJS, data, canSuspend) {
 	    var objname = Sk.abstr.typeName(obj), r, setf;
 
@@ -19476,16 +17228,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        throw new Sk.builtin.AttributeError("'" + objname + "' object has no attribute '" + nameJS + "'");
 	    }
 
-	    if (obj.tp$getattr !== undefined) {
-	        setf = obj.tp$getattr("__setattr__");
-	        if (setf !== undefined) {
-	            r = Sk.misceval.callsimOrSuspend(setf, new Sk.builtin.str(nameJS), data);
-	            return canSuspend ? r : Sk.misceval.retryOptionalSuspensionOrThrow(r);
-	        }
-	    }
-
 	    if (obj.tp$setattr !== undefined) {
-	        obj.tp$setattr(nameJS, data);
+	        return obj.tp$setattr(nameJS, data, canSuspend);
 	    } else {
 	        throw new Sk.builtin.AttributeError("'" + objname + "' object has no attribute '" + nameJS + "'");
 	    }
@@ -19679,9 +17423,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 	/**
+	 * Get an attribute
+	 * @param {string} name JS name of the attribute
+	 * @param {boolean=} canSuspend Can we return a suspension?
 	 * @return {undefined}
 	 */
-	Sk.builtin.object.prototype.GenericGetAttr = function (name) {
+	Sk.builtin.object.prototype.GenericGetAttr = function (name, canSuspend) {
 	    var res;
 	    var f;
 	    var descr;
@@ -19713,19 +17460,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	    descr = Sk.builtin.type.typeLookup(tp, name);
 
 	    // otherwise, look in the type for a descr
-	    if (descr !== undefined && descr !== null && descr.ob$type !== undefined) {
-	        f = descr.ob$type.tp$descr_get;
-	        if (!(f) && descr["__get__"]) {
-	            f = descr["__get__"];
-	            return Sk.misceval.callsimOrSuspend(f, descr, this, Sk.builtin.none.none$);
-	        }
-	        // todo;
-	        // if (f && descr.tp$descr_set) // is a data descriptor if it has a set
-	        // return f.call(descr, this, this.ob$type);
+	    if (descr !== undefined && descr !== null) {
+	        f = descr.tp$descr_get;
+	        // todo - data descriptors (ie those with tp$descr_set too) get a different lookup priority
 
 	        if (f) {
 	            // non-data descriptor
-	            return f.call(descr, this, this.ob$type);
+	            return f.call(descr, this, this.ob$type, canSuspend);
 	        }
 	    }
 
@@ -19742,7 +17483,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 	goog.exportSymbol("Sk.builtin.object.prototype.GenericPythonGetAttr", Sk.builtin.object.prototype.GenericPythonGetAttr);
 
-	Sk.builtin.object.prototype.GenericSetAttr = function (name, value) {
+	/**
+	 * @param {string} name
+	 * @param {undefined} value
+	 * @param {boolean=} canSuspend
+	 * @return {undefined}
+	 */
+	Sk.builtin.object.prototype.GenericSetAttr = function (name, value, canSuspend) {
 	    var objname = Sk.abstr.typeName(this);
 	    var pyname;
 	    var dict;
@@ -19758,16 +17505,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    descr = Sk.builtin.type.typeLookup(tp, name);
 
 	    // otherwise, look in the type for a descr
-	    if (descr !== undefined && descr !== null && descr.ob$type !== undefined) {
-	        //f = descr.ob$type.tp$descr_set;
-	        if (descr["__set__"]) {
-	            f = descr["__set__"];
-	            Sk.misceval.callsimOrSuspend(f, descr, this, value);
-	            return;
+	    if (descr !== undefined && descr !== null) {
+	        f = descr.tp$descr_set;
+	        // todo; is this the right lookup priority for data descriptors?
+	        if (f) {
+	            return f.call(descr, this, value, canSuspend);
 	        }
-	        // todo;
-	        //if (f && descr.tp$descr_set) // is a data descriptor if it has a set
-	        //return f.call(descr, this, this.ob$type);
 	    }
 
 	    if (dict.mp$ass_subscript) {
@@ -19776,7 +17519,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (this instanceof Sk.builtin.object && !(this.ob$type.sk$klass) &&
 	            dict.mp$lookup(pyname) === undefined) {
 	            // Cannot add new attributes to a builtin object
-	            throw new Sk.builtin.AttributeError("'" + objname + "' object has no attribute '" + name + "'");
+	            throw new Sk.builtin.AttributeError("'" + objname + "' object has no attribute '" + Sk.unfixReserved(name) + "'");
 	        }
 	        dict.mp$ass_subscript(new Sk.builtin.str(name), value);
 	    } else if (typeof dict === "object") {
@@ -19814,8 +17557,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	Sk.builtin.object.prototype.ob$type = Sk.builtin.type.makeIntoTypeObj("object", Sk.builtin.object);
 	Sk.builtin.object.prototype.ob$type.sk$klass = undefined;   // Nonsense for closure compiler
+	Sk.builtin.object.prototype.tp$descr_set = undefined;   // Nonsense for closure compiler
 
 	/** Default implementations of dunder methods found in all Python objects */
+	/**
+	 * Default implementation of __new__ just calls the class constructor
+	 * @name  __new__
+	 * @memberOf Sk.builtin.object.prototype
+	 * @instance
+	 */
+	Sk.builtin.object.prototype["__new__"] = function (cls) {
+	    Sk.builtin.pyCheckArgs("__new__", arguments, 1, 1, false, false);
+
+	    return new cls([], []);
+	};
 
 	/**
 	 * Python wrapper for `__repr__` method.
@@ -20323,7 +18078,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	Sk.builtin.func.prototype.tp$name = "function";
 	Sk.builtin.func.prototype.tp$descr_get = function (obj, objtype) {
 	    goog.asserts.assert(obj !== undefined && objtype !== undefined);
-	    if (obj == null) {
+	    if (obj === Sk.builtin.none.none$) {
 	        return this;
 	    }
 	    return new Sk.builtin.method(this, obj, objtype);
@@ -20338,21 +18093,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var expectskw;
 	    var name;
 	    var numargs;
-
-	    // note: functions expect 'this' to be globals to avoid having to
-	    // slice/unshift onto the main args
-	    if (this.func_closure) {
-	        // todo; OK to modify?
-	        if (this.func_code["$defaults"] && this.func_code["co_varnames"]) {
-	            // Make sure all default arguments are in args before adding closure
-	            numargs = args.length;
-	            numvarnames = this.func_code["co_varnames"].length;
-	            for (i = numargs; i < numvarnames; i++) {
-	                args.push(undefined);
-	            }
-	        }
-	        args.push(this.func_closure);
-	    }
 
 	    expectskw = this.func_code["co_kwargs"];
 	    kwargsarr = [];
@@ -20390,12 +18130,29 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	        }
 	    }
+
+	    if (this.func_closure) {
+	        // todo; OK to modify?
+	        if (this.func_code["co_varnames"]) {
+	            // Make sure all default arguments are in args before adding closure
+	            numargs = args.length;
+	            numvarnames = this.func_code["co_varnames"].length;
+	            for (i = numargs; i < numvarnames; i++) {
+	                args.push(undefined);
+	            }
+	        }
+
+	        args.push(this.func_closure);
+	    }
+
 	    if (expectskw) {
 	        args.unshift(kwargsarr);
 	    }
 
 	    //print(JSON.stringify(args, null, 2));
 
+	    // note: functions expect 'this' to be globals to avoid having to
+	    // slice/unshift onto the main args
 	    return this.func_code.apply(this.func_globals, args);
 	};
 
@@ -27772,15 +25529,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = Sk;
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
-/***/ },
+/***/ }),
 /* 2 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	'use strict';
 
 	var isArray = Array.isArray;
 
-	//TODO: Find a way to not have to do this.
 	function getOpName(op) {
 		if (op.prototype._astname) {
 			return op.prototype._astname;
@@ -28341,7 +26097,7 @@ return /******/ (function(modules) { // webpackBootstrap
 			var right = transform(node.comparators[i], ctx);
 			var cop = makeCop(left, node.ops[i], right);
 			if ( result ) {
-				result = binOp(result, '&&', cop);
+				result = logicOp(result, '&&', cop);
 			} else {
 				result = cop;
 			}
@@ -28918,9 +26674,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = transform;
 
 
-/***/ },
+/***/ }),
 /* 3 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -29110,9 +26866,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = improveError;
 
 
-/***/ },
+/***/ }),
 /* 4 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	(function (root, factory) {
 	  'use strict';
@@ -29194,11 +26950,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }, 
 	      listPropertyDescriptor: {
 	          "_type": {
-	            get: function () { return 'list'; },
+	            value: 'list',
+	            writable: false,
 	            enumerable: false
 	          },
 	          "_isPython": {
-	            get: function () { return true; },
+	            value: true,
+	            writable: false,
 	            enumerable: false
 	          },
 	          "append": {
@@ -29303,14 +27061,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	              var apply_key = function(a, numerical) {
 	                var list3 = list2.map(x);
 	                // construct a dict that maps the listay before and after the map
-	                var mapping = {}
+	                var mapping = {};
 	                for(var i in list3) mapping[list3[i]] = list2[i];
 	                if(numerical)
 	                  list3.sort(function(a, b) { return a - b; });
 	                else
-	                  list3.sort()
+	                  list3.sort();
 	                for(var i in a) a[i] = mapping[list3[i]];
-	              }
+	              };
 	              for(var i in this) {
 	                if(typeof this[i] !== 'number' || !isFinite(this[i])) {
 	                  if(typeof x != 'undefined') {
@@ -29354,11 +27112,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	      },
 	      dictPropertyDescriptor: {
 	        "_type": {
-	          get: function () { return 'dict';},
-	          enumerable: false
+	          value: 'dict',
+	          writable: false
 	        },
 	        "_isPython": {
-	          get: function () { return true; },
+	          value: true,
 	          enumerable: false
 	        },
 	        "items": {
@@ -29778,11 +27536,2194 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 
-/***/ }
+/***/ })
 /******/ ])
 });
 ;
-},{}],45:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
+/*
+ * Copyright 2009-2011 Mozilla Foundation and contributors
+ * Licensed under the New BSD license. See LICENSE.txt or:
+ * http://opensource.org/licenses/BSD-3-Clause
+ */
+exports.SourceMapGenerator = require('./source-map/source-map-generator').SourceMapGenerator;
+exports.SourceMapConsumer = require('./source-map/source-map-consumer').SourceMapConsumer;
+exports.SourceNode = require('./source-map/source-node').SourceNode;
+
+},{"./source-map/source-map-consumer":41,"./source-map/source-map-generator":42,"./source-map/source-node":43}],36:[function(require,module,exports){
+/* -*- Mode: js; js-indent-level: 2; -*- */
+/*
+ * Copyright 2011 Mozilla Foundation and contributors
+ * Licensed under the New BSD license. See LICENSE or:
+ * http://opensource.org/licenses/BSD-3-Clause
+ */
+if (typeof define !== 'function') {
+    var define = require('amdefine')(module, require);
+}
+define(function (require, exports, module) {
+
+  var util = require('./util');
+
+  /**
+   * A data structure which is a combination of an array and a set. Adding a new
+   * member is O(1), testing for membership is O(1), and finding the index of an
+   * element is O(1). Removing elements from the set is not supported. Only
+   * strings are supported for membership.
+   */
+  function ArraySet() {
+    this._array = [];
+    this._set = {};
+  }
+
+  /**
+   * Static method for creating ArraySet instances from an existing array.
+   */
+  ArraySet.fromArray = function ArraySet_fromArray(aArray, aAllowDuplicates) {
+    var set = new ArraySet();
+    for (var i = 0, len = aArray.length; i < len; i++) {
+      set.add(aArray[i], aAllowDuplicates);
+    }
+    return set;
+  };
+
+  /**
+   * Add the given string to this set.
+   *
+   * @param String aStr
+   */
+  ArraySet.prototype.add = function ArraySet_add(aStr, aAllowDuplicates) {
+    var isDuplicate = this.has(aStr);
+    var idx = this._array.length;
+    if (!isDuplicate || aAllowDuplicates) {
+      this._array.push(aStr);
+    }
+    if (!isDuplicate) {
+      this._set[util.toSetString(aStr)] = idx;
+    }
+  };
+
+  /**
+   * Is the given string a member of this set?
+   *
+   * @param String aStr
+   */
+  ArraySet.prototype.has = function ArraySet_has(aStr) {
+    return Object.prototype.hasOwnProperty.call(this._set,
+                                                util.toSetString(aStr));
+  };
+
+  /**
+   * What is the index of the given string in the array?
+   *
+   * @param String aStr
+   */
+  ArraySet.prototype.indexOf = function ArraySet_indexOf(aStr) {
+    if (this.has(aStr)) {
+      return this._set[util.toSetString(aStr)];
+    }
+    throw new Error('"' + aStr + '" is not in the set.');
+  };
+
+  /**
+   * What is the element at the given index?
+   *
+   * @param Number aIdx
+   */
+  ArraySet.prototype.at = function ArraySet_at(aIdx) {
+    if (aIdx >= 0 && aIdx < this._array.length) {
+      return this._array[aIdx];
+    }
+    throw new Error('No element indexed by ' + aIdx);
+  };
+
+  /**
+   * Returns the array representation of this set (which has the proper indices
+   * indicated by indexOf). Note that this is a copy of the internal array used
+   * for storing the members so that no one can mess with internal state.
+   */
+  ArraySet.prototype.toArray = function ArraySet_toArray() {
+    return this._array.slice();
+  };
+
+  exports.ArraySet = ArraySet;
+
+});
+
+},{"./util":44,"amdefine":23}],37:[function(require,module,exports){
+/* -*- Mode: js; js-indent-level: 2; -*- */
+/*
+ * Copyright 2011 Mozilla Foundation and contributors
+ * Licensed under the New BSD license. See LICENSE or:
+ * http://opensource.org/licenses/BSD-3-Clause
+ *
+ * Based on the Base 64 VLQ implementation in Closure Compiler:
+ * https://code.google.com/p/closure-compiler/source/browse/trunk/src/com/google/debugging/sourcemap/Base64VLQ.java
+ *
+ * Copyright 2011 The Closure Compiler Authors. All rights reserved.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *  * Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *  * Redistributions in binary form must reproduce the above
+ *    copyright notice, this list of conditions and the following
+ *    disclaimer in the documentation and/or other materials provided
+ *    with the distribution.
+ *  * Neither the name of Google Inc. nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+if (typeof define !== 'function') {
+    var define = require('amdefine')(module, require);
+}
+define(function (require, exports, module) {
+
+  var base64 = require('./base64');
+
+  // A single base 64 digit can contain 6 bits of data. For the base 64 variable
+  // length quantities we use in the source map spec, the first bit is the sign,
+  // the next four bits are the actual value, and the 6th bit is the
+  // continuation bit. The continuation bit tells us whether there are more
+  // digits in this value following this digit.
+  //
+  //   Continuation
+  //   |    Sign
+  //   |    |
+  //   V    V
+  //   101011
+
+  var VLQ_BASE_SHIFT = 5;
+
+  // binary: 100000
+  var VLQ_BASE = 1 << VLQ_BASE_SHIFT;
+
+  // binary: 011111
+  var VLQ_BASE_MASK = VLQ_BASE - 1;
+
+  // binary: 100000
+  var VLQ_CONTINUATION_BIT = VLQ_BASE;
+
+  /**
+   * Converts from a two-complement value to a value where the sign bit is
+   * placed in the least significant bit.  For example, as decimals:
+   *   1 becomes 2 (10 binary), -1 becomes 3 (11 binary)
+   *   2 becomes 4 (100 binary), -2 becomes 5 (101 binary)
+   */
+  function toVLQSigned(aValue) {
+    return aValue < 0
+      ? ((-aValue) << 1) + 1
+      : (aValue << 1) + 0;
+  }
+
+  /**
+   * Converts to a two-complement value from a value where the sign bit is
+   * placed in the least significant bit.  For example, as decimals:
+   *   2 (10 binary) becomes 1, 3 (11 binary) becomes -1
+   *   4 (100 binary) becomes 2, 5 (101 binary) becomes -2
+   */
+  function fromVLQSigned(aValue) {
+    var isNegative = (aValue & 1) === 1;
+    var shifted = aValue >> 1;
+    return isNegative
+      ? -shifted
+      : shifted;
+  }
+
+  /**
+   * Returns the base 64 VLQ encoded value.
+   */
+  exports.encode = function base64VLQ_encode(aValue) {
+    var encoded = "";
+    var digit;
+
+    var vlq = toVLQSigned(aValue);
+
+    do {
+      digit = vlq & VLQ_BASE_MASK;
+      vlq >>>= VLQ_BASE_SHIFT;
+      if (vlq > 0) {
+        // There are still more digits in this value, so we must make sure the
+        // continuation bit is marked.
+        digit |= VLQ_CONTINUATION_BIT;
+      }
+      encoded += base64.encode(digit);
+    } while (vlq > 0);
+
+    return encoded;
+  };
+
+  /**
+   * Decodes the next base 64 VLQ value from the given string and returns the
+   * value and the rest of the string via the out parameter.
+   */
+  exports.decode = function base64VLQ_decode(aStr, aOutParam) {
+    var i = 0;
+    var strLen = aStr.length;
+    var result = 0;
+    var shift = 0;
+    var continuation, digit;
+
+    do {
+      if (i >= strLen) {
+        throw new Error("Expected more digits in base 64 VLQ value.");
+      }
+      digit = base64.decode(aStr.charAt(i++));
+      continuation = !!(digit & VLQ_CONTINUATION_BIT);
+      digit &= VLQ_BASE_MASK;
+      result = result + (digit << shift);
+      shift += VLQ_BASE_SHIFT;
+    } while (continuation);
+
+    aOutParam.value = fromVLQSigned(result);
+    aOutParam.rest = aStr.slice(i);
+  };
+
+});
+
+},{"./base64":38,"amdefine":23}],38:[function(require,module,exports){
+/* -*- Mode: js; js-indent-level: 2; -*- */
+/*
+ * Copyright 2011 Mozilla Foundation and contributors
+ * Licensed under the New BSD license. See LICENSE or:
+ * http://opensource.org/licenses/BSD-3-Clause
+ */
+if (typeof define !== 'function') {
+    var define = require('amdefine')(module, require);
+}
+define(function (require, exports, module) {
+
+  var charToIntMap = {};
+  var intToCharMap = {};
+
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+    .split('')
+    .forEach(function (ch, index) {
+      charToIntMap[ch] = index;
+      intToCharMap[index] = ch;
+    });
+
+  /**
+   * Encode an integer in the range of 0 to 63 to a single base 64 digit.
+   */
+  exports.encode = function base64_encode(aNumber) {
+    if (aNumber in intToCharMap) {
+      return intToCharMap[aNumber];
+    }
+    throw new TypeError("Must be between 0 and 63: " + aNumber);
+  };
+
+  /**
+   * Decode a single base 64 digit to an integer.
+   */
+  exports.decode = function base64_decode(aChar) {
+    if (aChar in charToIntMap) {
+      return charToIntMap[aChar];
+    }
+    throw new TypeError("Not a valid base 64 digit: " + aChar);
+  };
+
+});
+
+},{"amdefine":23}],39:[function(require,module,exports){
+/* -*- Mode: js; js-indent-level: 2; -*- */
+/*
+ * Copyright 2011 Mozilla Foundation and contributors
+ * Licensed under the New BSD license. See LICENSE or:
+ * http://opensource.org/licenses/BSD-3-Clause
+ */
+if (typeof define !== 'function') {
+    var define = require('amdefine')(module, require);
+}
+define(function (require, exports, module) {
+
+  /**
+   * Recursive implementation of binary search.
+   *
+   * @param aLow Indices here and lower do not contain the needle.
+   * @param aHigh Indices here and higher do not contain the needle.
+   * @param aNeedle The element being searched for.
+   * @param aHaystack The non-empty array being searched.
+   * @param aCompare Function which takes two elements and returns -1, 0, or 1.
+   */
+  function recursiveSearch(aLow, aHigh, aNeedle, aHaystack, aCompare) {
+    // This function terminates when one of the following is true:
+    //
+    //   1. We find the exact element we are looking for.
+    //
+    //   2. We did not find the exact element, but we can return the index of
+    //      the next closest element that is less than that element.
+    //
+    //   3. We did not find the exact element, and there is no next-closest
+    //      element which is less than the one we are searching for, so we
+    //      return -1.
+    var mid = Math.floor((aHigh - aLow) / 2) + aLow;
+    var cmp = aCompare(aNeedle, aHaystack[mid], true);
+    if (cmp === 0) {
+      // Found the element we are looking for.
+      return mid;
+    }
+    else if (cmp > 0) {
+      // aHaystack[mid] is greater than our needle.
+      if (aHigh - mid > 1) {
+        // The element is in the upper half.
+        return recursiveSearch(mid, aHigh, aNeedle, aHaystack, aCompare);
+      }
+      // We did not find an exact match, return the next closest one
+      // (termination case 2).
+      return mid;
+    }
+    else {
+      // aHaystack[mid] is less than our needle.
+      if (mid - aLow > 1) {
+        // The element is in the lower half.
+        return recursiveSearch(aLow, mid, aNeedle, aHaystack, aCompare);
+      }
+      // The exact needle element was not found in this haystack. Determine if
+      // we are in termination case (2) or (3) and return the appropriate thing.
+      return aLow < 0 ? -1 : aLow;
+    }
+  }
+
+  /**
+   * This is an implementation of binary search which will always try and return
+   * the index of next lowest value checked if there is no exact hit. This is
+   * because mappings between original and generated line/col pairs are single
+   * points, and there is an implicit region between each of them, so a miss
+   * just means that you aren't on the very start of a region.
+   *
+   * @param aNeedle The element you are looking for.
+   * @param aHaystack The array that is being searched.
+   * @param aCompare A function which takes the needle and an element in the
+   *     array and returns -1, 0, or 1 depending on whether the needle is less
+   *     than, equal to, or greater than the element, respectively.
+   */
+  exports.search = function search(aNeedle, aHaystack, aCompare) {
+    if (aHaystack.length === 0) {
+      return -1;
+    }
+    return recursiveSearch(-1, aHaystack.length, aNeedle, aHaystack, aCompare)
+  };
+
+});
+
+},{"amdefine":23}],40:[function(require,module,exports){
+/* -*- Mode: js; js-indent-level: 2; -*- */
+/*
+ * Copyright 2014 Mozilla Foundation and contributors
+ * Licensed under the New BSD license. See LICENSE or:
+ * http://opensource.org/licenses/BSD-3-Clause
+ */
+if (typeof define !== 'function') {
+    var define = require('amdefine')(module, require);
+}
+define(function (require, exports, module) {
+
+  var util = require('./util');
+
+  /**
+   * Determine whether mappingB is after mappingA with respect to generated
+   * position.
+   */
+  function generatedPositionAfter(mappingA, mappingB) {
+    // Optimized for most common case
+    var lineA = mappingA.generatedLine;
+    var lineB = mappingB.generatedLine;
+    var columnA = mappingA.generatedColumn;
+    var columnB = mappingB.generatedColumn;
+    return lineB > lineA || lineB == lineA && columnB >= columnA ||
+           util.compareByGeneratedPositions(mappingA, mappingB) <= 0;
+  }
+
+  /**
+   * A data structure to provide a sorted view of accumulated mappings in a
+   * performance conscious manner. It trades a neglibable overhead in general
+   * case for a large speedup in case of mappings being added in order.
+   */
+  function MappingList() {
+    this._array = [];
+    this._sorted = true;
+    // Serves as infimum
+    this._last = {generatedLine: -1, generatedColumn: 0};
+  }
+
+  /**
+   * Iterate through internal items. This method takes the same arguments that
+   * `Array.prototype.forEach` takes.
+   *
+   * NOTE: The order of the mappings is NOT guaranteed.
+   */
+  MappingList.prototype.unsortedForEach =
+    function MappingList_forEach(aCallback, aThisArg) {
+      this._array.forEach(aCallback, aThisArg);
+    };
+
+  /**
+   * Add the given source mapping.
+   *
+   * @param Object aMapping
+   */
+  MappingList.prototype.add = function MappingList_add(aMapping) {
+    var mapping;
+    if (generatedPositionAfter(this._last, aMapping)) {
+      this._last = aMapping;
+      this._array.push(aMapping);
+    } else {
+      this._sorted = false;
+      this._array.push(aMapping);
+    }
+  };
+
+  /**
+   * Returns the flat, sorted array of mappings. The mappings are sorted by
+   * generated position.
+   *
+   * WARNING: This method returns internal data without copying, for
+   * performance. The return value must NOT be mutated, and should be treated as
+   * an immutable borrow. If you want to take ownership, you must make your own
+   * copy.
+   */
+  MappingList.prototype.toArray = function MappingList_toArray() {
+    if (!this._sorted) {
+      this._array.sort(util.compareByGeneratedPositions);
+      this._sorted = true;
+    }
+    return this._array;
+  };
+
+  exports.MappingList = MappingList;
+
+});
+
+},{"./util":44,"amdefine":23}],41:[function(require,module,exports){
+/* -*- Mode: js; js-indent-level: 2; -*- */
+/*
+ * Copyright 2011 Mozilla Foundation and contributors
+ * Licensed under the New BSD license. See LICENSE or:
+ * http://opensource.org/licenses/BSD-3-Clause
+ */
+if (typeof define !== 'function') {
+    var define = require('amdefine')(module, require);
+}
+define(function (require, exports, module) {
+
+  var util = require('./util');
+  var binarySearch = require('./binary-search');
+  var ArraySet = require('./array-set').ArraySet;
+  var base64VLQ = require('./base64-vlq');
+
+  /**
+   * A SourceMapConsumer instance represents a parsed source map which we can
+   * query for information about the original file positions by giving it a file
+   * position in the generated source.
+   *
+   * The only parameter is the raw source map (either as a JSON string, or
+   * already parsed to an object). According to the spec, source maps have the
+   * following attributes:
+   *
+   *   - version: Which version of the source map spec this map is following.
+   *   - sources: An array of URLs to the original source files.
+   *   - names: An array of identifiers which can be referrenced by individual mappings.
+   *   - sourceRoot: Optional. The URL root from which all sources are relative.
+   *   - sourcesContent: Optional. An array of contents of the original source files.
+   *   - mappings: A string of base64 VLQs which contain the actual mappings.
+   *   - file: Optional. The generated file this source map is associated with.
+   *
+   * Here is an example source map, taken from the source map spec[0]:
+   *
+   *     {
+   *       version : 3,
+   *       file: "out.js",
+   *       sourceRoot : "",
+   *       sources: ["foo.js", "bar.js"],
+   *       names: ["src", "maps", "are", "fun"],
+   *       mappings: "AA,AB;;ABCDE;"
+   *     }
+   *
+   * [0]: https://docs.google.com/document/d/1U1RGAehQwRypUTovF1KRlpiOFze0b-_2gc6fAH0KY0k/edit?pli=1#
+   */
+  function SourceMapConsumer(aSourceMap) {
+    var sourceMap = aSourceMap;
+    if (typeof aSourceMap === 'string') {
+      sourceMap = JSON.parse(aSourceMap.replace(/^\)\]\}'/, ''));
+    }
+
+    var version = util.getArg(sourceMap, 'version');
+    var sources = util.getArg(sourceMap, 'sources');
+    // Sass 3.3 leaves out the 'names' array, so we deviate from the spec (which
+    // requires the array) to play nice here.
+    var names = util.getArg(sourceMap, 'names', []);
+    var sourceRoot = util.getArg(sourceMap, 'sourceRoot', null);
+    var sourcesContent = util.getArg(sourceMap, 'sourcesContent', null);
+    var mappings = util.getArg(sourceMap, 'mappings');
+    var file = util.getArg(sourceMap, 'file', null);
+
+    // Once again, Sass deviates from the spec and supplies the version as a
+    // string rather than a number, so we use loose equality checking here.
+    if (version != this._version) {
+      throw new Error('Unsupported version: ' + version);
+    }
+
+    // Some source maps produce relative source paths like "./foo.js" instead of
+    // "foo.js".  Normalize these first so that future comparisons will succeed.
+    // See bugzil.la/1090768.
+    sources = sources.map(util.normalize);
+
+    // Pass `true` below to allow duplicate names and sources. While source maps
+    // are intended to be compressed and deduplicated, the TypeScript compiler
+    // sometimes generates source maps with duplicates in them. See Github issue
+    // #72 and bugzil.la/889492.
+    this._names = ArraySet.fromArray(names, true);
+    this._sources = ArraySet.fromArray(sources, true);
+
+    this.sourceRoot = sourceRoot;
+    this.sourcesContent = sourcesContent;
+    this._mappings = mappings;
+    this.file = file;
+  }
+
+  /**
+   * Create a SourceMapConsumer from a SourceMapGenerator.
+   *
+   * @param SourceMapGenerator aSourceMap
+   *        The source map that will be consumed.
+   * @returns SourceMapConsumer
+   */
+  SourceMapConsumer.fromSourceMap =
+    function SourceMapConsumer_fromSourceMap(aSourceMap) {
+      var smc = Object.create(SourceMapConsumer.prototype);
+
+      smc._names = ArraySet.fromArray(aSourceMap._names.toArray(), true);
+      smc._sources = ArraySet.fromArray(aSourceMap._sources.toArray(), true);
+      smc.sourceRoot = aSourceMap._sourceRoot;
+      smc.sourcesContent = aSourceMap._generateSourcesContent(smc._sources.toArray(),
+                                                              smc.sourceRoot);
+      smc.file = aSourceMap._file;
+
+      smc.__generatedMappings = aSourceMap._mappings.toArray().slice();
+      smc.__originalMappings = aSourceMap._mappings.toArray().slice()
+        .sort(util.compareByOriginalPositions);
+
+      return smc;
+    };
+
+  /**
+   * The version of the source mapping spec that we are consuming.
+   */
+  SourceMapConsumer.prototype._version = 3;
+
+  /**
+   * The list of original sources.
+   */
+  Object.defineProperty(SourceMapConsumer.prototype, 'sources', {
+    get: function () {
+      return this._sources.toArray().map(function (s) {
+        return this.sourceRoot != null ? util.join(this.sourceRoot, s) : s;
+      }, this);
+    }
+  });
+
+  // `__generatedMappings` and `__originalMappings` are arrays that hold the
+  // parsed mapping coordinates from the source map's "mappings" attribute. They
+  // are lazily instantiated, accessed via the `_generatedMappings` and
+  // `_originalMappings` getters respectively, and we only parse the mappings
+  // and create these arrays once queried for a source location. We jump through
+  // these hoops because there can be many thousands of mappings, and parsing
+  // them is expensive, so we only want to do it if we must.
+  //
+  // Each object in the arrays is of the form:
+  //
+  //     {
+  //       generatedLine: The line number in the generated code,
+  //       generatedColumn: The column number in the generated code,
+  //       source: The path to the original source file that generated this
+  //               chunk of code,
+  //       originalLine: The line number in the original source that
+  //                     corresponds to this chunk of generated code,
+  //       originalColumn: The column number in the original source that
+  //                       corresponds to this chunk of generated code,
+  //       name: The name of the original symbol which generated this chunk of
+  //             code.
+  //     }
+  //
+  // All properties except for `generatedLine` and `generatedColumn` can be
+  // `null`.
+  //
+  // `_generatedMappings` is ordered by the generated positions.
+  //
+  // `_originalMappings` is ordered by the original positions.
+
+  SourceMapConsumer.prototype.__generatedMappings = null;
+  Object.defineProperty(SourceMapConsumer.prototype, '_generatedMappings', {
+    get: function () {
+      if (!this.__generatedMappings) {
+        this.__generatedMappings = [];
+        this.__originalMappings = [];
+        this._parseMappings(this._mappings, this.sourceRoot);
+      }
+
+      return this.__generatedMappings;
+    }
+  });
+
+  SourceMapConsumer.prototype.__originalMappings = null;
+  Object.defineProperty(SourceMapConsumer.prototype, '_originalMappings', {
+    get: function () {
+      if (!this.__originalMappings) {
+        this.__generatedMappings = [];
+        this.__originalMappings = [];
+        this._parseMappings(this._mappings, this.sourceRoot);
+      }
+
+      return this.__originalMappings;
+    }
+  });
+
+  SourceMapConsumer.prototype._nextCharIsMappingSeparator =
+    function SourceMapConsumer_nextCharIsMappingSeparator(aStr) {
+      var c = aStr.charAt(0);
+      return c === ";" || c === ",";
+    };
+
+  /**
+   * Parse the mappings in a string in to a data structure which we can easily
+   * query (the ordered arrays in the `this.__generatedMappings` and
+   * `this.__originalMappings` properties).
+   */
+  SourceMapConsumer.prototype._parseMappings =
+    function SourceMapConsumer_parseMappings(aStr, aSourceRoot) {
+      var generatedLine = 1;
+      var previousGeneratedColumn = 0;
+      var previousOriginalLine = 0;
+      var previousOriginalColumn = 0;
+      var previousSource = 0;
+      var previousName = 0;
+      var str = aStr;
+      var temp = {};
+      var mapping;
+
+      while (str.length > 0) {
+        if (str.charAt(0) === ';') {
+          generatedLine++;
+          str = str.slice(1);
+          previousGeneratedColumn = 0;
+        }
+        else if (str.charAt(0) === ',') {
+          str = str.slice(1);
+        }
+        else {
+          mapping = {};
+          mapping.generatedLine = generatedLine;
+
+          // Generated column.
+          base64VLQ.decode(str, temp);
+          mapping.generatedColumn = previousGeneratedColumn + temp.value;
+          previousGeneratedColumn = mapping.generatedColumn;
+          str = temp.rest;
+
+          if (str.length > 0 && !this._nextCharIsMappingSeparator(str)) {
+            // Original source.
+            base64VLQ.decode(str, temp);
+            mapping.source = this._sources.at(previousSource + temp.value);
+            previousSource += temp.value;
+            str = temp.rest;
+            if (str.length === 0 || this._nextCharIsMappingSeparator(str)) {
+              throw new Error('Found a source, but no line and column');
+            }
+
+            // Original line.
+            base64VLQ.decode(str, temp);
+            mapping.originalLine = previousOriginalLine + temp.value;
+            previousOriginalLine = mapping.originalLine;
+            // Lines are stored 0-based
+            mapping.originalLine += 1;
+            str = temp.rest;
+            if (str.length === 0 || this._nextCharIsMappingSeparator(str)) {
+              throw new Error('Found a source and line, but no column');
+            }
+
+            // Original column.
+            base64VLQ.decode(str, temp);
+            mapping.originalColumn = previousOriginalColumn + temp.value;
+            previousOriginalColumn = mapping.originalColumn;
+            str = temp.rest;
+
+            if (str.length > 0 && !this._nextCharIsMappingSeparator(str)) {
+              // Original name.
+              base64VLQ.decode(str, temp);
+              mapping.name = this._names.at(previousName + temp.value);
+              previousName += temp.value;
+              str = temp.rest;
+            }
+          }
+
+          this.__generatedMappings.push(mapping);
+          if (typeof mapping.originalLine === 'number') {
+            this.__originalMappings.push(mapping);
+          }
+        }
+      }
+
+      this.__generatedMappings.sort(util.compareByGeneratedPositions);
+      this.__originalMappings.sort(util.compareByOriginalPositions);
+    };
+
+  /**
+   * Find the mapping that best matches the hypothetical "needle" mapping that
+   * we are searching for in the given "haystack" of mappings.
+   */
+  SourceMapConsumer.prototype._findMapping =
+    function SourceMapConsumer_findMapping(aNeedle, aMappings, aLineName,
+                                           aColumnName, aComparator) {
+      // To return the position we are searching for, we must first find the
+      // mapping for the given position and then return the opposite position it
+      // points to. Because the mappings are sorted, we can use binary search to
+      // find the best mapping.
+
+      if (aNeedle[aLineName] <= 0) {
+        throw new TypeError('Line must be greater than or equal to 1, got '
+                            + aNeedle[aLineName]);
+      }
+      if (aNeedle[aColumnName] < 0) {
+        throw new TypeError('Column must be greater than or equal to 0, got '
+                            + aNeedle[aColumnName]);
+      }
+
+      return binarySearch.search(aNeedle, aMappings, aComparator);
+    };
+
+  /**
+   * Compute the last column for each generated mapping. The last column is
+   * inclusive.
+   */
+  SourceMapConsumer.prototype.computeColumnSpans =
+    function SourceMapConsumer_computeColumnSpans() {
+      for (var index = 0; index < this._generatedMappings.length; ++index) {
+        var mapping = this._generatedMappings[index];
+
+        // Mappings do not contain a field for the last generated columnt. We
+        // can come up with an optimistic estimate, however, by assuming that
+        // mappings are contiguous (i.e. given two consecutive mappings, the
+        // first mapping ends where the second one starts).
+        if (index + 1 < this._generatedMappings.length) {
+          var nextMapping = this._generatedMappings[index + 1];
+
+          if (mapping.generatedLine === nextMapping.generatedLine) {
+            mapping.lastGeneratedColumn = nextMapping.generatedColumn - 1;
+            continue;
+          }
+        }
+
+        // The last mapping for each line spans the entire line.
+        mapping.lastGeneratedColumn = Infinity;
+      }
+    };
+
+  /**
+   * Returns the original source, line, and column information for the generated
+   * source's line and column positions provided. The only argument is an object
+   * with the following properties:
+   *
+   *   - line: The line number in the generated source.
+   *   - column: The column number in the generated source.
+   *
+   * and an object is returned with the following properties:
+   *
+   *   - source: The original source file, or null.
+   *   - line: The line number in the original source, or null.
+   *   - column: The column number in the original source, or null.
+   *   - name: The original identifier, or null.
+   */
+  SourceMapConsumer.prototype.originalPositionFor =
+    function SourceMapConsumer_originalPositionFor(aArgs) {
+      var needle = {
+        generatedLine: util.getArg(aArgs, 'line'),
+        generatedColumn: util.getArg(aArgs, 'column')
+      };
+
+      var index = this._findMapping(needle,
+                                    this._generatedMappings,
+                                    "generatedLine",
+                                    "generatedColumn",
+                                    util.compareByGeneratedPositions);
+
+      if (index >= 0) {
+        var mapping = this._generatedMappings[index];
+
+        if (mapping.generatedLine === needle.generatedLine) {
+          var source = util.getArg(mapping, 'source', null);
+          if (source != null && this.sourceRoot != null) {
+            source = util.join(this.sourceRoot, source);
+          }
+          return {
+            source: source,
+            line: util.getArg(mapping, 'originalLine', null),
+            column: util.getArg(mapping, 'originalColumn', null),
+            name: util.getArg(mapping, 'name', null)
+          };
+        }
+      }
+
+      return {
+        source: null,
+        line: null,
+        column: null,
+        name: null
+      };
+    };
+
+  /**
+   * Returns the original source content. The only argument is the url of the
+   * original source file. Returns null if no original source content is
+   * availible.
+   */
+  SourceMapConsumer.prototype.sourceContentFor =
+    function SourceMapConsumer_sourceContentFor(aSource) {
+      if (!this.sourcesContent) {
+        return null;
+      }
+
+      if (this.sourceRoot != null) {
+        aSource = util.relative(this.sourceRoot, aSource);
+      }
+
+      if (this._sources.has(aSource)) {
+        return this.sourcesContent[this._sources.indexOf(aSource)];
+      }
+
+      var url;
+      if (this.sourceRoot != null
+          && (url = util.urlParse(this.sourceRoot))) {
+        // XXX: file:// URIs and absolute paths lead to unexpected behavior for
+        // many users. We can help them out when they expect file:// URIs to
+        // behave like it would if they were running a local HTTP server. See
+        // https://bugzilla.mozilla.org/show_bug.cgi?id=885597.
+        var fileUriAbsPath = aSource.replace(/^file:\/\//, "");
+        if (url.scheme == "file"
+            && this._sources.has(fileUriAbsPath)) {
+          return this.sourcesContent[this._sources.indexOf(fileUriAbsPath)]
+        }
+
+        if ((!url.path || url.path == "/")
+            && this._sources.has("/" + aSource)) {
+          return this.sourcesContent[this._sources.indexOf("/" + aSource)];
+        }
+      }
+
+      throw new Error('"' + aSource + '" is not in the SourceMap.');
+    };
+
+  /**
+   * Returns the generated line and column information for the original source,
+   * line, and column positions provided. The only argument is an object with
+   * the following properties:
+   *
+   *   - source: The filename of the original source.
+   *   - line: The line number in the original source.
+   *   - column: The column number in the original source.
+   *
+   * and an object is returned with the following properties:
+   *
+   *   - line: The line number in the generated source, or null.
+   *   - column: The column number in the generated source, or null.
+   */
+  SourceMapConsumer.prototype.generatedPositionFor =
+    function SourceMapConsumer_generatedPositionFor(aArgs) {
+      var needle = {
+        source: util.getArg(aArgs, 'source'),
+        originalLine: util.getArg(aArgs, 'line'),
+        originalColumn: util.getArg(aArgs, 'column')
+      };
+
+      if (this.sourceRoot != null) {
+        needle.source = util.relative(this.sourceRoot, needle.source);
+      }
+
+      var index = this._findMapping(needle,
+                                    this._originalMappings,
+                                    "originalLine",
+                                    "originalColumn",
+                                    util.compareByOriginalPositions);
+
+      if (index >= 0) {
+        var mapping = this._originalMappings[index];
+
+        return {
+          line: util.getArg(mapping, 'generatedLine', null),
+          column: util.getArg(mapping, 'generatedColumn', null),
+          lastColumn: util.getArg(mapping, 'lastGeneratedColumn', null)
+        };
+      }
+
+      return {
+        line: null,
+        column: null,
+        lastColumn: null
+      };
+    };
+
+  /**
+   * Returns all generated line and column information for the original source
+   * and line provided. The only argument is an object with the following
+   * properties:
+   *
+   *   - source: The filename of the original source.
+   *   - line: The line number in the original source.
+   *
+   * and an array of objects is returned, each with the following properties:
+   *
+   *   - line: The line number in the generated source, or null.
+   *   - column: The column number in the generated source, or null.
+   */
+  SourceMapConsumer.prototype.allGeneratedPositionsFor =
+    function SourceMapConsumer_allGeneratedPositionsFor(aArgs) {
+      // When there is no exact match, SourceMapConsumer.prototype._findMapping
+      // returns the index of the closest mapping less than the needle. By
+      // setting needle.originalColumn to Infinity, we thus find the last
+      // mapping for the given line, provided such a mapping exists.
+      var needle = {
+        source: util.getArg(aArgs, 'source'),
+        originalLine: util.getArg(aArgs, 'line'),
+        originalColumn: Infinity
+      };
+
+      if (this.sourceRoot != null) {
+        needle.source = util.relative(this.sourceRoot, needle.source);
+      }
+
+      var mappings = [];
+
+      var index = this._findMapping(needle,
+                                    this._originalMappings,
+                                    "originalLine",
+                                    "originalColumn",
+                                    util.compareByOriginalPositions);
+      if (index >= 0) {
+        var mapping = this._originalMappings[index];
+
+        while (mapping && mapping.originalLine === needle.originalLine) {
+          mappings.push({
+            line: util.getArg(mapping, 'generatedLine', null),
+            column: util.getArg(mapping, 'generatedColumn', null),
+            lastColumn: util.getArg(mapping, 'lastGeneratedColumn', null)
+          });
+
+          mapping = this._originalMappings[--index];
+        }
+      }
+
+      return mappings.reverse();
+    };
+
+  SourceMapConsumer.GENERATED_ORDER = 1;
+  SourceMapConsumer.ORIGINAL_ORDER = 2;
+
+  /**
+   * Iterate over each mapping between an original source/line/column and a
+   * generated line/column in this source map.
+   *
+   * @param Function aCallback
+   *        The function that is called with each mapping.
+   * @param Object aContext
+   *        Optional. If specified, this object will be the value of `this` every
+   *        time that `aCallback` is called.
+   * @param aOrder
+   *        Either `SourceMapConsumer.GENERATED_ORDER` or
+   *        `SourceMapConsumer.ORIGINAL_ORDER`. Specifies whether you want to
+   *        iterate over the mappings sorted by the generated file's line/column
+   *        order or the original's source/line/column order, respectively. Defaults to
+   *        `SourceMapConsumer.GENERATED_ORDER`.
+   */
+  SourceMapConsumer.prototype.eachMapping =
+    function SourceMapConsumer_eachMapping(aCallback, aContext, aOrder) {
+      var context = aContext || null;
+      var order = aOrder || SourceMapConsumer.GENERATED_ORDER;
+
+      var mappings;
+      switch (order) {
+      case SourceMapConsumer.GENERATED_ORDER:
+        mappings = this._generatedMappings;
+        break;
+      case SourceMapConsumer.ORIGINAL_ORDER:
+        mappings = this._originalMappings;
+        break;
+      default:
+        throw new Error("Unknown order of iteration.");
+      }
+
+      var sourceRoot = this.sourceRoot;
+      mappings.map(function (mapping) {
+        var source = mapping.source;
+        if (source != null && sourceRoot != null) {
+          source = util.join(sourceRoot, source);
+        }
+        return {
+          source: source,
+          generatedLine: mapping.generatedLine,
+          generatedColumn: mapping.generatedColumn,
+          originalLine: mapping.originalLine,
+          originalColumn: mapping.originalColumn,
+          name: mapping.name
+        };
+      }).forEach(aCallback, context);
+    };
+
+  exports.SourceMapConsumer = SourceMapConsumer;
+
+});
+
+},{"./array-set":36,"./base64-vlq":37,"./binary-search":39,"./util":44,"amdefine":23}],42:[function(require,module,exports){
+/* -*- Mode: js; js-indent-level: 2; -*- */
+/*
+ * Copyright 2011 Mozilla Foundation and contributors
+ * Licensed under the New BSD license. See LICENSE or:
+ * http://opensource.org/licenses/BSD-3-Clause
+ */
+if (typeof define !== 'function') {
+    var define = require('amdefine')(module, require);
+}
+define(function (require, exports, module) {
+
+  var base64VLQ = require('./base64-vlq');
+  var util = require('./util');
+  var ArraySet = require('./array-set').ArraySet;
+  var MappingList = require('./mapping-list').MappingList;
+
+  /**
+   * An instance of the SourceMapGenerator represents a source map which is
+   * being built incrementally. You may pass an object with the following
+   * properties:
+   *
+   *   - file: The filename of the generated source.
+   *   - sourceRoot: A root for all relative URLs in this source map.
+   */
+  function SourceMapGenerator(aArgs) {
+    if (!aArgs) {
+      aArgs = {};
+    }
+    this._file = util.getArg(aArgs, 'file', null);
+    this._sourceRoot = util.getArg(aArgs, 'sourceRoot', null);
+    this._skipValidation = util.getArg(aArgs, 'skipValidation', false);
+    this._sources = new ArraySet();
+    this._names = new ArraySet();
+    this._mappings = new MappingList();
+    this._sourcesContents = null;
+  }
+
+  SourceMapGenerator.prototype._version = 3;
+
+  /**
+   * Creates a new SourceMapGenerator based on a SourceMapConsumer
+   *
+   * @param aSourceMapConsumer The SourceMap.
+   */
+  SourceMapGenerator.fromSourceMap =
+    function SourceMapGenerator_fromSourceMap(aSourceMapConsumer) {
+      var sourceRoot = aSourceMapConsumer.sourceRoot;
+      var generator = new SourceMapGenerator({
+        file: aSourceMapConsumer.file,
+        sourceRoot: sourceRoot
+      });
+      aSourceMapConsumer.eachMapping(function (mapping) {
+        var newMapping = {
+          generated: {
+            line: mapping.generatedLine,
+            column: mapping.generatedColumn
+          }
+        };
+
+        if (mapping.source != null) {
+          newMapping.source = mapping.source;
+          if (sourceRoot != null) {
+            newMapping.source = util.relative(sourceRoot, newMapping.source);
+          }
+
+          newMapping.original = {
+            line: mapping.originalLine,
+            column: mapping.originalColumn
+          };
+
+          if (mapping.name != null) {
+            newMapping.name = mapping.name;
+          }
+        }
+
+        generator.addMapping(newMapping);
+      });
+      aSourceMapConsumer.sources.forEach(function (sourceFile) {
+        var content = aSourceMapConsumer.sourceContentFor(sourceFile);
+        if (content != null) {
+          generator.setSourceContent(sourceFile, content);
+        }
+      });
+      return generator;
+    };
+
+  /**
+   * Add a single mapping from original source line and column to the generated
+   * source's line and column for this source map being created. The mapping
+   * object should have the following properties:
+   *
+   *   - generated: An object with the generated line and column positions.
+   *   - original: An object with the original line and column positions.
+   *   - source: The original source file (relative to the sourceRoot).
+   *   - name: An optional original token name for this mapping.
+   */
+  SourceMapGenerator.prototype.addMapping =
+    function SourceMapGenerator_addMapping(aArgs) {
+      var generated = util.getArg(aArgs, 'generated');
+      var original = util.getArg(aArgs, 'original', null);
+      var source = util.getArg(aArgs, 'source', null);
+      var name = util.getArg(aArgs, 'name', null);
+
+      if (!this._skipValidation) {
+        this._validateMapping(generated, original, source, name);
+      }
+
+      if (source != null && !this._sources.has(source)) {
+        this._sources.add(source);
+      }
+
+      if (name != null && !this._names.has(name)) {
+        this._names.add(name);
+      }
+
+      this._mappings.add({
+        generatedLine: generated.line,
+        generatedColumn: generated.column,
+        originalLine: original != null && original.line,
+        originalColumn: original != null && original.column,
+        source: source,
+        name: name
+      });
+    };
+
+  /**
+   * Set the source content for a source file.
+   */
+  SourceMapGenerator.prototype.setSourceContent =
+    function SourceMapGenerator_setSourceContent(aSourceFile, aSourceContent) {
+      var source = aSourceFile;
+      if (this._sourceRoot != null) {
+        source = util.relative(this._sourceRoot, source);
+      }
+
+      if (aSourceContent != null) {
+        // Add the source content to the _sourcesContents map.
+        // Create a new _sourcesContents map if the property is null.
+        if (!this._sourcesContents) {
+          this._sourcesContents = {};
+        }
+        this._sourcesContents[util.toSetString(source)] = aSourceContent;
+      } else if (this._sourcesContents) {
+        // Remove the source file from the _sourcesContents map.
+        // If the _sourcesContents map is empty, set the property to null.
+        delete this._sourcesContents[util.toSetString(source)];
+        if (Object.keys(this._sourcesContents).length === 0) {
+          this._sourcesContents = null;
+        }
+      }
+    };
+
+  /**
+   * Applies the mappings of a sub-source-map for a specific source file to the
+   * source map being generated. Each mapping to the supplied source file is
+   * rewritten using the supplied source map. Note: The resolution for the
+   * resulting mappings is the minimium of this map and the supplied map.
+   *
+   * @param aSourceMapConsumer The source map to be applied.
+   * @param aSourceFile Optional. The filename of the source file.
+   *        If omitted, SourceMapConsumer's file property will be used.
+   * @param aSourceMapPath Optional. The dirname of the path to the source map
+   *        to be applied. If relative, it is relative to the SourceMapConsumer.
+   *        This parameter is needed when the two source maps aren't in the same
+   *        directory, and the source map to be applied contains relative source
+   *        paths. If so, those relative source paths need to be rewritten
+   *        relative to the SourceMapGenerator.
+   */
+  SourceMapGenerator.prototype.applySourceMap =
+    function SourceMapGenerator_applySourceMap(aSourceMapConsumer, aSourceFile, aSourceMapPath) {
+      var sourceFile = aSourceFile;
+      // If aSourceFile is omitted, we will use the file property of the SourceMap
+      if (aSourceFile == null) {
+        if (aSourceMapConsumer.file == null) {
+          throw new Error(
+            'SourceMapGenerator.prototype.applySourceMap requires either an explicit source file, ' +
+            'or the source map\'s "file" property. Both were omitted.'
+          );
+        }
+        sourceFile = aSourceMapConsumer.file;
+      }
+      var sourceRoot = this._sourceRoot;
+      // Make "sourceFile" relative if an absolute Url is passed.
+      if (sourceRoot != null) {
+        sourceFile = util.relative(sourceRoot, sourceFile);
+      }
+      // Applying the SourceMap can add and remove items from the sources and
+      // the names array.
+      var newSources = new ArraySet();
+      var newNames = new ArraySet();
+
+      // Find mappings for the "sourceFile"
+      this._mappings.unsortedForEach(function (mapping) {
+        if (mapping.source === sourceFile && mapping.originalLine != null) {
+          // Check if it can be mapped by the source map, then update the mapping.
+          var original = aSourceMapConsumer.originalPositionFor({
+            line: mapping.originalLine,
+            column: mapping.originalColumn
+          });
+          if (original.source != null) {
+            // Copy mapping
+            mapping.source = original.source;
+            if (aSourceMapPath != null) {
+              mapping.source = util.join(aSourceMapPath, mapping.source)
+            }
+            if (sourceRoot != null) {
+              mapping.source = util.relative(sourceRoot, mapping.source);
+            }
+            mapping.originalLine = original.line;
+            mapping.originalColumn = original.column;
+            if (original.name != null) {
+              mapping.name = original.name;
+            }
+          }
+        }
+
+        var source = mapping.source;
+        if (source != null && !newSources.has(source)) {
+          newSources.add(source);
+        }
+
+        var name = mapping.name;
+        if (name != null && !newNames.has(name)) {
+          newNames.add(name);
+        }
+
+      }, this);
+      this._sources = newSources;
+      this._names = newNames;
+
+      // Copy sourcesContents of applied map.
+      aSourceMapConsumer.sources.forEach(function (sourceFile) {
+        var content = aSourceMapConsumer.sourceContentFor(sourceFile);
+        if (content != null) {
+          if (aSourceMapPath != null) {
+            sourceFile = util.join(aSourceMapPath, sourceFile);
+          }
+          if (sourceRoot != null) {
+            sourceFile = util.relative(sourceRoot, sourceFile);
+          }
+          this.setSourceContent(sourceFile, content);
+        }
+      }, this);
+    };
+
+  /**
+   * A mapping can have one of the three levels of data:
+   *
+   *   1. Just the generated position.
+   *   2. The Generated position, original position, and original source.
+   *   3. Generated and original position, original source, as well as a name
+   *      token.
+   *
+   * To maintain consistency, we validate that any new mapping being added falls
+   * in to one of these categories.
+   */
+  SourceMapGenerator.prototype._validateMapping =
+    function SourceMapGenerator_validateMapping(aGenerated, aOriginal, aSource,
+                                                aName) {
+      if (aGenerated && 'line' in aGenerated && 'column' in aGenerated
+          && aGenerated.line > 0 && aGenerated.column >= 0
+          && !aOriginal && !aSource && !aName) {
+        // Case 1.
+        return;
+      }
+      else if (aGenerated && 'line' in aGenerated && 'column' in aGenerated
+               && aOriginal && 'line' in aOriginal && 'column' in aOriginal
+               && aGenerated.line > 0 && aGenerated.column >= 0
+               && aOriginal.line > 0 && aOriginal.column >= 0
+               && aSource) {
+        // Cases 2 and 3.
+        return;
+      }
+      else {
+        throw new Error('Invalid mapping: ' + JSON.stringify({
+          generated: aGenerated,
+          source: aSource,
+          original: aOriginal,
+          name: aName
+        }));
+      }
+    };
+
+  /**
+   * Serialize the accumulated mappings in to the stream of base 64 VLQs
+   * specified by the source map format.
+   */
+  SourceMapGenerator.prototype._serializeMappings =
+    function SourceMapGenerator_serializeMappings() {
+      var previousGeneratedColumn = 0;
+      var previousGeneratedLine = 1;
+      var previousOriginalColumn = 0;
+      var previousOriginalLine = 0;
+      var previousName = 0;
+      var previousSource = 0;
+      var result = '';
+      var mapping;
+
+      var mappings = this._mappings.toArray();
+
+      for (var i = 0, len = mappings.length; i < len; i++) {
+        mapping = mappings[i];
+
+        if (mapping.generatedLine !== previousGeneratedLine) {
+          previousGeneratedColumn = 0;
+          while (mapping.generatedLine !== previousGeneratedLine) {
+            result += ';';
+            previousGeneratedLine++;
+          }
+        }
+        else {
+          if (i > 0) {
+            if (!util.compareByGeneratedPositions(mapping, mappings[i - 1])) {
+              continue;
+            }
+            result += ',';
+          }
+        }
+
+        result += base64VLQ.encode(mapping.generatedColumn
+                                   - previousGeneratedColumn);
+        previousGeneratedColumn = mapping.generatedColumn;
+
+        if (mapping.source != null) {
+          result += base64VLQ.encode(this._sources.indexOf(mapping.source)
+                                     - previousSource);
+          previousSource = this._sources.indexOf(mapping.source);
+
+          // lines are stored 0-based in SourceMap spec version 3
+          result += base64VLQ.encode(mapping.originalLine - 1
+                                     - previousOriginalLine);
+          previousOriginalLine = mapping.originalLine - 1;
+
+          result += base64VLQ.encode(mapping.originalColumn
+                                     - previousOriginalColumn);
+          previousOriginalColumn = mapping.originalColumn;
+
+          if (mapping.name != null) {
+            result += base64VLQ.encode(this._names.indexOf(mapping.name)
+                                       - previousName);
+            previousName = this._names.indexOf(mapping.name);
+          }
+        }
+      }
+
+      return result;
+    };
+
+  SourceMapGenerator.prototype._generateSourcesContent =
+    function SourceMapGenerator_generateSourcesContent(aSources, aSourceRoot) {
+      return aSources.map(function (source) {
+        if (!this._sourcesContents) {
+          return null;
+        }
+        if (aSourceRoot != null) {
+          source = util.relative(aSourceRoot, source);
+        }
+        var key = util.toSetString(source);
+        return Object.prototype.hasOwnProperty.call(this._sourcesContents,
+                                                    key)
+          ? this._sourcesContents[key]
+          : null;
+      }, this);
+    };
+
+  /**
+   * Externalize the source map.
+   */
+  SourceMapGenerator.prototype.toJSON =
+    function SourceMapGenerator_toJSON() {
+      var map = {
+        version: this._version,
+        sources: this._sources.toArray(),
+        names: this._names.toArray(),
+        mappings: this._serializeMappings()
+      };
+      if (this._file != null) {
+        map.file = this._file;
+      }
+      if (this._sourceRoot != null) {
+        map.sourceRoot = this._sourceRoot;
+      }
+      if (this._sourcesContents) {
+        map.sourcesContent = this._generateSourcesContent(map.sources, map.sourceRoot);
+      }
+
+      return map;
+    };
+
+  /**
+   * Render the source map being generated to a string.
+   */
+  SourceMapGenerator.prototype.toString =
+    function SourceMapGenerator_toString() {
+      return JSON.stringify(this);
+    };
+
+  exports.SourceMapGenerator = SourceMapGenerator;
+
+});
+
+},{"./array-set":36,"./base64-vlq":37,"./mapping-list":40,"./util":44,"amdefine":23}],43:[function(require,module,exports){
+/* -*- Mode: js; js-indent-level: 2; -*- */
+/*
+ * Copyright 2011 Mozilla Foundation and contributors
+ * Licensed under the New BSD license. See LICENSE or:
+ * http://opensource.org/licenses/BSD-3-Clause
+ */
+if (typeof define !== 'function') {
+    var define = require('amdefine')(module, require);
+}
+define(function (require, exports, module) {
+
+  var SourceMapGenerator = require('./source-map-generator').SourceMapGenerator;
+  var util = require('./util');
+
+  // Matches a Windows-style `\r\n` newline or a `\n` newline used by all other
+  // operating systems these days (capturing the result).
+  var REGEX_NEWLINE = /(\r?\n)/;
+
+  // Newline character code for charCodeAt() comparisons
+  var NEWLINE_CODE = 10;
+
+  // Private symbol for identifying `SourceNode`s when multiple versions of
+  // the source-map library are loaded. This MUST NOT CHANGE across
+  // versions!
+  var isSourceNode = "$$$isSourceNode$$$";
+
+  /**
+   * SourceNodes provide a way to abstract over interpolating/concatenating
+   * snippets of generated JavaScript source code while maintaining the line and
+   * column information associated with the original source code.
+   *
+   * @param aLine The original line number.
+   * @param aColumn The original column number.
+   * @param aSource The original source's filename.
+   * @param aChunks Optional. An array of strings which are snippets of
+   *        generated JS, or other SourceNodes.
+   * @param aName The original identifier.
+   */
+  function SourceNode(aLine, aColumn, aSource, aChunks, aName) {
+    this.children = [];
+    this.sourceContents = {};
+    this.line = aLine == null ? null : aLine;
+    this.column = aColumn == null ? null : aColumn;
+    this.source = aSource == null ? null : aSource;
+    this.name = aName == null ? null : aName;
+    this[isSourceNode] = true;
+    if (aChunks != null) this.add(aChunks);
+  }
+
+  /**
+   * Creates a SourceNode from generated code and a SourceMapConsumer.
+   *
+   * @param aGeneratedCode The generated code
+   * @param aSourceMapConsumer The SourceMap for the generated code
+   * @param aRelativePath Optional. The path that relative sources in the
+   *        SourceMapConsumer should be relative to.
+   */
+  SourceNode.fromStringWithSourceMap =
+    function SourceNode_fromStringWithSourceMap(aGeneratedCode, aSourceMapConsumer, aRelativePath) {
+      // The SourceNode we want to fill with the generated code
+      // and the SourceMap
+      var node = new SourceNode();
+
+      // All even indices of this array are one line of the generated code,
+      // while all odd indices are the newlines between two adjacent lines
+      // (since `REGEX_NEWLINE` captures its match).
+      // Processed fragments are removed from this array, by calling `shiftNextLine`.
+      var remainingLines = aGeneratedCode.split(REGEX_NEWLINE);
+      var shiftNextLine = function() {
+        var lineContents = remainingLines.shift();
+        // The last line of a file might not have a newline.
+        var newLine = remainingLines.shift() || "";
+        return lineContents + newLine;
+      };
+
+      // We need to remember the position of "remainingLines"
+      var lastGeneratedLine = 1, lastGeneratedColumn = 0;
+
+      // The generate SourceNodes we need a code range.
+      // To extract it current and last mapping is used.
+      // Here we store the last mapping.
+      var lastMapping = null;
+
+      aSourceMapConsumer.eachMapping(function (mapping) {
+        if (lastMapping !== null) {
+          // We add the code from "lastMapping" to "mapping":
+          // First check if there is a new line in between.
+          if (lastGeneratedLine < mapping.generatedLine) {
+            var code = "";
+            // Associate first line with "lastMapping"
+            addMappingWithCode(lastMapping, shiftNextLine());
+            lastGeneratedLine++;
+            lastGeneratedColumn = 0;
+            // The remaining code is added without mapping
+          } else {
+            // There is no new line in between.
+            // Associate the code between "lastGeneratedColumn" and
+            // "mapping.generatedColumn" with "lastMapping"
+            var nextLine = remainingLines[0];
+            var code = nextLine.substr(0, mapping.generatedColumn -
+                                          lastGeneratedColumn);
+            remainingLines[0] = nextLine.substr(mapping.generatedColumn -
+                                                lastGeneratedColumn);
+            lastGeneratedColumn = mapping.generatedColumn;
+            addMappingWithCode(lastMapping, code);
+            // No more remaining code, continue
+            lastMapping = mapping;
+            return;
+          }
+        }
+        // We add the generated code until the first mapping
+        // to the SourceNode without any mapping.
+        // Each line is added as separate string.
+        while (lastGeneratedLine < mapping.generatedLine) {
+          node.add(shiftNextLine());
+          lastGeneratedLine++;
+        }
+        if (lastGeneratedColumn < mapping.generatedColumn) {
+          var nextLine = remainingLines[0];
+          node.add(nextLine.substr(0, mapping.generatedColumn));
+          remainingLines[0] = nextLine.substr(mapping.generatedColumn);
+          lastGeneratedColumn = mapping.generatedColumn;
+        }
+        lastMapping = mapping;
+      }, this);
+      // We have processed all mappings.
+      if (remainingLines.length > 0) {
+        if (lastMapping) {
+          // Associate the remaining code in the current line with "lastMapping"
+          addMappingWithCode(lastMapping, shiftNextLine());
+        }
+        // and add the remaining lines without any mapping
+        node.add(remainingLines.join(""));
+      }
+
+      // Copy sourcesContent into SourceNode
+      aSourceMapConsumer.sources.forEach(function (sourceFile) {
+        var content = aSourceMapConsumer.sourceContentFor(sourceFile);
+        if (content != null) {
+          if (aRelativePath != null) {
+            sourceFile = util.join(aRelativePath, sourceFile);
+          }
+          node.setSourceContent(sourceFile, content);
+        }
+      });
+
+      return node;
+
+      function addMappingWithCode(mapping, code) {
+        if (mapping === null || mapping.source === undefined) {
+          node.add(code);
+        } else {
+          var source = aRelativePath
+            ? util.join(aRelativePath, mapping.source)
+            : mapping.source;
+          node.add(new SourceNode(mapping.originalLine,
+                                  mapping.originalColumn,
+                                  source,
+                                  code,
+                                  mapping.name));
+        }
+      }
+    };
+
+  /**
+   * Add a chunk of generated JS to this source node.
+   *
+   * @param aChunk A string snippet of generated JS code, another instance of
+   *        SourceNode, or an array where each member is one of those things.
+   */
+  SourceNode.prototype.add = function SourceNode_add(aChunk) {
+    if (Array.isArray(aChunk)) {
+      aChunk.forEach(function (chunk) {
+        this.add(chunk);
+      }, this);
+    }
+    else if (aChunk[isSourceNode] || typeof aChunk === "string") {
+      if (aChunk) {
+        this.children.push(aChunk);
+      }
+    }
+    else {
+      throw new TypeError(
+        "Expected a SourceNode, string, or an array of SourceNodes and strings. Got " + aChunk
+      );
+    }
+    return this;
+  };
+
+  /**
+   * Add a chunk of generated JS to the beginning of this source node.
+   *
+   * @param aChunk A string snippet of generated JS code, another instance of
+   *        SourceNode, or an array where each member is one of those things.
+   */
+  SourceNode.prototype.prepend = function SourceNode_prepend(aChunk) {
+    if (Array.isArray(aChunk)) {
+      for (var i = aChunk.length-1; i >= 0; i--) {
+        this.prepend(aChunk[i]);
+      }
+    }
+    else if (aChunk[isSourceNode] || typeof aChunk === "string") {
+      this.children.unshift(aChunk);
+    }
+    else {
+      throw new TypeError(
+        "Expected a SourceNode, string, or an array of SourceNodes and strings. Got " + aChunk
+      );
+    }
+    return this;
+  };
+
+  /**
+   * Walk over the tree of JS snippets in this node and its children. The
+   * walking function is called once for each snippet of JS and is passed that
+   * snippet and the its original associated source's line/column location.
+   *
+   * @param aFn The traversal function.
+   */
+  SourceNode.prototype.walk = function SourceNode_walk(aFn) {
+    var chunk;
+    for (var i = 0, len = this.children.length; i < len; i++) {
+      chunk = this.children[i];
+      if (chunk[isSourceNode]) {
+        chunk.walk(aFn);
+      }
+      else {
+        if (chunk !== '') {
+          aFn(chunk, { source: this.source,
+                       line: this.line,
+                       column: this.column,
+                       name: this.name });
+        }
+      }
+    }
+  };
+
+  /**
+   * Like `String.prototype.join` except for SourceNodes. Inserts `aStr` between
+   * each of `this.children`.
+   *
+   * @param aSep The separator.
+   */
+  SourceNode.prototype.join = function SourceNode_join(aSep) {
+    var newChildren;
+    var i;
+    var len = this.children.length;
+    if (len > 0) {
+      newChildren = [];
+      for (i = 0; i < len-1; i++) {
+        newChildren.push(this.children[i]);
+        newChildren.push(aSep);
+      }
+      newChildren.push(this.children[i]);
+      this.children = newChildren;
+    }
+    return this;
+  };
+
+  /**
+   * Call String.prototype.replace on the very right-most source snippet. Useful
+   * for trimming whitespace from the end of a source node, etc.
+   *
+   * @param aPattern The pattern to replace.
+   * @param aReplacement The thing to replace the pattern with.
+   */
+  SourceNode.prototype.replaceRight = function SourceNode_replaceRight(aPattern, aReplacement) {
+    var lastChild = this.children[this.children.length - 1];
+    if (lastChild[isSourceNode]) {
+      lastChild.replaceRight(aPattern, aReplacement);
+    }
+    else if (typeof lastChild === 'string') {
+      this.children[this.children.length - 1] = lastChild.replace(aPattern, aReplacement);
+    }
+    else {
+      this.children.push(''.replace(aPattern, aReplacement));
+    }
+    return this;
+  };
+
+  /**
+   * Set the source content for a source file. This will be added to the SourceMapGenerator
+   * in the sourcesContent field.
+   *
+   * @param aSourceFile The filename of the source file
+   * @param aSourceContent The content of the source file
+   */
+  SourceNode.prototype.setSourceContent =
+    function SourceNode_setSourceContent(aSourceFile, aSourceContent) {
+      this.sourceContents[util.toSetString(aSourceFile)] = aSourceContent;
+    };
+
+  /**
+   * Walk over the tree of SourceNodes. The walking function is called for each
+   * source file content and is passed the filename and source content.
+   *
+   * @param aFn The traversal function.
+   */
+  SourceNode.prototype.walkSourceContents =
+    function SourceNode_walkSourceContents(aFn) {
+      for (var i = 0, len = this.children.length; i < len; i++) {
+        if (this.children[i][isSourceNode]) {
+          this.children[i].walkSourceContents(aFn);
+        }
+      }
+
+      var sources = Object.keys(this.sourceContents);
+      for (var i = 0, len = sources.length; i < len; i++) {
+        aFn(util.fromSetString(sources[i]), this.sourceContents[sources[i]]);
+      }
+    };
+
+  /**
+   * Return the string representation of this source node. Walks over the tree
+   * and concatenates all the various snippets together to one string.
+   */
+  SourceNode.prototype.toString = function SourceNode_toString() {
+    var str = "";
+    this.walk(function (chunk) {
+      str += chunk;
+    });
+    return str;
+  };
+
+  /**
+   * Returns the string representation of this source node along with a source
+   * map.
+   */
+  SourceNode.prototype.toStringWithSourceMap = function SourceNode_toStringWithSourceMap(aArgs) {
+    var generated = {
+      code: "",
+      line: 1,
+      column: 0
+    };
+    var map = new SourceMapGenerator(aArgs);
+    var sourceMappingActive = false;
+    var lastOriginalSource = null;
+    var lastOriginalLine = null;
+    var lastOriginalColumn = null;
+    var lastOriginalName = null;
+    this.walk(function (chunk, original) {
+      generated.code += chunk;
+      if (original.source !== null
+          && original.line !== null
+          && original.column !== null) {
+        if(lastOriginalSource !== original.source
+           || lastOriginalLine !== original.line
+           || lastOriginalColumn !== original.column
+           || lastOriginalName !== original.name) {
+          map.addMapping({
+            source: original.source,
+            original: {
+              line: original.line,
+              column: original.column
+            },
+            generated: {
+              line: generated.line,
+              column: generated.column
+            },
+            name: original.name
+          });
+        }
+        lastOriginalSource = original.source;
+        lastOriginalLine = original.line;
+        lastOriginalColumn = original.column;
+        lastOriginalName = original.name;
+        sourceMappingActive = true;
+      } else if (sourceMappingActive) {
+        map.addMapping({
+          generated: {
+            line: generated.line,
+            column: generated.column
+          }
+        });
+        lastOriginalSource = null;
+        sourceMappingActive = false;
+      }
+      for (var idx = 0, length = chunk.length; idx < length; idx++) {
+        if (chunk.charCodeAt(idx) === NEWLINE_CODE) {
+          generated.line++;
+          generated.column = 0;
+          // Mappings end at eol
+          if (idx + 1 === length) {
+            lastOriginalSource = null;
+            sourceMappingActive = false;
+          } else if (sourceMappingActive) {
+            map.addMapping({
+              source: original.source,
+              original: {
+                line: original.line,
+                column: original.column
+              },
+              generated: {
+                line: generated.line,
+                column: generated.column
+              },
+              name: original.name
+            });
+          }
+        } else {
+          generated.column++;
+        }
+      }
+    });
+    this.walkSourceContents(function (sourceFile, sourceContent) {
+      map.setSourceContent(sourceFile, sourceContent);
+    });
+
+    return { code: generated.code, map: map };
+  };
+
+  exports.SourceNode = SourceNode;
+
+});
+
+},{"./source-map-generator":42,"./util":44,"amdefine":23}],44:[function(require,module,exports){
+/* -*- Mode: js; js-indent-level: 2; -*- */
+/*
+ * Copyright 2011 Mozilla Foundation and contributors
+ * Licensed under the New BSD license. See LICENSE or:
+ * http://opensource.org/licenses/BSD-3-Clause
+ */
+if (typeof define !== 'function') {
+    var define = require('amdefine')(module, require);
+}
+define(function (require, exports, module) {
+
+  /**
+   * This is a helper function for getting values from parameter/options
+   * objects.
+   *
+   * @param args The object we are extracting values from
+   * @param name The name of the property we are getting.
+   * @param defaultValue An optional value to return if the property is missing
+   * from the object. If this is not specified and the property is missing, an
+   * error will be thrown.
+   */
+  function getArg(aArgs, aName, aDefaultValue) {
+    if (aName in aArgs) {
+      return aArgs[aName];
+    } else if (arguments.length === 3) {
+      return aDefaultValue;
+    } else {
+      throw new Error('"' + aName + '" is a required argument.');
+    }
+  }
+  exports.getArg = getArg;
+
+  var urlRegexp = /^(?:([\w+\-.]+):)?\/\/(?:(\w+:\w+)@)?([\w.]*)(?::(\d+))?(\S*)$/;
+  var dataUrlRegexp = /^data:.+\,.+$/;
+
+  function urlParse(aUrl) {
+    var match = aUrl.match(urlRegexp);
+    if (!match) {
+      return null;
+    }
+    return {
+      scheme: match[1],
+      auth: match[2],
+      host: match[3],
+      port: match[4],
+      path: match[5]
+    };
+  }
+  exports.urlParse = urlParse;
+
+  function urlGenerate(aParsedUrl) {
+    var url = '';
+    if (aParsedUrl.scheme) {
+      url += aParsedUrl.scheme + ':';
+    }
+    url += '//';
+    if (aParsedUrl.auth) {
+      url += aParsedUrl.auth + '@';
+    }
+    if (aParsedUrl.host) {
+      url += aParsedUrl.host;
+    }
+    if (aParsedUrl.port) {
+      url += ":" + aParsedUrl.port
+    }
+    if (aParsedUrl.path) {
+      url += aParsedUrl.path;
+    }
+    return url;
+  }
+  exports.urlGenerate = urlGenerate;
+
+  /**
+   * Normalizes a path, or the path portion of a URL:
+   *
+   * - Replaces consequtive slashes with one slash.
+   * - Removes unnecessary '.' parts.
+   * - Removes unnecessary '<dir>/..' parts.
+   *
+   * Based on code in the Node.js 'path' core module.
+   *
+   * @param aPath The path or url to normalize.
+   */
+  function normalize(aPath) {
+    var path = aPath;
+    var url = urlParse(aPath);
+    if (url) {
+      if (!url.path) {
+        return aPath;
+      }
+      path = url.path;
+    }
+    var isAbsolute = (path.charAt(0) === '/');
+
+    var parts = path.split(/\/+/);
+    for (var part, up = 0, i = parts.length - 1; i >= 0; i--) {
+      part = parts[i];
+      if (part === '.') {
+        parts.splice(i, 1);
+      } else if (part === '..') {
+        up++;
+      } else if (up > 0) {
+        if (part === '') {
+          // The first part is blank if the path is absolute. Trying to go
+          // above the root is a no-op. Therefore we can remove all '..' parts
+          // directly after the root.
+          parts.splice(i + 1, up);
+          up = 0;
+        } else {
+          parts.splice(i, 2);
+          up--;
+        }
+      }
+    }
+    path = parts.join('/');
+
+    if (path === '') {
+      path = isAbsolute ? '/' : '.';
+    }
+
+    if (url) {
+      url.path = path;
+      return urlGenerate(url);
+    }
+    return path;
+  }
+  exports.normalize = normalize;
+
+  /**
+   * Joins two paths/URLs.
+   *
+   * @param aRoot The root path or URL.
+   * @param aPath The path or URL to be joined with the root.
+   *
+   * - If aPath is a URL or a data URI, aPath is returned, unless aPath is a
+   *   scheme-relative URL: Then the scheme of aRoot, if any, is prepended
+   *   first.
+   * - Otherwise aPath is a path. If aRoot is a URL, then its path portion
+   *   is updated with the result and aRoot is returned. Otherwise the result
+   *   is returned.
+   *   - If aPath is absolute, the result is aPath.
+   *   - Otherwise the two paths are joined with a slash.
+   * - Joining for example 'http://' and 'www.example.com' is also supported.
+   */
+  function join(aRoot, aPath) {
+    if (aRoot === "") {
+      aRoot = ".";
+    }
+    if (aPath === "") {
+      aPath = ".";
+    }
+    var aPathUrl = urlParse(aPath);
+    var aRootUrl = urlParse(aRoot);
+    if (aRootUrl) {
+      aRoot = aRootUrl.path || '/';
+    }
+
+    // `join(foo, '//www.example.org')`
+    if (aPathUrl && !aPathUrl.scheme) {
+      if (aRootUrl) {
+        aPathUrl.scheme = aRootUrl.scheme;
+      }
+      return urlGenerate(aPathUrl);
+    }
+
+    if (aPathUrl || aPath.match(dataUrlRegexp)) {
+      return aPath;
+    }
+
+    // `join('http://', 'www.example.com')`
+    if (aRootUrl && !aRootUrl.host && !aRootUrl.path) {
+      aRootUrl.host = aPath;
+      return urlGenerate(aRootUrl);
+    }
+
+    var joined = aPath.charAt(0) === '/'
+      ? aPath
+      : normalize(aRoot.replace(/\/+$/, '') + '/' + aPath);
+
+    if (aRootUrl) {
+      aRootUrl.path = joined;
+      return urlGenerate(aRootUrl);
+    }
+    return joined;
+  }
+  exports.join = join;
+
+  /**
+   * Make a path relative to a URL or another path.
+   *
+   * @param aRoot The root path or URL.
+   * @param aPath The path or URL to be made relative to aRoot.
+   */
+  function relative(aRoot, aPath) {
+    if (aRoot === "") {
+      aRoot = ".";
+    }
+
+    aRoot = aRoot.replace(/\/$/, '');
+
+    // XXX: It is possible to remove this block, and the tests still pass!
+    var url = urlParse(aRoot);
+    if (aPath.charAt(0) == "/" && url && url.path == "/") {
+      return aPath.slice(1);
+    }
+
+    return aPath.indexOf(aRoot + '/') === 0
+      ? aPath.substr(aRoot.length + 1)
+      : aPath;
+  }
+  exports.relative = relative;
+
+  /**
+   * Because behavior goes wacky when you set `__proto__` on objects, we
+   * have to prefix all the strings in our set with an arbitrary character.
+   *
+   * See https://github.com/mozilla/source-map/pull/31 and
+   * https://github.com/mozilla/source-map/issues/30
+   *
+   * @param String aStr
+   */
+  function toSetString(aStr) {
+    return '$' + aStr;
+  }
+  exports.toSetString = toSetString;
+
+  function fromSetString(aStr) {
+    return aStr.substr(1);
+  }
+  exports.fromSetString = fromSetString;
+
+  function strcmp(aStr1, aStr2) {
+    var s1 = aStr1 || "";
+    var s2 = aStr2 || "";
+    return (s1 > s2) - (s1 < s2);
+  }
+
+  /**
+   * Comparator between two mappings where the original positions are compared.
+   *
+   * Optionally pass in `true` as `onlyCompareGenerated` to consider two
+   * mappings with the same original source/line/column, but different generated
+   * line and column the same. Useful when searching for a mapping with a
+   * stubbed out mapping.
+   */
+  function compareByOriginalPositions(mappingA, mappingB, onlyCompareOriginal) {
+    var cmp;
+
+    cmp = strcmp(mappingA.source, mappingB.source);
+    if (cmp) {
+      return cmp;
+    }
+
+    cmp = mappingA.originalLine - mappingB.originalLine;
+    if (cmp) {
+      return cmp;
+    }
+
+    cmp = mappingA.originalColumn - mappingB.originalColumn;
+    if (cmp || onlyCompareOriginal) {
+      return cmp;
+    }
+
+    cmp = strcmp(mappingA.name, mappingB.name);
+    if (cmp) {
+      return cmp;
+    }
+
+    cmp = mappingA.generatedLine - mappingB.generatedLine;
+    if (cmp) {
+      return cmp;
+    }
+
+    return mappingA.generatedColumn - mappingB.generatedColumn;
+  };
+  exports.compareByOriginalPositions = compareByOriginalPositions;
+
+  /**
+   * Comparator between two mappings where the generated positions are
+   * compared.
+   *
+   * Optionally pass in `true` as `onlyCompareGenerated` to consider two
+   * mappings with the same generated line and column, but different
+   * source/name/original line and column the same. Useful when searching for a
+   * mapping with a stubbed out mapping.
+   */
+  function compareByGeneratedPositions(mappingA, mappingB, onlyCompareGenerated) {
+    var cmp;
+
+    cmp = mappingA.generatedLine - mappingB.generatedLine;
+    if (cmp) {
+      return cmp;
+    }
+
+    cmp = mappingA.generatedColumn - mappingB.generatedColumn;
+    if (cmp || onlyCompareGenerated) {
+      return cmp;
+    }
+
+    cmp = strcmp(mappingA.source, mappingB.source);
+    if (cmp) {
+      return cmp;
+    }
+
+    cmp = mappingA.originalLine - mappingB.originalLine;
+    if (cmp) {
+      return cmp;
+    }
+
+    cmp = mappingA.originalColumn - mappingB.originalColumn;
+    if (cmp) {
+      return cmp;
+    }
+
+    return strcmp(mappingA.name, mappingB.name);
+  };
+  exports.compareByGeneratedPositions = compareByGeneratedPositions;
+
+});
+
+},{"amdefine":23}],45:[function(require,module,exports){
 /*!
  * string_score.js: String Scoring Algorithm 0.1.22
  *
