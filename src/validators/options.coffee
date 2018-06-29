@@ -62,7 +62,7 @@ module.exports = (options) ->
       simpleLoops:
         type: 'boolean'
         default: false
-        description: "Whether simple loops will be supported, per language.  E.g. 'loop()' will be transpiled as 'while(true)'."
+        description: "Whether simple loops will be supported, per language.  E.g. 'loop()' will be transpiled as 'while(true)'. Deprecated: simple loops are no longer supported."
       protectBuiltins:
         type: 'boolean'
         default: true

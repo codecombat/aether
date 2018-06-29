@@ -12,6 +12,7 @@ module.exports = class Lua extends Language
     super arguments...
     parserHolder.lua2js ?= self?.aetherLua2JS ? require 'lua2js'
     @runtimeGlobals = parserHolder.lua2js.stdlib
+    # TODO: remove injectCode when we set language in Esper to let Esper use native language code
     @injectCode = require 'aether-lang-stdlibs/lua-stdlib.ast.json'
     @fidMap = {}
 

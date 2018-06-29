@@ -15,6 +15,7 @@ module.exports = class Python extends Language
 
   constructor: ->
     super arguments...
+    # TODO: remove injectCode when we set language in Esper to let Esper use native language code
     @injectCode = require 'aether-lang-stdlibs/python-stdlib.ast.json'
     @indent = Array(@wrappedCodeIndentLen + 1).join ' '
     unless parserHolder.parser?.pythonRuntime?
